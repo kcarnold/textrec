@@ -80,7 +80,8 @@ test_environment:
 # PROJECT RULES                                                                 #
 #################################################################################
 
-
+run_server:
+	exec python -m tornado.autoreload -m textrec.runserver
 
 #################################################################################
 # Self Documenting Commands                                                     #
