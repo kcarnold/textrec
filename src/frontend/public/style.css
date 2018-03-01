@@ -1,0 +1,423 @@
+/* https://www.paulirish.com/2012/box-sizing-border-box-ftw/ */
+/* apply a natural box layout model to all elements, but allowing components to change */
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+/*** Overall layout ****/
+html, body {
+    min-height: 100%;
+    height: 100%;
+}
+
+#root {
+    height: 100%;
+}
+
+.App {
+    height: 100%;
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.App > div {
+    padding: 10px;
+}
+
+.App > .ExperimentScreen {
+    padding: 0;
+    height: 100%;
+    display: flex;
+    flex-flow: column nowrap;
+}
+
+.ListWords {
+/*     height: 100vh; */
+}
+
+.ListWords textarea {
+    width: 100%;
+    height: 100%;
+}
+
+.clientId {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    font-size: 6px;
+}
+
+.ExperimentScreen .header {
+    overflow-y: scroll;
+    background-color: #ccc;
+    color: black;
+    flex: 1 0 auto;
+    height: 75px;
+}
+
+/*** TEXT ***/
+.CurText {
+    white-space: pre-wrap;
+    flex: 0 0 auto;
+    max-height: 80px;
+    padding: 1px;
+    overflow-y: scroll;
+    display: flex;
+    align-items: flex-end;
+    background: #ccc;
+    position: relative;
+    border-top: 1px solid black;
+}
+
+.CurText > span {
+    display: block;
+    width: 100%;
+    background: white;
+}
+
+.CurText .afterCursor {
+  color: #c34242;
+}
+
+.Cursor {
+    display: inline-block;
+    width: 2px;
+    margin: 0 -2px -3px 0;
+    background: blue;
+    height: 17px;
+    animation: blink-animation 1s steps(2, start) infinite;
+}
+
+.Cursor.deleting {
+  background: red;
+  animation: none;
+  width: 3px;
+}
+
+@keyframes blink-animation {
+  to {
+    visibility: hidden;
+  }
+}
+
+
+/***** KEYBOARD ****/
+.Keyboard {
+    height: 245px;
+    background: #D9D8DA;
+    flex: 0 0 auto;
+    position: relative;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: space-around;
+    cursor: pointer;
+    user-select: none;
+    padding-bottom: 30px;
+    touch-action: none;
+}
+
+
+.row {
+    display: flex;
+    justify-content: space-around;
+}
+
+.row:nth-child(2) {
+    margin-left: 18px;
+    margin-right: 18px;
+}
+
+.key {
+    display: block;
+    background: white;
+    line-height: 40px;
+    text-align: center;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px;
+    min-width: 1em;
+    flex: 1 0 auto;
+    margin: 0 4px;
+}
+
+
+.key[data-key=" "] {
+    flex: 12 0 auto;
+}
+
+.key[data-key="'"], .key[data-key="?"] {
+    flex: 1 1 0;
+}
+
+.key[data-key=\232B] {
+    background-image: url(data:image/png;base64,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);
+    background-size: 1.5em;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 2em;
+}
+
+.key[data-key=\A] {
+    flex-basis: auto;
+}
+
+.key-reverse {
+    background-color: #ACB4BD;
+}
+
+
+/******* SUGGESTIONS BAR *****/
+
+.SuggestionsBar {
+    user-select: none;
+    flex: 0 0 auto;
+    display: flex;
+}
+.SuggestionsBar.predictions {
+    background-color: #ADB5BD;
+    flex-flow: row nowrap;
+}
+
+.SuggestionsBar.synonyms {
+  background: #a1c9a1;
+  flex-flow: row wrap;
+  height: 60px;
+}
+
+.Suggestion {
+    border-top: 1px solid white;
+    display: block;
+    color: white;
+    text-align: center;
+    font-family: sans-serif;
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    /* padding: 0 4px; */
+    line-height: normal;
+    cursor: pointer;
+    flex: 1 0 0;
+    border-right: 1px solid white;
+}
+
+.predictions .Suggestion {
+    height: 42px;
+}
+
+.synonyms .Suggestion {
+  flex: 0 0 20%;
+  min-width: 20%;
+  height: 30px;
+}
+
+.Suggestion:last-child {
+    border-right-color: transparent;
+}
+
+.Suggestion.invalid span {
+  /*color: #dedede;*/
+  opacity: 0;
+  /*transition: opacity .25s;*/
+}
+
+.preview {
+  color: black;
+  margin: 0 2px;
+  font-weight: 100;
+  font-size: 14px;
+  display: block;
+  position: absolute;
+  bottom: 4px;
+  line-height: normal;
+  width: 100%;
+}
+
+span.word {
+    padding: 4px;
+    display: inline-block;
+    position: relative;
+}
+
+.Suggestion .beforeText {
+  color: black;
+  position: absolute;
+  right: 100%;
+  font-size: 10px;
+  line-height: 20px;
+}
+
+.Suggestion.bos {
+    background: #74a4bd;
+}
+
+.Suggestion .highlighted {
+  color: green;
+}
+
+@keyframes pulse {
+  from, to {
+    background: inherit;
+  }
+
+  50% {
+    background: #74a4bd;
+  }
+}
+
+@keyframes pulse2 {
+  from, to {
+    background: inherit;
+  }
+
+  50% {
+    background: #74a4bd;
+  }
+}
+
+.Suggestion.hasHighlightEven  {
+  animation: pulse 1s;
+  transform-origin: center;
+}
+
+.Suggestion.hasHighlightOdd  {
+  animation: pulse2 1s;
+  transform-origin: center;
+}
+
+
+/** Instructions etc. **/
+
+.Tutorial li, .SelectRestaurants li {
+  margin-bottom: 1em;
+}
+
+.SelectRestaurants blockquote {
+  border: 1px solid black;
+  padding: 5px;
+  margin: 5px;
+}
+
+.Restaurant {
+    border-bottom: 1px solid black;
+    padding: 12px;
+    line-height: 1.5;
+}
+
+.OutlineSelector span {
+    font-size: small;
+    display: inline-block;
+    padding: 5px;
+    background: white;
+    border-radius: 4px;
+    margin: 4px;
+}
+
+.OutlineSelector .cur {
+    background: yellow;
+}
+
+.Question textarea {
+  width: 100%;
+}
+
+.missed-attn-check {
+    color: red;
+    padding: 0 10px;
+    text-align: center;
+    transform: scale(.5);
+  transition: transform 1s, opacity 1s;
+  transition-timing-function: cubic-bezier(0, 2, 0.76, 1.28);
+}
+
+.missed-attn-check.inactive {
+  opacity: 0;
+}
+
+.missed-attn-check:not(.inactive) {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.AlternativesBar {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+}
+
+.cluster {
+    display: flex;
+    flex-flow: column-reverse;
+    text-align: center;
+}
+
+.Overlay {
+  display: block;
+  position: absolute;
+  bottom: 100%;
+  background: rgba(255, 255, 255, .8);
+  padding: 10px 0 0 0;
+/*   box-shadow: 2px 1px 3px white; */
+  overflow: hidden;
+}
+
+.Overlay span {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.Overlay .selected {
+  background: yellow;
+}
+
+.SuggestionsContainer {
+  position: relative;
+}
+
+.shiftSpot {
+  position: absolute;
+  top: 179px;
+  left: 37px;
+  border-left: 1px dashed red;
+  height: 100%
+}
+
+.shiftSpot::before {
+  content: "+";
+  color: red;
+  position: absolute;
+  top: -9px;
+  left: -5px;
+}
+
+span.replaceHighlight {
+    background: #87cc87;
+}
+
+/** Show scrollbars on instructions: https://stackoverflow.com/questions/22907777/make-scrollbar-visible-in-mobile-browsers **/
+
+.scrollable::-webkit-scrollbar {
+    -webkit-appearance: none;
+}
+
+.scrollable::-webkit-scrollbar:vertical {
+    width: 12px;
+}
+
+.scrollable::-webkit-scrollbar:horizontal {
+    height: 12px;
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, .5);
+    border-radius: 10px;
+    border: 2px solid #ffffff;
+}
+
+.scrollable::-webkit-scrollbar-track {
+    border-radius: 10px;
+    background-color: #ffffff;
+}
