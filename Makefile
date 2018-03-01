@@ -80,8 +80,11 @@ test_environment:
 # PROJECT RULES                                                                 #
 #################################################################################
 
+## Run backend Python server.
 run_backend:
 	exec python -m tornado.autoreload -m textrec.runserver
+
+## Run frontend server (devel)
 run_frontend:
 	cd src/frontend && exec yarn start
 
