@@ -79,13 +79,11 @@ export function init(state, clientId, clientKind) {
     });
     // Run side-effects after all handlers have had at it.
     sideEffects.forEach(sideEffect => {
-      if (sideEffect.type === 'requestSuggestions') {
+      if (sideEffect.type === 'rpc') {
         console.log(sideEffect)
         ws.send(sideEffect);
       } else {
-        if (sideEffect.type !== 'suggestion_context_changed') {
-          setTimeout(() => dispatch(sideEffect), 0);
-        }
+        setTimeout(() => dispatch(sideEffect), 0);
       }
     });
   }

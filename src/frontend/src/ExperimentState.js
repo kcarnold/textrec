@@ -356,7 +356,7 @@ export class ExperimentStateStore {
 
 
     return {
-      type: 'requestSuggestions',
+      type: 'rpc',
       sofar: prefix,
       cur_word: curWord,
       flags: {...this.sugFlags, promise,},
