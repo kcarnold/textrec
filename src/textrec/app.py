@@ -38,8 +38,8 @@ server_settings = dict(
 from . import rec_generator
 
 # Convert the normal generator function into a Tornado coroutine.
-# We do this here to avoid tornado imports in the core suggestion_generator.
-# get_suggestions_async = tornado.gen.coroutine(suggestion_generator.get_suggestions_async)
+# We do this here to avoid tornado imports in the core rec_generator.
+handle_request_async = tornado.gen.coroutine(rec_generator.handle_request_async)
 
 if not os.path.isdir(paths.logdir):
     os.makedirs(paths.logdir)
@@ -189,7 +189,7 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
                 request_id = request.get('request_id')
                 result = dict(type='suggestions', timestamp=request['timestamp'], request_id=request_id)
                 try:
-                    result['result'] = yield rec_generator.handle_request(request['rpc'])
+                    result['result'] = yield handle_request_async(request['rpc'])
                 except Exception:
                     traceback.print_exc()
                     print("Failing request:", json.dumps(request))

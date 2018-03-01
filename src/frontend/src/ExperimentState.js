@@ -357,10 +357,13 @@ export class ExperimentStateStore {
 
     return {
       type: 'rpc',
-      sofar: prefix,
-      cur_word: curWord,
-      flags: {...this.sugFlags, promise,},
-      request_id: this.contextSequenceNum
+      rpc: {
+        method: 'get_rec',
+        sofar: prefix,
+        cur_word: curWord,
+        flags: {...this.sugFlags, promise,},
+        request_id: this.contextSequenceNum
+      }
     };
   }
 
