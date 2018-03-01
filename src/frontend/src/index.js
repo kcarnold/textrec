@@ -55,9 +55,9 @@ if (initialPart === 'panopt') {
   if (match) {
     let clientId = match[1];
     let clientKind = match[2];
-    let mod = require('./App');
+    let mod = require('./OldApp');
     let globalState = mod.init(clientId, clientKind);
-    let App = mod.default;
+    let App = mod.App;
     topLevel = <App global={globalState} />;
   } else {
     topLevel = <h3>Invalid URL</h3>;

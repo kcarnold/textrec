@@ -3,21 +3,16 @@ import _ from 'lodash';
 import * as M from 'mobx';
 import {observer, Provider} from 'mobx-react';
 import WSClient from './wsclient';
-import {MasterStateStore} from './MasterStateStore';
-import {MasterView} from './MasterView';
 import Raven from 'raven-js';
 import * as WSPinger from './WSPinger';
 
 const MAX_PING_TIME = 200;
 
-export function init(clientId, clientKind) {
+export function init(state, clientId, clientKind) {
 
   var wsURL = `ws://${window.location.host}`;
   //var ws = new WSClient(`ws://${process.env.REACT_APP_BACKEND_HOST}:${process.env.REACT_APP_BACKEND_PORT}/ws`);
   var ws = new WSClient(wsURL + '/ws');
-
-  var state = new MasterStateStore(clientId || '');
-
 
   var messageCount = {};
   window.messageCount = messageCount;
@@ -187,7 +182,7 @@ export function init(clientId, clientKind) {
   return {state, dispatch, clientId, clientKind};
 }
 
-const App = observer(class App extends Component {
+export const View = observer(class View extends Component {
   render() {
     let {state, dispatch, clientId, clientKind} = this.props.global;
     if (clientKind === 'p') {
@@ -199,10 +194,8 @@ const App = observer(class App extends Component {
     }
     return (
       <Provider state={state} dispatch={dispatch} clientId={clientId} clientKind={clientKind} spying={false}>
-        <MasterView kind={clientKind} />
+        {this.props.children}
       </Provider>
     );
   }
 });
-
-export default App;
