@@ -2,16 +2,11 @@ import pathlib
 
 
 class paths:
-    parent = pathlib.Path(__file__).resolve().parent.parent
-    ui = parent / 'frontend/build'
-    logdir = parent / 'logs'
-    db = parent / 'database.db'
-    preproc = parent / 'yelp_preproc'
-    data = parent / 'data'
+    module_dir = pathlib.Path(__file__).resolve().parent
+    top_level = module_dir.parent.parent
+    ui = top_level / 'frontend/build'
+    logdir = top_level / 'logs'
+    data = top_level / 'data'
 
-    cache = parent / 'cache'
-    models = parent / 'models'
-
-    @classmethod
-    def model_basename(cls, model_name):
-        return cls.models / model_name
+    cache = top_level / 'cache'
+    models = top_level / 'models'
