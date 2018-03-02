@@ -1,2 +1,5 @@
+from . import onmt_model
+
 def handle_request_async(request):
-    return dict(response='ok')
+    recs = onmt_model.get_recs(request['sofar'])
+    return dict(response=recs)
