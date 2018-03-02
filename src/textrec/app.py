@@ -186,8 +186,7 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
             request = json.loads(message)
             if request['type'] == 'rpc':
                 start = time.time()
-                request_id = request.get('request_id')
-                result = dict(type='suggestions', timestamp=request['timestamp'], request_id=request_id)
+                result = dict(type='reply', timestamp=request['timestamp'])
                 try:
                     result['result'] = yield handle_request_async(request['rpc'])
                 except Exception:

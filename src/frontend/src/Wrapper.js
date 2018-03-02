@@ -117,8 +117,8 @@ export function init(state, clientId, clientKind) {
   var didInit = false;
 
   ws.onmessage = function(msg) {
-    if (msg.type === 'suggestions') {
-      dispatch({type: 'receivedSuggestions', msg});
+    if (msg.type === 'reply') {
+      dispatch({type: 'backendReply', msg});
     } else if (msg.type === 'backlog') {
       console.log('Backlog', msg.body.length);
       let firstTime = !didInit;

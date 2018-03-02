@@ -325,15 +325,16 @@ export class ExperimentStateStore {
       updateSuggestions: M.action(event => {
         let {msg} = event;
         // Only update suggestions if the data is valid.
-        if (msg.request_id === this.contextSequenceNum) {
-          this.lastSuggestionsFromServer = msg;
+        let {request_id} = msg.result;
+        if (request_id === this.contextSequenceNum) {
+          this.lastSuggestionsFromServer = msg.result;
         }
-        let idx = this.outstandingRequests.indexOf(msg.request_id);
+        let idx = this.outstandingRequests.indexOf(request_id);
         if (idx !== -1) {
           this.outstandingRequests.splice(idx, 1);
         }
         if (idx !== 0) {
-          console.log('warning: outstandingRequests weird: looking for', msg.request_id, 'in', this.outstandingRequests);
+          console.log('warning: outstandingRequests weird: looking for', request_id, 'in', this.outstandingRequests);
         }
       }),
 
@@ -424,7 +425,7 @@ export class ExperimentStateStore {
         return this.tapKey(event);
       case 'tapBackspace':
         return this.tapBackspace(event);
-      case 'receivedSuggestions':
+      case 'backendReply':
         return this.updateSuggestions(event);
       case 'tapSuggestion':
         return this.handleTapSuggestion(event);
