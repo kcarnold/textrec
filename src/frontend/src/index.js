@@ -14,7 +14,7 @@ if (process.env.NODE_ENV === 'production') {
 
 let topLevel;
 let query = window.location.search.slice(1);
-let initialPart = query.split('-', 1)[0] || query;
+let initialPart = query.split('/', 1)[0] || query;
 
 if (initialPart === 'panopt') {
   let Panopticon = require('./Panopticon').default;
