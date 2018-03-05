@@ -367,5 +367,5 @@ txt = open(paths.top_level / 'test_cnndm_in.txt').read()
 encoder_state = model.encode([txt])
 print("Ready.")
 
-def get_recs(text_so_far):
-  return model.decode(encoder_state, [onmt.io.BOS_WORD] + text_so_far.split())
+def get_recs(tokens_so_far):
+    return model.decode(encoder_state, [onmt.io.BOS_WORD] + tokens_so_far)
