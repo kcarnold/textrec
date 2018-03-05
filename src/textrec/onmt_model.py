@@ -344,18 +344,25 @@ class ONMTmodelAPI():
             # Here we go back to the usual convention: tgt_length x batch x vocab
             logits = input_dataset.collapse_copy_scores(
                 logits.data.unsqueeze(0),
-                batch, self.fields["tgt"].vocab, input_dataset.src_vocabs)
+                batch, tgt_vocab, input_dataset.src_vocabs)
+            vocab = tgt_vocab.itos + input_dataset.src_vocabs[0].itos
             logits = logits.log()
             assert logits.shape[0] == 1
             logits = logits.squeeze(0)
         else:
             logits = self.model.generator.forward(dec_out).data
+            vocab = tgt_vocab
         assert logits.shape[0] == 1
         logits = logits.squeeze(0)
+        return logits, vocab
 
+    def get_top_k(self, logits, vocab, k, prefix=None):
+        if prefix is not None:
+            offset = torch.FloatTensor([100.0 * (not x.startswith(prefix)) for x in vocab])
+            logits = logits - offset
         result = []
-        for idx in logits.topk(3)[1]:
-            result.append(tgt_vocab.itos[idx])
+        for idx in logits.topk(k)[1]:
+            result.append(vocab[idx])
         return result
 
 print("Loading ONMT model...")
@@ -364,5 +371,7 @@ args = '-replace_unk -alpha 0.9 -beta .25'.split()
 model = ONMTmodelAPI(args, model_file)
 print("Ready.")
 
-def get_recs(encoder_state, tokens_so_far):
-    return model.decode(encoder_state, [onmt.io.BOS_WORD] + tokens_so_far)
+def get_recs(encoder_state, tokens_so_far, *, prefix=None):
+    logits, vocab = model.decode(encoder_state, [onmt.io.BOS_WORD] + tokens_so_far)
+    return model.get_top_k(logits, vocab, k=3, prefix=prefix)
+

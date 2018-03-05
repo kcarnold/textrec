@@ -15,8 +15,11 @@ def get_encoder_state(stimulus):
 
 def handle_request_async(request):
     request_id = request.get('request_id')
+    prefix = None
+    if 'cur_word' in request:
+        prefix = ''.join([ent['letter'] for ent in request['cur_word']])
     encoder_state = get_encoder_state(request['stimulus'])
     tokens = tokenize(request['sofar'])
-    recs = onmt_model.get_recs(encoder_state, tokens)
+    recs = onmt_model.get_recs(encoder_state, tokens, prefix=prefix)
     recs_wrapped = [dict(words=[word], meta=None) for word in recs]
     return dict(predictions=recs_wrapped, request_id=request_id)
