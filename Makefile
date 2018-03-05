@@ -23,7 +23,12 @@ endif
 ## Install Python Dependencies
 requirements: test_environment
 	pip install -U pip setuptools wheel
+	conda install -y tornado ujson numpy nltk scipy cytoolz pandas pyyaml
+	# disabled: cython datrie numba  scikit-learn
 	pip install -r requirements.txt
+	pip install -e .
+	python -c "import nltk; nltk.download('punkt'); nltk.download('perluniprops'); nltk.download('nonbreaking_prefixes')"
+
 
 ## Make Dataset
 data: requirements
