@@ -31,9 +31,6 @@ We're not caching because (1) caching is a Hard Problem and (2) key taps will be
 It may be nice to prefetch what happens when a suggestion gets pressed, because there are only 3 states there and we know them exactly.
 But TODO.
 
-How this gets updated:
-An autorun thread watches contextSequenceNum and requests suggestions when the context changes.
-
 visibleSuggestions is a pure computation based on the last suggestions received from the server, the current context sequence number, and the active suggestion. It puts them all together, keeping track of what's valid.
 
 */
