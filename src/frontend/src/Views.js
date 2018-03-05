@@ -267,6 +267,7 @@ const ExperimentHead = inject('state', 'spying')(observer(class ExperimentHead e
       {ref: elt => this.ref = elt});
     return <div className="header scrollable">
       <div style={{padding: '5px'}}>{instructionElt}</div>
+      <div>{state.experimentState.stimulus}</div>
       {state.condition.useAttentionCheck && <p>If you notice an æ, tap on it (or nearby, it doesn't matter). Don't worry if you happen to miss a few.</p>}
       {state.condition.useAttentionCheck && <div className={classNames("missed-attn-check", state.showAttnCheckFailedMsg ? "active" : "inactive")}>There was an æ in an area you haven't noticed yet!<br/>Look for the æ and tap it.<br/>Once you notice it yourself, these messages will stop.</div>}
     </div>;

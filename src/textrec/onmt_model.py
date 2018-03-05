@@ -362,10 +362,7 @@ print("Loading ONMT model...")
 model_file = str(paths.models / "ada5_acc_49.81_ppl_12.70_e16.pt")
 args = '-replace_unk -alpha 0.9 -beta .25'.split()
 model = ONMTmodelAPI(args, model_file)
-print('Encoding source...')
-txt = open(paths.top_level / 'test_cnndm_in.txt').read()
-encoder_state = model.encode([txt])
 print("Ready.")
 
-def get_recs(tokens_so_far):
+def get_recs(encoder_state, tokens_so_far):
     return model.decode(encoder_state, [onmt.io.BOS_WORD] + tokens_so_far)
