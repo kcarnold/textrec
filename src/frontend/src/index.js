@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
+import * as Wrapper from './Wrapper';
 
 import Raven from 'raven-js';
 if (process.env.NODE_ENV === 'production') {
@@ -55,10 +56,11 @@ if (initialPart === 'panopt') {
   if (match) {
     let clientId = match[1];
     let clientKind = match[2];
-    let mod = require('./OldApp');
-    let globalState = mod.init(clientId, clientKind);
-    let App = mod.App;
-    topLevel = <App global={globalState} />;
+    let MasterStateStore = require('./MasterStateStore').MasterStateStore;
+    let MasterView = require('./MasterView').default;
+    let state = new MasterStateStore(clientId || '');
+    let globalState = Wrapper.init(state, clientId, clientKind);
+    topLevel = <Wrapper.View global={globalState}><MasterView kind={clientKind} /></Wrapper.View>;
   } else {
     topLevel = <h3>Invalid URL</h3>;
   }
