@@ -120,7 +120,7 @@ export class MasterStateStore {
       },
       lastEventTimestamp: null,
       replaying: true,
-      screenNum: 0,
+      screenNum: null,
       block: null,
       conditions: null,
       conditionName: null,
