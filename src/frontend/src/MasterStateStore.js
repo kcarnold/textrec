@@ -1,5 +1,3 @@
-// @flow
-
 import * as M from 'mobx';
 import {ExperimentStateStore} from './ExperimentState';
 import TutorialTasks from './TutorialTasks';

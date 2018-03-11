@@ -2,6 +2,8 @@
 import * as M from 'mobx';
 import _ from 'lodash';
 
+import type {Event} from './Events';
+
 let multiTapThresholdMs = 500;
 
 export default class TutorialTasks {
@@ -30,7 +32,7 @@ export default class TutorialTasks {
     });
   }
 
-  handleEvent(event) {
+  handleEvent(event: Event) {
     let timestamp = event.jsTimestamp;
     switch(event.type) {
     case 'tapSuggestion':
