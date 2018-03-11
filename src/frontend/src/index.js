@@ -56,7 +56,7 @@ if (initialPart === 'panopt') {
   if (match) {
     let clientId = match[1];
     let clientKind = match[2];
-    let MasterStateStore = require('./MasterStateStore').MasterStateStore;
+    let MasterStateStore = require('./IOTaskState').MasterStateStore;
     let MasterView = require('./MasterView').default;
     let state = new MasterStateStore(clientId || '');
     let globalState = Wrapper.init(state, clientId, clientKind);
