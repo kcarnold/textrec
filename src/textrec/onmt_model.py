@@ -373,12 +373,26 @@ class ONMTmodelAPI():
             result.append(vocab[idx])
         return result
 
-print("Loading ONMT model...")
-model_file = str(paths.models / "ada5_acc_49.81_ppl_12.70_e16.pt")
-args = '-replace_unk -alpha 0.9 -beta .25'.split()
-model = ONMTmodelAPI(args, model_file)
+print("Loading ONMT models...")
+model_specs = {
+  'sum': dict(
+    filename='cnndm_sum_acc_49.59_ppl_14.37_e15.pt',
+    args='-replace_unk -alpha 0.9 -beta .25'),
+  'lm': dict(
+    filename='cnndm_lm_acc_27.76_ppl_86.49_e20.pt',
+    args='')
+}
+models = dict()
+for name, spec in model_specs.items():
+    print(spec['filename'])
+    models[name] = ONMTmodelAPI(
+        spec['args'].split(),
+        str(paths.models / spec['filename'])
+    )
 print("Ready.")
 
-def get_recs(encoder_state, tokens_so_far, *, prefix=None):
-    logits, vocab = model.decode(encoder_state, [onmt.io.BOS_WORD] + tokens_so_far)
+def get_recs(model_name, encoder_state, tokens_so_far, *, prefix=None):
+    model = models[model_name]
+    logits, vocab = model.decode(
+        encoder_state, [onmt.io.BOS_WORD] + tokens_so_far)
     return model.get_top_k(logits, vocab, k=3, prefix=prefix)
