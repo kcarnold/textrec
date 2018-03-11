@@ -173,7 +173,7 @@ export class MasterStateStore {
         this.conditionName = preEvent.condition;
         this.curExperiment = preEvent.name;
 
-        let experimentObj = new ExperimentStateStore();
+        let experimentObj = new ExperimentStateStore({});
         this.experiments.set(preEvent.name, experimentObj);
         let initReq = experimentObj.init();
         if (initReq)
