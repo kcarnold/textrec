@@ -301,6 +301,10 @@ export class ExperimentStateStore {
       updateSuggestions: M.action(event => {
         let {msg} = event;
         // Only update suggestions if the data is valid.
+        if (!msg.result) {
+          console.warn("Request failed?");
+          return;
+        }
         let {request_id} = msg.result;
         if (request_id === this.contextSequenceNum) {
           this.lastSuggestionsFromServer = msg.result;
