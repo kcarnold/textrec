@@ -94,6 +94,7 @@ def translate_opts(parser):
     group.add_argument('-window', default='hamming',
                        help='Window type for spectrogram generation')
 
+
 def model_opts(parser):
     """
     These options are passed to the construction of the model.
@@ -201,7 +202,9 @@ def model_opts(parser):
     group.add_argument('-lambda_coverage', type=float, default=1,
                        help='Lambda value for coverage.')
 
+
 def var(a): return Variable(a, volatile=True)
+
 
 def rvar(a, beam_size): return var(a.repeat(1, beam_size, 1))
 
@@ -318,7 +321,6 @@ class ONMTmodelAPI():
             .unsqueeze(1) # [tgt_len x batch=1 x nfeats=1]
             )
 
-
         dec_out, dec_states, attn = self.translator.model.decoder(
             tgt_in, context, initial_dec_states, context_lengths=src_lengths)
 
@@ -329,19 +331,24 @@ class ONMTmodelAPI():
         dec_out = dec_out[-1:, :, :]
 
         # The "generator" converts a decoder hidden state into vocab logits.
-        # It expects tensors in a different format from the decoder: the sequence length and the batch are collapsed.
+        # It expects tensors in a different format from the decoder:
+        # the sequence length and the batch are collapsed.
         dec_out = dec_out.squeeze(0)
 
         if self.translator.copy_attn:
-            # The copy attention is [tgt_len x batch x src_len], but we need just the last tgt.
+            # The copy attention is [tgt_len x batch x src_len],
+            # but we need just the last tgt.
             copy_attn = attn['copy'][-1]
             assert copy_attn.shape[0] == 1
-            logits = self.model.generator.forward(dec_out,
+            logits = self.model.generator.forward(
+                dec_out,
                 copy_attn,
                 src_map)
-            # We have potential duplicate vocab entries: the copy attention could have
-            # selected a word that's also in the base target vocabulary. Collapse these.
-            # Here we go back to the usual convention: tgt_length x batch x vocab
+            # We have potential duplicate vocab entries: the copy attention
+            # could have selected a word that's also in the base target
+            # vocabulary. Collapse these.
+            # Here we go back to the usual convention:
+            # tgt_length x batch x vocab
             logits = input_dataset.collapse_copy_scores(
                 logits.data.unsqueeze(0),
                 batch, tgt_vocab, input_dataset.src_vocabs)
@@ -358,7 +365,8 @@ class ONMTmodelAPI():
 
     def get_top_k(self, logits, vocab, k, prefix=None):
         if prefix is not None:
-            offset = torch.FloatTensor([100.0 * (not x.startswith(prefix)) for x in vocab])
+            offset = torch.FloatTensor(
+                [100.0 * (not x.startswith(prefix)) for x in vocab])
             logits = logits - offset
         result = []
         for idx in logits.topk(k)[1]:
@@ -374,4 +382,3 @@ print("Ready.")
 def get_recs(encoder_state, tokens_so_far, *, prefix=None):
     logits, vocab = model.decode(encoder_state, [onmt.io.BOS_WORD] + tokens_so_far)
     return model.get_top_k(logits, vocab, k=3, prefix=prefix)
-
