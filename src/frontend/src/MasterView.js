@@ -1,9 +1,8 @@
 import React, {Component} from 'react';
 import {observer, inject} from 'mobx-react';
-import * as Views from './Views';
 
 
-export const MasterView = inject('state', 'spying')(observer(class MasterView extends Component {
+export const MasterView = viewsByName => inject('state', 'spying')(observer(class MasterView extends Component {
   componentDidUpdate() {
     if (!this.props.spying) {
       window.scrollTo(0, 0);
@@ -14,15 +13,12 @@ export const MasterView = inject('state', 'spying')(observer(class MasterView ex
     let {state, kind} = this.props;
     if (state.replaying) return <div>Loading...</div>;
     let screenDesc = state.screens[state.screenNum];
-    let screenName;
-    if (kind === 'c') {
-      screenName = screenDesc.controllerScreen || 'LookAtPhone';
-    } else {
-      screenName = screenDesc.screen || 'LookAtComputer';
-    }
+    let screenName = screenDesc.screen;
+    console.assert(screenName in viewsByName);
+    let viewProto = viewsByName[screenName];
     return (
       <div className="App">
-        {React.createElement(Views[screenName])}
+        {React.createElement(viewProto)}
       </div>);
   }
 }));

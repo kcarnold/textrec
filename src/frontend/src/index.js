@@ -13,6 +13,15 @@ if (process.env.NODE_ENV === 'production') {
       .install();
 }
 
+function getApp(config) {
+  if (config === 'io') {
+    return {
+      MasterStateStore: require('./IOTaskState').MasterStateStore,
+      Views: require('./IOViews'),
+    }
+  }
+}
+
 let topLevel;
 let query = window.location.search.slice(1);
 let initialPart = query.split('/', 1)[0] || query;
@@ -23,7 +32,8 @@ if (initialPart === 'panopt') {
 
 } else if (initialPart === 'showall') {
   let mod = require('./ShowAllScreens');
-  mod.init(query.slice(initialPart.length + 1));
+  let {MasterStateStore, Views} = getApp('io');
+  mod.init(MasterStateStore, Views, query.slice(initialPart.length + 1));
   let ShowAllScreens = mod.default;
   topLevel = <ShowAllScreens />;
 
@@ -56,8 +66,9 @@ if (initialPart === 'panopt') {
   if (match) {
     let clientId = match[1];
     let clientKind = match[2];
-    let MasterStateStore = require('./IOTaskState').MasterStateStore;
-    let MasterView = require('./MasterView').default;
+    let {MasterStateStore, Views} = getApp('io');
+    let MasterViewFactory = require('./MasterView').default;
+    let MasterView = MasterViewFactory(Views);
     let state = new MasterStateStore(clientId || '');
     let globalState = Wrapper.init(state, clientId, clientKind);
     topLevel = <Wrapper.View global={globalState}><MasterView kind={clientKind} /></Wrapper.View>;

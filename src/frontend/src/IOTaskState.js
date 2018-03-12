@@ -41,8 +41,8 @@ let baseStimuli = ["editor's note: in our behind the scenes series, cnn correspo
 
 function experimentBlock(block:number, conditionName: string): Array<Screen> {
   return [
-    {preEvent: {type: 'setupExperiment', block, condition: conditionName, name: `final-${block}`}, controllerScreen: 'Instructions', screen: 'ReadyPhone'},
-    {screen: 'ExperimentScreen'},
+    {preEvent: {type: 'setupExperiment', block, condition: conditionName, name: `final-${block}`}, screen: 'Instructions'},
+    {screen: 'ExperimentScreen', instructionsScreen: 'SummaryInstructions'},
     {screen: 'PostTaskSurvey'},
   ];
 }
@@ -51,7 +51,7 @@ function getScreens(conditions: string[]) {
   let result = [
     {controllerScreen: 'Welcome', screen: 'Welcome'},
     {screen: "IntroSurvey"},
-    {preEvent: {type: 'setupExperiment', block: 0, condition: 'tutorial', name: 'practice'}, screen: 'ExperimentScreen'},
+    // {preEvent: {type: 'setupExperiment', block: 0, condition: 'tutorial', name: 'practice'}, screen: 'ExperimentScreen'},
   ];
   conditions.forEach((condition, idx) => {
     result = result.concat(experimentBlock(idx, condition));
@@ -109,6 +109,8 @@ export class MasterStateStore {
     this.demoConditionName = clientId.slice(4);
 
     this.stimuli = seededShuffle(`${this.clientId}-stimuli`, baseStimuli);
+
+    this.timeEstimate = '20 minutes';
 
     M.extendObservable(this, {
       participantCode: null,

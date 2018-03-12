@@ -6,7 +6,6 @@ import {Keyboard} from './Keyboard';
 import {NextBtn} from './BaseViews';
 import {CurText} from './CurText';
 import {SuggestionsBar, AlternativesBar} from './SuggestionViews';
-import {ControlledInput, ControlledStarRating} from './ControlledInputs';
 import Consent from './Consent';
 
 export {IntroSurvey, PostTaskSurvey, PostExpSurvey} from './Surveys';
@@ -129,6 +128,19 @@ export const Welcome = inject('state')(observer(({state}) => <div>
   </div>));
 
 
+export const Instructions = inject('state')(observer(({state}) => <div>
+    <h1>Writing task {state.block + 1} of {state.conditions.length}</h1>
+
+    <p>For this writing session, you'll be using <b>Keyboard {state.block + 1}</b>. Each keyboard works a little differently.</p>
+
+    <p>Tap Next when you're ready to start.<br/><br/><NextBtn /></p></div>
+));
+
+export const SummaryInstructions = inject('state')(observer(({state}) => <div>
+  After you're done, scroll back up and click here: <NextBtn disabled={state.experimentState.wordCount < 10} />
+  </div>));
+
+
 const ExperimentHead = inject('state', 'spying')(observer(class ExperimentHead extends Component {
   componentDidMount() {
     if (!this.props.spying) {
@@ -141,7 +153,7 @@ const ExperimentHead = inject('state', 'spying')(observer(class ExperimentHead e
     let instructionsScreens = {
       PracticeComputer: PracticeComputer,
       TutorialInstructions: TutorialInstructions,
-      PracticeAlternativesInstructions: PracticeAlternativesInstructions,
+      SummaryInstructions: SummaryInstructions,
     }
     let instructionsScreenName = state.screens[state.screenNum].instructionsScreen;
     let instructionEltProto;
@@ -157,8 +169,6 @@ const ExperimentHead = inject('state', 'spying')(observer(class ExperimentHead e
     return <div className="header scrollable">
       <div style={{padding: '5px'}}>{instructionElt}</div>
       <div>{state.experimentState.stimulus}</div>
-      {state.condition.useAttentionCheck && <p>If you notice an æ, tap on it (or nearby, it doesn't matter). Don't worry if you happen to miss a few.</p>}
-      {state.condition.useAttentionCheck && <div className={classNames("missed-attn-check", state.showAttnCheckFailedMsg ? "active" : "inactive")}>There was an æ in an area you haven't noticed yet!<br/>Look for the æ and tap it.<br/>Once you notice it yourself, these messages will stop.</div>}
     </div>;
   }
 }));
