@@ -145,9 +145,6 @@ export class ExperimentStateStore {
         this.seqNums = this.seqNums.slice(0, startIdx).concat(_.map(toInsert, () => this.contextSequenceNum)).concat(this.seqNums.slice(startIdx + deleteCount));
       }),
       tapKey: M.action(event => {
-        let ac = this.validateAttnCheck(event);
-        if (ac.length) return ac;
-
         let cursorPos = this.curText.length;
         let oldCurWord = this.curText.slice(this.lastSpaceIdx + 1);
 
@@ -196,9 +193,6 @@ export class ExperimentStateStore {
       }),
       handleTapSuggestion: M.action(event => {
         let {slot, which} = event;
-        let ac = this.validateAttnCheck(event);
-        if (ac.length) return ac;
-
         let tappedSuggestion = this.visibleSuggestions[which][slot];
         let wordToInsert = tappedSuggestion.words[0];
         if (!wordToInsert) return [];
@@ -240,9 +234,6 @@ export class ExperimentStateStore {
       }),
 
       handleSelectAlternative: M.action(event => {
-        let ac = this.validateAttnCheck(event);
-        if (ac.length) return ac;
-
         let wordToInsert = event.word;
         let {curWord} = this.getSuggestionContext();
         let charsToDelete = curWord.length;
@@ -254,10 +245,6 @@ export class ExperimentStateStore {
         this.spliceText(this.curText.length - charsToDelete, charsToDelete, wordToInsert + ' ');
         this.lastSpaceWasAuto = true;
         return [];
-      }),
-
-      handleTapText: M.action(event => {
-        return this.validateAttnCheck(event);
       }),
 
       handleUndo: M.action(event => {
@@ -345,8 +332,6 @@ export class ExperimentStateStore {
         return this.handleTapSuggestion(event);
       case 'selectAlternative':
         return this.handleSelectAlternative(event);
-      case 'tapText':
-        return this.handleTapText(event);
       case 'updateDeleting':
         return this.handleDeleting(event);
       default:
