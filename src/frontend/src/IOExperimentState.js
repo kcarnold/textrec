@@ -38,13 +38,6 @@ visibleSuggestions is a pure computation based on the last suggestions received 
 
 */
 
-/*
-Attention checks:
- - type: text, predictions, synonyms
- - the first time is forced: if it's not passed, then the participant has to tap it before moving on.
- - after that, failing an attention check has no effect.
-*/
-
 function randChoice(rng, choices) {
   let unif = 1;
   while (unif === 1)
@@ -63,13 +56,6 @@ export class ExperimentStateStore {
     M.extendObservable(this, {
       stimulus: "editor's note: in our behind the scenes series, cnn correspondents share their experiences in covering news and analyze the stories behind the events. here, soledad o'brien takes users inside a jail where many of the inmates are mentally ill. an inmate housed on the ``forgotten floor, ''where many mentally ill inmates are housed in miami before trial. miami, florida (cnn) -- the ninth floor of the miami-dade pretrial detention facility is dubbed the`` forgotten floor.'' here, inmates with the most severe mental illnesses are incarcerated until they're ready to appear in court. most often, they face drug charges or charges of assaulting an officer -- charges that judge steven leifman says are usually ``avoidable felonies. ''he says the arrests often result from confrontations with police. mentally ill people often wo n't do what they're told when police arrive on the scene -- confrontation seems to exacerbate their illness and they become more paranoid, delusional, and less likely to follow directions, according to leifman. so, they end up on the ninth floor severely mentally disturbed, but not getting any real help because they're in jail. we toured the jail with leifman. he is well known in miami as an advocate for justice and the mentally ill. even though we were not exactly welcomed with open arms by the guards, we were given permission to shoot videotape and tour the floor. go inside the `forgotten floor ''' at first, it's hard to determine where the people are. the prisoners are wearing sleeveless robes. imagine cutting holes for arms and feet in a heavy wool sleeping bag -- that's kind of what they look like. they're designed to keep the mentally ill patients from injuring themselves. that's also why they have no shoes, laces or mattresses. leifman says about one-third of all people in miami-dade county jails are mentally ill. so, he says, the sheer volume is overwhelming the system, and the result is what we see on the ninth floor. of course, it is a jail, so it's not supposed to be warm and comforting, but the lights glare, the cells are tiny and it's loud. we see two, sometimes three men -- sometimes in the robes, sometimes naked, lying or sitting in their cells.`` i am the son of the president. you need to get me out of here! ''one man shouts at me. he is absolutely serious, convinced that help is on the way -- if only he could reach the white house. leifman tells me that these prisoner-patients will often circulate through the system, occasionally stabilizing in a mental hospital, only to return to jail to face their charges. it's brutally unjust, in his mind, and he has become a strong advocate for changing things in miami. over a meal later, we talk about how things got this way for mental patients. leifman says 200 years ago people were considered ``lunatics'' and they were locked up in jails even if they had no charges against them. they were just considered unfit to be in society. over the years, he says, there was some public outcry, and the mentally ill were moved out of jails and into hospitals. but leifman says many of these mental hospitals were so horrible they were shut down. where did the patients go? nowhere. the streets. they became, in many cases, the homeless, he says. they never got treatment. leifman says in 1955 there were more than half a million people in state mental hospitals, and today that number has been reduced 90 percent, and 40,000 to 50,000 people are in mental hospitals. the judge says he's working to change this. starting in 2008, many inmates who would otherwise have been brought to the`` forgotten floor ''will instead be sent to a new mental health facility -- the first step on a journey toward long-term treatment, not just punishment. leifman says it's not the complete answer, but it's a start. leifman says the best part is that it's a win-win solution. the patients win, the families are relieved, and the state saves money by simply not cycling these prisoners through again and again. and, for leifman, justice is served. e-mail to a friend.",
       curText: '',
-      attentionCheck: null,
-      attentionCheckStats: {
-        text: {total: 0, passed: 0, force: false},
-        predictions: {total: 0, passed: 0, force: false},
-        phrases: {total: 0, passed: 0, force: false},
-        synonyms: {total: 0, passed: 0, force: false},
-      },
       contextSequenceNum: 0,
       lastSuggestionsFromServer: {},
       activeSuggestion: null,
@@ -110,19 +96,6 @@ export class ExperimentStateStore {
           result.predictions[this.activeSuggestion.slot].highlightChars = this.activeSuggestion.highlightChars;
         }
 
-        let {attentionCheck} = this;
-        if (attentionCheck !== null && serverIsValid) {
-          let {type: attentionCheckType} = attentionCheck;
-          if (attentionCheckType === 'predictions' || attentionCheckType === 'synonyms') {
-            let rec = result[attentionCheck.type][attentionCheck.slot];
-            if (rec) {
-              // [attentionCheck.slot].words.length > attentionCheck.word + 1) {
-              // FIXME: this could be mutating a data structure that we don't own.
-              rec.words[0] = 'æ' + rec.words[0];
-              result.attentionCheckType = attentionCheck.type;
-            }
-          }
-        }
         return result;
       },
 
@@ -212,7 +185,6 @@ export class ExperimentStateStore {
         return [];
       }),
       tapBackspace: M.action((event) => {
-        /* Ignore the attention check, don't count this for or against. */
         let {delta} = event;
         if (delta === undefined)
           delta = -1;
@@ -350,44 +322,6 @@ export class ExperimentStateStore {
 
   getSuggestionContext() {
     return this.suggestionContext;
-  }
-
-  validateAttnCheck(event) {
-    if (this.attentionCheck === null) return [];
-    let {type: attentionCheckType} = this.attentionCheck;
-    let passed;
-    if (attentionCheckType === 'text') {
-      passed = event.type === 'tapText';
-    } else if (attentionCheckType === 'predictions' || attentionCheckType === 'synonyms') {
-      // only valid if there was a corresponding valid rec.
-      if (!this.visibleSuggestions.attentionCheckType) return [];
-
-      passed = (attentionCheckType === event.which && this.attentionCheck.slot === event.slot);
-    }
-
-    let stat = this.attentionCheckStats[attentionCheckType];
-    if (passed) {
-        this.attentionCheck = null;
-        if (!stat.force) {
-          stat.total++;
-          stat.passed++;
-        } else {
-          stat.force = false;
-        }
-        return [{type: 'passedAttnCheck'}];
-    } else {
-      // The first time we're going to force it. Don't give them credit.
-      if (stat.total === 0) {
-        stat.force = true;
-        return [{type: 'failedAttnCheckForce'}];
-      } else {
-        // Whatever, let 'em fail.
-        console.assert(!stat.force);
-        this.attentionCheck = null;
-        stat.total++;
-        return []; // {type: 'failedAttnCheck'} -- no, just do the action anyway.
-      }
-    }
   }
 
   handleEvent = (event) => {
