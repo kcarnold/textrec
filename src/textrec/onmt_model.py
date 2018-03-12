@@ -376,7 +376,7 @@ class ONMTmodelAPI():
 print("Loading ONMT models...")
 model_specs = {
   'sum': dict(
-    filename='cnndm_sum_acc_49.59_ppl_14.37_e15.pt',
+    filename='ada5_acc_49.81_ppl_12.70_e16.pt', # 'cnndm_sum_acc_49.59_ppl_14.37_e15.pt',
     args='-replace_unk -alpha 0.9 -beta .25'),
   'lm': dict(
     filename='cnndm_lm_acc_27.76_ppl_86.49_e20.pt',
