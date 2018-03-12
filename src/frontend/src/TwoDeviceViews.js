@@ -16,3 +16,10 @@ export const SetupPairingComputer = inject('clientId')(({clientId}) => {
   </div>;
   });
 export const SetupPairingPhone = () => <div>Successfully paired! <NextBtn /></div>;
+
+export const ProbablyWrongCode = () => <div>
+    <p>Waiting for computer. If you're seeing this on your phone, you probably mistyped your code.</p>
+  </div>;
+
+export const TimesUpPhone = () => <div>Time is up. Follow the instructions on your computer.</div>;
+

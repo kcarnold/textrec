@@ -18,72 +18,6 @@ const hostname = window.location.host;
 const wordCountTarget = 75;
 const askKnowWhatToSay = false;
 
-const texts = {
-  detailed: {
-    overallInstructions: <span>Write the true story of your experience. Tell your reader <b>as many vivid details as you can</b>. Don't worry about <em>summarizing</em> or <em>giving recommendations</em>.</span>,
-    brainstormingInstructions: <span><b>Brainstorm what you might want to talk about</b> by typing anything that comes to mind, even if it's not entirely accurate. Don't worry about grammar, coherence, accuracy, or anything else, this is just for you. <b>Have fun with it</b>, we'll write the real thing in step 2.</span>,
-    revisionInstructions: <span>Okay, this time for real. Try to make it reasonably accurate and coherent.</span>,
-    instructionsQuiz: 'SV_42ziiSrsZzOdBul',
-  },
-  detailedNoBrainstorm: {
-    overallInstructions: <span>Write the true story of your experience. Tell your reader <b>as many vivid details as you can</b>. Don't worry about <em>summarizing</em> or <em>giving recommendations</em>.</span>,
-    revisionInstructions: <span>Try to make it reasonably accurate and coherent.</span>,
-    instructionsQuiz: 'SV_42ziiSrsZzOdBul',
-  },
-  funny: {
-    overallInstructions: <span>Write the <b>funniest</b> review you can come up with. Have fun with it!</span>,
-    brainstormingInstructions: <span><b>Brainstorm what you might want to talk about</b> by typing anything that comes to mind, even if it's not entirely accurate. Don't worry about grammar, coherence, accuracy, or anything else, this is just for you. <b>Have fun with it</b>, we'll write the real thing in step 2.</span>,
-    revisionInstructions: <span>Okay, this time for real. Try to make it reasonably accurate and coherent -- but still funny!</span>,
-    instructionsQuiz: null,
-  },
-  review: {
-    overallInstructions: <span>Write a review of your experience that you'd be proud to post on a review website. Use at least {wordCountTarget} words. We'll bonus our favorite reviews!</span>,
-    brainstormingInstructions: <span />,
-    revisionInstructions: <span/>,
-    instructionsQuiz: null,
-  },
-  tabooTopic: {
-    overallInstructions: <span>Write a review of your experience <b>that tells us something new</b>, something that other reviews probably don't tell us. Specifically, other reviews already talk a lot about the <em>food</em>, <em>service</em>, and <em>atmosphere</em>, so try to <b>focus on other topics</b>. <br/><br/>Use at least {wordCountTarget} words. We'll bonus our favorite reviews!</span>,
-    brainstormingInstructions: <span />,
-    revisionInstructions: <span/>,
-    instructionsQuiz: null,
-  },
-  sentiment: {
-    overallInstructions: <span>Write a review of your experience. Include <b>both positive and negative aspects</b>. Use at least {wordCountTarget} words. We'll bonus our favorite reviews!</span>,
-    brainstormingInstructions: <span />,
-    revisionInstructions: <span/>,
-    instructionsQuiz: null,
-  },
-  yelp: {
-    overallInstructions: <span>
-      Write a review of your experience. &ldquo;<em>The best reviews are passionate, personal, and accurate.
-      They offer a rich narrative, a wealth of detail, and a helpful tip or two for other consumers.</em>&rdquo; (based on Yelp's Guidelines)...
-      and please try to avoid typos. <b>We'll bonus our favorite reviews</b>!
-    </span>,
-    brainstormingInstructions: null,
-    revisionInstructions: null,
-    instructionsQuiz: null,
-  },
-  persuade: {
-    overallInstructions: null
-  }
-};
-
-const OverallInstructions = inject('state')(observer(({state}) => {
-  if (state.masterConfig.instructions === 'persuade') {
-    return <div>Write a review that convinces someone to <b>{state.persuadePos ? "check out" : "avoid"} this restaurant</b>. The most convincing reviews will get $0.50 bonuses each!
-    <br/><br/>
-    Tips to make your review more persuasive:
-    <ul>
-      <li>Give both positives and negatives</li>
-      <li>Be as specific and descriptive as possible</li>
-      <li>Evaluate the entire experience</li>
-    </ul>
-    </div>;
-  }
-  return <p>{texts[state.masterConfig.instructions].overallInstructions}</p>;
-}));
-
 const tutorialTaskDescs = {
   typeKeyboard: 'Type a few words by tapping letters on the keyboard.',
   megaBackspace: 'Try deleting a few letters at a time by swiping the backspace key left or right.',
@@ -96,206 +30,6 @@ const tutorialTaskDescs = {
 
 
 const TutorialTodo = ({done, children}) => <div style={{color: done ? 'green' : 'red'}}>{done ? '\u2611' : '\u2610'} {children}</div>;
-
-
-export const Welcome = inject('state')(observer(({state}) => <div>
-    {SITE_DOWN && <h1 style={{paddingBottom: "2500px"}}>Site down for maintenance, please try again in a few hours.</h1>}
-    <h1>Welcome</h1>
-    <p>You should be seeing this page on a touchscreen device. If not, get one and go to this page's URL (<tt>{window.location.href}</tt>).</p>
-    <Consent timeEstimate={state.timeEstimate} isMTurk={state.isMTurk} persuade={state.isPersuade} />
-    <p>If you consent to participate, and if you're seeing this <b>on a touchscreen device</b>, tap here: <NextBtn /></p>
-  </div>));
-
-export const  ProbablyWrongCode = () => <div>
-    <p>Waiting for computer. If you're seeing this on your phone, you probably mistyped your code.</p>
-  </div>;
-
-function RestaurantPrompt({idx}) {
-  return <div key={idx} className="Restaurant">{idx}.
-      Name of the place: <ControlledInput name={`restaurant${idx}`} /><br />
-    About how long ago were you there, in days? <ControlledInput name={`visit${idx}`} type="number" min="0"/>
-    <br />How would you rate that visit? <ControlledStarRating name={`star${idx}`} />
-    {askKnowWhatToSay && <span><br/><br />On a scale of 1 to 5, do you already know what you want to say about this experience? 1="I haven't thought about it at all yet", 5="I know exactly what I want to say"<br/>
-    <ControlledInput name={`knowWhat${idx}`} type="number" min="1" max="5" /></span>}
-  </div>;
-}
-
-export const ExperimentOutline = inject('state')(observer(({state}) => {
-  let numPlaces = state.conditions.length;
-  return <div>
-    <h1>Experiment Outline</h1>
-    <p>In this experiment, you'll:</p>
-    <ol>
-      <li>Complete a tutorial to learn how to use a new keyboard,</li>
-      <li>Write short reviews of {numPlaces} restaurants of your choice,</li>
-      <li>Answer a few questions about each review, and some overall questions at the end, and</li>
-      <li>Complete a demographic and personality questionnaire.</li>
-    </ol>
-  </div>;
-}))
-
-export const SelectRestaurantsPersuade = inject('state')(observer(({state}) => {
-  console.assert(state.conditions.length === 3);
-  return <div className="SelectRestaurants">
-    <ExperimentOutline />
-
-    <blockquote>
-      <p>Your task:</p>
-      Suppose someone is just moving to your town and wants to check out some restaurants (or bars, cafes, diners, etc.). Pick <b>two restaurants</b> that{" "}
-          <b>they should visit</b>{" "}
-          and <b>one</b> that <b>they should avoid</b>. As part of
-          this study, we will write reviews of the three restaurants that
-          convince your reader to go, or not go.
-    </blockquote>
-
-    Restaurants <b>they should visit</b>:
-    <ol>
-      {[1, 2].map(idx => <li key={idx}><ControlledInput name={`restaurant${idx}`} /></li>)}
-    </ol>
-
-    Restaurants <b>they should avoid</b>:
-    <ol start="3">
-      {[3].map(idx => <li key={idx}><ControlledInput name={`restaurant${idx}`} /></li>)}
-    </ol>
-
-    <NextBtn disabled={!_.every([1,2,3], x => state.controlledInputs.get(`restaurant${x}`)) }/>
-  </div>
-}));
-
-
-export const SelectRestaurants = inject('state')(observer(({state}) => {
-  let numPlaces = state.conditions.length;
-  let indices = state.conditions.map((condition, idx) => idx + 1);
-  let groups = [{header: null, indices}];
-  if (state.masterConfigName === 'sent4') {
-    groups = [
-      {header: "Above-average experiences", indices: [1, 2]},
-      {header: "Below-average experiences", indices: [3, 4]}
-    ];
-  }
-  let allFields = [];
-  indices.forEach(idx => {
-    ['restaurant', 'visit', 'star', 'knowWhat'].forEach(kind => {
-      if (kind === 'knowWhat' && !askKnowWhatToSay) return;
-      allFields.push(`${kind}${idx}`);
-    });
-  });
-  let complete = _.every(allFields, x => state.controlledInputs.get(x))
-
-  return <div className="SelectRestaurants">
-    <ExperimentOutline />
-
-    <p>Before we get started, we want to make sure you'll be able to write about {numPlaces} different restaurant visits. So  <b>think of {numPlaces} restaurants (or bars, cafes, diners, etc.)</b> you've been to recently that you <b>haven't written about before</b>.</p>
-    {state.masterConfigName === 'sent4' && <p>Try to pick 2 above-average experiences and 2 below-average experiences.</p>}
-
-    {groups.map(({header, indices: groupIndices}, groupIdx) => <div key={groupIdx} style={{borderLeft: '2px solid black', paddingLeft: '5px'}}>
-      {header && <h3>{header}</h3>}
-      {groupIndices.map(idx => <RestaurantPrompt  key={idx} idx={idx} />)}
-    </div>)}
-
-    {complete || <p>(The Next button will be enabled once all fields are filled out.)</p>}
-    <NextBtn disabled={!complete} />
-  </div>;
-}));
-
-
-export const Instructions = inject('state')(observer(({state}) => {
-    let inExperiment = state.curScreen.screen === 'ExperimentScreen';
-    return <div>
-      <h1>{state.curPlace.name}!</h1>
-      <p style={{border: '1px solid black', padding: '2px'}}>{texts[state.masterConfig.instructions].overallInstructions}</p>
-      <hr/>
-      {state.passedQuiz || inExperiment || texts[state.masterConfig.instructions].instructionsQuiz === null
-        ? <p>Use your phone to complete this step.</p>
-        : <p>Your phone shows a brief quiz on these instructions. Once you've passed the quiz, look back here.</p>}
-      <p>The shortcuts will be different from what you saw before.</p>
-    </div>;
-  }));
-
-//     <p>{texts[state.masterConfig.instructions].overallInstructions}</p>
-
-export const ReadyPhone = inject('state')(observer(({state}) => <div>
-    <h1>Writing task {state.block + 1} of {state.conditions.length}</h1>
-    <p>We'll be writing about <b>{state.curPlace.name}</b>.</p>
-    <OverallInstructions />
-    <p>{texts[state.masterConfig.instructions].revisionInstructions}</p>
-    {state.condition.useAttentionCheck && <p>For this study, we need to measure which parts of the screen people are paying attention to. So if you happen to notice an "æ" somewhere, tap it to acknowledge that you saw it. (Don't worry if you happen to miss a few, and sorry if it gets annoying.)</p>}
-
-    <p>For this writing session, you'll be using <b>Keyboard {state.block + 1}</b>. Each keyboard works a little differently.</p>
-
-    <p>Tap Next when you're ready to start.<br/><br/><NextBtn /></p></div>
-));
-
-/*  InstructionsQuiz: inject('state')(({state}) => state.passedQuiz ? <p>You already passed the quiz the first time, just click <NextBtn /></p> : ),*/
-
-export const RevisionComputer = inject('state')(observer(({state}) => <div>
-  <p><b>{state.curPlace.name}</b></p>
-
-  Scroll down for instructions. After you're done, scroll back up and click here: <NextBtn disabled={state.experimentState.wordCount < (wordCountTarget - 10)} />
-  <OverallInstructions />
-
-      <div>Aim for about {wordCountTarget} words (you're at {state.experimentState.wordCount}). Only reviews between {wordCountTarget - 10}  and {wordCountTarget + 10} words are eligible for the competition.
-
-       </div>
-    </div>));
-
-const ExperimentHead = inject('state', 'spying')(observer(class ExperimentHead extends Component {
-  componentDidMount() {
-    if (!this.props.spying) {
-      this.ref.scrollTop = 0;
-    }
-  }
-
-  render() {
-    let {state} = this.props;
-    let instructionsScreens = {
-      PracticeComputer: PracticeComputer,
-      TutorialInstructions: TutorialInstructions,
-      RevisionComputer: RevisionComputer,
-      PracticeAlternativesInstructions: PracticeAlternativesInstructions,
-    }
-    let instructionsScreenName = state.screens[state.screenNum].controllerScreen;
-    let instructionEltProto;
-    if (state.isDemo) {
-      instructionEltProto = 'div';
-    } else {
-      console.assert(instructionsScreenName in instructionsScreens, instructionsScreenName);
-      instructionEltProto = instructionsScreens[instructionsScreenName];
-    }
-    let instructionElt = React.createElement(
-      instructionEltProto,
-      {ref: elt => this.ref = elt});
-    return <div className="header scrollable">
-      <div style={{padding: '5px'}}>{instructionElt}</div>
-      <div>{state.experimentState.stimulus}</div>
-      {state.condition.useAttentionCheck && <p>If you notice an æ, tap on it (or nearby, it doesn't matter). Don't worry if you happen to miss a few.</p>}
-      {state.condition.useAttentionCheck && <div className={classNames("missed-attn-check", state.showAttnCheckFailedMsg ? "active" : "inactive")}>There was an æ in an area you haven't noticed yet!<br/>Look for the æ and tap it.<br/>Once you notice it yourself, these messages will stop.</div>}
-    </div>;
-  }
-}));
-
-export const ExperimentScreen = inject('state', 'dispatch')(observer(({state, dispatch}) => {
-      let {experimentState} = state;
-      let {showReplacement, showPredictions, showSynonyms} = state.experimentState;
-      if (state.phoneSize.width > state.phoneSize.height) {
-        return <h1>Please rotate your phone to be in the portrait orientation.</h1>;
-      }
-
-      return <div className="ExperimentScreen">
-        <ExperimentHead key={state.screens[state.screenNum].controllerScreen} />
-        {showSynonyms &&
-          <SuggestionsBar
-            which="synonyms"
-            suggestions={experimentState.visibleSuggestions["synonyms"]}
-            beforeText={""}
-          />}
-        <CurText text={experimentState.curText} replacementRange={showReplacement && experimentState.visibleSuggestions['replacement_range']} />
-        {state.condition.alternatives ? <AlternativesBar /> : <div>
-          {showPredictions && <SuggestionsBar which="predictions" suggestions={experimentState.visibleSuggestions['predictions']} showPhrase={state.condition.showPhrase} />}
-        </div>}
-        <Keyboard dispatch={dispatch} />
-      </div>;
-    }));
 
 export const PracticeWord = inject('state', 'dispatch')(observer(({state, dispatch}) => {
     let allTasksDone = _.every(['typeKeyboard', 'megaBackspace', 'specialChars', 'tapSuggestion'].map(name => state.tutorialTasks.tasks[name]));
@@ -310,8 +44,6 @@ export const PracticeWord = inject('state', 'dispatch')(observer(({state, dispat
       {allTasksDone ? <p>When you're ready, click here to move on: <NextBtn />.</p> : <p>Complete all of the tutorial steps to move on.</p>}
     </div>;
   }));
-
-      // <video src="demo4.mp4" controls ref={elt => {elt.playbackRate=2;}}/>
 
 export const PracticeComputer = inject('state', 'dispatch')(observer(({state, dispatch}) => {
   let previewPhrase3;
@@ -388,16 +120,71 @@ export const PracticeAlternativesInstructions = inject('state', 'dispatch')(obse
   }));
 
 
-
-
-export const TimesUpPhone = () => <div>Time is up. Follow the instructions on your computer.</div>;
-
-export const EditScreen = inject('state', 'dispatch')(observer(({state, dispatch}) => <div className="EditPage">
-    <div style={{backgroundColor: '#ccc', color: 'black'}}>
-      Now, edit what you wrote to make it better.
-    </div>
-    <textarea value={state.curEditText} onChange={evt => {dispatch({type: 'controlledInputChanged', name: state.curEditTextName, value: evt.target.value});}} />;
+export const Welcome = inject('state')(observer(({state}) => <div>
+    {SITE_DOWN && <h1 style={{paddingBottom: "2500px"}}>Site down for maintenance, please try again in a few hours.</h1>}
+    <h1>Welcome</h1>
+    <p>You should be seeing this page on a touchscreen device. If not, get one and go to this page's URL (<tt>{window.location.href}</tt>).</p>
+    <Consent timeEstimate={state.timeEstimate} isMTurk={state.isMTurk} persuade={state.isPersuade} />
+    <p>If you consent to participate, and if you're seeing this <b>on a touchscreen device</b>, tap here: <NextBtn /></p>
   </div>));
+
+
+const ExperimentHead = inject('state', 'spying')(observer(class ExperimentHead extends Component {
+  componentDidMount() {
+    if (!this.props.spying) {
+      this.ref.scrollTop = 0;
+    }
+  }
+
+  render() {
+    let {state} = this.props;
+    let instructionsScreens = {
+      PracticeComputer: PracticeComputer,
+      TutorialInstructions: TutorialInstructions,
+      PracticeAlternativesInstructions: PracticeAlternativesInstructions,
+    }
+    let instructionsScreenName = state.screens[state.screenNum].instructionsScreen;
+    let instructionEltProto;
+    if (state.isDemo) {
+      instructionEltProto = 'div';
+    } else {
+      console.assert(instructionsScreenName in instructionsScreens, instructionsScreenName);
+      instructionEltProto = instructionsScreens[instructionsScreenName];
+    }
+    let instructionElt = React.createElement(
+      instructionEltProto,
+      {ref: elt => this.ref = elt});
+    return <div className="header scrollable">
+      <div style={{padding: '5px'}}>{instructionElt}</div>
+      <div>{state.experimentState.stimulus}</div>
+      {state.condition.useAttentionCheck && <p>If you notice an æ, tap on it (or nearby, it doesn't matter). Don't worry if you happen to miss a few.</p>}
+      {state.condition.useAttentionCheck && <div className={classNames("missed-attn-check", state.showAttnCheckFailedMsg ? "active" : "inactive")}>There was an æ in an area you haven't noticed yet!<br/>Look for the æ and tap it.<br/>Once you notice it yourself, these messages will stop.</div>}
+    </div>;
+  }
+}));
+
+export const ExperimentScreen = inject('state', 'dispatch')(observer(({state, dispatch}) => {
+      let {experimentState} = state;
+      let {showReplacement, showPredictions, showSynonyms} = state.experimentState;
+      if (state.phoneSize.width > state.phoneSize.height) {
+        return <h1>Please rotate your phone to be in the portrait orientation.</h1>;
+      }
+
+      return <div className="ExperimentScreen">
+        <ExperimentHead key={state.screens[state.screenNum].instructionsScreen} />
+        {showSynonyms &&
+          <SuggestionsBar
+            which="synonyms"
+            suggestions={experimentState.visibleSuggestions["synonyms"]}
+            beforeText={""}
+          />}
+        <CurText text={experimentState.curText} replacementRange={showReplacement && experimentState.visibleSuggestions['replacement_range']} />
+        {state.condition.alternatives ? <AlternativesBar /> : <div>
+          {showPredictions && <SuggestionsBar which="predictions" suggestions={experimentState.visibleSuggestions['predictions']} showPhrase={state.condition.showPhrase} />}
+        </div>}
+        <Keyboard dispatch={dispatch} />
+      </div>;
+    }));
 
 export const Done = inject('clientId', 'state')(observer(({clientId, state}) => <div>Thanks! Your code is <tt style={{fontSize: '20pt'}}>{clientId}</tt><br/><br />
   {state.isHDSL && <p>Your participation has been logged. Expect to receive a gift certificate by email in the next few days. Thanks!
@@ -409,29 +196,4 @@ export const Done = inject('clientId', 'state')(observer(({clientId, state}) => 
     </div>)}
 
   </div>));
-export const LookAtPhone = inject('clientId')(({clientId}) => <div><p>Complete this step on your phone.</p> If you need it, your phone code is <tt>{clientId}-p</tt>.</div>);
-export const LookAtComputer = inject('clientId')(({clientId}) => <div><p>Complete this step on your computer.</p> If you need it, your computer code is <tt>{clientId}-c</tt>.</div>);
 
-export const SetupPairingComputer = inject('clientId')(({clientId}) => {
-    let url = `http://${hostname}/?${clientId}-p`;
-    return <div>
-    <p>You will need two devices to complete this study: a <b>laptop/desktop computer</b> (you could use a tablet but we haven't tested it), and a <b>smartphone</b> with a web browser and WiFi (we will not be responsible for any data charges).</p>
-
-    <div>How to pair your phone (they're all the same, pick the easiest one for you):</div>
-    <ul>
-      <li>On your phone's web browser, go to <tt>{hostname}</tt> and enter <tt>{clientId}-p</tt>.</li>
-      <li>Send this link to yourself: <input readOnly={true} style={{fontFamily: 'monospace', width: '25em'}} value={url} /></li>
-      <li>Scan this:<br/><img src={"https://zxing.org/w/chart?cht=qr&chs=350x350&chld=L&choe=UTF-8&chl=" + encodeURIComponent(url)} alt=""/></li>
-    </ul>
-    <p>Once your phone is paired, there will be a button on that page to continue.</p>
-  </div>;
-  });
-export const SetupPairingPhone = () => <div>Successfully paired! <NextBtn /></div>;
-
-export const ShowReviews = inject('state')(observer(({state}) => <div>
-    <p>Here's what you wrote:</p>
-    {state.places.map(({name}, idx) => <div key={idx}>
-      <h1>{idx+1}: {name}</h1>
-      <div style={{border: '1px solid black', margin: '5px'}}>{state.experiments.get(`final-${idx}`).curText}</div>
-    </div>)}
-  </div>));
