@@ -369,8 +369,13 @@ class ONMTmodelAPI():
                 [100.0 * (not x.startswith(prefix)) for x in vocab])
             logits = logits - offset
         result = []
-        for idx in logits.topk(k)[1]:
-            result.append(vocab[idx])
+        for idx in logits.topk(k * 2)[1]:
+            word = vocab[idx]
+            if word[0] == '<':
+                continue
+            result.append(word)
+            if len(result) == k:
+                break
         return result
 
 print("Loading ONMT models...")
