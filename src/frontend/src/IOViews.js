@@ -199,11 +199,5 @@ export const ExperimentScreen = inject('state', 'dispatch')(observer(({state, di
 export const Done = inject('clientId', 'state')(observer(({clientId, state}) => <div>Thanks! Your code is <tt style={{fontSize: '20pt'}}>{clientId}</tt><br/><br />
   {state.isHDSL && <p>Your participation has been logged. Expect to receive a gift certificate by email in the next few days. Thanks!
     <img src={state.sonaCreditLink} alt="" /></p>}
-  <p>In case you want them, here's what you wrote.</p>
-      {state.places.map(({name}, idx) => <div key={idx}>
-      <h1>{idx+1}: {name}</h1>
-      <div style={{border: '1px solid black', margin: '5px'}}>{state.experiments.get(`final-${idx}`).curText}</div>
-    </div>)}
-
   </div>));
 

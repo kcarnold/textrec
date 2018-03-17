@@ -1,29 +1,31 @@
 import React, { Component } from 'react';
 import _ from 'lodash';
 import {observer, Provider} from 'mobx-react';
-import {MasterStateStore} from './MasterStateStore';
-import {MasterView} from './MasterView';
+import {MasterView as MasterViewFactory} from './MasterView';
 
 const fakeClientId = 'zzzzzz';
 
 const showController = false;
 
 let states = [];
-let eventsSoFar = [];
+let MasterView = null;
 
-function doEventToLastState(evt) {
-  eventsSoFar.push(evt);
-  states[states.length - 1].handleEvent(evt);
-}
+export function init(MasterStateStore, views, config) {
+  MasterView = MasterViewFactory(views);
 
-function copyState() {
-  let newState = new MasterStateStore(fakeClientId);
-  states.push(newState);
-  eventsSoFar.forEach(evt => newState.handleEvent(evt));
-  return newState;
-}
+  let eventsSoFar = [];
 
-export function init(config) {
+  function doEventToLastState(evt) {
+    eventsSoFar.push(evt);
+    states[states.length - 1].handleEvent(evt);
+  }
+
+  function copyState() {
+    let newState = new MasterStateStore(fakeClientId);
+    states.push(newState);
+    eventsSoFar.forEach(evt => newState.handleEvent(evt));
+    return newState;
+  }
   copyState();
   doEventToLastState({type: 'login', config});
   let screens = states[0].screens;
