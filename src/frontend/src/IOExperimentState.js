@@ -63,6 +63,7 @@ export class ExperimentStateStore {
     this.flags = flags;
     M.extendObservable(this, {
       stimulus: flags.stimulus,
+      transcribe: flags.transcribe,
       curText: '',
       contextSequenceNum: 0,
       lastSuggestionsFromServer: {},
