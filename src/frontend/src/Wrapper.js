@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
-import _ from 'lodash';
+import fromPairs from 'lodash/fromPairs';
+import map from 'lodash/map';
+import throttle from 'lodash/throttle';
 import * as M from 'mobx';
 import {observer, Provider} from 'mobx-react';
 import WSClient from './wsclient';
@@ -19,7 +21,7 @@ export function init(state, clientId, clientKind) {
 
   var browserMeta = {
     userAgent: navigator.userAgent,
-    screen: _.fromPairs(_.map('height availHeight width availWidth'.split(' '), x => [x, window.screen[x]])),
+    screen: fromPairs(map('height availHeight width availWidth'.split(' '), x => [x, window.screen[x]])),
     window: {
       devicePixelRatio: window.devicePixelRatio,
     },
@@ -167,7 +169,7 @@ export function init(state, clientId, clientKind) {
     dispatch({type: 'resized', width, height});
   }
 
-  var setSizeDebounced = _.throttle(setSize, 100, {leading: false, trailing: true});
+  var setSizeDebounced = throttle(setSize, 100, {leading: false, trailing: true});
 
   window.addEventListener('resize', setSizeDebounced);
 

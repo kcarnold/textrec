@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
-import _ from 'lodash';
+import forOwn from 'lodash/forOwn';
+import isEqual from 'lodash/isEqual';
+import map from 'lodash/map';
 
 var KEYLABELS = {
     ' ': 'space',
@@ -31,11 +33,11 @@ export class Keyboard extends Component {
     let {clientX, clientY} = evt.type === 'touchstart' ? evt.changedTouches[0] : evt;
     let {top, left, width, height} = this.node.getBoundingClientRect();
     let kbdRect = {top, left, width, height};
-    if (!_.isEqual(kbdRect, this.lastKbdRect)) {
+    if (!isEqual(kbdRect, this.lastKbdRect)) {
       this.lastKbdRect = kbdRect;
       var keyRects = [];
       this.keyRects = keyRects;
-      _.forOwn(this.keyNodes, (node, key) => {
+      forOwn(this.keyNodes, (node, key) => {
         let {top, left, width, height} = node.getBoundingClientRect();
         this.keyRects.push({rect: {top, left, width, height}, key});
       });
@@ -88,7 +90,7 @@ export class Keyboard extends Component {
     >{
       ['qwertyuiop', 'asdfghjkl', '\'?zxcvbnm⌫', '-!, .\r'].map(function(row, i) {
           return <div key={i} className="row">{
-            _.map(row, function(key, j) {
+            map(row, function(key, j) {
               // if (layer === 'upper') key = key.toUpperCase();
               var label = key in KEYLABELS ? KEYLABELS[key] : key;
               var className = 'key';
