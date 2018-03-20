@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import mean from 'lodash/mean';
 
 export function doPing(url, times, callback) {
   let rtts = [];
@@ -16,7 +16,7 @@ export function doPing(url, times, callback) {
   ws.onmessage = (msg) => {
     rtts.push(+new Date() - lastSendTime);
     if (rtts.length === times) {
-      callback({rtts, mean: _.mean(rtts)});
+      callback({rtts, mean: mean(rtts)});
     } else {
       sendPing();
     }

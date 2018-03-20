@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import _ from 'lodash';
+import forEach from 'lodash/forEach';
 import {observer, Provider} from 'mobx-react';
 import {MasterView as MasterViewFactory} from './MasterView';
 
@@ -34,7 +34,7 @@ export function init(MasterStateStore, views, config) {
     let newState = copyState();
     doEventToLastState({type: 'next'});
     if (newState.curScreen.screen === 'ExperimentScreen') {
-      _.forEach(`${i}`, chr => {
+      forEach(`${i}`, chr => {
         doEventToLastState({type: 'tapKey', key: chr});
       });
     }

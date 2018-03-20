@@ -5,7 +5,8 @@ import {observer, Provider} from 'mobx-react';
 import WSClient from './wsclient';
 import {MasterStateStore} from './MasterStateStore';
 import {MasterView} from './MasterView';
-import _ from 'lodash';
+import map from 'lodash/map';
+import filter from 'lodash/filter';
 
 let match = window.location.search.slice(1).match(/^(\w+)-(\w+)$/);
 let panopt = match[1], panopticode = match[2];
@@ -151,8 +152,8 @@ const AnalyzedView = observer(({store, participantId}) => {
   let analysis = store.analyses.get(participantId);
   if (!analysis) return null;
   return <div>
-    {_.map(analysis.byExpPage, ((content, pageName) => {
-      let synonymTaps = _.filter(content.displayedSuggs, {'action': {type: 'tapSuggestion', which: 'synonyms'}});
+    {map(analysis.byExpPage, ((content, pageName) => {
+      let synonymTaps = filter(content.displayedSuggs, {'action': {type: 'tapSuggestion', which: 'synonyms'}});
       return <div key={pageName}>
         {pageName} ({content.condition}) ({JSON.stringify(content.place)})
         <AnnotatedFinalText chunks={content.chunks} />

@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
-import _ from 'lodash';
+import mean from 'lodash/mean';
+import forEach from 'lodash/forEach';
+import filter from 'lodash/filter';
 import * as M from 'mobx';
 import {observer} from 'mobx-react';
 import WSClient from './wsclient';
@@ -12,9 +14,9 @@ class Stats {
       nosugg: [],
       diverse: [],
       match: [],
-      get nosugg_mean() { return _.mean(this.nosugg); },
-      get diverse_mean() { return _.mean(this.diverse); },
-      get match_mean() { return _.mean(this.match); },
+      get nosugg_mean() { return mean(this.nosugg); },
+      get diverse_mean() { return mean(this.diverse); },
+      get match_mean() { return mean(this.match); },
       get means() {
         return {
           nosugg: this.nosugg_mean,
@@ -98,8 +100,8 @@ function handleFiles(files) {
 
 function gotData(data) {
   window.AllLogs = data;
-  _.forEach(data, (requests, participant) => {
-    Requester(_.filter(requests, x=>x.domain !== 'sotu'));
+  forEach(data, (requests, participant) => {
+    Requester(filter(requests, x=>x.domain !== 'sotu'));
   });
 }
 

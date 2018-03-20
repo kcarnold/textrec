@@ -1,6 +1,6 @@
 // @flow
 import * as M from 'mobx';
-import _ from 'lodash';
+import every from 'lodash/every';
 
 import type {Event} from './Events';
 
@@ -27,7 +27,7 @@ export default class TutorialTasks {
       },
       get allDone() {
         let {tasks} = this;
-        return _.every(tasks);
+        return every(tasks);
       }
     });
   }

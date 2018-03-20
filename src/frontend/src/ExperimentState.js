@@ -1,5 +1,6 @@
 import * as M from 'mobx';
-import _ from 'lodash';
+import range from 'lodash/range';
+import map from 'lodash/map';
 import countWords from './CountWords';
 import seedrandom from 'seedrandom';
 
@@ -82,7 +83,7 @@ export class ExperimentStateStore {
         let serverIsValid = (this.condition.showPredictions === false) || fromServer.request_id === this.contextSequenceNum;
         if (!serverIsValid) {
           // Fill in the promised suggestion.
-          let predictions = _.range(3).map(() => blankRec);
+          let predictions = range(3).map(() => blankRec);
           if (this.activeSuggestion) {
             predictions[this.activeSuggestion.slot] = M.toJS(this.activeSuggestion);
           }
@@ -187,11 +188,11 @@ export class ExperimentStateStore {
 
       spliceText: M.action((startIdx, deleteCount, toInsert, taps) => {
         if (!taps) {
-          taps = _.map(toInsert, () => null);
+          taps = map(toInsert, () => null);
         }
         this.curText = this.curText.slice(0, startIdx) + toInsert + this.curText.slice(startIdx + deleteCount);
         this.tapLocations = this.tapLocations.slice(0, startIdx).concat(taps).concat(this.tapLocations.slice(startIdx + deleteCount));
-        this.seqNums = this.seqNums.slice(0, startIdx).concat(_.map(toInsert, () => this.contextSequenceNum)).concat(this.seqNums.slice(startIdx + deleteCount));
+        this.seqNums = this.seqNums.slice(0, startIdx).concat(map(toInsert, () => this.contextSequenceNum)).concat(this.seqNums.slice(startIdx + deleteCount));
       }),
       tapKey: M.action(event => {
         let ac = this.validateAttnCheck(event);

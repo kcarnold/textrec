@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import _ from 'lodash';
 import {observer, inject} from 'mobx-react';
 
 export default Timer = inject('dispatch', 'state')(observer(class Timer extends Component {

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import _ from 'lodash';
+import every from 'lodash/every';
 import {observer, inject} from 'mobx-react';
 import classNames from 'classnames';
 import {Keyboard} from './Keyboard';
@@ -31,7 +31,7 @@ const tutorialTaskDescs = {
 const TutorialTodo = ({done, children}) => <div style={{color: done ? 'green' : 'red'}}>{done ? '\u2611' : '\u2610'} {children}</div>;
 
 export const PracticeWord = inject('state', 'dispatch')(observer(({state, dispatch}) => {
-    let allTasksDone = _.every(['typeKeyboard', 'megaBackspace', 'specialChars', 'tapSuggestion'].map(name => state.tutorialTasks.tasks[name]));
+    let allTasksDone = every(['typeKeyboard', 'megaBackspace', 'specialChars', 'tapSuggestion'].map(name => state.tutorialTasks.tasks[name]));
     return <div>
       <p>For technical reasons, we have to use a special keyboard for this experiment. It will probably feel harder to type with than your ordinary keyboard, and it's missing some characters you may want to type, sorry about that.</p>
       <p>Let's get a little practice with it:</p>
