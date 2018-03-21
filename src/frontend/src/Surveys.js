@@ -206,14 +206,6 @@ const closingSurveyQuestions = [
   },
 
   {
-    text:
-      "About how many online reviews (of restaurants or otherwise) have you written in the past 3 months? Don't count the reviews from this study.",
-    responseType: "text",
-    name: "reviewing_experience",
-    flags: { type: "number" },
-  },
-
-  {
     text: <h2>Demographics</h2>,
     responseType: null,
   },
