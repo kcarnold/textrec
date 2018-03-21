@@ -63,9 +63,9 @@ export const TranscribeTask = inject('state', 'dispatch')(observer(({state, disp
 }));
 
 export const TaskDescription = () => <div>
-  <p>In this study we're going to be writing highlights from news stories. You already typed a few of them during the warm-up.</p>
+  <p>In this study we're going to be writing headlines from news stories. You already typed a few of them during the warm-up.</p>
 
-  <p>You will read a news article, then write two highlights from that article. Make them <b>useful for someone who didn't read the article</b>, and, of course, accurate.</p>
+  <p>You will read a news article, then write a headline of 75 words or less.</p>
 
 <NextBtn />
   </div>;
@@ -88,8 +88,8 @@ export const Instructions = inject('state')(observer(({state}) => <div>
 ));
 
 export const SummaryInstructions = inject('state')(observer(({state}) => <div>
-  After you're done, scroll back up and click here: <NextBtn disabled={state.experimentState.wordCount < 10} />
-  <div style={{whiteSpace: 'pre-line'}}>{state.experimentState.stimulus}</div>
+  Write a headline for this article in the space below. After you're done, click here: <NextBtn disabled={state.experimentState.wordCount < 10} />
+  <div style={{whiteSpace: 'pre-line', background: 'white', margin: '5px 2px'}}>{state.experimentState.stimulus}</div>
   </div>));
 
 
