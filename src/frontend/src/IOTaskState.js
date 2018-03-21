@@ -210,6 +210,7 @@ export class MasterStateStore {
       case 'setupExperiment':
         this.conditionName = preEvent.condition;
         this.curExperiment = preEvent.name;
+        this.block = preEvent.block;
 
         let experimentObj = new ExperimentStateStore({
           stimulus: this.stimuli[preEvent.block],
