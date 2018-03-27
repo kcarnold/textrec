@@ -185,17 +185,13 @@ export class MasterStateStore {
         if (isDemo) {
           return [{
             preEvent: {type: 'setupExperiment', block: 0, condition: this.demoConditionName, name: 'demo'},
-            screen: 'ExperimentScreen', controllerScreen: 'ExperimentScreen'
+            screen: 'ExperimentScreen', instructionsScreen: 'SummaryInstructions'
           }];
         }
         return getScreens(this.conditions);
       },
       get curScreen() {
-        if (this.screenNum) {
-          return this.screens[this.screenNum];
-        } else {
-          return {};
-        }
+        return this.screens[this.screenNum];
       },
       get condition() {
         console.assert(!!this.conditionName);

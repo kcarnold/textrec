@@ -124,14 +124,10 @@ const ExperimentHead = inject('state', 'spying')(observer(class ExperimentHead e
       TutorialInstructions: TutorialInstructions,
       SummaryInstructions: SummaryInstructions,
     }
-    let instructionsScreenName = state.screens[state.screenNum].instructionsScreen;
+    let instructionsScreenName = state.curScreen.instructionsScreen;
     let instructionEltProto;
-    if (state.isDemo) {
-      instructionEltProto = 'div';
-    } else {
-      console.assert(instructionsScreenName in instructionsScreens, instructionsScreenName);
-      instructionEltProto = instructionsScreens[instructionsScreenName];
-    }
+    console.assert(instructionsScreenName in instructionsScreens, instructionsScreenName);
+    instructionEltProto = instructionsScreens[instructionsScreenName];
     let instructionElt = React.createElement(
       instructionEltProto,
       {ref: elt => this.ref = elt});
@@ -149,7 +145,7 @@ export const ExperimentScreen = inject('state', 'dispatch')(observer(({state, di
       }
 
       return <div className="ExperimentScreen">
-        <ExperimentHead key={state.screens[state.screenNum].instructionsScreen} />
+        <ExperimentHead key={state.curScreen.instructionsScreen} />
         {showSynonyms &&
           <SuggestionsBar
             which="synonyms"
