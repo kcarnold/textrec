@@ -358,7 +358,7 @@ class ONMTmodelAPI():
             logits = logits.squeeze(0)
         else:
             logits = self.model.generator.forward(dec_out).data
-            vocab = tgt_vocab
+            vocab = tgt_vocab.itos
         assert logits.shape[0] == 1
         logits = logits.squeeze(0)
         return logits, vocab
