@@ -46,8 +46,13 @@ function randChoice(rng, choices) {
   return choices[Math.floor(unif * choices.length)];
 }
 
+type Stimulus = {
+  type: string,
+  content: string,
+}
+
 type IOExperimentFlags = {
-  stimulus: string,
+  stimulus: Stimulus,
   modelSeesStimulus: boolean,
 };
 
@@ -303,12 +308,16 @@ export class ExperimentStateStore {
   getSuggestionRequest() {
     let {prefix, curWord, promise} = this.getSuggestionContext();
 
+    let stimulus = {
+      type: this.stimulus.type,
+      content: this.flags.modelSeesStimulus ? this.stimulus.content : null,
+    };
 
     return {
       type: 'rpc',
       rpc: {
         method: 'get_rec',
-        stimulus: this.flags.modelSeesStimulus ? this.stimulus : null,
+        stimulus: stimulus,
         sofar: prefix,
         cur_word: curWord,
         flags: {...this.sugFlags, promise,},

@@ -87,9 +87,25 @@ export const Instructions = inject('state')(observer(({state}) => <div>
     <p>Tap Next when you're ready to start.<br/><br/><NextBtn /></p></div>
 ));
 
+const urlForImage = (content) => {
+  console.assert(content.length === 12);
+  return `http://images.cocodataset.org/train2017/${content}.jpg`
+}
+
+export const StimulusView = ({stimulus}) => {
+  if (stimulus.type === 'doc') {
+    return <div
+      style={{whiteSpace: 'pre-line', background: 'white', margin: '5px 2px'}}>
+      {stimulus.content}
+    </div>
+  } else if (stimulus.type === 'img') {
+    return <div><img src={urlForImage(stimulus.content)} /></div>;
+  }
+};
+
 export const SummaryInstructions = inject('state')(observer(({state}) => <div>
   Write a headline for this article in the space below. After you're done, click here: <NextBtn disabled={state.experimentState.wordCount < 10} />
-  <div style={{whiteSpace: 'pre-line', background: 'white', margin: '5px 2px'}}>{state.experimentState.stimulus}</div>
+  <StimulusView stimulus={state.experimentState.stimulus} />
   </div>));
 
 

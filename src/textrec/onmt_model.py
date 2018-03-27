@@ -380,12 +380,16 @@ class ONMTmodelAPI():
 
 print("Loading ONMT models...")
 model_specs = {
-  'sum': dict(
+  'cnndm_sum': dict(
     filename='ada5_acc_49.81_ppl_12.70_e16.pt', # 'cnndm_sum_acc_49.59_ppl_14.37_e15.pt',
+    # filename="model-copy_acc_51.78_ppl_11.71_e20.pt",
     args='-replace_unk -alpha 0.9 -beta .25'),
-  'lm': dict(
+  'cnndm_lm': dict(
     filename='cnndm_lm_acc_27.76_ppl_86.49_e20.pt',
-    args='')
+    args=''),
+  'coco_lm': dict(
+    filename='coco_lm_acc_44.56_ppl_18.76_e20.pt',
+    args=''),
 }
 models = dict()
 for name, spec in model_specs.items():

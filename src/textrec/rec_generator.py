@@ -22,12 +22,18 @@ def handle_request_async(request):
     if 'cur_word' in request:
         prefix = ''.join([ent['letter'] for ent in request['cur_word']])
     stimulus = request.get('stimulus')
-    if stimulus is None:
-        model_name = 'lm'
-        stimulus = '.'
-    else:
-        model_name = 'sum'
-    encoder_state = get_encoder_state((model_name, stimulus))
+    if stimulus['type'] == 'doc':
+        if stimulus['content'] is None:
+            model_name = 'cnndm_lm'
+            stimulus_content = '.'
+        else:
+            model_name = 'cnndm_sum'
+            stimulus_content = stimulus['content']
+    elif stimulus['type'] == 'img':
+        model_name = 'coco_lm'
+        stimulus_content = '.'
+
+    encoder_state = get_encoder_state((model_name, stimulus_content))
     tokens = tokenize(request['sofar'])
     recs = onmt_model.get_recs(model_name, encoder_state, tokens, prefix=prefix)
     recs_wrapped = [dict(words=[word], meta=None) for word in recs]

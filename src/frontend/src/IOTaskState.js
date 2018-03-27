@@ -42,15 +42,20 @@ let baseStimuli = [
 "honduras braced for potential catastrophe tuesday as hurricane mitch roared through the northwest caribbean , churning up high waves and intense rain that sent coastal residents scurrying for safer ground .",
 "cuban president fidel castro said sunday he disagreed with the arrest in london of former chilean dictator augusto pinochet , calling it a case of `` international meddling . ''",
 "u.s. prosecutors have asked for a 20-day extension to provide germany with paperwork necessary to extradite a top lieutenant of saudi terrorist suspect osama bin laden , officials said saturday .",
-];
+].map(content => ({type: 'doc', content}));
+
+baseStimuli = [
+  {type: 'img', content: '000000025994'},
+  {type: 'img', content: '000000025994'},
+]
 
 let tutorialStimuli = [
   {
-    stimulus: null,
+    stimulus: {type: 'doc', content: null},
     transcribe: "Opposition asks end to loans to \"illegal\" Cambodian government",
   },
   {
-    stimulus: null,
+    stimulus: {type: 'doc', content: null},
     transcribe: "Aid rushed to devastated victims of Hurricane Mitch",
   }
 ];
