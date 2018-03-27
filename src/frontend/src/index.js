@@ -14,11 +14,18 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 function getApp(config) {
-  if (config === 'io') {
+  if (config === 'sum') {
+    // Configure for summarization.
     return {
-      MasterStateStore: require('./IOTaskState').MasterStateStore,
+      createTaskState: require('./SumTask').createTaskState,
       Views: require('./IOViews'),
-    }
+    };
+  } else if (config === 'cap') {
+    // Configure for captioning.
+    return {
+      createTaskState: null,
+      Views: require('./IOViews'),
+    };
   }
 }
 
@@ -32,8 +39,8 @@ if (initialPart === 'panopt') {
 
 } else if (initialPart === 'showall') {
   let mod = require('./ShowAllScreens');
-  let {MasterStateStore, Views} = getApp('io');
-  mod.init(MasterStateStore, Views, query.slice(initialPart.length + 1));
+  let {createTaskState, Views} = getApp('sum');
+  mod.init(createTaskState, Views, query.slice(initialPart.length + 1));
   let ShowAllScreens = mod.default;
   topLevel = <ShowAllScreens />;
 
@@ -66,7 +73,7 @@ if (initialPart === 'panopt') {
   if (match) {
     let clientId = match[1];
     let clientKind = match[2];
-    let {MasterStateStore, Views} = getApp('io');
+    let {MasterStateStore, Views} = getApp('sum');
     let MasterViewFactory = require('./MasterView').default;
     let MasterView = MasterViewFactory(Views);
     let state = new MasterStateStore(clientId || '');

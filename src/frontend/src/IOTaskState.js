@@ -7,6 +7,7 @@ import TutorialTasks from './TutorialTasks';
 import {seededShuffle} from './shuffle';
 
 import type {Event} from './Events';
+import type {Stimulus} from './IOExperimentState';
 
 type Screen = {
   screen: string,
@@ -37,31 +38,8 @@ const namedConditions = {
   }
 }
 
-let baseStimuli = [
-"cambodian leader hun sen on friday rejected opposition parties ' demands for talks outside the country , accusing them of trying to `` internationalize '' the political crisis .",
-"honduras braced for potential catastrophe tuesday as hurricane mitch roared through the northwest caribbean , churning up high waves and intense rain that sent coastal residents scurrying for safer ground .",
-"cuban president fidel castro said sunday he disagreed with the arrest in london of former chilean dictator augusto pinochet , calling it a case of `` international meddling . ''",
-"u.s. prosecutors have asked for a 20-day extension to provide germany with paperwork necessary to extradite a top lieutenant of saudi terrorist suspect osama bin laden , officials said saturday .",
-].map(content => ({type: 'doc', content}));
 
-baseStimuli = [
-  {type: 'img', content: '000000025994'},
-  {type: 'img', content: '000000025994'},
-]
-
-let tutorialStimuli = [
-  {
-    stimulus: {type: 'doc', content: null},
-    transcribe: "Opposition asks end to loans to \"illegal\" Cambodian government",
-  },
-  {
-    stimulus: {type: 'doc', content: null},
-    transcribe: "Aid rushed to devastated victims of Hurricane Mitch",
-  }
-];
-
-
-function experimentBlock(block:number, conditionName: string): Array<Screen> {
+export function experimentBlock(block:number, conditionName: string): Array<Screen> {
   return [
     {preEvent: {type: 'setupExperiment', block, condition: conditionName, name: `final-${block}`}, screen: 'Instructions'},
     {screen: 'ExperimentScreen', instructionsScreen: 'SummaryInstructions'},
@@ -69,40 +47,17 @@ function experimentBlock(block:number, conditionName: string): Array<Screen> {
   ];
 }
 
-function getScreens(conditions: string[]) {
-  let tutorials = tutorialStimuli.map(({stimulus, transcribe}, idx) => (
-    {
-      preEvent: {
-        type: 'setupExperiment',
-        block: 0,
-        condition: 'general',
-        name: `practice-${idx}`,
-        extraFlags: {
-          transcribe: transcribe.toLowerCase(),
-          stimulus},
-      },
-      screen: 'ExperimentScreen', instructionsScreen: 'TranscribeTask'
-    }));
-  let result = [
-    {controllerScreen: 'Welcome', screen: 'Welcome'},
-    {screen: "IntroSurvey"},
-    ...tutorials,
-    {screen: "TaskDescription"},
-  ];
-  conditions.forEach((condition, idx) => {
-    result = result.concat(experimentBlock(idx, condition));
-  });
-  result = result.concat([
-    {screen: 'PostExpSurvey'},
-    {screen: 'Done'},
-  ]);
-  return result;
-}
-
-let baseConditions = ['general', 'specific'];
+type Config = {
+  clientId: string,
+  getScreens: (conditions: string[]) => Screen[],
+  baseConditions: string[],
+  baseStimuli: Stimulus[],
+  timeEstimate: string,
+};
 
 export class MasterStateStore {
   clientId: string;
+  config: Config;
   participantCode: ?string;
   conditions: Array<string>;
   lastEventTimestamp: number;
@@ -118,6 +73,7 @@ export class MasterStateStore {
 
   // Experiments
   experiments: ObservableMap<*>;
+  block: number;
   curExperiment: string;
   experimentState: Experiment;
   conditionName: string;
@@ -128,25 +84,26 @@ export class MasterStateStore {
 
   tutorialTasks: TutorialTasks;
 
+  stimuli: Stimulus[];
+
   // Demo handling
   isDemo: boolean;
   demoConditionName: string;
 
   doInit(configName:string) {
-    this.conditions = seededShuffle(`${this.clientId}-conditions`, baseConditions);
+    this.conditions = seededShuffle(`${this.clientId}-conditions`, this.config.baseConditions);
     this.screenNum = 0;
   }
 
-  constructor(clientId:string) {
-    this.clientId = clientId;
+  constructor(config: Config) {
+    this.clientId = config.clientId;
+    this.config = config;
 
-    let isDemo = (clientId || '').slice(0, 4) === 'demo';
+    let isDemo = (this.clientId || '').slice(0, 4) === 'demo';
     this.isDemo = isDemo;
-    this.demoConditionName = clientId.slice(4);
+    this.demoConditionName = this.clientId.slice(4);
 
-    this.stimuli = seededShuffle(`${this.clientId}-stimuli`, baseStimuli);
-
-    this.timeEstimate = '20 minutes';
+    this.stimuli = seededShuffle(`${this.clientId}-stimuli`, this.config.baseStimuli);
 
     M.extendObservable(this, {
       participantCode: null,
@@ -188,7 +145,7 @@ export class MasterStateStore {
             screen: 'ExperimentScreen', instructionsScreen: 'SummaryInstructions'
           }];
         }
-        return getScreens(this.conditions);
+        return this.config.getScreens(this.conditions);
       },
       get curScreen() {
         return this.screens[this.screenNum];
@@ -198,6 +155,9 @@ export class MasterStateStore {
         console.assert(this.conditionName in namedConditions);
         return {...namedConditions[this.conditionName]};
       },
+      get timeEstimate() {
+        return this.config.timeEstimate;
+      }
     });
   }
 

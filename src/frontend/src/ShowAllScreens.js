@@ -10,7 +10,7 @@ const showController = false;
 let states = [];
 let MasterView = null;
 
-export function init(MasterStateStore, views, config) {
+export function init(createTaskState, views, config) {
   MasterView = MasterViewFactory(views);
 
   let eventsSoFar = [];
@@ -21,7 +21,7 @@ export function init(MasterStateStore, views, config) {
   }
 
   function copyState() {
-    let newState = new MasterStateStore(fakeClientId);
+    let newState = createTaskState(fakeClientId);
     states.push(newState);
     eventsSoFar.forEach(evt => newState.handleEvent(evt));
     return newState;
