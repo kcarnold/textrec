@@ -99,7 +99,7 @@ export const StimulusView = ({stimulus}) => {
       {stimulus.content}
     </div>
   } else if (stimulus.type === 'img') {
-    return <div><img src={urlForImage(stimulus.content)} /></div>;
+    return <div><img src={urlForImage(stimulus.content)} style={{width: '100%'}}/></div>;
   }
 };
 

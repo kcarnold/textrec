@@ -32,7 +32,7 @@ if (initialPart === 'panopt') {
 
 } else if (initialPart === 'showall') {
   let mod = require('./ShowAllScreens');
-  let {createTaskState, screenToView} = getApp('sum');
+  let {createTaskState, screenToView} = getApp('cap');
   mod.init(createTaskState, screenToView, query.slice(initialPart.length + 1));
   let ShowAllScreens = mod.default;
   topLevel = <ShowAllScreens />;
