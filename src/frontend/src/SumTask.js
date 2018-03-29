@@ -1,4 +1,5 @@
 // @flow
+import React from 'react';
 
 import * as IOTaskState from './IOTaskState';
 import * as Views from './IOViews';
@@ -75,5 +76,5 @@ export function createTaskState(clientId:string) {
 export function screenToView(screenDesc: Screen) {
   let screenName = screenDesc.screen;
   console.assert(screenName in Views);
-  return Views[screenName];
+  return React.createElement(Views[screenName]);
 }

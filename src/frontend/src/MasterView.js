@@ -12,10 +12,9 @@ export const MasterView = screenToView => inject('state', 'spying')(observer(cla
   render() {
     let {state, kind} = this.props;
     if (state.replaying) return <div>Loading...</div>;
-    let screenDesc = state.screens[state.screenNum];
     return (
       <div className="App">
-        {React.createElement(screenToView(state.curScreen))}
+        {screenToView(state.curScreen)}
       </div>);
   }
 }));
