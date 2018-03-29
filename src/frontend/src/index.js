@@ -16,16 +16,9 @@ if (process.env.NODE_ENV === 'production') {
 function getApp(config) {
   if (config === 'sum') {
     // Configure for summarization.
-    return {
-      createTaskState: require('./SumTask').createTaskState,
-      Views: require('./IOViews'),
-    };
+    return require('./SumTask');
   } else if (config === 'cap') {
-    // Configure for captioning.
-    return {
-      createTaskState: null,
-      Views: require('./IOViews'),
-    };
+    return require('./CapTask');
   }
 }
 
@@ -39,8 +32,8 @@ if (initialPart === 'panopt') {
 
 } else if (initialPart === 'showall') {
   let mod = require('./ShowAllScreens');
-  let {createTaskState, Views} = getApp('sum');
-  mod.init(createTaskState, Views, query.slice(initialPart.length + 1));
+  let {createTaskState, screenToView} = getApp('sum');
+  mod.init(createTaskState, screenToView, query.slice(initialPart.length + 1));
   let ShowAllScreens = mod.default;
   topLevel = <ShowAllScreens />;
 
@@ -73,10 +66,10 @@ if (initialPart === 'panopt') {
   if (match) {
     let clientId = match[1];
     let clientKind = match[2];
-    let {MasterStateStore, Views} = getApp('sum');
+    let {createTaskState, screenToView} = getApp('sum');
     let MasterViewFactory = require('./MasterView').default;
-    let MasterView = MasterViewFactory(Views);
-    let state = new MasterStateStore(clientId || '');
+    let MasterView = MasterViewFactory(screenToView);
+    let state = createTaskState(clientId || '');
     let globalState = Wrapper.init(state, clientId, clientKind);
     topLevel = <Wrapper.View global={globalState}><MasterView kind={clientKind} /></Wrapper.View>;
   } else {

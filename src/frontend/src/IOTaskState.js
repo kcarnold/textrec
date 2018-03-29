@@ -24,6 +24,11 @@ type Experiment = {
 };
 
 const namedConditions = {
+  norecs: {
+    requestFlags: {},
+    modelSeesStimulus: false,
+    hideRecs: true,
+  },
   tutorial: {
     requestFlags: {},
     modelSeesStimulus: true,
@@ -38,14 +43,6 @@ const namedConditions = {
   }
 }
 
-
-export function experimentBlock(block:number, conditionName: string): Array<Screen> {
-  return [
-    {preEvent: {type: 'setupExperiment', block, condition: conditionName, name: `final-${block}`}, screen: 'Instructions'},
-    {screen: 'ExperimentScreen', instructionsScreen: 'SummaryInstructions'},
-    {screen: 'PostTaskSurvey'},
-  ];
-}
 
 type Config = {
   clientId: string,

@@ -1,6 +1,7 @@
 // @flow
 
 import * as IOTaskState from './IOTaskState';
+import * as Views from './IOViews';
 
 let baseStimuli = [
 "cambodian leader hun sen on friday rejected opposition parties ' demands for talks outside the country , accusing them of trying to `` internationalize '' the political crisis .",
@@ -13,14 +14,21 @@ let baseStimuli = [
 let tutorialStimuli = [
   {
     stimulus: {type: 'doc', content: null},
-    transcribe: "Opposition asks end to loans to \"illegal\" Cambodian government",
+    transcribe: "opposition asks end to loans to \"illegal\" cambodian government",
   },
   {
     stimulus: {type: 'doc', content: null},
-    transcribe: "Aid rushed to devastated victims of Hurricane Mitch",
+    transcribe: "aid rushed to devastated victims of hurricane mitch",
   }
 ];
 
+function experimentBlock(block:number, conditionName: string): Array<Screen> {
+  return [
+    {preEvent: {type: 'setupExperiment', block, condition: conditionName, name: `final-${block}`}, screen: 'Instructions'},
+    {screen: 'ExperimentScreen', instructionsScreen: 'SummaryInstructions'},
+    {screen: 'PostTaskSurvey'},
+  ];
+}
 
 function getScreens(conditions: string[]) {
   let tutorials = tutorialStimuli.map(({stimulus, transcribe}, idx) => (
@@ -43,7 +51,7 @@ function getScreens(conditions: string[]) {
     {screen: "TaskDescription"},
   ];
   conditions.forEach((condition, idx) => {
-    result = result.concat(IOTaskState.experimentBlock(idx, condition));
+    result = result.concat(experimentBlock(idx, condition));
   });
   result = result.concat([
     {screen: 'PostExpSurvey'},
@@ -52,7 +60,7 @@ function getScreens(conditions: string[]) {
   return result;
 }
 
-let baseConditions = ['general', 'specific'];
+let baseConditions = ['norecs', 'general', 'specific'];
 
 export function createTaskState(clientId:string) {
   return new IOTaskState.MasterStateStore({
@@ -62,4 +70,10 @@ export function createTaskState(clientId:string) {
     baseStimuli,
     timeEstimate: '20 minutes',
   });
+}
+
+export function screenToView(screenDesc: Screen) {
+  let screenName = screenDesc.screen;
+  console.assert(screenName in Views);
+  return Views[screenName];
 }
