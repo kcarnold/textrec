@@ -8,8 +8,6 @@ import {CurText} from './CurText';
 import {SuggestionsBar, AlternativesBar} from './SuggestionViews';
 import Consent from './Consent';
 
-export {IntroSurvey, PostTaskSurvey, PostExpSurvey} from './Surveys';
-
 const SITE_DOWN = false;
 
 const hostname = window.location.host;

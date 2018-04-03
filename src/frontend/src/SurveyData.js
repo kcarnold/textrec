@@ -1,22 +1,6 @@
-import React from "react";
-import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
-import { observer, inject } from "mobx-react";
-import { NextBtn } from "./BaseViews";
+import React from 'react';
 
-function likert(name, text, degrees, labels) {
-  let options = [];
-  for (let i = 0; i < degrees; i++) {
-    options.push("");
-  }
-  options[0] = labels[0];
-  options[degrees - 1] = labels[1];
-  return {
-    text,
-    name,
-    responseType: "likert",
-    options,
-  };
-}
+import {likert} from './SurveyViews';
 
 const miscQuestions = [
   {
@@ -149,7 +133,7 @@ I love to read challenging material.
   .trim()
   .split(/\n/);
 
-function personalityBlock(blockIdx) {
+export function personalityBlock(blockIdx) {
   const traitsPerBatch = 8;
   let traitBatch = traitItems.slice(
     traitsPerBatch * blockIdx,
@@ -182,21 +166,11 @@ function personalityBlock(blockIdx) {
   ];
 }
 
-function getIntroSurveyQuestions() {
-  return [
-    {
-      text:
-        "There will be several short surveys like this as breaks from the writing task.",
-    },
-    ...personalityBlock(0),
-  ];
-}
-
-function getPostTaskQuestions(block) {
+export function getPostTaskQuestions(block) {
   return [...tlxQuestions, ...personalityBlock(block + 1), ...miscQuestions];
 }
 
-const closingSurveyQuestions = [
+export const closingSurveyQuestions = [
   {
     text:
       "While you were writing, did you speak or whisper what you were writing?",
@@ -247,172 +221,3 @@ const closingSurveyQuestions = [
     flags: { multiline: true },
   },
 ];
-
-function TextResponse({ basename, question }) {
-  return (
-    <ControlledInput
-      name={`${basename}-${question.name}`}
-      {...question.flags || {}}
-    />
-  );
-}
-
-function StarRating({ basename, question }) {
-  let { name } = question;
-  return <ControlledStarRating name={`${basename}-${name}`} />;
-}
-
-export const OptionsResponse = inject("dispatch", "state", "spying")(
-  observer(function OptionsResponse({
-    state,
-    dispatch,
-    spying,
-    basename,
-    question,
-  }) {
-    let name = `${basename}-${question.name}`;
-    let choice = state.controlledInputs.get(name) || "";
-    function change(newVal) {
-      dispatch({ type: "controlledInputChanged", name, value: newVal });
-    }
-    return (
-      <div>
-        {question.options.map(option =>
-          <label
-            key={option}
-            style={{
-              background: "#f0f0f0",
-              display: "block",
-              margin: "3px 0",
-              padding: "10px 3px",
-              width: "100%",
-            }}
-            title={spying && `${name}=${option}`}
-          >
-            <input
-              type="radio"
-              checked={choice === option}
-              onChange={() => change(option)}
-            />
-            <span style={{ width: "100%" }}>
-              {option}
-            </span>
-          </label>,
-        )}
-      </div>
-    );
-  }),
-);
-
-export const LikertResponse = inject("dispatch", "state", "spying")(
-  observer(function LikertResponse({
-    state,
-    dispatch,
-    spying,
-    basename,
-    question,
-  }) {
-    let name = `${basename}-${question.name}`;
-    let choice = state.controlledInputs.get(name);
-    function change(newVal) {
-      dispatch({ type: "controlledInputChanged", name, value: newVal });
-    }
-    return (
-      <div
-        style={{ display: "flex", flexFlow: "row nowrap", padding: "5px 0" }}
-      >
-        {question.options.map((label, idx) =>
-          <div key={idx} style={{ textAlign: "center", flex: "1 1 0" }}>
-            <label title={spying && `${name}=${idx}`}>
-              <input
-                type="radio"
-                checked={choice === idx}
-                onChange={() => change(idx)}
-              />
-              <br />
-              <span>
-                {label}&nbsp;
-              </span>
-            </label>
-          </div>,
-        )}
-      </div>
-    );
-  }),
-);
-
-const responseTypes = {
-  starRating: StarRating,
-  text: TextResponse,
-  options: OptionsResponse,
-  likert: LikertResponse,
-};
-
-function Question({ basename, question }) {
-  let responseType = null;
-  if (question.responseType) {
-    console.assert(question.responseType in responseTypes);
-    responseType = responseTypes[question.responseType];
-  }
-  return (
-    <div
-      className="Question"
-      style={{
-        margin: "5px",
-        borderTop: "3px solid #aaa",
-        padding: "5px",
-      }}
-    >
-      <div className="QText">
-        {question.text}
-      </div>
-      {responseType &&
-        React.createElement(responseType, { basename, question })}
-    </div>
-  );
-}
-
-export const Survey = ({ title, basename, questions }) =>
-  <div className="Survey">
-    <h1>
-      {title}
-    </h1>
-
-    {questions.map((question, idx) => {
-      return (
-        <Question
-          key={question.name || idx}
-          basename={basename}
-          question={question}
-        />
-      );
-    })}
-
-    <NextBtn />
-  </div>;
-
-export const IntroSurvey = () =>
-  <Survey
-    title="Opening Survey"
-    basename="intro"
-    questions={getIntroSurveyQuestions()}
-  />;
-
-export const PostTaskSurvey = inject("state")(
-  observer(({ state }) => {
-    return (
-      <Survey
-        title="After-Writing Survey"
-        basename={`postTask-${state.block}`}
-        questions={getPostTaskQuestions(state.block)}
-      />
-    );
-  }),
-);
-
-export const PostExpSurvey = () =>
-  <Survey
-    title="Closing Survey"
-    basename="postExp"
-    questions={closingSurveyQuestions}
-  />;

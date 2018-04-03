@@ -2,7 +2,8 @@ import React from 'react';
 
 import * as IOTaskState from './IOTaskState';
 import * as Views from './IOViews';
-
+import {Survey} from './SurveyViews';
+import {personalityBlock, getPostTaskQuestions, closingSurveyQuestions} from './SurveyData';
 
 let baseStimuli = [
   {type: 'img', content: '000000025994'},
@@ -26,7 +27,13 @@ function experimentBlock(block:number, conditionName: string): Array<Screen> {
   return [
     {preEvent: {type: 'setupExperiment', block, condition: conditionName, name: `final-${block}`}, screen: 'Instructions'},
     {screen: 'ExperimentScreen', instructionsScreen: 'SummaryInstructions'},
-    {screen: 'PostTaskSurvey'},
+    {screen: 'PostTaskSurvey', type: "survey", props: {
+      title: "After-Writing Survey",
+      basename: `postTask-${block}`,
+      questions: [
+        ...getPostTaskQuestions(block)
+      ]
+    }},
   ];
 }
 
@@ -46,7 +53,16 @@ function getScreens(conditions: string[]) {
     }));
   let result = [
     {controllerScreen: 'Welcome', screen: 'Welcome'},
-    {screen: "IntroSurvey"},
+    {screen: "IntroSurvey", type: "survey", props: {
+      title: "Opening Survey",
+      basename: "intro",
+      questions: [
+        {
+          text:
+            "There will be several short surveys like this as breaks from the writing task.",
+        },
+        ...personalityBlock(0),
+    ]}},
     ...tutorials,
     {screen: "TaskDescription"},
   ];
@@ -54,7 +70,13 @@ function getScreens(conditions: string[]) {
     result = result.concat(experimentBlock(idx, condition));
   });
   result = result.concat([
-    {screen: 'PostExpSurvey'},
+    {screen: 'PostExpSurvey', type: "survey", props: {
+      title: "Closing Survey",
+      basename: "postExp",
+      questions: [
+        ...closingSurveyQuestions
+      ]
+    }},
     {screen: 'Done'},
   ]);
   return result;
@@ -73,6 +95,9 @@ export function createTaskState(clientId:string) {
 }
 
 export function screenToView(screenDesc: Screen) {
+  if (screenDesc.type === "survey") {
+    return React.createElement(Survey, screenDesc.props);
+  }
   let screenName = screenDesc.screen;
   console.assert(screenName in Views);
   return React.createElement(Views[screenName]);
