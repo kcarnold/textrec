@@ -1,11 +1,11 @@
 // @flow
 
-import * as M from 'mobx';
-import range from 'lodash/range';
-import map from 'lodash/map'
-import countWords from './CountWords';
-import seedrandom from 'seedrandom';
-import type {Event} from './Events';
+import * as M from "mobx";
+import range from "lodash/range";
+import map from "lodash/map";
+import countWords from "./CountWords";
+import seedrandom from "seedrandom";
+import type { Event } from "./Events";
 
 /**** Main experiment-screen state store!
 
@@ -41,19 +41,18 @@ visibleSuggestions is a pure computation based on the last suggestions received 
 
 function randChoice(rng, choices) {
   let unif = 1;
-  while (unif === 1)
-    unif = rng();
+  while (unif === 1) unif = rng();
   return choices[Math.floor(unif * choices.length)];
 }
 
 type Stimulus = {
   type: string,
-  content: string,
-}
+  content: string
+};
 
 type IOExperimentFlags = {
   stimulus: Stimulus,
-  modelSeesStimulus: boolean,
+  modelSeesStimulus: boolean
 };
 
 export class ExperimentStateStore {
@@ -70,7 +69,7 @@ export class ExperimentStateStore {
     M.extendObservable(this, {
       stimulus: flags.stimulus,
       transcribe: flags.transcribe,
-      curText: '',
+      curText: "",
       contextSequenceNum: 0,
       lastSuggestionsFromServer: {},
       activeSuggestion: null,
@@ -81,15 +80,17 @@ export class ExperimentStateStore {
       },
       get visibleSuggestions() {
         let fromServer = this.lastSuggestionsFromServer;
-        const blankRec = {words: []};
+        const blankRec = { words: [] };
         let serverIsValid = fromServer.request_id === this.contextSequenceNum;
         if (!serverIsValid) {
           // Fill in the promised suggestion.
           let predictions = range(3).map(() => blankRec);
           if (this.activeSuggestion) {
-            predictions[this.activeSuggestion.slot] = M.toJS(this.activeSuggestion);
+            predictions[this.activeSuggestion.slot] = M.toJS(
+              this.activeSuggestion
+            );
           }
-          return {predictions};
+          return { predictions };
         }
 
         // Make a copy, so we can modify.
@@ -97,10 +98,10 @@ export class ExperimentStateStore {
         let result = {};
         if (fromServer.replacement_range)
           result.replacement_range = fromServer.replacement_range;
-        ['predictions', 'synonyms'].forEach(type => {
+        ["predictions", "synonyms"].forEach(type => {
           result[type] = fromServer[type] || [];
-          let minToReturn = type === 'synonyms' ? 10 : 3;
-          while(result[type].length < minToReturn) {
+          let minToReturn = type === "synonyms" ? 10 : 3;
+          while (result[type].length < minToReturn) {
             result[type].push(blankRec);
           }
         });
@@ -108,7 +109,9 @@ export class ExperimentStateStore {
         if (this.activeSuggestion && this.activeSuggestion.highlightChars) {
           // Highlight even what we receive from the server.
           // FIXME: should this happen on server? Format conversion is complicated...
-          result.predictions[this.activeSuggestion.slot].highlightChars = this.activeSuggestion.highlightChars;
+          result.predictions[
+            this.activeSuggestion.slot
+          ].highlightChars = this.activeSuggestion.highlightChars;
         }
 
         return result;
@@ -120,11 +123,12 @@ export class ExperimentStateStore {
       },
 
       get suggestionContext() {
-        let sofar = this.curText, cursorPos = sofar.length;
+        let sofar = this.curText,
+          cursorPos = sofar.length;
         let lastSpaceIdx = this.lastSpaceIdx;
         let curWord = [];
-        for (let i=lastSpaceIdx + 1; i<cursorPos; i++) {
-          let chr = {letter: sofar[i]};
+        for (let i = lastSpaceIdx + 1; i < cursorPos; i++) {
+          let chr = { letter: sofar[i] };
           if (this.tapLocations[i] !== null) {
             chr.tap = this.tapLocations[i];
           }
@@ -132,7 +136,7 @@ export class ExperimentStateStore {
         }
         let result = {
           prefix: sofar.slice(0, lastSpaceIdx + 1),
-          curWord,
+          curWord
         };
         if (this.activeSuggestion) {
           result.promise = {
@@ -155,9 +159,18 @@ export class ExperimentStateStore {
         if (!taps) {
           taps = map(toInsert, () => null);
         }
-        this.curText = this.curText.slice(0, startIdx) + toInsert + this.curText.slice(startIdx + deleteCount);
-        this.tapLocations = this.tapLocations.slice(0, startIdx).concat(taps).concat(this.tapLocations.slice(startIdx + deleteCount));
-        this.seqNums = this.seqNums.slice(0, startIdx).concat(map(toInsert, () => this.contextSequenceNum)).concat(this.seqNums.slice(startIdx + deleteCount));
+        this.curText =
+          this.curText.slice(0, startIdx) +
+          toInsert +
+          this.curText.slice(startIdx + deleteCount);
+        this.tapLocations = this.tapLocations
+          .slice(0, startIdx)
+          .concat(taps)
+          .concat(this.tapLocations.slice(startIdx + deleteCount));
+        this.seqNums = this.seqNums
+          .slice(0, startIdx)
+          .concat(map(toInsert, () => this.contextSequenceNum))
+          .concat(this.seqNums.slice(startIdx + deleteCount));
       }),
       tapKey: M.action(event => {
         let cursorPos = this.curText.length;
@@ -166,20 +179,33 @@ export class ExperimentStateStore {
         let isNonWord = event.key.match(/\W/);
         let deleteSpace = this.lastSpaceWasAuto && isNonWord;
         let toInsert = event.key;
-        let taps = [{x: event.x, y: event.y}];
-        let autoSpace = isNonWord && event.key !== " " && event.key !== "'" && event.key !== '-';
+        let taps = [{ x: event.x, y: event.y }];
+        let autoSpace =
+          isNonWord &&
+          event.key !== " " &&
+          event.key !== "'" &&
+          event.key !== "-";
         if (autoSpace) {
           toInsert += " ";
           taps.push({});
         }
         let charsToDelete = deleteSpace ? 1 : 0;
-        this.spliceText(cursorPos - charsToDelete, charsToDelete, toInsert, taps);
+        this.spliceText(
+          cursorPos - charsToDelete,
+          charsToDelete,
+          toInsert,
+          taps
+        );
         this.lastSpaceWasAuto = autoSpace;
         let newActiveSuggestion = null;
 
         // If this key happened to be the prefix of a recommended word, continue that word.
         let curWord = this.curText.slice(this.lastSpaceIdx + 1);
-        if (this.flags.showRelevanceHints && !isNonWord && curWord.slice(0, oldCurWord.length) === oldCurWord) {
+        if (
+          this.flags.showRelevanceHints &&
+          !isNonWord &&
+          curWord.slice(0, oldCurWord.length) === oldCurWord
+        ) {
           this.visibleSuggestions.predictions.forEach((pred, slot) => {
             if (pred.words.length === 0) return;
             if (newActiveSuggestion) return;
@@ -196,53 +222,56 @@ export class ExperimentStateStore {
 
         return [];
       }),
-      tapBackspace: M.action((event) => {
-        let {delta} = event;
-        if (delta === undefined)
-          delta = -1;
-        this.spliceText(this.curText.length + delta, -delta, '');
+      tapBackspace: M.action(event => {
+        let { delta } = event;
+        if (delta === undefined) delta = -1;
+        this.spliceText(this.curText.length + delta, -delta, "");
         this.lastSpaceWasAuto = false;
         this.activeSuggestion = null;
         this.electricDeleteLiveChars = null;
         return [];
       }),
       handleTapSuggestion: M.action(event => {
-        let {slot, which} = event;
+        let { slot, which } = event;
         let tappedSuggestion = this.visibleSuggestions[which][slot];
         let wordToInsert = tappedSuggestion.words[0];
         if (!wordToInsert) return [];
-        if (which === 'synonyms') {
+        if (which === "synonyms") {
           // Replace the _previous_ word.
-          let [startIdx, endIdx] = this.visibleSuggestions['replacement_range'];
+          let [startIdx, endIdx] = this.visibleSuggestions["replacement_range"];
           // Actually, kill all remaining text.
           endIdx = this.curText.length;
           let autoSpace = endIdx === this.curText.length;
           this.spliceText(startIdx, endIdx - startIdx, wordToInsert);
           if (autoSpace) {
             // Add a space.
-            this.spliceText(this.curText.length, 0, ' ');
+            this.spliceText(this.curText.length, 0, " ");
           }
-          if (this.curText.slice(-1) === ' ') {
+          if (this.curText.slice(-1) === " ") {
             this.lastSpaceWasAuto = true;
           }
         } else {
           if (tappedSuggestion.words.length > 1) {
             this.activeSuggestion = {
               words: tappedSuggestion.words.slice(1),
-              slot: slot,
+              slot: slot
             };
           } else {
             this.activeSuggestion = null;
           }
 
-          let {curWord} = this.getSuggestionContext();
+          let { curWord } = this.getSuggestionContext();
           let charsToDelete = curWord.length;
           let isNonWord = wordToInsert.match(/^\W$/);
           let deleteSpace = this.lastSpaceWasAuto && isNonWord;
           if (deleteSpace) {
             charsToDelete++;
           }
-          this.spliceText(this.curText.length - charsToDelete, charsToDelete, wordToInsert + ' ');
+          this.spliceText(
+            this.curText.length - charsToDelete,
+            charsToDelete,
+            wordToInsert + " "
+          );
           this.lastSpaceWasAuto = true;
         }
         return [];
@@ -250,14 +279,18 @@ export class ExperimentStateStore {
 
       handleSelectAlternative: M.action(event => {
         let wordToInsert = event.word;
-        let {curWord} = this.getSuggestionContext();
+        let { curWord } = this.getSuggestionContext();
         let charsToDelete = curWord.length;
         let isNonWord = wordToInsert.match(/^\W$/);
         let deleteSpace = this.lastSpaceWasAuto && isNonWord;
         if (deleteSpace) {
           charsToDelete++;
         }
-        this.spliceText(this.curText.length - charsToDelete, charsToDelete, wordToInsert + ' ');
+        this.spliceText(
+          this.curText.length - charsToDelete,
+          charsToDelete,
+          wordToInsert + " "
+        );
         this.lastSpaceWasAuto = true;
         return [];
       }),
@@ -273,13 +306,13 @@ export class ExperimentStateStore {
       }),
 
       updateSuggestions: M.action(event => {
-        let {msg} = event;
+        let { msg } = event;
         // Only update suggestions if the data is valid.
         if (!msg.result) {
           console.warn("Request failed?");
           return;
         }
-        let {request_id} = msg.result;
+        let { request_id } = msg.result;
         if (request_id === this.contextSequenceNum) {
           this.lastSuggestionsFromServer = msg.result;
         }
@@ -288,13 +321,21 @@ export class ExperimentStateStore {
           this.outstandingRequests.splice(idx, 1);
         }
         if (idx !== 0) {
-          console.log('warning: outstandingRequests weird: looking for', request_id, 'in', this.outstandingRequests);
+          console.log(
+            "warning: outstandingRequests weird: looking for",
+            request_id,
+            "in",
+            this.outstandingRequests
+          );
         }
       }),
 
       handleDeleting: M.action(event => {
-        let {delta} = event;
-        this.electricDeleteLiveChars = Math.min(Math.max(0, this.curText.length + delta), this.curText.length);
+        let { delta } = event;
+        this.electricDeleteLiveChars = Math.min(
+          Math.max(0, this.curText.length + delta),
+          this.curText.length
+        );
         return [];
       })
     });
@@ -306,21 +347,21 @@ export class ExperimentStateStore {
   }
 
   getSuggestionRequest() {
-    let {prefix, curWord, promise} = this.getSuggestionContext();
+    let { prefix, curWord, promise } = this.getSuggestionContext();
 
     let stimulus = {
       type: this.stimulus.type,
-      content: this.flags.modelSeesStimulus ? this.stimulus.content : null,
+      content: this.flags.modelSeesStimulus ? this.stimulus.content : null
     };
 
     return {
-      type: 'rpc',
+      type: "rpc",
       rpc: {
-        method: 'get_rec',
+        method: "get_rec",
         stimulus: stimulus,
         sofar: prefix,
         cur_word: curWord,
-        flags: {...this.sugFlags, promise,},
+        flags: { ...this.sugFlags, promise },
         request_id: this.contextSequenceNum
       }
     };
@@ -330,7 +371,7 @@ export class ExperimentStateStore {
     return this.suggestionContext;
   }
 
-  handleEvent = (event) => {
+  handleEvent = event => {
     let prevState = {
       curText: this.curText,
       tapLocations: this.tapLocations.slice(),
@@ -339,21 +380,21 @@ export class ExperimentStateStore {
     };
     let sideEffects = (() => {
       switch (event.type) {
-      case 'undo':
-        return this.handleUndo(event);
-      case 'tapKey':
-        return this.tapKey(event);
-      case 'tapBackspace':
-        return this.tapBackspace(event);
-      case 'backendReply':
-        return this.updateSuggestions(event);
-      case 'tapSuggestion':
-        return this.handleTapSuggestion(event);
-      case 'selectAlternative':
-        return this.handleSelectAlternative(event);
-      case 'updateDeleting':
-        return this.handleDeleting(event);
-      default:
+        case "undo":
+          return this.handleUndo(event);
+        case "tapKey":
+          return this.tapKey(event);
+        case "tapBackspace":
+          return this.tapBackspace(event);
+        case "backendReply":
+          return this.updateSuggestions(event);
+        case "tapSuggestion":
+          return this.handleTapSuggestion(event);
+        case "selectAlternative":
+          return this.handleSelectAlternative(event);
+        case "updateDeleting":
+          return this.handleDeleting(event);
+        default:
       }
     })();
     sideEffects = sideEffects || [];

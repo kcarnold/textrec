@@ -1,55 +1,54 @@
 // @flow
 
-import * as M from 'mobx';
-import type { ObservableMap } from 'mobx';
-import {ExperimentStateStore} from './IOExperimentState';
-import TutorialTasks from './TutorialTasks';
-import {seededShuffle} from './shuffle';
+import * as M from "mobx";
+import type { ObservableMap } from "mobx";
+import { ExperimentStateStore } from "./IOExperimentState";
+import TutorialTasks from "./TutorialTasks";
+import { seededShuffle } from "./shuffle";
 
-import type {Event} from './Events';
-import type {Stimulus} from './IOExperimentState';
+import type { Event } from "./Events";
+import type { Stimulus } from "./IOExperimentState";
 
 type Screen = {
   screen: string,
   preEvent?: Object,
-  timer?: number,
+  timer?: number
 };
 
 type Condition = {
-  requestFlags: Object,
+  requestFlags: Object
 };
 
 type Experiment = {
-  handleEvent: (event: Event) => Event[],
+  handleEvent: (event: Event) => Event[]
 };
 
 const namedConditions = {
   norecs: {
     requestFlags: {},
     modelSeesStimulus: false,
-    hideRecs: true,
+    hideRecs: true
   },
   tutorial: {
     requestFlags: {},
-    modelSeesStimulus: true,
+    modelSeesStimulus: true
   },
   general: {
     requestFlags: {},
-    modelSeesStimulus: false,
+    modelSeesStimulus: false
   },
   specific: {
     requestFlags: {},
-    modelSeesStimulus: true,
+    modelSeesStimulus: true
   }
-}
-
+};
 
 type Config = {
   clientId: string,
   getScreens: (conditions: string[]) => Screen[],
   baseConditions: string[],
   baseStimuli: Stimulus[],
-  timeEstimate: string,
+  timeEstimate: string
 };
 
 export class MasterStateStore {
@@ -60,12 +59,12 @@ export class MasterStateStore {
   lastEventTimestamp: number;
   replaying: boolean;
 
-  phoneSize: {width: number, height: number};
+  phoneSize: { width: number, height: number };
   pingTime: number;
 
   // Screens
   screenNum: number;
-  screenTimes: Array<{num: number, timestamp: number}>;
+  screenTimes: Array<{ num: number, timestamp: number }>;
   screens: Array<Screen>;
 
   // Experiments
@@ -87,8 +86,11 @@ export class MasterStateStore {
   isDemo: boolean;
   demoConditionName: string;
 
-  doInit(configName:string) {
-    this.conditions = seededShuffle(`${this.clientId}-conditions`, this.config.baseConditions);
+  doInit(configName: string) {
+    this.conditions = seededShuffle(
+      `${this.clientId}-conditions`,
+      this.config.baseConditions
+    );
     this.screenNum = 0;
   }
 
@@ -96,16 +98,22 @@ export class MasterStateStore {
     this.clientId = config.clientId;
     this.config = config;
 
-    let isDemo = (this.clientId || '').slice(0, 4) === 'demo';
+    let isDemo = (this.clientId || "").slice(0, 4) === "demo";
     this.isDemo = isDemo;
     this.demoConditionName = this.clientId.slice(4);
 
-    this.stimuli = seededShuffle(`${this.clientId}-stimuli`, this.config.baseStimuli);
+    this.stimuli = seededShuffle(
+      `${this.clientId}-stimuli`,
+      this.config.baseStimuli
+    );
 
     M.extendObservable(this, {
       participantCode: null,
       get isHDSL() {
-        return this.participantCode !== null && this.participantCode.slice(0, 4) === 'sona';
+        return (
+          this.participantCode !== null &&
+          this.participantCode.slice(0, 4) === "sona"
+        );
       },
       get sonaCreditLink() {
         console.assert(this.isHDSL);
@@ -133,14 +141,22 @@ export class MasterStateStore {
       timerDur: null,
       tutorialTasks: null,
       screenTimes: [],
-      phoneSize: {width: 360, height: 500},
+      phoneSize: { width: 360, height: 500 },
       pingTime: null,
       get screens() {
         if (isDemo) {
-          return [{
-            preEvent: {type: 'setupExperiment', block: 0, condition: this.demoConditionName, name: 'demo'},
-            screen: 'ExperimentScreen', instructionsScreen: 'SummaryInstructions'
-          }];
+          return [
+            {
+              preEvent: {
+                type: "setupExperiment",
+                block: 0,
+                condition: this.demoConditionName,
+                name: "demo"
+              },
+              screen: "ExperimentScreen",
+              instructionsScreen: "SummaryInstructions"
+            }
+          ];
         }
         return this.config.getScreens(this.conditions);
       },
@@ -150,7 +166,7 @@ export class MasterStateStore {
       get condition() {
         console.assert(!!this.conditionName);
         console.assert(this.conditionName in namedConditions);
-        return {...namedConditions[this.conditionName]};
+        return { ...namedConditions[this.conditionName] };
       },
       get timeEstimate() {
         return this.config.timeEstimate;
@@ -163,29 +179,31 @@ export class MasterStateStore {
     let sideEffects = [];
     let screen = this.screens[this.screenNum];
     if (screen.preEvent) {
-      let {preEvent} = screen;
+      let { preEvent } = screen;
       switch (preEvent.type) {
-      case 'setupExperiment':
-        this.conditionName = preEvent.condition;
-        this.curExperiment = preEvent.name;
-        this.block = preEvent.block;
+        case "setupExperiment":
+          this.conditionName = preEvent.condition;
+          this.curExperiment = preEvent.name;
+          this.block = preEvent.block;
 
-        let experimentObj = new ExperimentStateStore({
-          stimulus: this.stimuli[preEvent.block],
-          ...this.condition,
-          ...(preEvent.extraFlags || {})
-        });
-        this.experiments.set(preEvent.name, experimentObj);
-        let initReq = experimentObj.init();
-        if (initReq)
-          sideEffects.push(initReq);
-        this.tutorialTasks = new TutorialTasks();
-        break;
-      default:
+          let experimentObj = new ExperimentStateStore({
+            stimulus: this.stimuli[preEvent.block],
+            ...this.condition,
+            ...(preEvent.extraFlags || {})
+          });
+          this.experiments.set(preEvent.name, experimentObj);
+          let initReq = experimentObj.init();
+          if (initReq) sideEffects.push(initReq);
+          this.tutorialTasks = new TutorialTasks();
+          break;
+        default:
       }
     }
     // FIXME: This doesn't get the correct time for the Welcome screen, because the login event doesn't have a jsTimestamp.
-    this.screenTimes.push({num: this.screenNum, timestamp: this.lastEventTimestamp});
+    this.screenTimes.push({
+      num: this.screenNum,
+      timestamp: this.lastEventTimestamp
+    });
     if (screen.timer) {
       this.timerStartedAt = this.lastEventTimestamp;
       this.timerDur = screen.timer;
@@ -193,7 +211,7 @@ export class MasterStateStore {
     return sideEffects;
   }
 
-  handleEvent = M.action((event) => {
+  handleEvent = M.action(event => {
     let sideEffects = [];
     this.lastEventTimestamp = event.jsTimestamp;
     if (this.experimentState) {
@@ -206,37 +224,37 @@ export class MasterStateStore {
 
     let screenAtStart = this.screenNum;
     switch (event.type) {
-    case 'login':
-      this.doInit(event.config);
-      if (event.platform_id) {
-        this.participantCode = event.platform_id;
-      }
-      break;
-    case 'next':
-      this.screenNum++;
-      break;
-    case 'setScreen':
-      this.screenNum = event.screen;
-      break;
-    case 'controlledInputChanged':
-      this.controlledInputs.set(event.name, event.value);
-      break;
-    case 'resized':
-      if (event.kind === 'p') {
-        this.phoneSize = {width: event.width, height: event.height};
-      }
-      if (this.isDemo && !this.experimentState) {
-        this.doInit('demo');
-        this.pingTime = 0;
-      }
-    break;
-    case 'pingResults':
-      if (event.kind === 'p') {
-        this.pingTime = event.ping.mean;
-      }
-      break;
+      case "login":
+        this.doInit(event.config);
+        if (event.platform_id) {
+          this.participantCode = event.platform_id;
+        }
+        break;
+      case "next":
+        this.screenNum++;
+        break;
+      case "setScreen":
+        this.screenNum = event.screen;
+        break;
+      case "controlledInputChanged":
+        this.controlledInputs.set(event.name, event.value);
+        break;
+      case "resized":
+        if (event.kind === "p") {
+          this.phoneSize = { width: event.width, height: event.height };
+        }
+        if (this.isDemo && !this.experimentState) {
+          this.doInit("demo");
+          this.pingTime = 0;
+        }
+        break;
+      case "pingResults":
+        if (event.kind === "p") {
+          this.pingTime = event.ping.mean;
+        }
+        break;
 
-    default:
+      default:
     }
 
     if (this.screenNum !== screenAtStart) {
