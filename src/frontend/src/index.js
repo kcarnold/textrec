@@ -66,7 +66,7 @@ if (initialPart === 'panopt') {
   if (match) {
     let clientId = match[1];
     let clientKind = match[2];
-    let {createTaskState, screenToView} = getApp('sum');
+    let {createTaskState, screenToView} = getApp('cap');
     let MasterViewFactory = require('./MasterView').default;
     let MasterView = MasterViewFactory(screenToView);
     let state = createTaskState(clientId || '');

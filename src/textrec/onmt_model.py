@@ -388,7 +388,8 @@ model_specs = {
     filename='cnndm_lm_acc_27.76_ppl_86.49_e20.pt',
     args=''),
   'coco_lm': dict(
-    filename='coco_lm_acc_44.56_ppl_18.76_e20.pt',
+    #filename='coco_lm_acc_44.56_ppl_18.76_e20.pt',
+    filename='coco_lm_acc_44.84_ppl_17.58_e20.pt',
     args=''),
 }
 models = dict()

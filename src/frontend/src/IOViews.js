@@ -104,7 +104,7 @@ export const StimulusView = ({stimulus}) => {
 };
 
 export const SummaryInstructions = inject('state')(observer(({state}) => <div>
-  Write a headline for this article in the space below. After you're done, click here: <NextBtn disabled={state.experimentState.wordCount < 10} />
+  Write the most specific description you can for the image below. After you're done, click here: <NextBtn disabled={state.experimentState.wordCount < 10} />
   <StimulusView stimulus={state.experimentState.stimulus} />
   </div>));
 
