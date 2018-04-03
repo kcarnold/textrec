@@ -2,7 +2,7 @@ import React from 'react';
 
 import {likert} from './SurveyViews';
 
-const miscQuestions = [
+export const miscQuestions = [
   {
     text:
       "Did you experience any technical difficulties that you haven't reported already?",
@@ -51,7 +51,7 @@ const postTaskBaseQuestions = [
 ];
 */
 
-const tlxQuestions = [
+export const tlxQuestions = [
   likert("mental", "Mental Demand: How mentally demanding was the task?", 7, [
     "Very low",
     "Very high",
@@ -164,10 +164,6 @@ export function personalityBlock(blockIdx) {
       text: "",
     },
   ];
-}
-
-export function getPostTaskQuestions(block) {
-  return [...tlxQuestions, ...personalityBlock(block + 1), ...miscQuestions];
 }
 
 export const closingSurveyQuestions = [

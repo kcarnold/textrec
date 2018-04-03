@@ -2,8 +2,8 @@ import React from 'react';
 
 import * as IOTaskState from './IOTaskState';
 import * as Views from './IOViews';
-import {Survey} from './SurveyViews';
-import {personalityBlock, getPostTaskQuestions, closingSurveyQuestions} from './SurveyData';
+import {Survey, likert} from './SurveyViews';
+import {personalityBlock, tlxQuestions, miscQuestions, closingSurveyQuestions} from './SurveyData';
 
 let baseStimuli = [
   {type: 'img', content: '000000025994'},
@@ -24,6 +24,20 @@ let tutorialStimuli = [
 ];
 
 function experimentBlock(block:number, conditionName: string): Array<Screen> {
+  let systemQuestions = [];
+  if (conditionName !== 'norecs') {
+    systemQuestions = [
+      likert("sys-accurate", "How accurate were the system's predictions?", 7, [
+        "Not accurate at all",
+        "Extremely accurate"]),
+      likert("sys-distracting", "How distracting were the system's predictions?", 7, [
+        "Not distracting at all",
+        "Extremely distracting"]),
+      likert("sys-helpful", "How helpful were the system's predictions?", 7, [
+        "Not helpful at all",
+        "Extremely helpful"]),
+    ];
+  }
   return [
     {preEvent: {type: 'setupExperiment', block, condition: conditionName, name: `final-${block}`}, screen: 'Instructions'},
     {screen: 'ExperimentScreen', instructionsScreen: 'SummaryInstructions'},
@@ -31,7 +45,14 @@ function experimentBlock(block:number, conditionName: string): Array<Screen> {
       title: "After-Writing Survey",
       basename: `postTask-${block}`,
       questions: [
-        ...getPostTaskQuestions(block)
+        likert("specific", "How specific was the caption you wrote?", 7, [
+          "Very generic",
+          "Very specific"]),
+        ...systemQuestions,
+        {text: <b>Cognitive Load</b>},
+        ...tlxQuestions,
+        ...personalityBlock(block + 1),
+        ...miscQuestions,
       ]
     }},
   ];
@@ -61,6 +82,16 @@ function getScreens(conditions: string[]) {
           text:
             "There will be several short surveys like this as breaks from the writing task.",
         },
+
+        // TODO: should we break this down into prediction, correction, gesture, etc.?
+        {
+          text:
+            "Do you use predictive typing on your phone?",
+          responseType: "options",
+          name: "use_predictive",
+          options: ["Yes", "No"],
+        },
+
         ...personalityBlock(0),
     ]}},
     ...tutorials,
