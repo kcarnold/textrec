@@ -1,7 +1,9 @@
 import React from "react";
+import { observer, inject } from "mobx-react";
 
 import * as IOTaskState from "./IOTaskState";
 import * as Views from "./IOViews";
+import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
 import {
   personalityBlock,
@@ -10,23 +12,73 @@ import {
   closingSurveyQuestions
 } from "./SurveyData";
 
+import { seededShuffle } from "./shuffle";
+
+const iobs = fn => inject("state", "dispatch")(observer(fn));
+
 let baseStimuli = [
-  { type: "img", content: "000000025994" },
-  { type: "img", content: "000000030711" },
-  { type: "img", content: "000000102555" }
+  { type: "img", content: "0" },
+  { type: "img", content: "1" },
+  { type: "img", content: "2" },
+  { type: "img", content: "3" },
+  { type: "img", content: "4" },
+  { type: "img", content: "5" },
+  { type: "img", content: "6" },
+  { type: "img", content: "7" },
+  { type: "img", content: "8" },
+  { type: "img", content: "9" },
+  { type: "img", content: "10" },
+  { type: "img", content: "11" }
 ];
 
 let tutorialStimuli = [
   {
-    stimulus: { type: "img", content: "000000099807" },
-    transcribe:
-      "a woman near her cross country skies and her two golden retrievers"
+    stimulus: { type: "img", content: "1228" },
+    transcribe: "a father and daughter playing football on a sunny day."
   },
   {
     stimulus: { type: "img", content: "0000000216407" },
-    transcribe: "a man with a backpack and a puppy inside it while on skis."
+    transcribe:
+      "a woman sitting on a sofa watching a mouse run across the floor."
   }
 ];
+
+const urlForImage = content => {
+  // console.assert(content.length === 12);
+  // return `http://images.cocodataset.org/train2017/${content}.jpg`
+  return `http://visualqa.org/data/abstract_v002/scene_img/img/${content}.png`;
+};
+
+export const StimulusView = ({ stimulus }) => {
+  if (stimulus.type === "doc") {
+    return (
+      <div
+        style={{
+          whiteSpace: "pre-line",
+          background: "white",
+          margin: "5px 2px"
+        }}
+      >
+        {stimulus.content}
+      </div>
+    );
+  } else if (stimulus.type === "img") {
+    return (
+      <div>
+        <img src={urlForImage(stimulus.content)} style={{ width: "100%" }} />
+      </div>
+    );
+  }
+};
+
+const SummaryInstructions = iobs(({ state }) => (
+  <div>
+    Write the most specific description you can for the image below. After
+    you're done, click here:{" "}
+    <NextBtn disabled={state.experimentState.wordCount < 10} />
+    <StimulusView stimulus={state.experimentState.stimulus} />
+  </div>
+));
 
 function experimentBlock(block: number, conditionName: string): Array<Screen> {
   let systemQuestions = [];
@@ -58,7 +110,11 @@ function experimentBlock(block: number, conditionName: string): Array<Screen> {
       },
       screen: "Instructions"
     },
-    { screen: "ExperimentScreen", instructionsScreen: "SummaryInstructions" },
+    {
+      screen: "ExperimentScreen",
+      type: "experiment",
+      instructions: SummaryInstructions
+    },
     {
       screen: "PostTaskSurvey",
       type: "survey",
@@ -94,7 +150,26 @@ function getScreens(conditions: string[]) {
       }
     },
     screen: "ExperimentScreen",
-    instructionsScreen: "TranscribeTask"
+    instructions: iobs(({ state }) => (
+      <div>
+        <p>
+          <b>Warm-up!</b>
+        </p>
+        <p>
+          For technical reasons, we have to use a special keyboard for this
+          study. We'll type a few news headlines to start off so you get used to
+          it.
+        </p>
+        <p>
+          <b>Type this:</b>
+          <br />
+          <div style={{ background: "white" }}>
+            {state.experimentState.transcribe}
+          </div>
+        </p>
+        <NextBtn />
+      </div>
+    ))
   }));
   let result = [
     { controllerScreen: "Welcome", screen: "Welcome" },
@@ -123,7 +198,25 @@ function getScreens(conditions: string[]) {
       }
     },
     ...tutorials,
-    { screen: "TaskDescription" }
+    {
+      screen: "TaskDescription",
+      view: () => (
+        <div>
+          <p>
+            In this study we're going to be writing descriptions of images. You
+            already typed a few of them during the warm-up.
+          </p>
+
+          <p>
+            Your goal is to write the <b>most specific description</b> you can.
+            Someone reading a <b>specific</b> description will be able to pick
+            out your image from among a set of similar images.
+          </p>
+
+          <NextBtn />
+        </div>
+      )
+    }
   ];
   conditions.forEach((condition, idx) => {
     result = result.concat(experimentBlock(idx, condition));
@@ -146,10 +239,18 @@ function getScreens(conditions: string[]) {
 let baseConditions = ["norecs", "general", "specific"];
 
 export function createTaskState(clientId: string) {
+  let conditionOrder = seededShuffle(`${clientId}-conditions`, baseConditions);
+
+  // Repeat conditions.
+  let conditions = [];
+  for (let i = 0; i < 4; i++) {
+    conditions = [...conditions, ...conditionOrder];
+  }
+
   return new IOTaskState.MasterStateStore({
     clientId,
     getScreens,
-    baseConditions,
+    conditions,
     baseStimuli,
     timeEstimate: "20 minutes"
   });
@@ -158,6 +259,13 @@ export function createTaskState(clientId: string) {
 export function screenToView(screenDesc: Screen) {
   if (screenDesc.type === "survey") {
     return React.createElement(Survey, screenDesc.props);
+  }
+  if (screenDesc.type === "experiment") {
+    let instructions = React.createElement(screenDesc.instructions);
+    return <Views.ExperimentScreen instructions={instructions} />;
+  }
+  if (screenDesc.view) {
+    return React.createElement(screenDesc.view);
   }
   let screenName = screenDesc.screen;
   console.assert(screenName in Views);

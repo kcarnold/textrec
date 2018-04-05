@@ -50,23 +50,8 @@ export const TutorialInstructions = inject('state', 'dispatch')(observer(({state
 export const TranscribeTask = inject('state', 'dispatch')(observer(({state, dispatch}) => {
   let phrase = state.experimentState.transcribe;
   return <div>
-    <p><b>Warm-up!</b></p>
-    <p>For technical reasons, we have to use a special keyboard for this study. We'll type a few news headlines to start off so you get used to it.</p>
-    <p><b>Type this:</b><br/>
-    <div style={{background: 'white'}}>
-      {phrase}
-    </div></p>
-    <NextBtn />
   </div>;
 }));
-
-export const TaskDescription = () => <div>
-  <p>In this study we're going to be writing headlines from news stories. You already typed a few of them during the warm-up.</p>
-
-  <p>You will read a news article, then write a headline of 75 words or less.</p>
-
-<NextBtn />
-  </div>;
 
 export const Welcome = inject('state')(observer(({state}) => <div>
     {SITE_DOWN && <h1 style={{paddingBottom: "2500px"}}>Site down for maintenance, please try again in a few hours.</h1>}
@@ -85,27 +70,6 @@ export const Instructions = inject('state')(observer(({state}) => <div>
     <p>Tap Next when you're ready to start.<br/><br/><NextBtn /></p></div>
 ));
 
-const urlForImage = (content) => {
-  console.assert(content.length === 12);
-  return `http://images.cocodataset.org/train2017/${content}.jpg`
-}
-
-export const StimulusView = ({stimulus}) => {
-  if (stimulus.type === 'doc') {
-    return <div
-      style={{whiteSpace: 'pre-line', background: 'white', margin: '5px 2px'}}>
-      {stimulus.content}
-    </div>
-  } else if (stimulus.type === 'img') {
-    return <div><img src={urlForImage(stimulus.content)} style={{width: '100%'}}/></div>;
-  }
-};
-
-export const SummaryInstructions = inject('state')(observer(({state}) => <div>
-  Write the most specific description you can for the image below. After you're done, click here: <NextBtn disabled={state.experimentState.wordCount < 10} />
-  <StimulusView stimulus={state.experimentState.stimulus} />
-  </div>));
-
 
 const ExperimentHead = inject('state', 'spying')(observer(class ExperimentHead extends Component {
   componentDidMount() {
@@ -115,27 +79,13 @@ const ExperimentHead = inject('state', 'spying')(observer(class ExperimentHead e
   }
 
   render() {
-    let {state} = this.props;
-    let instructionsScreens = {
-      PracticeWord: PracticeWord,
-      TranscribeTask: TranscribeTask,
-      TutorialInstructions: TutorialInstructions,
-      SummaryInstructions: SummaryInstructions,
-    }
-    let instructionsScreenName = state.curScreen.instructionsScreen;
-    let instructionEltProto;
-    console.assert(instructionsScreenName in instructionsScreens, instructionsScreenName);
-    instructionEltProto = instructionsScreens[instructionsScreenName];
-    let instructionElt = React.createElement(
-      instructionEltProto,
-      {ref: elt => this.ref = elt});
-    return <div className="header scrollable">
-      <div style={{padding: '5px'}}>{instructionElt}</div>
+    return <div className="header scrollable" ref={elt => this.ref = elt}>
+      <div style={{padding: '5px'}}>{this.props.instructions}</div>
     </div>;
   }
 }));
 
-export const ExperimentScreen = inject('state', 'dispatch')(observer(({state, dispatch}) => {
+export const ExperimentScreen = inject('state', 'dispatch')(observer(({state, dispatch, instructions}) => {
       let {experimentState} = state;
       let {showReplacement, showPredictions, showSynonyms} = state.experimentState;
       if (state.phoneSize.width > state.phoneSize.height) {
@@ -143,7 +93,7 @@ export const ExperimentScreen = inject('state', 'dispatch')(observer(({state, di
       }
 
       return <div className="ExperimentScreen">
-        <ExperimentHead key={state.curScreen.instructionsScreen} />
+        <ExperimentHead instructions={instructions} />
         {showSynonyms &&
           <SuggestionsBar
             which="synonyms"

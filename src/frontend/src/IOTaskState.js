@@ -87,16 +87,13 @@ export class MasterStateStore {
   demoConditionName: string;
 
   doInit(configName: string) {
-    this.conditions = seededShuffle(
-      `${this.clientId}-conditions`,
-      this.config.baseConditions
-    );
     this.screenNum = 0;
   }
 
   constructor(config: Config) {
     this.clientId = config.clientId;
     this.config = config;
+    this.conditions = config.conditions;
 
     let isDemo = (this.clientId || "").slice(0, 4) === "demo";
     this.isDemo = isDemo;
@@ -127,7 +124,6 @@ export class MasterStateStore {
       replaying: true,
       screenNum: null,
       block: null,
-      conditions: null,
       conditionName: null,
       experiments: M.observable.shallowMap({}),
       curExperiment: null,
