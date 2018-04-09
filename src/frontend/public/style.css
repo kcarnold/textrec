@@ -71,6 +71,7 @@ html, body {
     background: #ccc;
     position: relative;
     border-top: 1px solid black;
+    user-select: none;
 }
 
 .CurText > span {
