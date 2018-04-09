@@ -15,7 +15,7 @@ import onmt.opts as opts
 
 # HACK!!
 import sys
-sys.modules['onmt.modules.VecsEncoder'].override_h5_filename = '/Users/kcarnold/code/OpenNMT-py/train36_small.hdf5'
+sys.modules['onmt.modules.VecsEncoder'].override_h5_filename = str(paths.models / 'trainval_feats.small.h5')
 
 class ONMTModelWrapper:
     def __init__(self, model_filename, cmdline_args):
