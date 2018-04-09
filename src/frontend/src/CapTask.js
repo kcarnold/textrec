@@ -73,8 +73,8 @@ export const StimulusView = ({ stimulus }) => {
 
 const SummaryInstructions = iobs(({ state }) => (
   <div>
-    Write the most specific description you can for the image below. After
-    you're done, click here:{" "}
+    Write the most specific description you can for the image below. Write only a single sentence. After
+    you're done, tap here:{" "}
     <NextBtn disabled={state.experimentState.wordCount < 10} />
     <StimulusView stimulus={state.experimentState.stimulus} />
   </div>
