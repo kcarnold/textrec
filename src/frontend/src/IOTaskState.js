@@ -141,20 +141,9 @@ export class MasterStateStore {
       pingTime: null,
       get screens() {
         if (isDemo) {
-          return [
-            {
-              preEvent: {
-                type: "setupExperiment",
-                block: 0,
-                condition: this.demoConditionName,
-                name: "demo"
-              },
-              screen: "ExperimentScreen",
-              instructionsScreen: "SummaryInstructions"
-            }
-          ];
+          return this.config.getScreens([this.demoConditionName], true);
         }
-        return this.config.getScreens(this.conditions);
+        return this.config.getScreens(this.conditions, false);
       },
       get curScreen() {
         return this.screens[this.screenNum];

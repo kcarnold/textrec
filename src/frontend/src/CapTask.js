@@ -137,7 +137,23 @@ function experimentBlock(block: number, conditionName: string): Array<Screen> {
   ];
 }
 
-function getScreens(conditions: string[]) {
+function getScreens(conditions: string[], isDemo: boolean) {
+  if (isDemo) {
+    console.assert(conditions.length === 1);
+    let condition = conditions[0];
+    return [{
+      preEvent: {
+        type: "setupExperiment",
+        block: 0,
+        condition,
+        name: `final-0`
+      },
+      screen: "ExperimentScreen",
+      type: "experiment",
+      instructions: SummaryInstructions
+    }];
+  }
+
   let tutorials = tutorialStimuli.map(({ stimulus, transcribe }, idx) => ({
     preEvent: {
       type: "setupExperiment",
@@ -150,6 +166,7 @@ function getScreens(conditions: string[]) {
       }
     },
     screen: "ExperimentScreen",
+    type: "experiment",
     instructions: iobs(({ state }) => (
       <div>
         <p>
@@ -157,7 +174,7 @@ function getScreens(conditions: string[]) {
         </p>
         <p>
           For technical reasons, we have to use a special keyboard for this
-          study. We'll type a few news headlines to start off so you get used to
+          study. We'll type a few captions to start off so you get used to
           it.
         </p>
         <p>
