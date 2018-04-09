@@ -87,23 +87,16 @@ const ExperimentHead = inject('state', 'spying')(observer(class ExperimentHead e
 
 export const ExperimentScreen = inject('state', 'dispatch')(observer(({state, dispatch, instructions}) => {
       let {experimentState} = state;
-      let {showReplacement, showPredictions, showSynonyms} = state.experimentState;
       if (state.phoneSize.width > state.phoneSize.height) {
         return <h1>Please rotate your phone to be in the portrait orientation.</h1>;
       }
 
       return <div className="ExperimentScreen">
         <ExperimentHead instructions={instructions} />
-        {showSynonyms &&
-          <SuggestionsBar
-            which="synonyms"
-            suggestions={experimentState.visibleSuggestions["synonyms"]}
-            beforeText={""}
-          />}
-        <CurText text={experimentState.curText} replacementRange={showReplacement && experimentState.visibleSuggestions['replacement_range']} />
-        {state.condition.alternatives ? <AlternativesBar /> : <div>
-          {showPredictions && <SuggestionsBar which="predictions" suggestions={experimentState.visibleSuggestions['predictions']} showPhrase={state.condition.showPhrase} />}
-        </div>}
+        <CurText text={experimentState.curText} />
+        <div>
+          {(!state.condition.hideRecs) && <SuggestionsBar which="predictions" suggestions={experimentState.visibleSuggestions['predictions']} showPhrase={state.condition.showPhrase} />}
+        </div>
         <Keyboard dispatch={dispatch} />
       </div>;
     }));
