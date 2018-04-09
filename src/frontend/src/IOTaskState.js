@@ -99,7 +99,7 @@ export class MasterStateStore {
     this.isDemo = isDemo;
     this.demoConditionName = this.clientId.slice(4);
 
-    this.stimuli = seededShuffle(
+    this.stimuli = isDemo ? this.config.baseStimuli.slice() : seededShuffle(
       `${this.clientId}-stimuli`,
       this.config.baseStimuli
     );
