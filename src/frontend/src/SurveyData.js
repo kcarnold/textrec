@@ -201,7 +201,7 @@ export const closingSurveyQuestions = [
     options: ["Basic", "Conversational", "Fluent", "Native or bilingual"],
   },
 
-  ...personalityBlock(4),
+  // ...personalityBlock(4),
 
   {
     text:
