@@ -41,14 +41,13 @@ let tutorialStimuli = [
   },
   {
     stimulus: { type: "img", content: "000000459515" },
-    transcribe:
-      "a grilled pizza with chicken, broccoli and cheese."
+    transcribe: "a grilled pizza with chicken, broccoli and cheese."
   }
 ];
 
 const urlForImage = content => {
   console.assert(content.length === 12);
-  return `http://images.cocodataset.org/train2017/${content}.jpg`
+  return `http://images.cocodataset.org/train2017/${content}.jpg`;
   // return `http://visualqa.org/data/abstract_v002/scene_img/img/${content}.png`;
 };
 
@@ -76,8 +75,8 @@ export const StimulusView = ({ stimulus }) => {
 
 const SummaryInstructions = iobs(({ state }) => (
   <div>
-    Write the most specific description you can for the image below. Write only a single sentence. After
-    you're done, tap here:{" "}
+    Write the most specific description you can for the image below. Write only
+    a single sentence. After you're done, tap here:{" "}
     <NextBtn disabled={state.experimentState.wordCount < 10} />
     <StimulusView stimulus={state.experimentState.stimulus} />
   </div>
@@ -144,17 +143,19 @@ function getScreens(conditions: string[], isDemo: boolean) {
   if (isDemo) {
     console.assert(conditions.length === 1);
     let condition = conditions[0];
-    return [{
-      preEvent: {
-        type: "setupExperiment",
-        block: 0,
-        condition,
-        name: `final-0`
-      },
-      screen: "ExperimentScreen",
-      type: "experiment",
-      instructions: SummaryInstructions
-    }];
+    return [
+      {
+        preEvent: {
+          type: "setupExperiment",
+          block: 0,
+          condition,
+          name: `final-0`
+        },
+        screen: "ExperimentScreen",
+        type: "experiment",
+        instructions: SummaryInstructions
+      }
+    ];
   }
 
   let tutorials = tutorialStimuli.map(({ stimulus, transcribe }, idx) => ({
@@ -177,8 +178,7 @@ function getScreens(conditions: string[], isDemo: boolean) {
         </p>
         <p>
           For technical reasons, we have to use a special keyboard for this
-          study. We'll type a few captions to start off so you get used to
-          it.
+          study. We'll type a few captions to start off so you get used to it.
         </p>
         <p>
           <b>Type this:</b>
@@ -211,7 +211,7 @@ function getScreens(conditions: string[], isDemo: boolean) {
             responseType: "options",
             name: "use_predictive",
             options: ["Yes", "No"]
-          },
+          }
 
           // ...personalityBlock(0)
         ]
