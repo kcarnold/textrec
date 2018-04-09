@@ -17,36 +17,36 @@ import { seededShuffle } from "./shuffle";
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
 let baseStimuli = [
-  { type: "img", content: "0" },
-  { type: "img", content: "1" },
-  { type: "img", content: "2" },
-  { type: "img", content: "3" },
-  { type: "img", content: "4" },
-  { type: "img", content: "5" },
-  { type: "img", content: "6" },
-  { type: "img", content: "7" },
-  { type: "img", content: "8" },
-  { type: "img", content: "9" },
-  { type: "img", content: "10" },
-  { type: "img", content: "11" }
+  { type: "img", content: "000000150367" },
+  { type: "img", content: "000000524881" },
+  { type: "img", content: "000000127298" },
+  { type: "img", content: "000000232689" },
+  { type: "img", content: "000000283426" },
+  { type: "img", content: "000000275075" },
+  { type: "img", content: "000000107610" },
+  { type: "img", content: "000000093272" },
+  { type: "img", content: "000000218224" },
+  { type: "img", content: "000000138629" },
+  { type: "img", content: "000000306670" },
+  { type: "img", content: "000000165203" }
 ];
 
 let tutorialStimuli = [
   {
-    stimulus: { type: "img", content: "1228" },
-    transcribe: "a father and daughter playing football on a sunny day."
+    stimulus: { type: "img", content: "000000416308" },
+    transcribe: "a group of people on a beach preparing to paraglide."
   },
   {
-    stimulus: { type: "img", content: "0000000216407" },
+    stimulus: { type: "img", content: "000000459515" },
     transcribe:
-      "a woman sitting on a sofa watching a mouse run across the floor."
+      "a grilled pizza with chicken, broccoli and cheese."
   }
 ];
 
 const urlForImage = content => {
-  // console.assert(content.length === 12);
-  // return `http://images.cocodataset.org/train2017/${content}.jpg`
-  return `http://visualqa.org/data/abstract_v002/scene_img/img/${content}.png`;
+  console.assert(content.length === 12);
+  return `http://images.cocodataset.org/train2017/${content}.jpg`
+  // return `http://visualqa.org/data/abstract_v002/scene_img/img/${content}.png`;
 };
 
 export const StimulusView = ({ stimulus }) => {
