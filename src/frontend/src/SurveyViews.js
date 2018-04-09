@@ -2,6 +2,8 @@ import React from "react";
 import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
 import { observer, inject } from "mobx-react";
 import { NextBtn } from "./BaseViews";
+import classNames from 'classnames';
+
 
 export function likert(name, text, degrees, labels) {
   let options = [];
@@ -18,18 +20,17 @@ export function likert(name, text, degrees, labels) {
   };
 }
 
-function TextResponse({ basename, question }) {
+function TextResponse({ name, question }) {
   return (
     <ControlledInput
-      name={`${basename}-${question.name}`}
+      name={name}
       {...question.flags || {}}
     />
   );
 }
 
-function StarRating({ basename, question }) {
-  let { name } = question;
-  return <ControlledStarRating name={`${basename}-${name}`} />;
+function StarRating({ name }) {
+  return <ControlledStarRating name={name} />;
 }
 
 export const OptionsResponse = inject("dispatch", "state", "spying")(
@@ -37,10 +38,9 @@ export const OptionsResponse = inject("dispatch", "state", "spying")(
     state,
     dispatch,
     spying,
-    basename,
+    name,
     question,
   }) {
-    let name = `${basename}-${question.name}`;
     let choice = state.controlledInputs.get(name) || "";
     function change(newVal) {
       dispatch({ type: "controlledInputChanged", name, value: newVal });
@@ -79,10 +79,9 @@ export const LikertResponse = inject("dispatch", "state", "spying")(
     state,
     dispatch,
     spying,
-    basename,
+    name,
     question,
   }) {
-    let name = `${basename}-${question.name}`;
     let choice = state.controlledInputs.get(name);
     function change(newVal) {
       dispatch({ type: "controlledInputChanged", name, value: newVal });
@@ -118,15 +117,22 @@ const responseTypes = {
   likert: LikertResponse,
 };
 
-function Question({ basename, question }) {
+const Question = inject("state")(observer(({ basename, question, state }) => {
   let responseType = null;
+  let responseVarName = null;
+  let responseClass = null;
   if (question.responseType) {
     console.assert(question.responseType in responseTypes);
     responseType = responseTypes[question.responseType];
+    responseVarName = `${basename}-${question.name}`;
+    responseClass = (
+      state.controlledInputs.get(responseVarName) !== undefined
+      ? 'complete'
+      : 'missing');
   }
   return (
     <div
-      className="Question"
+      className={classNames("Question", responseClass)}
       style={{
         margin: "5px",
         borderTop: "3px solid #aaa",
@@ -137,10 +143,10 @@ function Question({ basename, question }) {
         {question.text}
       </div>
       {responseType &&
-        React.createElement(responseType, { basename, question })}
+        React.createElement(responseType, { question, name: responseVarName })}
     </div>
   );
-}
+}));
 
 export const Survey = ({ title, basename, questions }) =>
   <div className="Survey">

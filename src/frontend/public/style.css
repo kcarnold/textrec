@@ -323,6 +323,31 @@ span.word {
   width: 100%;
 }
 
+
+@keyframes complete {
+  from, to {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(.75);
+  }
+}
+
+
+.Question.missing {
+  /*background: hsl(0, 81%, 94%);*/
+  /*border-left: 2px dashed red;*/
+  border-left: 2px solid transparent;
+}
+
+.Question.complete {
+  border-left: 2px solid green;
+ /*hsl(150, 77%, 95%);*/
+  /*opacity: .7;*/
+  animation: complete 0.25s;
+}
+
 .missed-attn-check {
     color: red;
     padding: 0 10px;
