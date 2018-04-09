@@ -16,6 +16,9 @@ import { seededShuffle } from "./shuffle";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
+
+const TRIALS_PER_CONDITION = 2;
+
 let baseStimuli = [
   { type: "img", content: "000000150367" },
   { type: "img", content: "000000524881" },
@@ -23,12 +26,12 @@ let baseStimuli = [
   { type: "img", content: "000000232689" },
   { type: "img", content: "000000283426" },
   { type: "img", content: "000000275075" },
-  { type: "img", content: "000000107610" },
-  { type: "img", content: "000000093272" },
-  { type: "img", content: "000000218224" },
-  { type: "img", content: "000000138629" },
-  { type: "img", content: "000000306670" },
-  { type: "img", content: "000000165203" }
+  // { type: "img", content: "000000107610" },
+  // { type: "img", content: "000000093272" },
+  // { type: "img", content: "000000218224" },
+  // { type: "img", content: "000000138629" },
+  // { type: "img", content: "000000306670" },
+  // { type: "img", content: "000000165203" },
 ];
 
 let tutorialStimuli = [
@@ -260,7 +263,7 @@ export function createTaskState(clientId: string) {
 
   // Repeat conditions.
   let conditions = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < TRIALS_PER_CONDITION; i++) {
     conditions = [...conditions, ...conditionOrder];
   }
 
