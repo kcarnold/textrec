@@ -129,7 +129,7 @@ function experimentBlock(block: number, conditionName: string): Array<Screen> {
           ...systemQuestions,
           { text: <b>Cognitive Load</b> },
           ...tlxQuestions,
-          ...personalityBlock(block + 1),
+          // ...personalityBlock(block + 1),
           ...miscQuestions
         ]
       }
@@ -210,7 +210,7 @@ function getScreens(conditions: string[], isDemo: boolean) {
             options: ["Yes", "No"]
           },
 
-          ...personalityBlock(0)
+          // ...personalityBlock(0)
         ]
       }
     },
