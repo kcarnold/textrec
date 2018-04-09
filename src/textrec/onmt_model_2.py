@@ -99,11 +99,12 @@ class ONMTModelWrapper:
             tgt_in = Variable(
                 torch.LongTensor(partial_vec) # [tgt_len]
                 .unsqueeze(1) # [tgt_len x batch=1]
-                .unsqueeze(1) # [tgt_len x batch=1 x nfeats=1]
+                .unsqueeze(1), # [tgt_len x batch=1 x nfeats=1]
+                volatile=True
                 )
 
             dec_out, dec_states, attn = translator.model.decoder(
-                tgt_in, memory_bank, initial_dec_states,)
+                tgt_in, memory_bank, initial_dec_states)
 
             assert dec_out.shape[0] == len(partial)
             dec_out = dec_out[-1:, :, :]
