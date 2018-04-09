@@ -16,7 +16,6 @@ import { seededShuffle } from "./shuffle";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
-
 const TRIALS_PER_CONDITION = 2;
 
 let baseStimuli = [
@@ -25,7 +24,7 @@ let baseStimuli = [
   { type: "img", content: "000000127298" },
   { type: "img", content: "000000232689" },
   { type: "img", content: "000000283426" },
-  { type: "img", content: "000000275075" },
+  { type: "img", content: "000000275075" }
   // { type: "img", content: "000000107610" },
   // { type: "img", content: "000000093272" },
   // { type: "img", content: "000000218224" },
@@ -178,10 +177,26 @@ function getScreens(conditions: string[], isDemo: boolean) {
         </p>
         <p>
           For technical reasons, we have to use a special keyboard for this
-          study. We'll type a few captions to start off so you get used to it.
+          study. A few quick notes about the keyboard:
         </p>
+        <ul>
+          <li>It's simplified: no caps, and only a few extra symbols.</li>
+          <li>
+            You can't edit text you've already entered, other than by deleting
+            and retyping it. Sorry.
+          </li>
+          <li>Autocorrect doesn't work. Please try to avoid typos.</li>
+          <li>
+            <b>but</b>, on the upside, there are some special things about the
+            predictive typing! The predictive typing will work a little
+            differently in different parts of the study.
+          </li>
+        </ul>
         <p>
-          <b>Type this:</b>
+          <b>
+            We'll type a few sentences to start off so you get used to it. Type
+            this:
+          </b>
           <br />
           <div style={{ background: "white" }}>
             {state.experimentState.transcribe}
