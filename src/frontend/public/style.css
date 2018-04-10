@@ -423,6 +423,11 @@ span.replaceHighlight {
     background: #87cc87;
 }
 
+
+.Survey {
+  padding-bottom: 20px;
+}
+
 /** Show scrollbars on instructions: https://stackoverflow.com/questions/22907777/make-scrollbar-visible-in-mobile-browsers **/
 
 .scrollable::-webkit-scrollbar {
