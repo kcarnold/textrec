@@ -195,6 +195,8 @@ export function processLogGivenState(state, log) {
     let pageData = byExpPage[pageName];
     let expState = state.experiments.get(pageName);
     pageData.finalText = expState.curText;
+    pageData.stimulus = expState.stimulus;
+    pageData.flags = expState.flags;
     if (pageData.displayedSuggs[pageData.displayedSuggs.length - 1]) {
       pageData.displayedSuggs[pageData.displayedSuggs.length - 1].action = {
         type: "next",
