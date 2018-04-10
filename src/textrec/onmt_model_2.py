@@ -13,6 +13,8 @@ import onmt.ModelConstructor
 import onmt.modules
 import onmt.opts as opts
 
+from functools import lru_cache
+
 # HACK!!
 import sys
 sys.modules['onmt.modules.VecsEncoder'].override_h5_filename = str(paths.models / 'trainval_feats.small.h5')
@@ -24,13 +26,15 @@ class ONMTModelWrapper:
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         opts.add_md_help_argument(parser)
         opts.translate_opts(parser)
-        opt = parser.parse_args(['-model', model_filename, '-src', ''] + (cmdline_args or []))
+        opt = parser.parse_args(
+            ['-model', model_filename, '-src', ''] + (cmdline_args or []))
 
         dummy_parser = argparse.ArgumentParser(description='train.py')
         opts.model_opts(dummy_parser)
         dummy_opt = dummy_parser.parse_args([])
         fields, model, model_opt = \
             onmt.ModelConstructor.load_test_model(opt, dummy_opt.__dict__)
+        tgt_vocab = fields["tgt"].vocab
 
         opt.cuda = False
 
@@ -50,6 +54,7 @@ class ONMTModelWrapper:
             min_length=opt.min_length,
             stepwise_penalty=opt.stepwise_penalty)
 
+        @lru_cache(maxsize=32)
         def encode(in_text):
             with codecs.open("tmp.txt", "w", "utf-8") as f:
                 f.write(in_text + "\n")
@@ -83,34 +88,34 @@ class ONMTModelWrapper:
                 src=src)
 
 
-        def generate_completions(encoder_out, partial):
+        @lru_cache(maxsize=128)
+        def get_decoder_state(in_text, tokens_so_far):
+            encoder_out = encode(in_text)
             enc_states = encoder_out['enc_states']
             memory_bank = encoder_out['memory_bank']
             src = encoder_out['src']
 
-            initial_dec_states = translator.model.decoder.init_decoder_state(
-                src, memory_bank, enc_states)
+            if len(tokens_so_far) == 0:
+                return None, translator.model.decoder.init_decoder_state(
+                    src, memory_bank, enc_states)
 
-            tgt_vocab = fields["tgt"].vocab
+            prev_out, prev_state = get_decoder_state(in_text, tokens_so_far[:-1])
 
-            partial_vec = [tgt_vocab.stoi[tok] for tok in partial]
-
-            # Feed the states so far into the decoder.
             tgt_in = Variable(
-                torch.LongTensor(partial_vec) # [tgt_len]
-                .unsqueeze(1) # [tgt_len x batch=1]
-                .unsqueeze(1), # [tgt_len x batch=1 x nfeats=1]
-                volatile=True
-                )
+                torch.LongTensor([tgt_vocab.stoi[tokens_so_far[-1]]]),
+                volatile=True) # [tgt_len]
+            tgt_in = tgt_in.unsqueeze(1)  # [tgt_len x batch=1]
+            tgt_in = tgt_in.unsqueeze(1)  # [tgt_len x batch=1 x nfeats=1]
 
             dec_out, dec_states, attn = translator.model.decoder(
-                tgt_in, memory_bank, initial_dec_states)
+                tgt_in, memory_bank, prev_state)
 
-            assert dec_out.shape[0] == len(partial)
-            dec_out = dec_out[-1:, :, :]
+            assert dec_out.shape[0] == 1
+            return dec_out[0], dec_states
 
-            dec_out = dec_out.squeeze(0)
-
+        def generate_completions(in_text, tokens_so_far):
+            tokens_so_far = tuple(tokens_so_far) # Make it hashable
+            dec_out, dec_states = get_decoder_state(in_text, tokens_so_far)
             logits = model.generator.forward(dec_out).data
             vocab = tgt_vocab.itos
 
@@ -166,10 +171,10 @@ for name, spec in model_specs.items():
 print("Ready.")
 
 
-def get_recs(model_name, encoder_state, tokens_so_far, *, prefix=None):
+def get_recs(model_name, in_text, tokens_so_far, *, prefix=None):
     wrapper = models[model_name]
     logits, vocab = wrapper.generate_completions(
-        encoder_state, [onmt.io.BOS_WORD] + tokens_so_far)
+        in_text, [onmt.io.BOS_WORD] + tokens_so_far)
     return get_top_k(logits, vocab, k=3, prefix=prefix)
 
 

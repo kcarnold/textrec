@@ -1,3 +1,4 @@
+from functools import lru_cache
 # from . import onmt_model
 from . import onmt_model_2
 
@@ -12,14 +13,10 @@ mtokenizer = MosesTokenizer()
 def tokenize(text):
     return mtokenizer.tokenize(text)
 
-encoder_states = {}
-def get_encoder_state(model_name_and_stimulus):
-    if model_name_and_stimulus not in encoder_states:
-        model_name, stimulus = model_name_and_stimulus
-        tokenized = ' '.join(tokenize(stimulus))
-        encoder_state = onmt_model_2.models[model_name].encode(tokenized)
-        encoder_states[model_name_and_stimulus] = encoder_state
-    return encoder_states[model_name_and_stimulus]
+
+@lru_cache()
+def tokenize_stimulus(stimulus):
+    return ' '.join(tokenize(stimulus))
 
 
 def handle_request_async(request):
@@ -43,8 +40,8 @@ def handle_request_async(request):
             model_name = 'coco_cap'
             stimulus_content = str(image_id2idx[int(stimulus['content'])])
 
-    encoder_state = get_encoder_state((model_name, stimulus_content))
+    in_text = tokenize_stimulus(stimulus_content)
     tokens = tokenize(request['sofar'])
-    recs = onmt_model_2.get_recs(model_name, encoder_state, tokens, prefix=prefix)
+    recs = onmt_model_2.get_recs(model_name, in_text, tokens, prefix=prefix)
     recs_wrapped = [dict(words=[word], meta=None) for word in recs]
     return dict(predictions=recs_wrapped, request_id=request_id)
