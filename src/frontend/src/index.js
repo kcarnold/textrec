@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 import * as Wrapper from "./Wrapper";
+import getApp from './Apps';
 
 import Raven from "raven-js";
 if (process.env.NODE_ENV === "production") {
@@ -10,15 +11,6 @@ if (process.env.NODE_ENV === "production") {
       release: process.env.REACT_APP_GIT_REV
     })
     .install();
-}
-
-function getApp(config) {
-  if (config === "sum") {
-    // Configure for summarization.
-    return require("./SumTask");
-  } else if (config === "cap") {
-    return require("./CapTask");
-  }
 }
 
 let topLevel;
