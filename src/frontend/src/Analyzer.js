@@ -1,10 +1,9 @@
 import _ from "lodash";
 
-const INCOMPLETE_BUT_OK = "hfj33r".split(/s/);
+const INCOMPLETE_BUT_OK = "".split(/s/);
 
-export function processLogGivenStateStore(StateStoreClass, log) {
+export function processLogGivenState(state, log) {
   let { participant_id } = log[0];
-  let state = new StateStoreClass(participant_id);
   let byExpPage = {};
   let pageSeq = [];
   let requestsByTimestamp = {};
@@ -15,7 +14,6 @@ export function processLogGivenStateStore(StateStoreClass, log) {
       let pageData = {
         displayedSuggs: [],
         condition: state.conditionName,
-        place: state.curPlace,
         finalText: "",
         actions: [],
         annotatedFinalText: [],
@@ -46,8 +44,8 @@ export function processLogGivenStateStore(StateStoreClass, log) {
       entry.msg.request_id === (state.experimentState || {}).contextSequenceNum;
 
     // Track requests
-    if (entry.kind === "meta" && entry.type === "requestSuggestions") {
-      let msg = _.clone(entry.request);
+    if (entry.kind === "meta" && entry.type === "rpc") {
+      let msg = _.clone(entry.request.rpc);
       let requestCurText =
         msg.sofar + msg.cur_word.map(ent => ent.letter).join("");
       requestsByTimestamp[msg.timestamp] = { request: msg, response: null };
@@ -103,7 +101,7 @@ export function processLogGivenStateStore(StateStoreClass, log) {
       [
         "connected",
         "init",
-        "requestSuggestions",
+        "rpc",
         "receivedSuggestions",
         "next",
       ].indexOf(entry.type) === -1
@@ -274,21 +272,23 @@ function getRev(log) {
   for (let i = 0; i < log.length; i++) {
     let entry = log[i];
     if ("rev" in entry) {
-      return entry["rev"];
+      return entry["rev"]
     }
   }
 }
 
-async function getStateStoreClass(log) {
+async function getState(log) {
+  let { participant_id, config } = log[0];
   let rev = getRev(log);
-  return (await import(`../../old-code/${rev}/frontend/src/MasterStateStore`))
-    .MasterStateStore;
+  let getApp = (await import(`../../../old-code/${rev}/src/Apps`)).default;
+  let {createTaskState} = getApp(config)
+  return createTaskState(participant_id);
 }
 
 export async function analyzeLog(log) {
-  let stateStoreClass = await getStateStoreClass(log);
+  let state = await getState(log);
   try {
-    return processLogGivenStateStore(stateStoreClass, log);
+    return processLogGivenState(state, log);
   } catch (e) {
     console.log(e, e.stack);
     throw(e);
