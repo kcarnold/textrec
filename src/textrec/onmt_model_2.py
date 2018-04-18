@@ -6,9 +6,9 @@ import torch
 
 from torch.autograd import Variable
 
-import onmt.io
-import onmt.translate
 import onmt
+import onmt.io
+from onmt.translate.Translator import make_translator
 import onmt.ModelConstructor
 import onmt.modules
 import onmt.opts as opts
@@ -18,6 +18,24 @@ from functools import lru_cache
 # HACK!!
 import sys
 sys.modules['onmt.modules.VecsEncoder'].override_h5_filename = str(paths.models / 'trainval_feats.small.h5')
+
+def main(opt):
+    translator = make_translator(opt, report_score=True)
+    translator.translate(opt.src_dir, opt.src, opt.tgt,
+                         opt.batch_size, opt.attn_debug)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='translate.py',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    onmt.opts.add_md_help_argument(parser)
+    onmt.opts.translate_opts(parser)
+
+    opt = parser.parse_args()
+    main(opt)
+
+
 
 class ONMTModelWrapper:
     def __init__(self, model_filename, cmdline_args):
@@ -29,30 +47,11 @@ class ONMTModelWrapper:
         opt = parser.parse_args(
             ['-model', model_filename, '-src', ''] + (cmdline_args or []))
 
-        dummy_parser = argparse.ArgumentParser(description='train.py')
-        opts.model_opts(dummy_parser)
-        dummy_opt = dummy_parser.parse_args([])
-        fields, model, model_opt = \
-            onmt.ModelConstructor.load_test_model(opt, dummy_opt.__dict__)
+        translator = make_translator(opt)
+        model = translator.model
+        fields = translator.fields
         tgt_vocab = fields["tgt"].vocab
 
-        opt.cuda = False
-
-        scorer = onmt.translate.GNMTGlobalScorer(opt.alpha,
-                                                 opt.beta,
-                                                 opt.coverage_penalty,
-                                                 opt.length_penalty)
-        translator = onmt.translate.Translator(
-            model, fields,
-            beam_size=opt.beam_size,
-            n_best=opt.n_best,
-            global_scorer=scorer,
-            max_length=opt.max_length,
-            copy_attn=model_opt.copy_attn,
-            cuda=opt.cuda,
-            beam_trace=opt.dump_beam != "",
-            min_length=opt.min_length,
-            stepwise_penalty=opt.stepwise_penalty)
 
         @lru_cache(maxsize=32)
         def encode(in_text):
@@ -123,6 +122,9 @@ class ONMTModelWrapper:
             logits = logits[0]
             return logits, vocab
 
+        self.model = model
+        self.fields = fields
+        self.translator = translator
         self.encode = encode
         self.generate_completions = generate_completions
 
@@ -153,12 +155,13 @@ model_specs = {
   #   args=''),
   'coco_lm': dict(
     #filename='coco_lm_acc_44.56_ppl_18.76_e20.pt',
-    filename='coco_lm_acc_44.84_ppl_17.58_e20.pt',
+    # filename='coco_lm_acc_44.84_ppl_17.58_e20.pt',
+    filename='coco_lm_adam_acc_46.00_ppl_16.32_e10_nooptim.pt',
     args='',),
   'coco_cap': dict(
-    filename='coco_cap_2_acc_42.97_ppl_18.83_e20.pt',
+    # filename='coco_cap_2_acc_42.97_ppl_18.83_e20.pt',
+    filename='coco_cap_adam_acc_48.73_ppl_12.56_e10_nooptim.pt',
     args='-data_type vecs',
-    # h5_filename='/Users/kcarnold/code/OpenNMT-py-me/train36_small.hdf5'
     )
 }
 models = dict()
