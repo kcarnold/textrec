@@ -283,7 +283,7 @@ def beam_search_phrases_init(model, start_words, **kw):
     return [(0., [], False, start_state, model.model.vocab_index(start_words[-1]), 0, None)]
 
 
-def beam_search_phrases_extend(model, beam, *, beam_width, iteration_num, length_after_first, prefix_logprobs=None, bonus_words={}):
+def beam_search_phrases_extend(model, beam, *, iteration_num, beam_width, length_after_first, prefix_logprobs=None, bonus_words={}):
     if isinstance(model, str):
         model = get_model(model)
 
