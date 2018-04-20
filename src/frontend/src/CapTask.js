@@ -2,6 +2,7 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
 
+import flatMap from 'lodash/flatMap';
 import * as IOTaskState from "./IOTaskState";
 import * as Views from "./IOViews";
 import { NextBtn } from "./BaseViews";
@@ -53,6 +54,10 @@ let tutorialStimuli = [
   {
     stimulus: { type: "img", content: 459515 },
     transcribe: "a grilled pizza with chicken, broccoli and cheese."
+  },
+  {
+    stimulus: { type: "img", content: 165204 },
+    transcribe: "placeholder fixme", // FIXME!
   }
 ];
 
@@ -125,14 +130,31 @@ function experimentBlock(block: number, conditionName: string, stimuli: Stimulus
     agreeLikert("sys-accurate", "This keyboard design helped me write captions that were very accurate"),
     agreeLikert("sys-fast", "This keyboard design helped me write captions quickly"),
   ];
+  let tutorialStimulus = tutorialStimuli[block];
+
   return [
     {
       screen: "Instructions",
       view: () => <div>
         About to start using
-        <h1>Keyboard {block + 1}</h1>
+        <h1>Keyboard design {block + 1}</h1>
         Tap Next when ready: <NextBtn />
       </div>
+    },
+    {
+      preEvent: {
+        type: "setupExperiment",
+        block: block,
+        condition: "general",
+        name: `practice-${block}`,
+        flags: {
+          ...namedConditions['general'],
+          transcribe: tutorialStimulus.transcribe.toLowerCase(),
+          stimulus: tutorialStimulus.stimulus
+        }
+      },
+      screen: "ExperimentScreen",
+      view: experimentView({instructions: TutorialInstructions(block)})
     },
     ...stimuli.map((stimulus, idx) => ({
         preEvent: {
@@ -168,41 +190,19 @@ function experimentBlock(block: number, conditionName: string, stimuli: Stimulus
   ];
 }
 
-const TutorialInstructions = iobs(({ state }) => (
-      <div>
-        <p>
-          <b>Warm-up!</b>
-        </p>
-        <p>
-          For technical reasons, we have to use a special keyboard for this
-          study. A few quick notes about the keyboard:
-        </p>
-        <ul>
-          <li>It's simplified: no caps, and only a few extra symbols.</li>
-          <li>
-            You can't edit text you've already entered, other than by deleting
-            and retyping it. Sorry.
-          </li>
-          <li>Autocorrect doesn't work. Please try to avoid typos.</li>
-          <li>
-            <b>but</b>, on the upside, there are some special things about the
-            predictive typing! The predictive typing will work a little
-            differently in different parts of the study.
-          </li>
-        </ul>
-        <p>
-          <b>
-            We'll type a few sentences to start off so you get used to it. Type
-            this:
-          </b>
-          <br />
-          <div style={{ background: "white" }}>
-            {state.experimentState.transcribe}
-          </div>
-        </p>
-        <NextBtn />
-      </div>
-    ));
+const TutorialInstructions = block => iobs(({ state }) => (
+    <div>
+      <h1>Practice with Keyboard {block + 1}</h1>
+        <b>
+          Type this:
+        </b>
+        <br />
+        <div style={{ background: "white" }}>
+          {state.experimentState.transcribe}
+        </div>
+      <NextBtn />
+    </div>
+  ));
 
 function getDemoScreens(condition: string, stimulus: Stimulus) {
   return [
@@ -223,58 +223,7 @@ function getDemoScreens(condition: string, stimulus: Stimulus) {
   ];
 }
 
-function getScreens(conditions: string[], stimuli: Stimulus[]) : Screen[] {
-  let tutorials = tutorialStimuli.map(({ stimulus, transcribe }, idx) => ({
-    preEvent: {
-      type: "setupExperiment",
-      block: 0,
-      condition: "general",
-      name: `practice-${idx}`,
-      flags: {
-        ...namedConditions['general'],
-        transcribe: transcribe.toLowerCase(),
-        stimulus
-      }
-    },
-    screen: "ExperimentScreen",
-    view: experimentView({instructions: TutorialInstructions})
-  }));
-
-  // Group stimuli by block.
-  console.assert(stimuli.length === conditions.length * TRIALS_PER_CONDITION);
-  let blocks = conditions.map((condition, idx) => ({
-    condition,
-    stimuli: stimuli.slice(idx * TRIALS_PER_CONDITION).slice(0, TRIALS_PER_CONDITION)
-  }));
-
-  let result = [
-    { controllerScreen: "Welcome", screen: "Welcome" },
-    {
-      screen: "IntroSurvey",
-      view: surveyView({
-        title: "Opening Survey",
-        basename: "intro",
-        questions: [
-          {
-            text:
-              "There will be several short surveys like this as breaks from the writing task."
-          },
-
-          // TODO: should we break this down into prediction, correction, gesture, etc.?
-          {
-            text: "Do you use predictive typing on your phone?",
-            responseType: "options",
-            name: "use_predictive",
-            options: ["Yes", "No"]
-          }
-
-          // ...personalityBlock(0)
-        ]
-      })
-    },
-    {
-      screen: "TaskDescription",
-      view: () => (
+const TaskDescription = () => (
         <div>
           <p>
             In this study we're going to be writing captions for images. The captions should be <b>specific</b> and <b>accurate</b>.
@@ -322,14 +271,66 @@ function getScreens(conditions: string[], stimuli: Stimulus[]) : Screen[] {
 
           <NextBtn />
         </div>
-      )
-    },
-    ...tutorials,
-  ];
-  blocks.forEach((block, idx) => {
-    result = result.concat(experimentBlock(idx, block.condition, block.stimuli));
-  });
-  result = result.concat([
+      );
+
+const StudyDesc = () => <div>
+        <h1>Study Preview</h1>
+
+        <p>You'll use {baseConditions.length} different keyboard designs in this study.</p>
+        <p>For each keyboard design, there will be a practice round to get used to it, then you'll type {TRIALS_PER_CONDITION} captions using it, and finally a short survey.</p>
+        <p>You will type a total of {baseConditions.length * TRIALS_PER_CONDITION} captions.</p>
+
+        <p>Note:</p>
+        <ul>
+          <li>All of the keyboard designs have a simplified key layout: no caps, and only a few extra symbols.</li>
+          <li>
+            You can't edit text you've already entered, other than by deleting
+            and retyping it. Sorry.
+          </li>
+          <li>Autocorrect doesn't work. Please try to avoid typos.</li>
+          <li>At the end, you will be comparing your experiencecs between the different keyboards. So <b>please try to remember which is which</b>!</li>
+        </ul>
+      </div>;
+
+// Surveys
+const introSurvey = {
+        title: "Opening Survey",
+        basename: "intro",
+        questions: [
+          {
+            text:
+              "There will be several short surveys like this as breaks from the writing task."
+          },
+
+          // TODO: should we break this down into prediction, correction, gesture, etc.?
+          {
+            text: "Do you use predictive typing on your phone?",
+            responseType: "options",
+            name: "use_predictive",
+            options: ["Yes", "No"]
+          }
+
+          // ...personalityBlock(0)
+        ]
+      };
+
+
+function getScreens(conditions: string[], stimuli: Stimulus[]) : Screen[] {
+  // Group stimuli by block.
+  console.assert(stimuli.length === conditions.length * TRIALS_PER_CONDITION);
+  let blocks = conditions.map((condition, idx) => ({
+    condition,
+    stimuli: stimuli.slice(idx * TRIALS_PER_CONDITION).slice(0, TRIALS_PER_CONDITION)
+  }));
+
+  let result = [
+    { screen: "Welcome" },
+    { screen: "IntroSurvey", view: surveyView(introSurvey) },
+    {      screen: "TaskDescription",       view: TaskDescription  },
+    {       screen: "StudyDesc",      view: StudyDesc    },
+
+    ...flatMap(blocks, (block, idx) => experimentBlock(idx, block.condition, block.stimuli)),
+
     {
       screen: "PostExpSurvey",
       view: surveyView({
@@ -339,7 +340,7 @@ function getScreens(conditions: string[], stimuli: Stimulus[]) : Screen[] {
       })
     },
     { screen: "Done" }
-  ]);
+  ];
   return result;
 }
 
