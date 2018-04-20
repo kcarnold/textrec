@@ -1,10 +1,16 @@
 // @flow
 
-import * as M from "mobx";
+import {
+  decorate,
+  observable,
+  computed,
+  action,
+  toJS,
+} from "mobx";
 import range from "lodash/range";
 import map from "lodash/map";
 import countWords from "./CountWords";
-import type { Event } from "./Events";
+import type { Event, TapSuggestion, TapKey, TapBackspace, UpdateSuggestions, Deleting } from "./Events";
 
 /**** Main experiment-screen state store!
 
@@ -49,301 +55,291 @@ type IOExperimentFlags = {
 };
 
 export class ExperimentStateStore {
-  outstandingRequests: number[];
+  outstandingRequests: number[] = [];
 
-  prevState: Object; // TODO
-  tapLocations: Object[];
-  seqNums: number[];
+  prevState: Object = null; // TODO
+  tapLocations: Object[] = [];
+  seqNums: number[] = [];
+
   flags: IOExperimentFlags;
-  curText: string;
   stimulus: Stimulus;
   transcribe: string;
-  contextSequenceNum: number;
-  lastSuggestionsFromServer: Object;
-  activeSuggestion: Object;
-  lastSpaceWasAuto: boolean;
-  electricDeleteLiveChars: ?number;
 
+  curText: string = "";
+  contextSequenceNum: number = 0;
+  lastSuggestionsFromServer: Object = {};
+  activeSuggestion: Object = null;
+  lastSpaceWasAuto: boolean = false;
+  electricDeleteLiveChars: ?number = null;
 
   constructor(flags: IOExperimentFlags) {
-    this.outstandingRequests = [];
-    this.prevState = null;
-    this.tapLocations = [];
-    this.seqNums = [];
     this.flags = flags;
-    M.extendObservable(this, {
-      stimulus: flags.stimulus,
-      transcribe: flags.transcribe,
-      curText: "",
-      contextSequenceNum: 0,
-      lastSuggestionsFromServer: {},
-      activeSuggestion: null,
-      lastSpaceWasAuto: false,
-      electricDeleteLiveChars: null,
-      get wordCount() {
-        return countWords(this.curText);
-      },
-      get visibleSuggestions() {
-        let fromServer = this.lastSuggestionsFromServer;
-        const blankRec = { words: [] };
-        let serverIsValid = fromServer.request_id === this.contextSequenceNum;
-        if (!serverIsValid) {
-          // Fill in the promised suggestion.
-          let predictions = range(3).map(() => blankRec);
-          if (this.activeSuggestion) {
-            predictions[this.activeSuggestion.slot] = M.toJS(
-              this.activeSuggestion
-            );
-          }
-          return { predictions };
-        }
+    this.stimulus = flags.stimulus;
+    this.transcribe = flags.transcribe;
+  }
 
-        // Make a copy, so we can modify.
-        fromServer = M.toJS(fromServer);
-        let result = {};
-        if (fromServer.replacement_range)
-          result.replacement_range = fromServer.replacement_range;
-        ["predictions", "synonyms"].forEach(type => {
-          result[type] = fromServer[type] || [];
-          let minToReturn = type === "synonyms" ? 10 : 3;
-          while (result[type].length < minToReturn) {
-            result[type].push(blankRec);
-          }
-        });
+  // Computed properties.
 
-        if (this.activeSuggestion && this.activeSuggestion.highlightChars) {
-          // Highlight even what we receive from the server.
-          // FIXME: should this happen on server? Format conversion is complicated...
-          result.predictions[
-            this.activeSuggestion.slot
-          ].highlightChars = this.activeSuggestion.highlightChars;
-        }
+  get wordCount() {
+    return countWords(this.curText);
+  }
 
-        return result;
-      },
+  get visibleSuggestions() {
+    let fromServer = this.lastSuggestionsFromServer;
+    const blankRec = { words: [] };
+    let serverIsValid = fromServer.request_id === this.contextSequenceNum;
+    if (!serverIsValid) {
+      // Fill in the promised suggestion.
+      let predictions = range(3).map(() => blankRec);
+      if (this.activeSuggestion) {
+        predictions[this.activeSuggestion.slot] = toJS(this.activeSuggestion);
+      }
+      return { predictions };
+    }
 
-      get lastSpaceIdx() {
-        let sofar = this.curText;
-        return sofar.search(/\s\S*$/);
-      },
+    // Make a copy, so we can modify.
+    fromServer = toJS(fromServer);
+    let result = {};
+    if (fromServer.replacement_range)
+      result.replacement_range = fromServer.replacement_range;
+    ["predictions", "synonyms"].forEach(type => {
+      result[type] = fromServer[type] || [];
+      let minToReturn = type === "synonyms" ? 10 : 3;
+      while (result[type].length < minToReturn) {
+        result[type].push(blankRec);
+      }
+    });
 
-      get suggestionContext() {
-        let sofar = this.curText,
-          cursorPos = sofar.length;
-        let lastSpaceIdx = this.lastSpaceIdx;
-        let curWord = [];
-        for (let i = lastSpaceIdx + 1; i < cursorPos; i++) {
-          let chr = { letter: sofar[i] };
-          if (this.tapLocations[i] !== null) {
-            chr.tap = this.tapLocations[i];
-          }
-          curWord.push(chr);
-        }
-        let result = {
-          prefix: sofar.slice(0, lastSpaceIdx + 1),
-          curWord,
-        };
-        if (this.activeSuggestion) {
-          result.promise = {
-            slot: this.activeSuggestion.slot,
-            words: this.activeSuggestion.words,
+    if (this.activeSuggestion && this.activeSuggestion.highlightChars) {
+      // Highlight even what we receive from the server.
+      // FIXME: should this happen on server? Format conversion is complicated...
+      result.predictions[
+        this.activeSuggestion.slot
+      ].highlightChars = this.activeSuggestion.highlightChars;
+    }
+
+    return result;
+  }
+
+  get lastSpaceIdx() {
+    let sofar = this.curText;
+    return sofar.search(/\s\S*$/);
+  }
+
+  get suggestionContext() {
+    let sofar = this.curText,
+      cursorPos = sofar.length;
+    let lastSpaceIdx = this.lastSpaceIdx;
+    let curWord = [];
+    for (let i = lastSpaceIdx + 1; i < cursorPos; i++) {
+      let chr = { letter: sofar[i] };
+      if (this.tapLocations[i] !== null) {
+        chr.tap = this.tapLocations[i];
+      }
+      curWord.push(chr);
+    }
+    let result = {
+      prefix: sofar.slice(0, lastSpaceIdx + 1),
+      curWord,
+    };
+    if (this.activeSuggestion) {
+      result.promise = {
+        slot: this.activeSuggestion.slot,
+        words: this.activeSuggestion.words,
+      };
+    }
+    return result;
+  }
+
+  get hasPartialWord() {
+    return this.suggestionContext.curWord.length > 0;
+  }
+
+  get showPredictions() {
+    return true;
+  }
+
+  // Actions
+
+  spliceText(startIdx, deleteCount, toInsert, taps) {
+    if (!taps) {
+      taps = map(toInsert, () => null);
+    }
+    this.curText =
+      this.curText.slice(0, startIdx) +
+      toInsert +
+      this.curText.slice(startIdx + deleteCount);
+    this.tapLocations = this.tapLocations
+      .slice(0, startIdx)
+      .concat(taps)
+      .concat(this.tapLocations.slice(startIdx + deleteCount));
+    this.seqNums = this.seqNums
+      .slice(0, startIdx)
+      .concat(map(toInsert, () => this.contextSequenceNum))
+      .concat(this.seqNums.slice(startIdx + deleteCount));
+  }
+
+  tapKey(event: TapKey) {
+    let cursorPos = this.curText.length;
+    let oldCurWord = this.curText.slice(this.lastSpaceIdx + 1);
+
+    let isNonWord = event.key.match(/\W/);
+    let deleteSpace = this.lastSpaceWasAuto && isNonWord;
+    let toInsert = event.key;
+    let taps = [{ x: event.x, y: event.y }];
+    let autoSpace =
+      isNonWord && event.key !== " " && event.key !== "'" && event.key !== "-";
+    if (autoSpace) {
+      toInsert += " ";
+      taps.push({});
+    }
+    let charsToDelete = deleteSpace ? 1 : 0;
+    this.spliceText(cursorPos - charsToDelete, charsToDelete, toInsert, taps);
+    this.lastSpaceWasAuto = autoSpace;
+    let newActiveSuggestion = null;
+
+    // If this key happened to be the prefix of a recommended word, continue that word.
+    let curWord = this.curText.slice(this.lastSpaceIdx + 1);
+    if (
+      this.flags.showRelevanceHints &&
+      !isNonWord &&
+      curWord.slice(0, oldCurWord.length) === oldCurWord
+    ) {
+      this.visibleSuggestions.predictions.forEach((pred, slot) => {
+        if (pred.words.length === 0) return;
+        if (newActiveSuggestion) return;
+        if (pred.words[0].slice(0, curWord.length) === curWord) {
+          newActiveSuggestion = {
+            words: pred.words,
+            slot,
+            highlightChars: curWord.length,
           };
         }
-        return result;
-      },
+      });
+    }
+    this.activeSuggestion = newActiveSuggestion;
 
-      get hasPartialWord() {
-        return this.suggestionContext.curWord.length > 0;
-      },
+    return [];
+  }
 
-      get showPredictions() {
-        return true;
-      },
+  tapBackspace(event: Event) {
+    let { delta } = event;
+    if (delta === undefined) delta = -1;
+    this.spliceText(this.curText.length + delta, -delta, "");
+    this.lastSpaceWasAuto = false;
+    this.activeSuggestion = null;
+    this.electricDeleteLiveChars = null;
+    return [];
+  }
 
-      spliceText: M.action((startIdx, deleteCount, toInsert, taps) => {
-        if (!taps) {
-          taps = map(toInsert, () => null);
-        }
-        this.curText =
-          this.curText.slice(0, startIdx) +
-          toInsert +
-          this.curText.slice(startIdx + deleteCount);
-        this.tapLocations = this.tapLocations
-          .slice(0, startIdx)
-          .concat(taps)
-          .concat(this.tapLocations.slice(startIdx + deleteCount));
-        this.seqNums = this.seqNums
-          .slice(0, startIdx)
-          .concat(map(toInsert, () => this.contextSequenceNum))
-          .concat(this.seqNums.slice(startIdx + deleteCount));
-      }),
-      tapKey: M.action((event: Event) => {
-        let cursorPos = this.curText.length;
-        let oldCurWord = this.curText.slice(this.lastSpaceIdx + 1);
-
-        let isNonWord = event.key.match(/\W/);
-        let deleteSpace = this.lastSpaceWasAuto && isNonWord;
-        let toInsert = event.key;
-        let taps = [{ x: event.x, y: event.y }];
-        let autoSpace =
-          isNonWord &&
-          event.key !== " " &&
-          event.key !== "'" &&
-          event.key !== "-";
-        if (autoSpace) {
-          toInsert += " ";
-          taps.push({});
-        }
-        let charsToDelete = deleteSpace ? 1 : 0;
-        this.spliceText(
-          cursorPos - charsToDelete,
-          charsToDelete,
-          toInsert,
-          taps
-        );
-        this.lastSpaceWasAuto = autoSpace;
-        let newActiveSuggestion = null;
-
-        // If this key happened to be the prefix of a recommended word, continue that word.
-        let curWord = this.curText.slice(this.lastSpaceIdx + 1);
-        if (
-          this.flags.showRelevanceHints &&
-          !isNonWord &&
-          curWord.slice(0, oldCurWord.length) === oldCurWord
-        ) {
-          this.visibleSuggestions.predictions.forEach((pred, slot) => {
-            if (pred.words.length === 0) return;
-            if (newActiveSuggestion) return;
-            if (pred.words[0].slice(0, curWord.length) === curWord) {
-              newActiveSuggestion = {
-                words: pred.words,
-                slot,
-                highlightChars: curWord.length,
-              };
-            }
-          });
-        }
-        this.activeSuggestion = newActiveSuggestion;
-
-        return [];
-      }),
-      tapBackspace: M.action(event => {
-        let { delta } = event;
-        if (delta === undefined) delta = -1;
-        this.spliceText(this.curText.length + delta, -delta, "");
-        this.lastSpaceWasAuto = false;
-        this.activeSuggestion = null;
-        this.electricDeleteLiveChars = null;
-        return [];
-      }),
-      handleTapSuggestion: M.action(event => {
-        let { slot, which } = event;
-        let tappedSuggestion = this.visibleSuggestions[which][slot];
-        let wordToInsert = tappedSuggestion.words[0];
-        if (!wordToInsert) return [];
-        if (which === "synonyms") {
-          // Replace the _previous_ word.
-          let [startIdx, endIdx] = this.visibleSuggestions["replacement_range"];
-          // Actually, kill all remaining text.
-          endIdx = this.curText.length;
-          let autoSpace = endIdx === this.curText.length;
-          this.spliceText(startIdx, endIdx - startIdx, wordToInsert);
-          if (autoSpace) {
-            // Add a space.
-            this.spliceText(this.curText.length, 0, " ");
-          }
-          if (this.curText.slice(-1) === " ") {
-            this.lastSpaceWasAuto = true;
-          }
-        } else {
-          if (tappedSuggestion.words.length > 1) {
-            this.activeSuggestion = {
-              words: tappedSuggestion.words.slice(1),
-              slot: slot,
-            };
-          } else {
-            this.activeSuggestion = null;
-          }
-
-          let { curWord } = this.getSuggestionContext();
-          let charsToDelete = curWord.length;
-          let isNonWord = wordToInsert.match(/^\W$/);
-          let deleteSpace = this.lastSpaceWasAuto && isNonWord;
-          if (deleteSpace) {
-            charsToDelete++;
-          }
-          this.spliceText(
-            this.curText.length - charsToDelete,
-            charsToDelete,
-            wordToInsert + " "
-          );
-          this.lastSpaceWasAuto = true;
-        }
-        return [];
-      }),
-
-      handleSelectAlternative: M.action(event => {
-        let wordToInsert = event.word;
-        let { curWord } = this.getSuggestionContext();
-        let charsToDelete = curWord.length;
-        let isNonWord = wordToInsert.match(/^\W$/);
-        let deleteSpace = this.lastSpaceWasAuto && isNonWord;
-        if (deleteSpace) {
-          charsToDelete++;
-        }
-        this.spliceText(
-          this.curText.length - charsToDelete,
-          charsToDelete,
-          wordToInsert + " "
-        );
+  handleTapSuggestion(event: TapSuggestion) {
+    let { slot, which } = event;
+    let tappedSuggestion = this.visibleSuggestions[which][slot];
+    let wordToInsert = tappedSuggestion.words[0];
+    if (!wordToInsert) return [];
+    if (which === "synonyms") {
+      // Replace the _previous_ word.
+      let [startIdx, endIdx] = this.visibleSuggestions["replacement_range"];
+      // Actually, kill all remaining text.
+      endIdx = this.curText.length;
+      let autoSpace = endIdx === this.curText.length;
+      this.spliceText(startIdx, endIdx - startIdx, wordToInsert);
+      if (autoSpace) {
+        // Add a space.
+        this.spliceText(this.curText.length, 0, " ");
+      }
+      if (this.curText.slice(-1) === " ") {
         this.lastSpaceWasAuto = true;
-        return [];
-      }),
+      }
+    } else {
+      if (tappedSuggestion.words.length > 1) {
+        this.activeSuggestion = {
+          words: tappedSuggestion.words.slice(1),
+          slot: slot,
+        };
+      } else {
+        this.activeSuggestion = null;
+      }
 
-      handleUndo: M.action(event => {
-        if (this.prevState) {
-          this.curText = this.prevState.curText;
-          this.tapLocations = this.prevState.tapLocations;
-          this.seqNums = this.prevState.seqNums;
-          this.activeSuggestion = this.prevState.activeSuggestion;
-          this.prevState = null;
-        }
-      }),
+      let { curWord } = this.getSuggestionContext();
+      let charsToDelete = curWord.length;
+      let isNonWord = wordToInsert.match(/^\W$/);
+      let deleteSpace = this.lastSpaceWasAuto && isNonWord;
+      if (deleteSpace) {
+        charsToDelete++;
+      }
+      this.spliceText(
+        this.curText.length - charsToDelete,
+        charsToDelete,
+        wordToInsert + " "
+      );
+      this.lastSpaceWasAuto = true;
+    }
+    return [];
+  }
 
-      updateSuggestions: M.action(event => {
-        let { msg } = event;
-        // Only update suggestions if the data is valid.
-        if (!msg.result) {
-          console.warn("Request failed?");
-          return;
-        }
-        let { request_id } = msg.result;
-        if (request_id === this.contextSequenceNum) {
-          this.lastSuggestionsFromServer = msg.result;
-        }
-        let idx = this.outstandingRequests.indexOf(request_id);
-        if (idx !== -1) {
-          this.outstandingRequests.splice(idx, 1);
-        }
-        if (idx !== 0) {
-          console.log(
-            "warning: outstandingRequests weird: looking for",
-            request_id,
-            "in",
-            this.outstandingRequests
-          );
-        }
-      }),
+  handleSelectAlternative(event: Event) {
+    let wordToInsert = event.word;
+    let { curWord } = this.getSuggestionContext();
+    let charsToDelete = curWord.length;
+    let isNonWord = wordToInsert.match(/^\W$/);
+    let deleteSpace = this.lastSpaceWasAuto && isNonWord;
+    if (deleteSpace) {
+      charsToDelete++;
+    }
+    this.spliceText(
+      this.curText.length - charsToDelete,
+      charsToDelete,
+      wordToInsert + " "
+    );
+    this.lastSpaceWasAuto = true;
+    return [];
+  }
 
-      handleDeleting: M.action(event => {
-        let { delta } = event;
-        this.electricDeleteLiveChars = Math.min(
-          Math.max(0, this.curText.length + delta),
-          this.curText.length
-        );
-        return [];
-      }),
-    });
+  handleUndo(event: Event): Event[] {
+    if (this.prevState) {
+      this.curText = this.prevState.curText;
+      this.tapLocations = this.prevState.tapLocations;
+      this.seqNums = this.prevState.seqNums;
+      this.activeSuggestion = this.prevState.activeSuggestion;
+      this.prevState = null;
+    }
+    return [];
+  }
+
+  handleDeleting(event: Deleting): Event[] {
+    let { delta } = event;
+    this.electricDeleteLiveChars = Math.min(
+      Math.max(0, this.curText.length + delta),
+      this.curText.length
+    );
+    return [];
+  }
+
+  updateSuggestions(event: UpdateSuggestions): Event[] {
+    let { msg } = event;
+    // Only update suggestions if the data is valid.
+    if (!msg.result) {
+      console.warn("Request failed?");
+      return [];
+    }
+    let { request_id } = msg.result;
+    if (request_id === this.contextSequenceNum) {
+      this.lastSuggestionsFromServer = msg.result;
+    }
+    let idx = this.outstandingRequests.indexOf(request_id);
+    if (idx !== -1) {
+      this.outstandingRequests.splice(idx, 1);
+    }
+    if (idx !== 0) {
+      console.log(
+        "warning: outstandingRequests weird: looking for",
+        request_id,
+        "in",
+        this.outstandingRequests
+      );
+    }
+    return [];
   }
 
   init() {
@@ -376,7 +372,7 @@ export class ExperimentStateStore {
     return this.suggestionContext;
   }
 
-  handleEvent = (event: Event) => {
+  handleEvent(event: Event): Event[] {
     let prevState = {
       curText: this.curText,
       tapLocations: this.tapLocations.slice(),
@@ -422,5 +418,31 @@ export class ExperimentStateStore {
     }
 
     return sideEffects;
-  };
+  }
 }
+
+decorate(ExperimentStateStore, {
+  curText: observable,
+  contextSequenceNum: observable,
+  lastSuggestionsFromServer: observable,
+  activeSuggestion: observable,
+  lastSpaceWasAuto: observable,
+  electricDeleteLiveChars: observable,
+
+  wordCount: computed,
+  visibleSuggestions: computed,
+  lastSpaceIdx: computed,
+  suggestionContext: computed,
+  hasPartialWord: computed,
+  showPredictions: computed,
+
+  spliceText: action.bound,
+  tapKey: action.bound,
+  tapBackspace: action.bound,
+  handleTapSuggestion: action.bound,
+  handleSelectAlternative: action.bound,
+  handleUndo: action.bound,
+  updateSuggestions: action.bound,
+  handleDeleting: action.bound,
+  handleEvent: action.bound,
+});
