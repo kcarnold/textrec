@@ -197,7 +197,8 @@ const TutorialInstructions = block =>
   iobs(({ state }) => (
     <div>
       <h1>Practice with Keyboard {block + 1}</h1>
-      <b>Type this:</b>
+
+      <b>Type this caption:</b>
       <br />
       <div style={{ background: "white" }}>
         {state.experimentState.transcribe}
