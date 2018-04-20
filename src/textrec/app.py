@@ -4,7 +4,6 @@ import json
 import time
 import os
 import traceback
-import datetime
 import io
 import zlib
 
@@ -77,7 +76,7 @@ class Participant:
     def log(self, event):
         assert self.log_file is not None
         print(
-            json.dumps(dict(event, timestamp=datetime.datetime.now().isoformat(), participant_id=self.participant_id)),
+            json.dumps(dict(event, pyTimestamp=time.time(), participant_id=self.participant_id)),
             file=self.log_file, flush=True)
 
     def get_log_entries(self):
@@ -274,14 +273,22 @@ class LoginHandler(tornado.web.RequestHandler):
     def post(self):
         print("POST", self.request.body)
         data = json.loads(self.request.body.decode('utf-8'))
+
+        # Allocate a participant id.
         while True:
             participant_id = ''.join(random.choices('23456789cfghjmpqrvwx', k=6))
             if not os.path.exists(get_log_file_name(participant_id)):
                 print("Successfully allocated", participant_id)
                 break
+
+        # Login that participant.
         participant = Participant.get_participant(participant_id)
         params = dict(data['params'])
-        participant.log(dict(kind='p', type='login', config=params.pop('c'), platform_id=params.pop('p', None)))
+        participant.log(dict(
+            kind='p', type='login', config=params.pop('c'), platform_id=params.pop('p', None),
+            jsTimestamp=data['jsTimestamp'], **params))
+
+        # Return participant id.
         self.set_header('Content-Type', 'application/json')
         self.write(json.dumps(dict(participant_id=participant_id)))
 

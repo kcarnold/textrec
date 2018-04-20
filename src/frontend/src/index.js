@@ -53,7 +53,7 @@ if (initialPart === "panopt") {
       );
     }
   };
-  xhr.send(JSON.stringify({ params }));
+  xhr.send(JSON.stringify({ params, jsTimestamp: +new Date() }));
 } else {
   let match = query.match(/^(\w+)-(\w+)$/);
   if (match) {
