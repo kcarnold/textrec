@@ -1,3 +1,4 @@
+// @flow
 import React from "react";
 import { observer, inject } from "mobx-react";
 
@@ -14,17 +15,28 @@ import {
 
 import { seededShuffle } from "./shuffle";
 
+import type {Screen} from './IOTaskState'
+
+
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
 const TRIALS_PER_CONDITION = 2;
 
-let baseStimuli = [
-  { type: "img", content: "000000150367" },
-  { type: "img", content: "000000524881" },
-  { type: "img", content: "000000127298" },
-  { type: "img", content: "000000232689" },
-  { type: "img", content: "000000283426" },
-  { type: "img", content: "000000275075" }
+function surveyView(props) {
+  return () => React.createElement(Survey, props);
+}
+
+type Stimulus = {
+  type: "img", content: number
+};
+
+let baseStimuli: Stimulus[] = [
+  { type: "img", content: 150367 },
+  { type: "img", content: 524881 },
+  { type: "img", content: 127298 },
+  { type: "img", content: 232689 },
+  { type: "img", content: 283426 },
+  { type: "img", content: 275075 }
   // { type: "img", content: "000000107610" },
   // { type: "img", content: "000000093272" },
   // { type: "img", content: "000000218224" },
@@ -35,11 +47,11 @@ let baseStimuli = [
 
 let tutorialStimuli = [
   {
-    stimulus: { type: "img", content: "000000416308" },
+    stimulus: { type: "img", content: 416308 },
     transcribe: "a group of people on a beach preparing to paraglide."
   },
   {
-    stimulus: { type: "img", content: "000000459515" },
+    stimulus: { type: "img", content: 459515 },
     transcribe: "a grilled pizza with chicken, broccoli and cheese."
   }
 ];
@@ -76,26 +88,26 @@ const urlForImage = content => {
   // return `http://visualqa.org/data/abstract_v002/scene_img/img/${content}.png`;
 };
 
-export const StimulusView = ({ stimulus }) => {
-  if (stimulus.type === "doc") {
-    return (
-      <div
-        style={{
-          whiteSpace: "pre-line",
-          background: "white",
-          margin: "5px 2px"
-        }}
-      >
-        {stimulus.content}
-      </div>
-    );
-  } else if (stimulus.type === "img") {
+const StimulusView = ({ stimulus }) => {
+  // if (stimulus.type === "doc") {
+  //   return (
+  //     <div
+  //       style={{
+  //         whiteSpace: "pre-line",
+  //         background: "white",
+  //         margin: "5px 2px"
+  //       }}
+  //     >
+  //       {stimulus.content}
+  //     </div>
+  //   );
+  // } else if (stimulus.type === "img") {
     return (
       <div>
         <img src={urlForImage(stimulus.content)} style={{ width: "100%" }} alt="(image to caption should display here)" />
       </div>
     );
-  }
+  // }
 };
 
 const CapInstructions = iobs(({ state }) => (
@@ -134,13 +146,11 @@ function experimentBlock(block: number, conditionName: string, stimuli: Stimulus
           }
         },
         screen: "ExperimentScreen",
-        type: "experiment",
-        instructions: CapInstructions
+        view: experimentView({instructions: CapInstructions})
     })),
     {
       screen: "PostTaskSurvey",
-      type: "survey",
-      props: {
+      view: surveyView({
         title: "After-Writing Survey",
         basename: `postTask-${block}`,
         questions: [
@@ -153,47 +163,12 @@ function experimentBlock(block: number, conditionName: string, stimuli: Stimulus
           // ...personalityBlock(block + 1),
           ...miscQuestions
         ]
-      }
+      })
     }
   ];
 }
 
-function getDemoScreens(condition: string, stimulus: Stimulus) {
-  return [
-    {
-      preEvent: {
-        type: "setupExperiment",
-        block: 0,
-        condition,
-        name: `final-0`,
-        flags: {
-          ...namedConditions[condition],
-          stimulus
-        }
-      },
-      screen: "ExperimentScreen",
-      type: "experiment",
-      instructions: CapInstructions
-    }
-  ];
-}
-
-function getScreens(conditions: string[], stimuli: Stimulus[]) {
-  let tutorials = tutorialStimuli.map(({ stimulus, transcribe }, idx) => ({
-    preEvent: {
-      type: "setupExperiment",
-      block: 0,
-      condition: "general",
-      name: `practice-${idx}`,
-      flags: {
-        ...namedConditions['general'],
-        transcribe: transcribe.toLowerCase(),
-        stimulus
-      }
-    },
-    screen: "ExperimentScreen",
-    type: "experiment",
-    instructions: iobs(({ state }) => (
+const TutorialInstructions = iobs(({ state }) => (
       <div>
         <p>
           <b>Warm-up!</b>
@@ -227,7 +202,42 @@ function getScreens(conditions: string[], stimuli: Stimulus[]) {
         </p>
         <NextBtn />
       </div>
-    ))
+    ));
+
+function getDemoScreens(condition: string, stimulus: Stimulus) {
+  return [
+    {
+      preEvent: {
+        type: "setupExperiment",
+        block: 0,
+        condition,
+        name: `final-0`,
+        flags: {
+          ...namedConditions[condition],
+          stimulus
+        }
+      },
+      screen: "ExperimentScreen",
+      view: experimentView({instructions: CapInstructions})
+    }
+  ];
+}
+
+function getScreens(conditions: string[], stimuli: Stimulus[]) : Screen[] {
+  let tutorials = tutorialStimuli.map(({ stimulus, transcribe }, idx) => ({
+    preEvent: {
+      type: "setupExperiment",
+      block: 0,
+      condition: "general",
+      name: `practice-${idx}`,
+      flags: {
+        ...namedConditions['general'],
+        transcribe: transcribe.toLowerCase(),
+        stimulus
+      }
+    },
+    screen: "ExperimentScreen",
+    view: experimentView({instructions: TutorialInstructions})
   }));
 
   // Group stimuli by block.
@@ -241,8 +251,7 @@ function getScreens(conditions: string[], stimuli: Stimulus[]) {
     { controllerScreen: "Welcome", screen: "Welcome" },
     {
       screen: "IntroSurvey",
-      type: "survey",
-      props: {
+      view: surveyView({
         title: "Opening Survey",
         basename: "intro",
         questions: [
@@ -261,7 +270,7 @@ function getScreens(conditions: string[], stimuli: Stimulus[]) {
 
           // ...personalityBlock(0)
         ]
-      }
+      })
     },
     {
       screen: "TaskDescription",
@@ -323,16 +332,22 @@ function getScreens(conditions: string[], stimuli: Stimulus[]) {
   result = result.concat([
     {
       screen: "PostExpSurvey",
-      type: "survey",
-      props: {
+      view: surveyView({
         title: "Closing Survey",
         basename: "postExp",
         questions: [...closingSurveyQuestions]
-      }
+      })
     },
     { screen: "Done" }
   ]);
   return result;
+}
+
+function experimentView(props) {
+  return () => {
+    let instructions = React.createElement(props.instructions);
+    return <Views.ExperimentScreen instructions={instructions} />;
+  };
 }
 
 let baseConditions = ["norecs", "general", "specific"];
@@ -342,7 +357,7 @@ export function createTaskState(clientId: string) {
 
   let screens, stimuli;
   let demoConditionName = IOTaskState.getDemoConditionName(clientId);
-  if (demoConditionName !== null) {
+  if (demoConditionName != null) {
     screens = getDemoScreens(demoConditionName, baseStimuli[0]);
   } else {
     let conditions = seededShuffle(`${clientId}-conditions`, baseConditions);
@@ -358,13 +373,6 @@ export function createTaskState(clientId: string) {
 }
 
 export function screenToView(screenDesc: Screen) {
-  if (screenDesc.type === "survey") {
-    return React.createElement(Survey, screenDesc.props);
-  }
-  if (screenDesc.type === "experiment") {
-    let instructions = React.createElement(screenDesc.instructions);
-    return <Views.ExperimentScreen instructions={instructions} />;
-  }
   if (screenDesc.view) {
     return React.createElement(screenDesc.view);
   }

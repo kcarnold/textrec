@@ -5,4 +5,7 @@
 [libs]
 
 [options]
-unsafe.enable_getters_and_setters=true
+
+[lints]
+sketchy-null=warn
+# untyped-import=warn

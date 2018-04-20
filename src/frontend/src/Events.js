@@ -10,6 +10,6 @@ export type Event =
   | TapKey
   | TapBackspace;
 
-export type Timestamped = { timestamp: number };
+export type Timestamped = { jsTimestamp: number };
 
 export type TSEvent = Event & Timestamped;

@@ -7,9 +7,10 @@ import TutorialTasks from "./TutorialTasks";
 
 import type { Event } from "./Events";
 
-type Screen = {
+export type Screen = {
   screen: string,
-  preEvent?: Object,
+  view?: any,
+  preEvent?: any,
   timer?: number
 };
 
@@ -156,7 +157,7 @@ export class MasterStateStore {
     let screenAtStart = this.screenNum;
     switch (event.type) {
       case "login":
-        this.doInit(event.config);
+        this.doInit();
         if (event.platform_id) {
           this.participantCode = event.platform_id;
         }

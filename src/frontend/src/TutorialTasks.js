@@ -2,7 +2,7 @@
 import * as M from 'mobx';
 import every from 'lodash/every';
 
-import type {TSEvent} from './Events';
+import type {TSEvent, Event} from './Events';
 
 let multiTapThresholdMs = 500;
 
@@ -32,10 +32,10 @@ export default class TutorialTasks {
     });
   }
 
-  handleEvent(event: TSEvent) {
-    let timestamp = event.jsTimestamp;
-    switch(event.type) {
-    case 'tapSuggestion':
+  handleEvent(evt: TSEvent) {
+    let timestamp = evt.jsTimestamp;
+    let event = ((evt: any): Event); // Work around a Flow limitation??
+    if (event.type === 'tapSuggestion') {
       this.tasks['tapSuggestion'] = true;
       if (event.which === 'predictions') {
         this.tasks['tapPrediction'] = true;
@@ -52,29 +52,24 @@ export default class TutorialTasks {
           this.tasks.quadTap = true;
         }
       } else {
-        this.consectutiveTaps = {slot: event.slot, times: 1, lastTimestamp: event.jsTimestamp};
+        this.consectutiveTaps = {slot: event.slot, times: 1, lastTimestamp: timestamp};
       }
-      break;
-    case 'tapKey':
+    } else if (event.type === 'tapKey') {
       if (event.key.match(/[a-z]/)) {
         this.tasks.typeKeyboard = true;
       } else if (event.key.match(/[-.,!'?]/)) {
         this.tasks.specialChars = true;
       }
       this.consectutiveTaps = {};
-      break;
-    case 'tapBackspace':
+    } else if (event.type === 'tapBackspace') {
       this.consectutiveTaps = {};
       this.tasks.backspace = true;
       if (event.delta < -5) {
         this.tasks.megaBackspace = true;
       }
-      break;
-    case 'undo':
+    } else if (event.type === 'undo') {
       this.consectutiveTaps = {};
       this.tasks.undo = true;
-      break;
-    default:
     }
   }
 }
