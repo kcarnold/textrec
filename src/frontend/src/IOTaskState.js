@@ -24,7 +24,7 @@ type Config = {
   timeEstimate: string
 };
 
-export function getDemoConditionName(clientId:string): ?string {
+export function getDemoConditionName(clientId: string): ?string {
   if (clientId.slice(0, 4) === "demo") {
     return clientId.slice(4);
   }
