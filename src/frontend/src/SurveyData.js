@@ -52,37 +52,37 @@ const postTaskBaseQuestions = [
 */
 
 export const tlxQuestions = [
-  likert("mental", "Mental Demand: How mentally demanding was the task?", 7, [
+  likert("mental", "How mentally demanding was the task?", 7, [
     "Very low",
     "Very high",
   ]),
   likert(
     "physical",
-    "Physical Demand: How physically demanding was the task?",
+    "How physically demanding was the task?",
     7,
     ["Very low", "Very high"],
   ),
   likert(
     "temporal",
-    "Temporal Demand: How hurried or rushed was the pace of the task?",
+    "How hurried or rushed was the pace of the task?",
     7,
     ["Very low", "Very high"],
   ),
   likert(
     "performance",
-    "Performance: How successful were you in accomplishing what you were asked to do?",
+    "How successful were you in accomplishing what you were asked to do?",
     7,
     ["Perfect \u{1F601}", "Failure \u{1F641}"],
   ),
   likert(
     "effort",
-    "Effort: How hard did you have to work to accomplish your level of performance?",
+    "How hard did you have to work to accomplish your level of performance?",
     7,
     ["Very low", "Very high"],
   ),
   likert(
     "frustration",
-    "Frustration: How insecure, discouraged, irritated, stressed, and annoyed were you?",
+    "How insecure, discouraged, irritated, stressed, and annoyed were you?",
     7,
     ["Very low", "Very high"],
   ),
