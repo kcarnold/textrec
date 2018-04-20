@@ -88,14 +88,14 @@ export class MasterStateStore {
       replaying: true,
       screenNum: null,
       block: null,
-      experiments: M.observable.shallowMap({}),
+      experiments: M.observable.map({}, { deep: false }),
       curExperiment: null,
       get experimentState() {
         if (this.curExperiment) {
           return this.experiments.get(this.curExperiment);
         }
       },
-      controlledInputs: M.observable.shallowMap({}),
+      controlledInputs: M.observable.map({}, { deep: false }),
       timerStartedAt: null,
       timerDur: null,
       tutorialTasks: null,
