@@ -60,15 +60,6 @@ export const Welcome = inject('state')(observer(({state}) => <div>
   </div>));
 
 
-export const Instructions = inject('state')(observer(({state}) => <div>
-    <h1>Writing task {state.block + 1} of {state.conditions.length}</h1>
-
-    <p>For this writing session, you'll be using <b>Keyboard {state.block + 1}</b>. Each keyboard works a little differently.</p>
-
-    <p>Tap Next when you're ready to start.<br/><br/><NextBtn /></p></div>
-));
-
-
 const ExperimentHead = inject('state', 'spying')(observer(class ExperimentHead extends Component {
   componentDidMount() {
     if (!this.props.spying) {
@@ -93,7 +84,10 @@ export const ExperimentScreen = inject('state', 'dispatch')(observer(({state, di
         <ExperimentHead instructions={instructions} />
         <CurText text={experimentState.curText} />
         <div>
-          {(!state.condition.hideRecs) && <SuggestionsBar which="predictions" suggestions={experimentState.visibleSuggestions['predictions']} showPhrase={state.condition.showPhrase} />}
+          {(!experimentState.flags.hideRecs) &&
+            <SuggestionsBar which="predictions"
+              suggestions={experimentState.visibleSuggestions['predictions']}
+              showPhrase={experimentState.flags.showPhrase} />}
         </div>
         <Keyboard dispatch={dispatch} />
       </div>;

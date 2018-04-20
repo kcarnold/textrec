@@ -7,7 +7,6 @@ import TutorialTasks from "./TutorialTasks";
 import { seededShuffle } from "./shuffle";
 
 import type { Event } from "./Events";
-import type { Stimulus } from "./IOExperimentState";
 
 type Screen = {
   screen: string,
@@ -15,47 +14,27 @@ type Screen = {
   timer?: number
 };
 
-type Condition = {
-  requestFlags: Object
-};
-
 type Experiment = {
   handleEvent: (event: Event) => Event[]
 };
 
-const namedConditions = {
-  norecs: {
-    requestFlags: {},
-    modelSeesStimulus: false,
-    hideRecs: true
-  },
-  tutorial: {
-    requestFlags: {},
-    modelSeesStimulus: true
-  },
-  general: {
-    requestFlags: {},
-    modelSeesStimulus: false
-  },
-  specific: {
-    requestFlags: {},
-    modelSeesStimulus: true
-  }
-};
-
 type Config = {
   clientId: string,
-  getScreens: (conditions: string[]) => Screen[],
-  baseConditions: string[],
-  baseStimuli: Stimulus[],
+  screens: Screen[],
   timeEstimate: string
 };
+
+export function getDemoConditionName(clientId:string): ?string {
+  if (clientId.slice(0, 4) === "demo") {
+    return clientId.slice(4);
+  }
+  return null;
+}
 
 export class MasterStateStore {
   clientId: string;
   config: Config;
   participantCode: ?string;
-  conditions: Array<string>;
   lastEventTimestamp: number;
   replaying: boolean;
 
@@ -72,7 +51,6 @@ export class MasterStateStore {
   block: number;
   curExperiment: string;
   experimentState: Experiment;
-  conditionName: string;
   timerDur: number;
   timerStartedAt: number;
 
@@ -80,29 +58,14 @@ export class MasterStateStore {
 
   tutorialTasks: TutorialTasks;
 
-  stimuli: Stimulus[];
-
-  // Demo handling
-  isDemo: boolean;
-  demoConditionName: string;
-
-  doInit(configName: string) {
+  doInit() {
     this.screenNum = 0;
   }
 
   constructor(config: Config) {
     this.clientId = config.clientId;
     this.config = config;
-    this.conditions = config.conditions;
-
-    let isDemo = (this.clientId || "").slice(0, 4) === "demo";
-    this.isDemo = isDemo;
-    this.demoConditionName = this.clientId.slice(4);
-
-    this.stimuli = isDemo ? this.config.baseStimuli.slice() : seededShuffle(
-      `${this.clientId}-stimuli`,
-      this.config.baseStimuli
-    );
+    this.screens = config.screens;
 
     M.extendObservable(this, {
       participantCode: null,
@@ -124,7 +87,6 @@ export class MasterStateStore {
       replaying: true,
       screenNum: null,
       block: null,
-      conditionName: null,
       experiments: M.observable.shallowMap({}),
       curExperiment: null,
       get experimentState() {
@@ -139,19 +101,8 @@ export class MasterStateStore {
       screenTimes: [],
       phoneSize: { width: 360, height: 500 },
       pingTime: null,
-      get screens() {
-        if (isDemo) {
-          return this.config.getScreens([this.demoConditionName], true);
-        }
-        return this.config.getScreens(this.conditions, false);
-      },
       get curScreen() {
         return this.screens[this.screenNum];
-      },
-      get condition() {
-        console.assert(!!this.conditionName);
-        console.assert(this.conditionName in namedConditions);
-        return { ...namedConditions[this.conditionName] };
       },
       get timeEstimate() {
         return this.config.timeEstimate;
@@ -167,15 +118,11 @@ export class MasterStateStore {
       let { preEvent } = screen;
       switch (preEvent.type) {
         case "setupExperiment":
-          this.conditionName = preEvent.condition;
           this.curExperiment = preEvent.name;
+          // TODO: remove this.block.
           this.block = preEvent.block;
 
-          let experimentObj = new ExperimentStateStore({
-            stimulus: this.stimuli[preEvent.block],
-            ...this.condition,
-            ...(preEvent.extraFlags || {})
-          });
+          let experimentObj = new ExperimentStateStore(preEvent.flags);
           this.experiments.set(preEvent.name, experimentObj);
           let initReq = experimentObj.init();
           if (initReq) sideEffects.push(initReq);
@@ -228,8 +175,9 @@ export class MasterStateStore {
         if (event.kind === "p") {
           this.phoneSize = { width: event.width, height: event.height };
         }
-        if (this.isDemo && !this.experimentState) {
-          this.doInit("demo");
+        if (this.screenNum === null) {
+          console.warn("Force init, should only happen for demo.");
+          this.doInit();
           this.pingTime = 0;
         }
         break;

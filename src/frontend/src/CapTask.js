@@ -44,6 +44,30 @@ let tutorialStimuli = [
   }
 ];
 
+
+const namedConditions = {
+  norecs: {
+    requestFlags: {},
+    modelSeesStimulus: false,
+    hideRecs: true
+  },
+  tutorial: {
+    requestFlags: {},
+    modelSeesStimulus: true
+  },
+  general: {
+    requestFlags: {},
+    modelSeesStimulus: false
+  },
+  specific: {
+    requestFlags: {},
+    modelSeesStimulus: true
+  }
+};
+
+
+
+
 const urlForImage = content => {
   console.assert(content.length === 12);
   return `http://images.cocodataset.org/train2017/${content}.jpg`;
@@ -72,7 +96,7 @@ export const StimulusView = ({ stimulus }) => {
   }
 };
 
-const SummaryInstructions = iobs(({ state }) => (
+const CapInstructions = iobs(({ state }) => (
   <div>
     Write the most specific description you can for the image below. Write only
     a single sentence. After you're done, tap here:{" "}
@@ -81,41 +105,37 @@ const SummaryInstructions = iobs(({ state }) => (
   </div>
 ));
 
-function experimentBlock(block: number, conditionName: string): Array<Screen> {
-  let systemQuestions = [];
-  if (conditionName !== "norecs") {
-    systemQuestions = [
-      likert("sys-accurate", "How accurate were the system's predictions?", 7, [
-        "Not accurate at all",
-        "Extremely accurate"
-      ]),
-      likert(
-        "sys-distracting",
-        "How distracting were the system's predictions?",
-        7,
-        ["Not distracting at all", "Extremely distracting"]
-      ),
-      likert("sys-helpful", "How helpful were the system's predictions?", 7, [
-        "Not helpful at all",
-        "Extremely helpful"
-      ])
-    ];
-  }
+function experimentBlock(block: number, conditionName: string, stimuli: Stimulus[]): Array<Screen> {
+  let agreeLikert = (name, prompt) => likert(name, prompt, 7, ["Strongly disagree", "Strongly agree"]);
+  let designQuestions = [
+    agreeLikert("sys-specific", "This keyboard design helped me write captions that were very specific"),
+    agreeLikert("sys-accurate", "This keyboard design helped me write captions that were very accurate"),
+    agreeLikert("sys-fast", "This keyboard design helped me write captions quickly"),
+  ];
   return [
     {
-      preEvent: {
-        type: "setupExperiment",
-        block,
-        condition: conditionName,
-        name: `final-${block}`
-      },
-      screen: "Instructions"
+      screen: "Instructions",
+      view: () => <div>
+        About to start using
+        <h1>Keyboard {block + 1}</h1>
+        Tap Next when ready: <NextBtn />
+      </div>
     },
-    {
-      screen: "ExperimentScreen",
-      type: "experiment",
-      instructions: SummaryInstructions
-    },
+    ...stimuli.map((stimulus, idx) => ({
+        preEvent: {
+          type: "setupExperiment",
+          block,
+          condition: conditionName,
+          name: `final-${block}-${idx}`,
+          flags: {
+            ...namedConditions[conditionName],
+            stimulus
+          }
+        },
+        screen: "ExperimentScreen",
+        type: "experiment",
+        instructions: CapInstructions
+    })),
     {
       screen: "PostTaskSurvey",
       type: "survey",
@@ -123,12 +143,11 @@ function experimentBlock(block: number, conditionName: string): Array<Screen> {
         title: "After-Writing Survey",
         basename: `postTask-${block}`,
         questions: [
-          likert("specific", "How specific was the caption you wrote?", 7, [
-            "Very generic",
-            "Very specific"
-          ]),
-          ...systemQuestions,
-          { text: <b>Cognitive Load</b> },
+          // likert("specific", "How specific was the caption you wrote?", 7, [
+          //   "Very generic",
+          //   "Very specific"
+          // ]),
+          ...designQuestions,
           ...tlxQuestions,
           // ...personalityBlock(block + 1),
           ...miscQuestions
@@ -138,32 +157,35 @@ function experimentBlock(block: number, conditionName: string): Array<Screen> {
   ];
 }
 
-function getScreens(conditions: string[], isDemo: boolean) {
-  if (isDemo) {
-    console.assert(conditions.length === 1);
-    let condition = conditions[0];
-    return [
-      {
-        preEvent: {
-          type: "setupExperiment",
-          block: 0,
-          condition,
-          name: `final-0`
-        },
-        screen: "ExperimentScreen",
-        type: "experiment",
-        instructions: SummaryInstructions
-      }
-    ];
-  }
+function getDemoScreens(condition: string, stimulus: Stimulus) {
+  return [
+    {
+      preEvent: {
+        type: "setupExperiment",
+        block: 0,
+        condition,
+        name: `final-0`,
+        flags: {
+          ...namedConditions[condition],
+          stimulus
+        }
+      },
+      screen: "ExperimentScreen",
+      type: "experiment",
+      instructions: CapInstructions
+    }
+  ];
+}
 
+function getScreens(conditions: string[], stimuli: Stimulus[]) {
   let tutorials = tutorialStimuli.map(({ stimulus, transcribe }, idx) => ({
     preEvent: {
       type: "setupExperiment",
       block: 0,
       condition: "general",
       name: `practice-${idx}`,
-      extraFlags: {
+      flags: {
+        ...namedConditions['general'],
         transcribe: transcribe.toLowerCase(),
         stimulus
       }
@@ -206,6 +228,14 @@ function getScreens(conditions: string[], isDemo: boolean) {
       </div>
     ))
   }));
+
+  // Group stimuli by block.
+  console.assert(stimuli.length === conditions.length * TRIALS_PER_CONDITION);
+  let blocks = conditions.map((condition, idx) => ({
+    condition,
+    stimuli: stimuli.slice(idx * TRIALS_PER_CONDITION).slice(0, TRIALS_PER_CONDITION)
+  }));
+
   let result = [
     { controllerScreen: "Welcome", screen: "Welcome" },
     {
@@ -253,8 +283,8 @@ function getScreens(conditions: string[], isDemo: boolean) {
       )
     }
   ];
-  conditions.forEach((condition, idx) => {
-    result = result.concat(experimentBlock(idx, condition));
+  blocks.forEach((block, idx) => {
+    result = result.concat(experimentBlock(idx, block.condition, block.stimuli));
   });
   result = result.concat([
     {
@@ -274,19 +304,21 @@ function getScreens(conditions: string[], isDemo: boolean) {
 let baseConditions = ["norecs", "general", "specific"];
 
 export function createTaskState(clientId: string) {
-  let conditionOrder = seededShuffle(`${clientId}-conditions`, baseConditions);
+  clientId = clientId || "";
 
-  // Repeat conditions.
-  let conditions = [];
-  for (let i = 0; i < TRIALS_PER_CONDITION; i++) {
-    conditions = [...conditions, ...conditionOrder];
+  let screens, stimuli;
+  let demoConditionName = IOTaskState.getDemoConditionName(clientId);
+  if (demoConditionName !== null) {
+    screens = getDemoScreens(demoConditionName, baseStimuli[0]);
+  } else {
+    let conditions = seededShuffle(`${clientId}-conditions`, baseConditions);
+    stimuli = seededShuffle(`${clientId}-stimuli`, baseStimuli);
+    screens = getScreens(conditions, stimuli);
   }
 
   return new IOTaskState.MasterStateStore({
     clientId,
-    getScreens,
-    conditions,
-    baseStimuli,
+    screens,
     timeEstimate: "20 minutes"
   });
 }
