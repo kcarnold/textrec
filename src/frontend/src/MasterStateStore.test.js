@@ -1,6 +1,6 @@
 import Promise from "bluebird";
 import { MasterStateStore } from "./MasterStateStore";
-import { readLogFile } from './testUtil.js';
+import { readLogFile } from "./testUtil.js";
 
 const participantIds = ["smoke0"];
 let logData = {};

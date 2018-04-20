@@ -1,6 +1,6 @@
 import Promise from "bluebird";
-import { readLogFile } from './testUtil.js';
-import { analyzeLog } from './Analyzer.js';
+import { readLogFile } from "./testUtil.js";
+import { analyzeLog } from "./Analyzer.js";
 
 const participantIds = [
   // "99c66d",
@@ -11,7 +11,7 @@ const participantIds = [
   "94jfwg",
   "w5hfrr",
   // "gfhfhx",
-  ];
+];
 let logData = null;
 let analyzed = null;
 
@@ -19,7 +19,10 @@ beforeAll(async () => {
   let logs = await Promise.map(participantIds, readLogFile);
   console.log(`Loaded ${logs.length} logs.`);
   logData = logs;
-  analyzed = await Promise.map(logData, async ([participantId, log]) => [participantId, await analyzeLog(log)]);
+  analyzed = await Promise.map(logData, async ([participantId, log]) => [
+    participantId,
+    await analyzeLog(log),
+  ]);
 });
 
 it("includes the overall fields we expect", () => {
@@ -48,7 +51,7 @@ function expectNotToContainAttnCheck(recset) {
 
 it("extracts what suggestions were displayed", () => {
   analyzed.forEach(([participantId, result]) => {
-    let page = result.byExpPage['final-0'];
+    let page = result.byExpPage["final-0"];
     expect(page.displayedSuggs.length).toBeGreaterThan(0);
     page.displayedSuggs.forEach(suggEntry => {
       expect(suggEntry).toMatchObject({
@@ -62,19 +65,19 @@ it("extracts what suggestions were displayed", () => {
         context: expect.any(String),
         recs: expect.anything(),
         latency: expect.any(Number),
-        action: expect.objectContaining({type: expect.any(String)}),
+        action: expect.objectContaining({ type: expect.any(String) }),
       });
     });
-    page.displayedSuggs.forEach(({recs, action}) => {
-      if ((action || {}).type === 'tapSuggestion')
+    page.displayedSuggs.forEach(({ recs, action }) => {
+      if ((action || {}).type === "tapSuggestion")
         expectNotToContainAttnCheck(recs);
-    })
+    });
   });
 });
 
 it("extracts final text", () => {
   analyzed.forEach(([participantId, result]) => {
-    let page = result.byExpPage['final-0'];
+    let page = result.byExpPage["final-0"];
     expect(page.finalText).toEqual(expect.any(String));
     expect(page.finalText.length).toBeGreaterThan(0);
   });
@@ -82,7 +85,7 @@ it("extracts final text", () => {
 
 it("includes all actions", () => {
   analyzed.forEach(([participantId, result]) => {
-    let page = result.byExpPage['final-0'];
+    let page = result.byExpPage["final-0"];
     expect(page.actions.length).toBeGreaterThan(0);
     page.actions.forEach(action => {
       expect(action).toMatchObject({
@@ -92,23 +95,25 @@ it("includes all actions", () => {
       });
     });
     expect(page.secsOnPage).toBeGreaterThan(0);
-    expect(page.lastEventTimestamp - page.firstEventTimestamp).toBeGreaterThan(0);
+    expect(page.lastEventTimestamp - page.firstEventTimestamp).toBeGreaterThan(
+      0
+    );
   });
 });
 
 it("annotates the final text by the actions that entered it", () => {
   analyzed.forEach(([participantId, result]) => {
-    let page = result.byExpPage['final-0'];
+    let page = result.byExpPage["final-0"];
     expect(page.chunks).toEqual(expect.any(Array));
-    let finalText = ''
+    let finalText = "";
     page.chunks.forEach(chunk => {
       expect(chunk).toMatchObject({
         timestamp: expect.any(Number),
         actionClass: expect.any(String),
         chars: expect.any(String),
-        action: expect.objectContaining({type: expect.any(String)})
+        action: expect.objectContaining({ type: expect.any(String) }),
       });
-      if (chunk.action.type === 'tapSuggestion') {
+      if (chunk.action.type === "tapSuggestion") {
         expect(chunk.action.annoType).toMatch(/^tapSugg/);
         expect(chunk.action.sugInserted).toMatch(/^(([\w']*)|[,!.?])$/);
       }

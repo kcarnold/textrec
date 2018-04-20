@@ -1,4 +1,4 @@
-import pako from 'pako';
+import pako from "pako";
 
 export default function WSClient(path) {
   var self = this;
@@ -25,38 +25,41 @@ export default function WSClient(path) {
 
   setInterval(function() {
     if (self.ws.readyState === WebSocket.OPEN) {
-      self.send({type: 'ping'});
+      self.send({ type: "ping" });
     }
   }, 10000);
 
   function onopen() {
     self.attempts = 0;
-    console.log('ws open', self.ws.readyState, self.queue);
-    self.deflater = new pako.Deflate({to: 'string'});
-    self.inflater = new pako.Inflate({to: 'string'});
-    for (var i=0; i<self.helloMsgs.length; i++) {
-        _send(self.helloMsgs[i]);
+    console.log("ws open", self.ws.readyState, self.queue);
+    self.deflater = new pako.Deflate({ to: "string" });
+    self.inflater = new pako.Inflate({ to: "string" });
+    for (var i = 0; i < self.helloMsgs.length; i++) {
+      _send(self.helloMsgs[i]);
     }
-    while(self.queue.length) {
+    while (self.queue.length) {
       _send(self.queue.shift());
     }
-    self.stateChanged && self.stateChanged('open');
+    self.stateChanged && self.stateChanged("open");
   }
 
   function backoffReconnect() {
     if (self.waitingToReconnect) return;
     self.waitingToReconnect = true;
-    setTimeout(self.connect, Math.min(10, Math.pow(2, self.attempts - 2)) * 1000);
+    setTimeout(
+      self.connect,
+      Math.min(10, Math.pow(2, self.attempts - 2)) * 1000
+    );
   }
 
   function onclose() {
-    console.log('websocket closed');
-    self.stateChanged && self.stateChanged('closed');
+    console.log("websocket closed");
+    self.stateChanged && self.stateChanged("closed");
     backoffReconnect();
   }
 
   function onerror(e) {
-    console.log('websocket error', e);
+    console.log("websocket error", e);
     backoffReconnect();
   }
 
@@ -67,14 +70,14 @@ export default function WSClient(path) {
   }
 
   self.send = function(msg) {
-    msg = {timestamp: +new Date(), ...msg};
+    msg = { timestamp: +new Date(), ...msg };
     if (self.ws.readyState === WebSocket.OPEN) {
-        _send(msg);
+      _send(msg);
     } else {
-        self.queue.push(msg);
+      self.queue.push(msg);
     }
     return msg;
-  }
+  };
 
   self.isOpen = function() {
     return self.ws.readyState === WebSocket.OPEN;

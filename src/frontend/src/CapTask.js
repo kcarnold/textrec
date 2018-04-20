@@ -11,7 +11,7 @@ import {
   personalityBlock,
   tlxQuestions,
   miscQuestions,
-  closingSurveyQuestions
+  closingSurveyQuestions,
 } from "./SurveyData";
 
 import { seededShuffle } from "./shuffle";
@@ -28,7 +28,7 @@ function surveyView(props) {
 
 type Stimulus = {
   type: "img",
-  content: number
+  content: number,
 };
 
 let baseStimuli: Stimulus[] = [
@@ -37,7 +37,7 @@ let baseStimuli: Stimulus[] = [
   { type: "img", content: 127298 },
   { type: "img", content: 232689 },
   { type: "img", content: 283426 },
-  { type: "img", content: 275075 }
+  { type: "img", content: 275075 },
   // { type: "img", content: "000000107610" },
   // { type: "img", content: "000000093272" },
   // { type: "img", content: "000000218224" },
@@ -49,36 +49,36 @@ let baseStimuli: Stimulus[] = [
 let tutorialStimuli = [
   {
     stimulus: { type: "img", content: 416308 },
-    transcribe: "a group of people on a beach preparing to paraglide."
+    transcribe: "a group of people on a beach preparing to paraglide.",
   },
   {
     stimulus: { type: "img", content: 459515 },
-    transcribe: "a grilled pizza with chicken, broccoli and cheese."
+    transcribe: "a grilled pizza with chicken, broccoli and cheese.",
   },
   {
     stimulus: { type: "img", content: 165204 },
-    transcribe: "placeholder fixme" // FIXME!
-  }
+    transcribe: "placeholder fixme", // FIXME!
+  },
 ];
 
 const namedConditions = {
   norecs: {
     requestFlags: {},
     modelSeesStimulus: false,
-    hideRecs: true
+    hideRecs: true,
   },
   tutorial: {
     requestFlags: {},
-    modelSeesStimulus: true
+    modelSeesStimulus: true,
   },
   general: {
     requestFlags: {},
-    modelSeesStimulus: false
+    modelSeesStimulus: false,
   },
   specific: {
     requestFlags: {},
-    modelSeesStimulus: true
-  }
+    modelSeesStimulus: true,
+  },
 };
 
 const urlForImage = content => {
@@ -143,7 +143,7 @@ function experimentBlock(
     agreeLikert(
       "sys-fast",
       "This keyboard design helped me write captions quickly"
-    )
+    ),
   ];
   let tutorialStimulus = tutorialStimuli[block];
 
@@ -156,7 +156,7 @@ function experimentBlock(
           <h1>Keyboard design {block + 1}</h1>
           Tap Next when ready: <NextBtn />
         </div>
-      )
+      ),
     },
     {
       preEvent: {
@@ -166,11 +166,11 @@ function experimentBlock(
           condition: "general",
           ...namedConditions["general"],
           transcribe: tutorialStimulus.transcribe.toLowerCase(),
-          stimulus: tutorialStimulus.stimulus
-        }
+          stimulus: tutorialStimulus.stimulus,
+        },
       },
       screen: "ExperimentScreen",
-      view: experimentView({ instructions: TutorialInstructions(block) })
+      view: experimentView({ instructions: TutorialInstructions(block) }),
     },
     ...stimuli.map((stimulus, idx) => ({
       preEvent: {
@@ -179,11 +179,11 @@ function experimentBlock(
         flags: {
           condition: conditionName,
           ...namedConditions[conditionName],
-          stimulus
-        }
+          stimulus,
+        },
       },
       screen: "ExperimentScreen",
-      view: experimentView({ instructions: CapInstructions })
+      view: experimentView({ instructions: CapInstructions }),
     })),
     {
       screen: "PostTaskSurvey",
@@ -198,10 +198,10 @@ function experimentBlock(
           ...designQuestions,
           ...tlxQuestions,
           // ...personalityBlock(block + 1),
-          ...miscQuestions
-        ]
-      })
-    }
+          ...miscQuestions,
+        ],
+      }),
+    },
   ];
 }
 
@@ -227,12 +227,12 @@ function getDemoScreens(condition: string, stimulus: Stimulus) {
         flags: {
           condition,
           ...namedConditions[condition],
-          stimulus
-        }
+          stimulus,
+        },
       },
       screen: "ExperimentScreen",
-      view: experimentView({ instructions: CapInstructions })
-    }
+      view: experimentView({ instructions: CapInstructions }),
+    },
   ];
 }
 
@@ -369,7 +369,7 @@ const introSurvey = {
   questions: [
     {
       text:
-        "There will be several short surveys like this as breaks from the writing task."
+        "There will be several short surveys like this as breaks from the writing task.",
     },
 
     // TODO: should we break this down into prediction, correction, gesture, etc.?
@@ -377,11 +377,11 @@ const introSurvey = {
       text: "Do you use predictive typing on your phone?",
       responseType: "options",
       name: "use_predictive",
-      options: ["Yes", "No"]
-    }
+      options: ["Yes", "No"],
+    },
 
     // ...personalityBlock(0)
-  ]
+  ],
 };
 
 function getScreens(conditions: string[], stimuli: Stimulus[]): Screen[] {
@@ -391,7 +391,7 @@ function getScreens(conditions: string[], stimuli: Stimulus[]): Screen[] {
     condition,
     stimuli: stimuli
       .slice(idx * TRIALS_PER_CONDITION)
-      .slice(0, TRIALS_PER_CONDITION)
+      .slice(0, TRIALS_PER_CONDITION),
   }));
 
   let result = [
@@ -409,10 +409,10 @@ function getScreens(conditions: string[], stimuli: Stimulus[]): Screen[] {
       view: surveyView({
         title: "Closing Survey",
         basename: "postExp",
-        questions: [...closingSurveyQuestions]
-      })
+        questions: [...closingSurveyQuestions],
+      }),
     },
-    { screen: "Done" }
+    { screen: "Done" },
   ];
   return result;
 }
@@ -442,7 +442,7 @@ export function createTaskState(clientId: string) {
   return new IOTaskState.MasterStateStore({
     clientId,
     screens,
-    timeEstimate: "20 minutes"
+    timeEstimate: "20 minutes",
   });
 }
 

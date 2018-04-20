@@ -52,9 +52,9 @@ export function processLogGivenState(state, log) {
       if (tmpSugRequests[msg.request_id]) {
         console.assert(
           tmpSugRequests[msg.request_id] === requestCurText,
-          `Mismatch request curText for ${participant_id}-${msg.timestamp}}, "${tmpSugRequests[
-            msg.request_id
-          ]}" VS "${requestCurText}"`,
+          `Mismatch request curText for ${participant_id}-${msg.timestamp}}, "${
+            tmpSugRequests[msg.request_id]
+          }" VS "${requestCurText}"`
         );
         // console.log("Ignoring duplicate request", msg.timestamp);
         requestsByTimestamp[msg.timestamp].dupe = true;
@@ -98,13 +98,9 @@ export function processLogGivenState(state, log) {
     }
 
     if (
-      [
-        "connected",
-        "init",
-        "rpc",
-        "receivedSuggestions",
-        "next",
-      ].indexOf(entry.type) === -1
+      ["connected", "init", "rpc", "receivedSuggestions", "next"].indexOf(
+        entry.type
+      ) === -1
     ) {
       let { curWord } = suggestionContext;
       let annoType = entry.type;
@@ -151,7 +147,7 @@ export function processLogGivenState(state, log) {
       }
       annotatedFinalText.splice(
         commonPrefixLen,
-        lastText.length - commonPrefixLen,
+        lastText.length - commonPrefixLen
       );
       Array.prototype.forEach.call(curText.slice(commonPrefixLen), char => {
         annotatedFinalText.push({ char, action: annotatedAction });
@@ -247,7 +243,7 @@ export function processLogGivenState(state, log) {
         state.curScreen.screen === "IntroSurvey",
       "Incomplete log file %s (on screen %s)",
       participant_id,
-      state.curScreen.screen || state.curScreen.controllerScreen,
+      state.curScreen.screen || state.curScreen.controllerScreen
     );
   }
 
@@ -274,7 +270,7 @@ function getRev(log) {
   for (let i = 0; i < log.length; i++) {
     let entry = log[i];
     if ("rev" in entry) {
-      return entry["rev"]
+      return entry["rev"];
     }
   }
 }
@@ -283,7 +279,7 @@ async function getState(log) {
   let { participant_id, config } = log[0];
   let rev = getRev(log);
   let getApp = (await import(`../../../old-code/${rev}/src/Apps`)).default;
-  let {createTaskState} = getApp(config)
+  let { createTaskState } = getApp(config);
   return createTaskState(participant_id);
 }
 
@@ -293,6 +289,6 @@ export async function analyzeLog(log) {
     return processLogGivenState(state, log);
   } catch (e) {
     console.log(e, e.stack);
-    throw(e);
+    throw e;
   }
 }

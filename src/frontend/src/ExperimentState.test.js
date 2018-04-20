@@ -44,35 +44,31 @@ const recs2 = {
   predictions: [
     {
       words: ["."],
-      meta: {
-      },
+      meta: {},
     },
     {
       words: ["!"],
-      meta: {
-      },
+      meta: {},
     },
     {
       words: ["and", "it", "was"],
-      meta: {
-      },
+      meta: {},
     },
   ],
 };
 
-
 function tapKeys(state, keys) {
   Array.prototype.forEach.call(keys, key =>
-    state.handleEvent({ type: "tapKey", key }),
+    state.handleEvent({ type: "tapKey", key })
   );
 }
 
 it("requests suggestions on init", () => {
-  let sugFlags = {domain: 'test'}
+  let sugFlags = { domain: "test" };
   let state = new ExperimentStateStore({}, sugFlags);
   expect(state.init()).toMatchObject({
-    type: 'requestSuggestions',
-    sofar: '',
+    type: "requestSuggestions",
+    sofar: "",
     cur_word: [],
     request_id: 0,
     flags: expect.any(Object),
@@ -80,7 +76,7 @@ it("requests suggestions on init", () => {
 });
 
 it("requests suggestions following all main user events", () => {
-  let sugFlags = {domain: 'test'}
+  let sugFlags = { domain: "test" };
   let state = new ExperimentStateStore({}, sugFlags);
   state.init();
   expect(state.contextSequenceNum).toEqual(0);
@@ -91,10 +87,14 @@ it("requests suggestions following all main user events", () => {
   expect(state.contextSequenceNum).toEqual(0);
 
   // Try a sugg tap.
-  let req1 = state.handleEvent({type: 'tapSuggestion', which: 'predictions', slot: 0});
+  let req1 = state.handleEvent({
+    type: "tapSuggestion",
+    which: "predictions",
+    slot: 0,
+  });
   expect(req1).toHaveLength(1);
   expect(req1[0]).toMatchObject({
-    type: 'requestSuggestions',
+    type: "requestSuggestions",
     sofar: "one ",
     cur_word: [],
     request_id: 1,
@@ -108,40 +108,40 @@ it("requests suggestions following all main user events", () => {
   // The non-tapped suggestions should be invalid right now.
   [1, 2].forEach(i => {
     expect(state.visibleSuggestions.predictions[i].words).toEqual([]);
-  })
+  });
 
   // Try a keypress.
-  let req2 = state.handleEvent({type: 'tapKey', key: 'a'});
+  let req2 = state.handleEvent({ type: "tapKey", key: "a" });
   expect(req2).toHaveLength(1);
-  expect(req2[0].sofar).toEqual('one ');
-  expect(req2[0].cur_word[0].letter).toEqual('a');
+  expect(req2[0].sofar).toEqual("one ");
+  expect(req2[0].cur_word[0].letter).toEqual("a");
   expect(req2[0].request_id).toEqual(2);
   expect(state.contextSequenceNum).toEqual(2);
-  expect(state.curText).toEqual('one a');
-  expect(state.seqNums.slice()).toEqual([0,0,0,0,1]);
+  expect(state.curText).toEqual("one a");
+  expect(state.seqNums.slice()).toEqual([0, 0, 0, 0, 1]);
 
   // All suggestions should be invalid right now.
   [0, 1, 2].forEach(i => {
     expect(state.visibleSuggestions.predictions[i].words).toEqual([]);
-  })
+  });
 
   // Try a backspace. Since there hasn't been a response in two requests,
   // this should not make a new request.
-  let req3 = state.handleEvent({type: 'tapBackspace'});
+  let req3 = state.handleEvent({ type: "tapBackspace" });
   expect(req3).toHaveLength(0);
-  expect(state.curText).toEqual('one ');
-  expect(state.seqNums.slice()).toEqual([0,0,0,0]);
+  expect(state.curText).toEqual("one ");
+  expect(state.seqNums.slice()).toEqual([0, 0, 0, 0]);
 
   // Now give a response to the first request.
   // (contents don't matter)
   let req4 = state.handleEvent({
-    type: 'receivedSuggestions',
-    msg: { request_id: 1, ...recs1 }
+    type: "receivedSuggestions",
+    msg: { request_id: 1, ...recs1 },
   });
   // Now we should get the request for the backspace.
   expect(req4).toHaveLength(1);
   expect(req4[0]).toMatchObject({
-    sofar: 'one ',
+    sofar: "one ",
     cur_word: [],
     request_id: 3,
     flags: expect.any(Object),
@@ -153,8 +153,8 @@ it("requests suggestions following all main user events", () => {
 
   // Now the server starts catching up. Give the response for the key tap.
   let req4A = state.handleEvent({
-    type: 'receivedSuggestions',
-    msg: { request_id: 2, ...recs1 }
+    type: "receivedSuggestions",
+    msg: { request_id: 2, ...recs1 },
   });
   // No new requests.
   expect(req4A).toHaveLength(0);
@@ -163,22 +163,23 @@ it("requests suggestions following all main user events", () => {
     expect(state.visibleSuggestions.predictions[i].words).toEqual([]);
   });
 
-
   // Now give the response for the backspace. They should show up now, and no new requests.
   let req5 = state.handleEvent({
-    type: 'receivedSuggestions',
-    msg: { request_id: 3, ...recs1 }
+    type: "receivedSuggestions",
+    msg: { request_id: 3, ...recs1 },
   });
   expect(req5).toHaveLength(0);
   [0, 1, 2].forEach(i => {
-    expect(state.visibleSuggestions.predictions[i].words.length).toBeGreaterThan(0);
+    expect(
+      state.visibleSuggestions.predictions[i].words.length
+    ).toBeGreaterThan(0);
   });
 
   expect(state.contextSequenceNum).toEqual(3);
 
   // Try going far in the future, and we still only get one outstanding request.
-  for (let i=0; i<10; i++) {
-    let request = state.handleEvent({type: 'tapKey', key: 'x'});
+  for (let i = 0; i < 10; i++) {
+    let request = state.handleEvent({ type: "tapKey", key: "x" });
     if (i < 2) {
       expect(request).toHaveLength(1);
       expect(request[0].request_id).toEqual(3 + 1 + i);
@@ -187,26 +188,41 @@ it("requests suggestions following all main user events", () => {
     }
   }
   let req6 = state.handleEvent({
-    type: 'receivedSuggestions',
-    msg: { request_id: 4, ...recs1 }
+    type: "receivedSuggestions",
+    msg: { request_id: 4, ...recs1 },
   });
   expect(req6).toHaveLength(1);
   expect(state.contextSequenceNum).toEqual(13);
   expect(req6[0].request_id).toEqual(13);
-  expect(state.curText).toEqual('one xxxxxxxxxx');
-  expect(state.seqNums.slice()).toEqual([0,0,0,0,3,4,5,6,7,8,9,10,11,12]);
+  expect(state.curText).toEqual("one xxxxxxxxxx");
+  expect(state.seqNums.slice()).toEqual([
+    0,
+    0,
+    0,
+    0,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+  ]);
 });
 
 xit("doesn't duplicate requests after an auto-space", () => {
-  throw new Error('todo');
-})
+  throw new Error("todo");
+});
 
 it("requests suggestions on init", () => {
-  let sugFlags = {domain: 'test'}
+  let sugFlags = { domain: "test" };
   let state = new ExperimentStateStore({}, sugFlags);
   expect(state.init()).toMatchObject({
-    type: 'requestSuggestions',
-    sofar: '',
+    type: "requestSuggestions",
+    sofar: "",
     cur_word: [],
     request_id: 0,
     flags: expect.any(Object),
@@ -214,12 +230,14 @@ it("requests suggestions on init", () => {
 });
 
 it("doesn't request suggestions if we turn that off", () => {
-  let sugFlags = {domain: 'test'}
-  let state = new ExperimentStateStore({dontRequestSuggestions: true}, sugFlags);
+  let sugFlags = { domain: "test" };
+  let state = new ExperimentStateStore(
+    { dontRequestSuggestions: true },
+    sugFlags
+  );
   expect(state.init()).toEqual(null);
-  expect(state.handleEvent({type: 'tapKey', key: 'a'})).toHaveLength(0);
+  expect(state.handleEvent({ type: "tapKey", key: "a" })).toHaveLength(0);
 });
-
 
 it("inserts automatic spaces after suggestions", () => {
   var state = new ExperimentStateStore({});
@@ -232,7 +250,7 @@ it("inserts automatic spaces after suggestions", () => {
     msg: { request_id: state.contextSequenceNum, ...recs0 },
   });
   expect(state.visibleSuggestions.replacement_range).toEqual(
-    recs0.replacement_range,
+    recs0.replacement_range
   );
   expect(state.visibleSuggestions.synonyms.slice(0, 3)).toEqual(recs0.synonyms);
 
@@ -262,7 +280,7 @@ it("promises a phrase completion even without a server roundtrip", () => {
   expect(M.toJS(state.suggestionContext.promise.words)).toEqual(words.slice(1));
 
   expect(M.toJS(state.visibleSuggestions.predictions[1].words)).toEqual(
-    words.slice(1),
+    words.slice(1)
   );
 });
 
@@ -276,18 +294,18 @@ it("doesn't crash when running out of words", () => {
   });
 
   // Tap on that sugg way more times than there are words.
-  for (let i=0; i<10; i++) {
+  for (let i = 0; i < 10; i++) {
     state.handleEvent({ type: "tapSuggestion", which: "predictions", slot: 1 });
   }
 
   expect(M.toJS(state.visibleSuggestions.predictions[1].words)).toEqual([]);
-  expect(state.curText).toEqual(words.join(' ') + ' ');
+  expect(state.curText).toEqual(words.join(" ") + " ");
 });
 
-
 it("promises the same word completion as long as the user is typing a prefix", () => {
-  let state = new ExperimentStateStore({showRelevanceHints: true});
-  let slot = 1, otherSlot = 0;
+  let state = new ExperimentStateStore({ showRelevanceHints: true });
+  let slot = 1,
+    otherSlot = 0;
   let words = recs1.predictions[slot].words; //["this", "is", "my", "favorite", "place"];
 
   // Set up the received recommendations
@@ -296,7 +314,7 @@ it("promises the same word completion as long as the user is typing a prefix", (
     msg: { request_id: state.contextSequenceNum, ...recs1 },
   });
   expect(M.toJS(state.visibleSuggestions.predictions[slot].words)).toEqual(
-    words,
+    words
   );
 
   // Start typing that word.
@@ -313,14 +331,14 @@ it("promises the same word completion as long as the user is typing a prefix", (
   });
 
   // Typing space clears it.
-  state.handleEvent({ type: "tapKey", key: ' '});
+  state.handleEvent({ type: "tapKey", key: " " });
   expect(state.visibleSuggestions.predictions[slot].words).toEqual([]);
 });
 
-
 it("doesn't do any word completion stuff if relevance hints aren't enabled", () => {
-  let state = new ExperimentStateStore({showRelevanceHints: false});
-  let slot = 1, otherSlot = 0;
+  let state = new ExperimentStateStore({ showRelevanceHints: false });
+  let slot = 1,
+    otherSlot = 0;
   let words = recs1.predictions[slot].words; //["this", "is", "my", "favorite", "place"];
 
   // Set up the received recommendations
@@ -329,7 +347,7 @@ it("doesn't do any word completion stuff if relevance hints aren't enabled", () 
     msg: { request_id: state.contextSequenceNum, ...recs1 },
   });
   expect(M.toJS(state.visibleSuggestions.predictions[slot].words)).toEqual(
-    words,
+    words
   );
 
   // Start typing that word.
@@ -343,9 +361,8 @@ it("doesn't do any word completion stuff if relevance hints aren't enabled", () 
   expect(state.suggestionContext.promise).toBeUndefined();
 });
 
-
 it("doesn't promise the same word completion if the user isn't typing a prefix", () => {
-  let state = new ExperimentStateStore({showRelevanceHints: true});
+  let state = new ExperimentStateStore({ showRelevanceHints: true });
   let slot = 1;
   let words = recs1.predictions[slot].words; //["this", "is", "my", "favorite", "place"];
 
@@ -355,7 +372,7 @@ it("doesn't promise the same word completion if the user isn't typing a prefix",
     msg: { request_id: state.contextSequenceNum, ...recs1 },
   });
   expect(M.toJS(state.visibleSuggestions.predictions[slot].words)).toEqual(
-    words,
+    words
   );
 
   // Start typing that word.
@@ -363,18 +380,17 @@ it("doesn't promise the same word completion if the user isn't typing a prefix",
 
   // None of the words start with "a"
   recs1.predictions.forEach(pred => {
-    expect(pred.words[0][0]).not.toEqual('a');
+    expect(pred.words[0][0]).not.toEqual("a");
   });
 
   // Tap 'a'.
-  state.handleEvent({ type: "tapKey", key: 'a' });
+  state.handleEvent({ type: "tapKey", key: "a" });
   expect(state.visibleSuggestions.predictions[slot].words).toEqual([]);
 });
 
-
 it("doesn't promise word completions for punctuation", () => {
-  Array.prototype.forEach.call('.!', char => {
-    let state = new ExperimentStateStore({showRelevanceHints: true});
+  Array.prototype.forEach.call(".!", char => {
+    let state = new ExperimentStateStore({ showRelevanceHints: true });
 
     tapKeys(state, "i have never had a bad experience ");
 
@@ -385,7 +401,7 @@ it("doesn't promise word completions for punctuation", () => {
     });
 
     // Tap a period, which is also a shortcut, but shouldn't trigger a promise.
-    expect(state.visibleSuggestions.predictions[0].words[0]).toEqual('.');
+    expect(state.visibleSuggestions.predictions[0].words[0]).toEqual(".");
     state.handleEvent({ type: "tapKey", key: char });
     expect(state.visibleSuggestions.predictions[0].words).toEqual([]);
     expect(state.suggestionContext.promise).toBeUndefined();

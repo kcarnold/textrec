@@ -6,7 +6,7 @@ function advance(state, dispatch) {
 }
 
 export const NextBtn = inject("dispatch", "state")(
-  observer(props =>
+  observer(props => (
     <button
       onClick={() => {
         if (!props.confirm || window.confirm("Are you sure?")) {
@@ -16,6 +16,6 @@ export const NextBtn = inject("dispatch", "state")(
       disabled={props.disabled}
     >
       {props.children || "Next"}
-    </button>,
-  ),
+    </button>
+  ))
 );

@@ -38,15 +38,14 @@ visibleSuggestions is a pure computation based on the last suggestions received 
 
 */
 
-
 type Stimulus = {
   type: string,
-  content: string
+  content: string,
 };
 
 type IOExperimentFlags = {
   stimulus: Stimulus,
-  modelSeesStimulus: boolean
+  modelSeesStimulus: boolean,
 };
 
 export class ExperimentStateStore {
@@ -130,12 +129,12 @@ export class ExperimentStateStore {
         }
         let result = {
           prefix: sofar.slice(0, lastSpaceIdx + 1),
-          curWord
+          curWord,
         };
         if (this.activeSuggestion) {
           result.promise = {
             slot: this.activeSuggestion.slot,
-            words: this.activeSuggestion.words
+            words: this.activeSuggestion.words,
           };
         }
         return result;
@@ -207,7 +206,7 @@ export class ExperimentStateStore {
               newActiveSuggestion = {
                 words: pred.words,
                 slot,
-                highlightChars: curWord.length
+                highlightChars: curWord.length,
               };
             }
           });
@@ -248,7 +247,7 @@ export class ExperimentStateStore {
           if (tappedSuggestion.words.length > 1) {
             this.activeSuggestion = {
               words: tappedSuggestion.words.slice(1),
-              slot: slot
+              slot: slot,
             };
           } else {
             this.activeSuggestion = null;
@@ -331,7 +330,7 @@ export class ExperimentStateStore {
           this.curText.length
         );
         return [];
-      })
+      }),
     });
   }
 
@@ -345,7 +344,7 @@ export class ExperimentStateStore {
 
     let stimulus = {
       type: this.stimulus.type,
-      content: this.flags.modelSeesStimulus ? this.stimulus.content : null
+      content: this.flags.modelSeesStimulus ? this.stimulus.content : null,
     };
 
     return {
@@ -356,8 +355,8 @@ export class ExperimentStateStore {
         sofar: prefix,
         cur_word: curWord,
         flags: { ...this.sugFlags, promise },
-        request_id: this.contextSequenceNum
-      }
+        request_id: this.contextSequenceNum,
+      },
     };
   }
 
@@ -370,7 +369,7 @@ export class ExperimentStateStore {
       curText: this.curText,
       tapLocations: this.tapLocations.slice(),
       seqNums: this.seqNums.slice(),
-      activeSuggestion: this.activeSuggestion
+      activeSuggestion: this.activeSuggestion,
     };
     let sideEffects = (() => {
       switch (event.type) {

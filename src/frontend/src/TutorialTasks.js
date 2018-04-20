@@ -1,13 +1,13 @@
 // @flow
-import * as M from 'mobx';
-import every from 'lodash/every';
+import * as M from "mobx";
+import every from "lodash/every";
 
-import type {TSEvent, Event} from './Events';
+import type { TSEvent, Event } from "./Events";
 
 let multiTapThresholdMs = 500;
 
 export default class TutorialTasks {
-  tasks: {[name: string]: boolean} ;
+  tasks: { [name: string]: boolean };
   consectutiveTaps: Object;
 
   constructor() {
@@ -26,23 +26,26 @@ export default class TutorialTasks {
         tapAlternative: false,
       },
       get allDone() {
-        let {tasks} = this;
+        let { tasks } = this;
         return every(tasks);
-      }
+      },
     });
   }
 
   handleEvent(evt: TSEvent) {
     let timestamp = evt.jsTimestamp;
     let event = ((evt: any): Event); // Work around a Flow limitation??
-    if (event.type === 'tapSuggestion') {
-      this.tasks['tapSuggestion'] = true;
-      if (event.which === 'predictions') {
-        this.tasks['tapPrediction'] = true;
-      } else if (event.which === 'synonyms') {
-        this.tasks['tapAlternative'] = true;
+    if (event.type === "tapSuggestion") {
+      this.tasks["tapSuggestion"] = true;
+      if (event.which === "predictions") {
+        this.tasks["tapPrediction"] = true;
+      } else if (event.which === "synonyms") {
+        this.tasks["tapAlternative"] = true;
       }
-      if (this.consectutiveTaps.slot === event.slot && timestamp - this.consectutiveTaps.lastTimestamp < multiTapThresholdMs) {
+      if (
+        this.consectutiveTaps.slot === event.slot &&
+        timestamp - this.consectutiveTaps.lastTimestamp < multiTapThresholdMs
+      ) {
         this.consectutiveTaps.times++;
         this.consectutiveTaps.lastTimestamp = timestamp;
         if (this.consectutiveTaps.times >= 2) {
@@ -52,22 +55,26 @@ export default class TutorialTasks {
           this.tasks.quadTap = true;
         }
       } else {
-        this.consectutiveTaps = {slot: event.slot, times: 1, lastTimestamp: timestamp};
+        this.consectutiveTaps = {
+          slot: event.slot,
+          times: 1,
+          lastTimestamp: timestamp,
+        };
       }
-    } else if (event.type === 'tapKey') {
+    } else if (event.type === "tapKey") {
       if (event.key.match(/[a-z]/)) {
         this.tasks.typeKeyboard = true;
       } else if (event.key.match(/[-.,!'?]/)) {
         this.tasks.specialChars = true;
       }
       this.consectutiveTaps = {};
-    } else if (event.type === 'tapBackspace') {
+    } else if (event.type === "tapBackspace") {
       this.consectutiveTaps = {};
       this.tasks.backspace = true;
       if (event.delta < -5) {
         this.tasks.megaBackspace = true;
       }
-    } else if (event.type === 'undo') {
+    } else if (event.type === "undo") {
       this.consectutiveTaps = {};
       this.tasks.undo = true;
     }

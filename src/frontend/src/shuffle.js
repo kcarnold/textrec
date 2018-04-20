@@ -1,4 +1,4 @@
-import seedrandom from 'seedrandom';
+import seedrandom from "seedrandom";
 
 export function shuffle(rng, array) {
   // Fisher-Yates shuffle, with a provided RNG function.
@@ -10,7 +10,7 @@ export function shuffle(rng, array) {
   array = Array.prototype.slice.call(array);
 
   let m = array.length;
-  while(m) {
+  while (m) {
     // Pick an element from the part of the list that's not yet shuffled.
     let prevElement = Math.floor(rng() * m--);
 

@@ -2,13 +2,13 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 import * as Wrapper from "./Wrapper";
-import getApp from './Apps';
+import getApp from "./Apps";
 
 import Raven from "raven-js";
 if (process.env.NODE_ENV === "production") {
   Raven.config("https://c0c96b3696f14e4eb2fe4f35f4da3176@sentry.io/186354")
     .config({
-      release: process.env.REACT_APP_GIT_REV
+      release: process.env.REACT_APP_GIT_REV,
     })
     .install();
 }

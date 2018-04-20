@@ -1,7 +1,7 @@
-import * as M from 'mobx';
-import {ExperimentStateStore} from './ExperimentState';
-import TutorialTasks from './TutorialTasks';
-import {seededShuffle} from './shuffle';
+import * as M from "mobx";
+import { ExperimentStateStore } from "./ExperimentState";
+import TutorialTasks from "./TutorialTasks";
+import { seededShuffle } from "./shuffle";
 
 const finalTimer = 60 * 5;
 
@@ -12,11 +12,20 @@ type Screen = {
   timer?: number,
 };
 
-function experimentBlock(block:number, conditionName: string): Array<Screen> {
+function experimentBlock(block: number, conditionName: string): Array<Screen> {
   return [
-    {preEvent: {type: 'setupExperiment', block, condition: conditionName, name: `final-${block}`}, controllerScreen: 'Instructions', screen: 'ReadyPhone'},
-    {screen: 'ExperimentScreen', controllerScreen: 'RevisionComputer'},
-    {screen: 'PostTaskSurvey'},
+    {
+      preEvent: {
+        type: "setupExperiment",
+        block,
+        condition: conditionName,
+        name: `final-${block}`,
+      },
+      controllerScreen: "Instructions",
+      screen: "ReadyPhone",
+    },
+    { screen: "ExperimentScreen", controllerScreen: "RevisionComputer" },
+    { screen: "PostTaskSurvey" },
   ];
 }
 
@@ -30,7 +39,7 @@ const CONDITION_DEFAULTS = {
   showPhrase: true,
   showPredictions: true,
   showSuggsAtBos: true,
-}
+};
 
 export const namedConditions = {
   trump: {
@@ -38,7 +47,7 @@ export const namedConditions = {
       useSufarr: false,
       temperature: 0,
       use_bos_suggs: false,
-      domain: 'tweeterinchief'
+      domain: "tweeterinchief",
     },
     showPhrase: true,
   },
@@ -47,7 +56,7 @@ export const namedConditions = {
       useSufarr: false,
       temperature: 0,
       use_bos_suggs: false,
-      domain: 'sotu'
+      domain: "sotu",
     },
     showPhrase: true,
   },
@@ -56,7 +65,7 @@ export const namedConditions = {
       useSufarr: false,
       temperature: 0,
       use_bos_suggs: false,
-      domain: 'airbnb_train'
+      domain: "airbnb_train",
     },
     showPhrase: true,
     showRelevanceHints: true,
@@ -78,7 +87,7 @@ export const namedConditions = {
   },
   word: {
     sugFlags: ngramFlags,
-    showPhrase: false
+    showPhrase: false,
   },
   phrase: {
     //sugFlags: {...ngramFlags, continuation_length: 17},
@@ -89,71 +98,71 @@ export const namedConditions = {
       use_bos_suggs: false,
       continuation_length: 17,
     },
-    showPhrase: true
+    showPhrase: true,
   },
   rarePhrase: {
     sugFlags: {
       useSufarr: true,
       rare_word_bonus: 0,
-      null_logprob_weight: -.75,
+      null_logprob_weight: -0.75,
       use_bos_suggs: false,
       continuation_length: 17,
     },
-    showPhrase: true
+    showPhrase: true,
   },
   samplePhrase: {
     sugFlags: {
-      temperature: 1.,
+      temperature: 1,
       useSufarr: false,
-      rare_word_bonus: 0.,
-      continuation_length: 17
+      rare_word_bonus: 0,
+      continuation_length: 17,
     },
-    showPhrase: true
+    showPhrase: true,
   },
   topicdiverse: {
     sugFlags: {
       useSufarr: false,
-      rare_word_bonus: 0.,
-      null_logprob_weight: 0.,
+      rare_word_bonus: 0,
+      null_logprob_weight: 0,
       use_bos_suggs: true,
       continuation_length: 17,
     },
-    showPhrase: true
+    showPhrase: true,
   },
   wdiverse: {
     sugFlags: {
       useSufarr: false,
-      rare_word_bonus: 0.,
-      null_logprob_weight: 0.,
+      rare_word_bonus: 0,
+      null_logprob_weight: 0,
       use_bos_suggs: true,
       continuation_length: 17,
     },
-    showPhrase: false
+    showPhrase: false,
   },
   nondiverse: {
     sugFlags: {
       useSufarr: false,
-      rare_word_bonus: 0.,
-      null_logprob_weight: 0.,
+      rare_word_bonus: 0,
+      null_logprob_weight: 0,
       use_bos_suggs: false,
       continuation_length: 17,
     },
-    showPhrase: true
+    showPhrase: true,
   },
   topiccontinue: {
     sugFlags: {
       useSufarr: false,
-      rare_word_bonus: 0.,
-      null_logprob_weight: 0.,
-      use_bos_suggs: 'continue',
+      rare_word_bonus: 0,
+      null_logprob_weight: 0,
+      use_bos_suggs: "continue",
       continuation_length: 17,
     },
-    showPhrase: true
+    showPhrase: true,
   },
   handcluster: {
     sugFlags: {
-      use_bos_suggs: 'manual',
-      continuation_length: 17
+      use_bos_suggs: "manual",
+      continuation_length: 17,
     },
     showPhrase: true,
   },
@@ -165,7 +174,7 @@ export const namedConditions = {
     },
     showPhrase: true,
     showSuggsAtBos: true,
-    sentiment: 'diverse',
+    sentiment: "diverse",
   },
   sentpos: {
     sugFlags: {
@@ -197,7 +206,7 @@ export const namedConditions = {
     },
     showPhrase: true,
     showSuggsAtBos: true,
-    sentiment: 'match',
+    sentiment: "match",
   },
   yelppredict: {
     sugFlags: {
@@ -232,7 +241,7 @@ export const namedConditions = {
       split: true,
       num_sims: 10,
       num_alternatives: 10,
-      domain: 'airbnb_train'
+      domain: "airbnb_train",
     },
     showSynonyms: true,
     showSynonymsXorPredictions: false,
@@ -245,7 +254,7 @@ export const namedConditions = {
       split: true,
       num_sims: 10,
       num_alternatives: 5,
-      domain: 'airbnb_train'
+      domain: "airbnb_train",
     },
     showSynonyms: false,
     showReplacement: false,
@@ -255,121 +264,160 @@ export const namedConditions = {
     sugFlags: {
       alternatives: true,
     },
-    alternatives: true
+    alternatives: true,
   },
 
   yelprare: {
     sugFlags: {
       continuation_length: 17,
-      domain: 'yelp_lowfreq'
+      domain: "yelp_lowfreq",
     },
   },
 
   yelpcommon: {
     sugFlags: {
       continuation_length: 17,
-      domain: 'yelp_hifreq'
+      domain: "yelp_hifreq",
     },
-  }
+  },
 };
 
 const MASTER_CONFIGS = {
   demo: {
-    baseConditions: ['word', 'phrase'],
+    baseConditions: ["word", "phrase"],
   },
   study1: {
-    baseConditions: ['word', 'phrase'],
+    baseConditions: ["word", "phrase"],
   },
   study2: {
-    baseConditions: ['rarePhrase', 'phrase'],
-    instructions: 'detailed',
+    baseConditions: ["rarePhrase", "phrase"],
+    instructions: "detailed",
   },
   funny: {
-    baseConditions: ['rarePhrase', 'phrase'],
-    instructions: 'funny',
+    baseConditions: ["rarePhrase", "phrase"],
+    instructions: "funny",
   },
   study4: {
-    baseConditions: ['rarePhrase', 'phrase'],
-    instructions: 'review',
+    baseConditions: ["rarePhrase", "phrase"],
+    instructions: "review",
   },
   topicdiversity: {
-    baseConditions: ['topicdiverse', 'topiccontinue'],
-    instructions: 'tabooTopic'
+    baseConditions: ["topicdiverse", "topiccontinue"],
+    instructions: "tabooTopic",
   },
   sentiment: {
-    baseConditions: ['sentdiverse', 'nosugg'],
-    instructions: 'sentiment'
+    baseConditions: ["sentdiverse", "nosugg"],
+    instructions: "sentiment",
   },
   sent3: {
-    baseConditions: ['sentdiverse', 'sentmatch', 'nosugg'],
-    instructions: 'sentiment'
+    baseConditions: ["sentdiverse", "sentmatch", "nosugg"],
+    instructions: "sentiment",
   },
   polarized: {
-    baseConditions: ['sentpos', 'sentneg', 'word'],
-    instructions: 'review',
+    baseConditions: ["sentpos", "sentneg", "word"],
+    instructions: "review",
   },
   sent32: {
-    baseConditions: ['sentdiverse', 'sentmatch', 'word'],
-    instructions: 'review',
+    baseConditions: ["sentdiverse", "sentmatch", "word"],
+    instructions: "review",
   },
   sent4: {
-    baseConditions: ['sentpos', 'sentneg'],
-    instructions: 'yelp',
-    timeEstimate: '45 to 75 minutes',
+    baseConditions: ["sentpos", "sentneg"],
+    instructions: "yelp",
+    timeEstimate: "45 to 75 minutes",
   },
   synonyms: {
-    baseConditions: ['zerosugg', 'yelppredict', 'yelpalternatives'],
-    instructions: 'persuade',
+    baseConditions: ["zerosugg", "yelppredict", "yelpalternatives"],
+    instructions: "persuade",
     showAlternativesPractice: true,
-    timeEstimate: '30 to 45 minutes'
+    timeEstimate: "30 to 45 minutes",
   },
   persuade: {
-    baseConditions: ['zerosugg', 'sentpos', 'sentneg'],
-    instructions: 'persuade'
-  }
+    baseConditions: ["zerosugg", "sentpos", "sentneg"],
+    instructions: "persuade",
+  },
 };
-
-
 
 function getScreens(masterConfigName: string, conditions: string[]) {
   let masterConfig = MASTER_CONFIGS[masterConfigName];
-  let {showAlternativesPractice} = masterConfig;
-  let tutorialCondition = 'airbnb';
-  let selectionScreen = masterConfig.instructions === 'persuade' ? 'SelectRestaurantsPersuade' : 'SelectRestaurants';
+  let { showAlternativesPractice } = masterConfig;
+  let tutorialCondition = "airbnb";
+  let selectionScreen =
+    masterConfig.instructions === "persuade"
+      ? "SelectRestaurantsPersuade"
+      : "SelectRestaurants";
   let result = [
-    {controllerScreen: 'Welcome', screen: 'Welcome'},
-    {screen: selectionScreen},
-    {screen: "IntroSurvey"},
-    {preEvent: {type: 'setupExperiment', block: 0, condition: tutorialCondition, name: 'practice'}, screen: 'ExperimentScreen', controllerScreen: 'PracticeComputer'},
+    { controllerScreen: "Welcome", screen: "Welcome" },
+    { screen: selectionScreen },
+    { screen: "IntroSurvey" },
+    {
+      preEvent: {
+        type: "setupExperiment",
+        block: 0,
+        condition: tutorialCondition,
+        name: "practice",
+      },
+      screen: "ExperimentScreen",
+      controllerScreen: "PracticeComputer",
+    },
   ];
-  result.push({preEvent: {type: 'setupExperiment', block: 0, condition: tutorialCondition, name: 'practice-2'}, screen: 'ExperimentScreen', controllerScreen: 'TutorialInstructions'});
+  result.push({
+    preEvent: {
+      type: "setupExperiment",
+      block: 0,
+      condition: tutorialCondition,
+      name: "practice-2",
+    },
+    screen: "ExperimentScreen",
+    controllerScreen: "TutorialInstructions",
+  });
   if (showAlternativesPractice) {
-    result.push({preEvent: {type: 'setupExperiment', block: 0, condition: 'airbnbAlternatives', name: 'practice-3'}, screen: 'ExperimentScreen', controllerScreen: 'PracticeAlternativesInstructions'});
+    result.push({
+      preEvent: {
+        type: "setupExperiment",
+        block: 0,
+        condition: "airbnbAlternatives",
+        name: "practice-3",
+      },
+      screen: "ExperimentScreen",
+      controllerScreen: "PracticeAlternativesInstructions",
+    });
   }
-  if (masterConfigName === 'infoSource') {
+  if (masterConfigName === "infoSource") {
     conditions.forEach((conditionName, block) => {
       result = result.concat([
-        {preEvent: {type: 'setupExperiment', block, condition: conditionName, name: `final-${block}`}, controllerScreen: 'ListWords'},
-        {screen: 'ExperimentScreen', controllerScreen: 'RevisionComputer', timer: finalTimer},
-        {controllerScreen: 'PostTaskSurvey'},
+        {
+          preEvent: {
+            type: "setupExperiment",
+            block,
+            condition: conditionName,
+            name: `final-${block}`,
+          },
+          controllerScreen: "ListWords",
+        },
+        {
+          screen: "ExperimentScreen",
+          controllerScreen: "RevisionComputer",
+          timer: finalTimer,
+        },
+        { controllerScreen: "PostTaskSurvey" },
       ]);
     });
-
   } else {
     conditions.forEach((condition, idx) => {
       result = result.concat(experimentBlock(idx, condition));
     });
   }
   result = result.concat([
-    {controllerScreen: 'ShowReviews', screen: 'PostExpSurvey'},
-    {screen: 'Done', controllerScreen: 'Done'},
+    { controllerScreen: "ShowReviews", screen: "PostExpSurvey" },
+    { screen: "Done", controllerScreen: "Done" },
   ]);
   return result;
 }
 
-
 function specialSent4PlaceSort(participantId, places) {
-  let pos = places.slice(0, 2), neg = places.slice(2);
+  let pos = places.slice(0, 2),
+    neg = places.slice(2);
   neg = seededShuffle(`${participantId}-places-neg`, neg);
   pos = seededShuffle(`${participantId}-places-pos`, pos);
   let order = seededShuffle(`${participantId}-places-order`, [pos, neg]);
@@ -388,8 +436,8 @@ export class MasterStateStore {
   lastEventTimestamp: number;
   replaying: boolean;
   block: number;
-  times: {[name: string]: number};
-  screenTimes: Array<{num: number, timestamp: number}>;
+  times: { [name: string]: number };
+  screenTimes: Array<{ num: number, timestamp: number }>;
   screens: Array<Screen>;
   screenNum: number;
   curExperiment: string;
@@ -397,36 +445,42 @@ export class MasterStateStore {
   timerDur: number;
   timerStartedAt: number;
 
-  setMasterConfig(configName:string) {
+  setMasterConfig(configName: string) {
     this.masterConfigName = configName;
     this.masterConfig = MASTER_CONFIGS[configName];
-    this.conditions = seededShuffle(`${this.clientId}-conditions`, this.masterConfig.baseConditions);
-    if (configName === 'sent4') {
+    this.conditions = seededShuffle(
+      `${this.clientId}-conditions`,
+      this.masterConfig.baseConditions
+    );
+    if (configName === "sent4") {
       // This condition repeats the base conditions.
       this.conditions = this.conditions.concat(this.conditions);
     }
     this.screenNum = 0;
   }
 
-  constructor(clientId:string) {
+  constructor(clientId: string) {
     this.clientId = clientId;
 
-    let isDemo = (clientId || '').slice(0, 4) === 'demo';
+    let isDemo = (clientId || "").slice(0, 4) === "demo";
     this.isDemo = isDemo;
     this.demoConditionName = clientId.slice(4);
     let sentiment = null;
-    if (this.demoConditionName.slice(0,9) === 'sentmatch') {
+    if (this.demoConditionName.slice(0, 9) === "sentmatch") {
       sentiment = +this.demoConditionName[9];
-      this.demoConditionName = 'sentmatch';
+      this.demoConditionName = "sentmatch";
     }
 
-    this.times = {finalTimer};
+    this.times = { finalTimer };
 
     M.extendObservable(this, {
       masterConfig: null,
       participantCode: null,
       get isHDSL() {
-        return this.participantCode !== null && this.participantCode.slice(0, 4) === 'sona';
+        return (
+          this.participantCode !== null &&
+          this.participantCode.slice(0, 4) === "sona"
+        );
       },
       get sonaCreditLink() {
         console.assert(this.isHDSL);
@@ -437,9 +491,11 @@ export class MasterStateStore {
         return !this.isHDSL;
       },
       get isPersuade() {
-        return this.masterConfig.instructions === 'persuade';
+        return this.masterConfig.instructions === "persuade";
       },
-      get timeEstimate() { return this.masterConfig.timeEstimate; },
+      get timeEstimate() {
+        return this.masterConfig.timeEstimate;
+      },
       sentiment,
       lastEventTimestamp: null,
       replaying: true,
@@ -448,7 +504,7 @@ export class MasterStateStore {
       conditions: null,
       conditionName: null,
       get isPractice() {
-        return (this.curExperiment || '').slice(0, 5) === 'pract';
+        return (this.curExperiment || "").slice(0, 5) === "pract";
       },
       experiments: M.observable.shallowMap({}),
       curExperiment: null,
@@ -464,16 +520,27 @@ export class MasterStateStore {
       screenTimes: [],
       lastFailedAttnCheck: 0,
       get showAttnCheckFailedMsg() {
-        return this.lastEventTimestamp && this.lastEventTimestamp - this.lastFailedAttnCheck < 3000;
+        return (
+          this.lastEventTimestamp &&
+          this.lastEventTimestamp - this.lastFailedAttnCheck < 3000
+        );
       },
-      phoneSize: {width: 360, height: 500},
+      phoneSize: { width: 360, height: 500 },
       pingTime: null,
       get screens() {
         if (isDemo) {
-          return [{
-            preEvent: {type: 'setupExperiment', block: 0, condition: this.demoConditionName, name: 'demo'},
-            screen: 'ExperimentScreen', controllerScreen: 'ExperimentScreen'
-          }];
+          return [
+            {
+              preEvent: {
+                type: "setupExperiment",
+                block: 0,
+                condition: this.demoConditionName,
+                name: "demo",
+              },
+              screen: "ExperimentScreen",
+              controllerScreen: "ExperimentScreen",
+            },
+          ];
         }
         return getScreens(this.masterConfigName, this.conditions);
       },
@@ -485,15 +552,15 @@ export class MasterStateStore {
         }
       },
       get places() {
-        let {controlledInputs} = this;
+        let { controlledInputs } = this;
         let res = this.conditions.map((condition, idx) => ({
           idx,
-          name: controlledInputs.get(`restaurant${idx+1}`),
-          visit: controlledInputs.get(`visit${idx+1}`) + " day(s) ago",
-          stars: controlledInputs.get(`star${idx+1}`),
-          knowWhatToWrite: controlledInputs.get(`knowWhat${idx+1}`)
+          name: controlledInputs.get(`restaurant${idx + 1}`),
+          visit: controlledInputs.get(`visit${idx + 1}`) + " day(s) ago",
+          stars: controlledInputs.get(`star${idx + 1}`),
+          knowWhatToWrite: controlledInputs.get(`knowWhat${idx + 1}`),
         }));
-        if (this.masterConfigName === 'sent4') {
+        if (this.masterConfigName === "sent4") {
           // Sort places special: pick two good, then two bad, or vice versa.
           console.assert(res.length === 4);
           return specialSent4PlaceSort(this.clientId, res);
@@ -502,22 +569,28 @@ export class MasterStateStore {
         }
       },
       get curPlace() {
-        if (isDemo) return {name: 'Corner Cafe', visit: 'last night', stars: 4};
+        if (isDemo)
+          return { name: "Corner Cafe", visit: "last night", stars: 4 };
         return this.places[this.block];
       },
-      get curEditTextName() { return 'edited-'+this.block; },
+      get curEditTextName() {
+        return "edited-" + this.block;
+      },
       get curEditText() {
         return this.controlledInputs.get(this.curEditTextName);
       },
       get condition() {
         console.assert(!!this.conditionName);
         console.assert(this.conditionName in namedConditions);
-        return {...CONDITION_DEFAULTS, ...namedConditions[this.conditionName]};
+        return {
+          ...CONDITION_DEFAULTS,
+          ...namedConditions[this.conditionName],
+        };
       },
       get persuadePos() {
         // For the 'persuade' condition, the first two restaurants are pro, the third is con.
         return this.curPlace.idx < 2;
-      }
+      },
     });
   }
 
@@ -526,41 +599,49 @@ export class MasterStateStore {
     let sideEffects = [];
     let screen = this.screens[this.screenNum];
     if (screen.preEvent) {
-      let {preEvent} = screen;
+      let { preEvent } = screen;
       switch (preEvent.type) {
-      case 'setupExperiment':
-        this.block = preEvent.block;
-        this.conditionName = preEvent.condition;
-        this.curExperiment = preEvent.name;
+        case "setupExperiment":
+          this.block = preEvent.block;
+          this.conditionName = preEvent.condition;
+          this.curExperiment = preEvent.name;
 
-        let sentiment = this.condition.sentiment;
-        if (sentiment === 'match') {
-          sentiment = this.sentiment || this.curPlace.stars;
-        }
-        let sugFlags = {
-          domain: 'yelp_train-balanced',
-          ...this.condition.sugFlags,
-          sentiment
-        };
+          let sentiment = this.condition.sentiment;
+          if (sentiment === "match") {
+            sentiment = this.sentiment || this.curPlace.stars;
+          }
+          let sugFlags = {
+            domain: "yelp_train-balanced",
+            ...this.condition.sugFlags,
+            sentiment,
+          };
 
-        let experimentObj = new ExperimentStateStore(this.condition, sugFlags);
-        this.experiments.set(preEvent.name, experimentObj);
-        let initReq = experimentObj.init();
-        if (initReq)
-          sideEffects.push(initReq);
-        this.tutorialTasks = new TutorialTasks();
-        if (this.masterConfig.useConstraints) {
-          this.experimentState.useConstraints = this.masterConfig.useConstraints;
-        }
-        break;
-      case 'setEditFromExperiment':
-        this.controlledInputs.set(this.curEditTextName, this.experimentState.curText);
-        break;
-      default:
+          let experimentObj = new ExperimentStateStore(
+            this.condition,
+            sugFlags
+          );
+          this.experiments.set(preEvent.name, experimentObj);
+          let initReq = experimentObj.init();
+          if (initReq) sideEffects.push(initReq);
+          this.tutorialTasks = new TutorialTasks();
+          if (this.masterConfig.useConstraints) {
+            this.experimentState.useConstraints = this.masterConfig.useConstraints;
+          }
+          break;
+        case "setEditFromExperiment":
+          this.controlledInputs.set(
+            this.curEditTextName,
+            this.experimentState.curText
+          );
+          break;
+        default:
       }
     }
     // FIXME: This doesn't get the correct time for the Welcome screen, because the login event doesn't have a jsTimestamp.
-    this.screenTimes.push({num: this.screenNum, timestamp: this.lastEventTimestamp});
+    this.screenTimes.push({
+      num: this.screenNum,
+      timestamp: this.lastEventTimestamp,
+    });
     if (screen.timer) {
       this.timerStartedAt = this.lastEventTimestamp;
       this.timerDur = screen.timer;
@@ -568,7 +649,7 @@ export class MasterStateStore {
     return sideEffects;
   }
 
-  handleEvent = M.action((event) => {
+  handleEvent = M.action(event => {
     let sideEffects = [];
     this.lastEventTimestamp = event.jsTimestamp;
     if (this.experimentState) {
@@ -581,48 +662,48 @@ export class MasterStateStore {
 
     let screenAtStart = this.screenNum;
     switch (event.type) {
-    case 'login':
-      this.setMasterConfig(event.config);
-      if (event.platform_id) {
-        this.participantCode = event.platform_id;
-      }
-      break;
-    case 'next':
-      this.screenNum++;
-      break;
-    case 'setScreen':
-      this.screenNum = event.screen;
-      break;
-    case 'setStateVarMagic':
-      this[event.var] = event.val;
-      break;
-    case 'controlledInputChanged':
-      this.controlledInputs.set(event.name, event.value);
-      break;
-    case 'resized':
-      if (event.kind === 'p') {
-        this.phoneSize = {width: event.width, height: event.height};
-      }
-      if (this.isDemo && !this.experimentState) {
-        this.setMasterConfig('demo');
-        this.pingTime = 0;
-      }
-    break;
-    case 'pingResults':
-      if (event.kind === 'p') {
-        this.pingTime = event.ping.mean;
-      }
-      break;
-    case 'failedAttnCheckForce':
-      if (!this.replaying) {
-        this.lastFailedAttnCheck = event.jsTimestamp;
-      }
-      break;
-    case 'passedAttnCheck':
-      this.lastFailedAttnCheck = 0;
-      break;
+      case "login":
+        this.setMasterConfig(event.config);
+        if (event.platform_id) {
+          this.participantCode = event.platform_id;
+        }
+        break;
+      case "next":
+        this.screenNum++;
+        break;
+      case "setScreen":
+        this.screenNum = event.screen;
+        break;
+      case "setStateVarMagic":
+        this[event.var] = event.val;
+        break;
+      case "controlledInputChanged":
+        this.controlledInputs.set(event.name, event.value);
+        break;
+      case "resized":
+        if (event.kind === "p") {
+          this.phoneSize = { width: event.width, height: event.height };
+        }
+        if (this.isDemo && !this.experimentState) {
+          this.setMasterConfig("demo");
+          this.pingTime = 0;
+        }
+        break;
+      case "pingResults":
+        if (event.kind === "p") {
+          this.pingTime = event.ping.mean;
+        }
+        break;
+      case "failedAttnCheckForce":
+        if (!this.replaying) {
+          this.lastFailedAttnCheck = event.jsTimestamp;
+        }
+        break;
+      case "passedAttnCheck":
+        this.lastFailedAttnCheck = 0;
+        break;
 
-    default:
+      default:
     }
 
     if (this.screenNum !== screenAtStart) {

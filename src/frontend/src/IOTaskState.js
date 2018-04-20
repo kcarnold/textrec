@@ -11,17 +11,17 @@ export type Screen = {
   screen: string,
   view?: any,
   preEvent?: any,
-  timer?: number
+  timer?: number,
 };
 
 type Experiment = {
-  handleEvent: (event: Event) => Event[]
+  handleEvent: (event: Event) => Event[],
 };
 
 type Config = {
   clientId: string,
   screens: Screen[],
-  timeEstimate: string
+  timeEstimate: string,
 };
 
 export function getDemoConditionName(clientId: string): ?string {
@@ -106,7 +106,7 @@ export class MasterStateStore {
       },
       get timeEstimate() {
         return this.config.timeEstimate;
-      }
+      },
     });
   }
 
@@ -132,7 +132,7 @@ export class MasterStateStore {
     // FIXME: This doesn't get the correct time for the Welcome screen, because the login event doesn't have a jsTimestamp.
     this.screenTimes.push({
       num: this.screenNum,
-      timestamp: this.lastEventTimestamp
+      timestamp: this.lastEventTimestamp,
     });
     if (screen.timer) {
       this.timerStartedAt = this.lastEventTimestamp;

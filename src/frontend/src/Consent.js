@@ -1,6 +1,6 @@
 import React from "react";
 
-const Consent = ({ timeEstimate, isMTurk, persuade }) =>
+const Consent = ({ timeEstimate, isMTurk, persuade }) => (
   <section
     className="container"
     style={{
@@ -8,24 +8,26 @@ const Consent = ({ timeEstimate, isMTurk, persuade }) =>
       padding: "10px 10px",
     }}
   >
-    {persuade
-      ? <p>
-          <b>How persuasively can you write?</b>
-          <br />
-          <br />
-          Suppose someone is just moving to your town and wants to check out
-          some restaurants. Pick <b>two restaurants</b> that{" "}
-          <b>they should visit</b> and <b>one</b> that <b>they should avoid</b>.
-          As part of this study, you will write reviews of the three restaurants
-          that convince your reader to go, or not go.<br />
-          <br />
-          Bonuses are available for especially persuasive writing!
-        </p>
-      : <p>
-          We are testing apps to help people write, and we need your help to try
-          out writing with some of these apps. (It's actually just a webpage to
-          visit on your phone, nothing to install.)
-        </p>}
+    {persuade ? (
+      <p>
+        <b>How persuasively can you write?</b>
+        <br />
+        <br />
+        Suppose someone is just moving to your town and wants to check out some
+        restaurants. Pick <b>two restaurants</b> that <b>they should visit</b>{" "}
+        and <b>one</b> that <b>they should avoid</b>. As part of this study, you
+        will write reviews of the three restaurants that convince your reader to
+        go, or not go.<br />
+        <br />
+        Bonuses are available for especially persuasive writing!
+      </p>
+    ) : (
+      <p>
+        We are testing apps to help people write, and we need your help to try
+        out writing with some of these apps. (It's actually just a webpage to
+        visit on your phone, nothing to install.)
+      </p>
+    )}
 
     <hr />
     <p>
@@ -186,7 +188,7 @@ const Consent = ({ timeEstimate, isMTurk, persuade }) =>
       data may be shared with other researchers and other participants in this
       study.
     </p>
-    {isMTurk &&
+    {isMTurk && (
       <p>
         The MTurk platform provides access to your worker ID, which in some
         cases can be mapped to your name and work history. We are relying on the
@@ -198,7 +200,8 @@ const Consent = ({ timeEstimate, isMTurk, persuade }) =>
         may be possible to re-identify your work, as with any MTurk task.{" "}
         <b>Please make sure to mark your Amazon Profile as private</b> if you do
         not want it to be found from your Mechanical Turk Worker ID.
-      </p>}
+      </p>
+    )}
     <p>
       <b>
         <span style={{ fontSize: "14.0pt" }}>
@@ -236,6 +239,7 @@ const Consent = ({ timeEstimate, isMTurk, persuade }) =>
         If you have questions about your rights as a research participant.
       </li>
     </ul>
-  </section>;
+  </section>
+);
 
 export default Consent;

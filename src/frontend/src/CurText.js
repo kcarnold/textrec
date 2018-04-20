@@ -55,28 +55,25 @@ export const CurText = inject("spying", "state", "dispatch")(
             }}
           >
             <span>
-              <span>
-                {text.slice(0, hiStart)}
-              </span>
+              <span>{text.slice(0, hiStart)}</span>
               <span className="replaceHighlight">
                 {text.slice(hiStart, hiEnd)}
               </span>
-              <span>
-                {text.slice(hiEnd)}
-              </span>
+              <span>{text.slice(hiEnd)}</span>
               <span
-                className={classNames("Cursor", electricDeleteLiveChars && "deleting")}
+                className={classNames(
+                  "Cursor",
+                  electricDeleteLiveChars && "deleting"
+                )}
                 ref={elt => {
                   this.cursor = elt;
                 }}
               />
-              <span className="afterCursor">
-                {afterCursor}
-              </span>
+              <span className="afterCursor">{afterCursor}</span>
             </span>
           </div>
         );
       }
-    },
-  ),
+    }
+  )
 );

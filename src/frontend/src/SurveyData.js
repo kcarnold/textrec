@@ -1,6 +1,6 @@
-import React from 'react';
+import React from "react";
 
-import {likert} from './SurveyViews';
+import { likert } from "./SurveyViews";
 
 export const miscQuestions = [
   {
@@ -56,35 +56,31 @@ export const tlxQuestions = [
     "Very low",
     "Very high",
   ]),
-  likert(
-    "physical",
-    "How physically demanding was the task?",
-    7,
-    ["Very low", "Very high"],
-  ),
-  likert(
-    "temporal",
-    "How hurried or rushed was the pace of the task?",
-    7,
-    ["Very low", "Very high"],
-  ),
+  likert("physical", "How physically demanding was the task?", 7, [
+    "Very low",
+    "Very high",
+  ]),
+  likert("temporal", "How hurried or rushed was the pace of the task?", 7, [
+    "Very low",
+    "Very high",
+  ]),
   likert(
     "performance",
     "How successful were you in accomplishing what you were asked to do?",
     7,
-    ["Perfect \u{1F601}", "Failure \u{1F641}"],
+    ["Perfect \u{1F601}", "Failure \u{1F641}"]
   ),
   likert(
     "effort",
     "How hard did you have to work to accomplish your level of performance?",
     7,
-    ["Very low", "Very high"],
+    ["Very low", "Very high"]
   ),
   likert(
     "frustration",
     "How insecure, discouraged, irritated, stressed, and annoyed were you?",
     7,
-    ["Very low", "Very high"],
+    ["Very low", "Very high"]
   ),
 ];
 
@@ -137,7 +133,7 @@ export function personalityBlock(blockIdx) {
   const traitsPerBatch = 8;
   let traitBatch = traitItems.slice(
     traitsPerBatch * blockIdx,
-    traitsPerBatch * (blockIdx + 1),
+    traitsPerBatch * (blockIdx + 1)
   );
   return [
     {
@@ -211,7 +207,8 @@ export const closingSurveyQuestions = [
     flags: { multiline: true },
   },
   {
-    text: "Aaaand... we're done! How was this experiment? What went well? What could have been better? Any ideas?",
+    text:
+      "Aaaand... we're done! How was this experiment? What went well? What could have been better? Any ideas?",
     responseType: "text",
     name: "other",
     flags: { multiline: true },

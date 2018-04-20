@@ -1,27 +1,31 @@
-import React, { Component } from 'react';
-import fromPairs from 'lodash/fromPairs';
-import map from 'lodash/map';
-import throttle from 'lodash/throttle';
-import * as M from 'mobx';
-import {observer, Provider} from 'mobx-react';
-import WSClient from './wsclient';
-import Raven from 'raven-js';
-import * as WSPinger from './WSPinger';
+import React, { Component } from "react";
+import fromPairs from "lodash/fromPairs";
+import map from "lodash/map";
+import throttle from "lodash/throttle";
+import * as M from "mobx";
+import { observer, Provider } from "mobx-react";
+import WSClient from "./wsclient";
+import Raven from "raven-js";
+import * as WSPinger from "./WSPinger";
 
 const MAX_PING_TIME = 200;
 
 export function init(state, clientId, clientKind) {
-
   var wsURL = `ws://${window.location.host}`;
   //var ws = new WSClient(`ws://${process.env.REACT_APP_BACKEND_HOST}:${process.env.REACT_APP_BACKEND_PORT}/ws`);
-  var ws = new WSClient(wsURL + '/ws');
+  var ws = new WSClient(wsURL + "/ws");
 
   var messageCount = {};
   window.messageCount = messageCount;
 
   var browserMeta = {
     userAgent: navigator.userAgent,
-    screen: fromPairs(map('height availHeight width availWidth'.split(' '), x => [x, window.screen[x]])),
+    screen: fromPairs(
+      map("height availHeight width availWidth".split(" "), x => [
+        x,
+        window.screen[x],
+      ])
+    ),
     window: {
       devicePixelRatio: window.devicePixelRatio,
     },
@@ -31,22 +35,22 @@ export function init(state, clientId, clientKind) {
     },
   };
 
-
   function updateBacklog() {
-    ws.setHello([{
-      type: 'init',
-      participantId: clientId,
-      kind: clientKind,
-      browserMeta,
-      git_rev: process.env.REACT_APP_GIT_REV,
-      messageCount: messageCount,
-      masterConfig: state.masterConfig,
-    }]);
+    ws.setHello([
+      {
+        type: "init",
+        participantId: clientId,
+        kind: clientKind,
+        browserMeta,
+        git_rev: process.env.REACT_APP_GIT_REV,
+        messageCount: messageCount,
+        masterConfig: state.masterConfig,
+      },
+    ]);
   }
 
   function addLogEntry(kind, event) {
-    if (!messageCount[kind])
-      messageCount[kind] = 0;
+    if (!messageCount[kind]) messageCount[kind] = 0;
     messageCount[kind] += 1;
     updateBacklog();
   }
@@ -64,9 +68,9 @@ export function init(state, clientId, clientKind) {
 
   function _dispatch(event) {
     Raven.captureBreadcrumb({
-      category: 'dispatch',
+      category: "dispatch",
       message: event.type,
-      data: event
+      data: event,
     });
     console.log(event);
     event.jsTimestamp = +new Date();
@@ -81,8 +85,8 @@ export function init(state, clientId, clientKind) {
     });
     // Run side-effects after all handlers have had at it.
     sideEffects.forEach(sideEffect => {
-      if (sideEffect.type === 'rpc') {
-        console.log(sideEffect)
+      if (sideEffect.type === "rpc") {
+        console.log(sideEffect);
         ws.send(sideEffect);
       } else {
         setTimeout(() => dispatch(sideEffect), 0);
@@ -91,14 +95,14 @@ export function init(state, clientId, clientKind) {
   }
 
   let dispatch;
-  if (process.env.NODE_ENV === 'production') {
-    dispatch = (event) => {
+  if (process.env.NODE_ENV === "production") {
+    dispatch = event => {
       try {
         return _dispatch(event);
       } catch (e) {
         Raven.captureException(e, {
-          tags: {dispatcher: 'dispatch'},
-          extra: event
+          tags: { dispatcher: "dispatch" },
+          extra: event,
         });
         throw e;
       }
@@ -109,20 +113,19 @@ export function init(state, clientId, clientKind) {
 
   // Every event gets logged to the server. Keep events small!
   function log(event) {
-    ws.send({type: 'log', event});
+    ws.send({ type: "log", event });
     addLogEntry(clientKind, event);
   }
-
 
   registerHandler(state.handleEvent);
 
   var didInit = false;
 
   ws.onmessage = function(msg) {
-    if (msg.type === 'reply') {
-      dispatch({type: 'backendReply', msg});
-    } else if (msg.type === 'backlog') {
-      console.log('Backlog', msg.body.length);
+    if (msg.type === "reply") {
+      dispatch({ type: "backendReply", msg });
+    } else if (msg.type === "backlog") {
+      console.log("Backlog", msg.body.length);
       let firstTime = !didInit;
       state.replaying = true;
       msg.body.forEach(msg => {
@@ -131,8 +134,8 @@ export function init(state, clientId, clientKind) {
           addLogEntry(msg.kind, msg);
         } catch (e) {
           Raven.captureException(e, {
-            tags: {dispatcher: 'backlog'},
-            extra: msg
+            tags: { dispatcher: "backlog" },
+            extra: msg,
           });
           throw e;
         }
@@ -143,8 +146,8 @@ export function init(state, clientId, clientKind) {
         afterFirstMessage();
         didInit = true;
       }
-    } else if (msg.type === 'otherEvent') {
-      console.log('otherEvent', msg.event);
+    } else if (msg.type === "otherEvent") {
+      console.log("otherEvent", msg.event);
       // Keep all the clients in lock-step.
       state.handleEvent(msg.event);
       addLogEntry(msg.event.kind, msg.event);
@@ -153,49 +156,80 @@ export function init(state, clientId, clientKind) {
 
   // The handler for the first backlog message calls 'afterFirstMessage'.
   function afterFirstMessage() {
-    if (clientKind === 'p') {
+    if (clientKind === "p") {
       setSizeDebounced();
     }
     if (state.pingTime === null || state.pingTime > MAX_PING_TIME) {
-      setTimeout(() => WSPinger.doPing(wsURL + '/ping', 5, function(ping) {
-        dispatch({type: 'pingResults', ping});
-      }), 100);
+      setTimeout(
+        () =>
+          WSPinger.doPing(wsURL + "/ping", 5, function(ping) {
+            dispatch({ type: "pingResults", ping });
+          }),
+        100
+      );
     }
   }
 
   function setSize() {
-    let width = Math.min(document.documentElement.clientWidth, window.screen.availWidth);
-    let height = Math.min(document.documentElement.clientHeight, window.screen.availHeight);
-    dispatch({type: 'resized', width, height});
+    let width = Math.min(
+      document.documentElement.clientWidth,
+      window.screen.availWidth
+    );
+    let height = Math.min(
+      document.documentElement.clientHeight,
+      window.screen.availHeight
+    );
+    dispatch({ type: "resized", width, height });
   }
 
-  var setSizeDebounced = throttle(setSize, 100, {leading: false, trailing: true});
+  var setSizeDebounced = throttle(setSize, 100, {
+    leading: false,
+    trailing: true,
+  });
 
-  window.addEventListener('resize', setSizeDebounced);
-
+  window.addEventListener("resize", setSizeDebounced);
 
   // Globals
   window.M = M;
   window.state = state;
   window.dispatch = dispatch;
 
-  return {state, dispatch, clientId, clientKind};
+  return { state, dispatch, clientId, clientKind };
 }
 
-export const View = observer(class View extends Component {
-  render() {
-    let {state, dispatch, clientId, clientKind} = this.props.global;
-    if (clientKind === 'p') {
-      if (state.pingTime === null) {
-        return <div>Please wait while we test your phone's communication with our server.</div>;
-      } else if (state.pingTime > MAX_PING_TIME) {
-        return <div>Sorry, your phone's connection to our server is too slow (your ping is {Math.round(state.pingTime)} ms). Check your WiFi connection and reload the page.</div>;
+export const View = observer(
+  class View extends Component {
+    render() {
+      let { state, dispatch, clientId, clientKind } = this.props.global;
+      if (clientKind === "p") {
+        if (state.pingTime === null) {
+          return (
+            <div>
+              Please wait while we test your phone's communication with our
+              server.
+            </div>
+          );
+        } else if (state.pingTime > MAX_PING_TIME) {
+          return (
+            <div>
+              Sorry, your phone's connection to our server is too slow (your
+              ping is {Math.round(state.pingTime)} ms). Check your WiFi
+              connection and reload the page.
+            </div>
+          );
+        }
       }
+      return (
+        <Provider
+          state={state}
+          dispatch={dispatch}
+          clientId={clientId}
+          clientKind={clientKind}
+          spying={false}
+        >
+          {this.props.children}
+        </Provider>
+      );
     }
-    return (
-      <Provider state={state} dispatch={dispatch} clientId={clientId} clientKind={clientKind} spying={false}>
-        {this.props.children}
-      </Provider>
-    );
   }
-});
+);
