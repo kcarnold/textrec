@@ -1,4 +1,4 @@
-// @noflow
+// @flow
 
 import * as M from "mobx";
 import range from "lodash/range";
@@ -51,7 +51,19 @@ type IOExperimentFlags = {
 export class ExperimentStateStore {
   outstandingRequests: number[];
 
+  prevState: Object; // TODO
+  tapLocations: Object[];
+  seqNums: number[];
+  flags: IOExperimentFlags;
   curText: string;
+  stimulus: Stimulus;
+  transcribe: string;
+  contextSequenceNum: number;
+  lastSuggestionsFromServer: Object;
+  activeSuggestion: Object;
+  lastSpaceWasAuto: boolean;
+  electricDeleteLiveChars: ?number;
+
 
   constructor(flags: IOExperimentFlags) {
     this.outstandingRequests = [];
