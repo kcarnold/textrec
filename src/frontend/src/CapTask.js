@@ -69,8 +69,10 @@ const namedConditions = {
 
 
 const urlForImage = content => {
-  console.assert(content.length === 12);
-  return `http://images.cocodataset.org/train2017/${content}.jpg`;
+  let padded = `${content}`;
+  while (padded.length < 12) padded = "0" + padded;
+  console.assert(padded.length === 12);
+  return `http://images.cocodataset.org/train2017/${padded}.jpg`;
   // return `http://visualqa.org/data/abstract_v002/scene_img/img/${content}.png`;
 };
 
@@ -98,8 +100,7 @@ export const StimulusView = ({ stimulus }) => {
 
 const CapInstructions = iobs(({ state }) => (
   <div>
-    Write the most specific description you can for the image below. Write only
-    a single sentence. After you're done, tap here:{" "}
+    Write the most specific and accurate description you can for the image below. After you're done, tap here:{" "}
     <NextBtn disabled={state.experimentState.wordCount < 10} />
     <StimulusView stimulus={state.experimentState.stimulus} />
   </div>
@@ -262,26 +263,59 @@ function getScreens(conditions: string[], stimuli: Stimulus[]) {
         ]
       }
     },
-    ...tutorials,
     {
       screen: "TaskDescription",
       view: () => (
         <div>
           <p>
-            In this study we're going to be writing descriptions of images. You
-            already typed a few of them during the warm-up.
+            In this study we're going to be writing captions for images. The captions should be <b>specific</b> and <b>accurate</b>.
           </p>
 
-          <p>
-            Your goal is to write the <b>most specific description</b> you can.
-            Someone reading a <b>specific</b> description will be able to pick
-            out your image from among a set of similar images.
-          </p>
+          <h3>Example</h3>
+
+          <StimulusView stimulus={({type: 'img', content: 395402 })} />
+
+          <ul>
+            <li>A dog with a collar is sitting in a carpeted room. &mdash; <b>Not specific.</b></li>
+            <li>An alert tricolor dalmation is looking to its left. &mdash; <b>Not accurate.</b></li>
+            <li>An alert tricolor terrier is looking to its right. &mdash; <b>Good: both specific and accurate</b></li>
+          </ul>
+
+          <p>Why? Other people will be shown your caption and they'll have to pick out the right image from a line-up, like this:</p>
+
+          <StimulusView stimulus={({type: 'img', content: 395402 })} />
+          <StimulusView stimulus={({type: 'img', content: 6710 })} />
+          <StimulusView stimulus={({type: 'img', content: 250868 })} />
+
+
+          <p>A bonus of $0.50 will be available to the most specific and accurate captions!</p>
+
+          <h3>Quiz</h3>
+          <StimulusView stimulus={({type: 'img', content: 251368 })} />
+
+          <p>Which of the following captions is most likely to get the bonus?</p>
+
+          <ul>
+            <li>exactly how are both the dog and the person going to fit on that skateboard?</li>
+            <li>the dark haired dog is trying to ride on the skateboard.</li>
+            <li>a person in shorts and a black dog both have one foot on a skateboard.</li>
+            <li>a guy with a dog trying to climb on a skateboard </li>
+          </ul>
+
+          <p style={{marginBottom: 200}}>Scroll down for answer</p>
+
+          <ul>
+            <li>exactly how are both the dog and the person going to fit on that skateboard? &mdash; <b>not a caption, also not specific</b></li>
+            <li>the dark haired dog is trying to ride on the skateboard. &mdash; <b>would better fit an image where the dog is actually on the skateboard. Doesn't describe the person: not specific.</b></li>
+            <li>a person in shorts and a black dog both have one foot on a skateboard. &mdash; <b>Most likely to get bonus, because it describes this image correctly (accurate), and probably fits few other images (specific).</b></li>
+            <li>a guy with a dog trying to climb on a skateboard &mdash; <b>unclear: is the guy holding the dog? inaccurate.</b></li>
+          </ul>
 
           <NextBtn />
         </div>
       )
-    }
+    },
+    ...tutorials,
   ];
   blocks.forEach((block, idx) => {
     result = result.concat(experimentBlock(idx, block.condition, block.stimuli));
