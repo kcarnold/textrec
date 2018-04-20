@@ -1,17 +1,13 @@
 import React, { Component } from 'react';
 import every from 'lodash/every';
 import {observer, inject} from 'mobx-react';
-import classNames from 'classnames';
 import {Keyboard} from './Keyboard';
 import {NextBtn} from './BaseViews';
 import {CurText} from './CurText';
-import {SuggestionsBar, AlternativesBar} from './SuggestionViews';
+import {SuggestionsBar} from './SuggestionViews';
 import Consent from './Consent';
 
 const SITE_DOWN = false;
-
-const wordCountTarget = 75;
-const askKnowWhatToSay = false;
 
 const tutorialTaskDescs = {
   typeKeyboard: 'Type a few words by tapping letters on the keyboard.',
@@ -45,11 +41,11 @@ export const TutorialInstructions = inject('state', 'dispatch')(observer(({state
 }));
 
 
-export const TranscribeTask = inject('state', 'dispatch')(observer(({state, dispatch}) => {
-  let phrase = state.experimentState.transcribe;
-  return <div>
-  </div>;
-}));
+// export const TranscribeTask = inject('state', 'dispatch')(observer(({state, dispatch}) => {
+//   let phrase = state.experimentState.transcribe;
+//   return <div>
+//   </div>;
+// }));
 
 export const Welcome = inject('state')(observer(({state}) => <div>
     {SITE_DOWN && <h1 style={{paddingBottom: "2500px"}}>Site down for maintenance, please try again in a few hours.</h1>}

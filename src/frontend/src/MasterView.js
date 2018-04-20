@@ -10,7 +10,7 @@ export const MasterView = screenToView => inject('state', 'spying')(observer(cla
   }
 
   render() {
-    let {state, kind} = this.props;
+    let {state} = this.props;
     if (state.replaying) return <div>Loading...</div>;
     return (
       <div className="App">
