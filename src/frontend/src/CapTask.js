@@ -158,33 +158,21 @@ function experimentBlock(
         </div>
       ),
     },
-    {
-      preEvent: {
-        type: "setupExperiment",
-        name: `practice-${block}`,
-        flags: {
-          condition: "general",
-          ...namedConditions["general"],
-          transcribe: tutorialStimulus.transcribe.toLowerCase(),
-          stimulus: tutorialStimulus.stimulus,
-        },
-      },
-      screen: "ExperimentScreen",
-      view: experimentView({ instructions: TutorialInstructions(block) }),
-    },
-    ...stimuli.map((stimulus, idx) => ({
-      preEvent: {
-        type: "setupExperiment",
+    trialScreen({
+      name: `practice-${block}`,
+      condition: conditionName,
+      transcribe: tutorialStimulus.transcribe.toLowerCase(),
+      stimulus: tutorialStimulus.stimulus,
+      instructions: TutorialInstructions(block),
+    }),
+    ...stimuli.map((stimulus, idx) =>
+      trialScreen({
         name: `final-${block}-${idx}`,
-        flags: {
-          condition: conditionName,
-          ...namedConditions[conditionName],
-          stimulus,
-        },
-      },
-      screen: "ExperimentScreen",
-      view: experimentView({ instructions: CapInstructions }),
-    })),
+        condition: conditionName,
+        stimulus,
+        instructions: CapInstructions,
+      })
+    ),
     {
       screen: "PostTaskSurvey",
       view: surveyView({
@@ -220,19 +208,12 @@ const TutorialInstructions = block =>
 
 function getDemoScreens(condition: string, stimulus: Stimulus) {
   return [
-    {
-      preEvent: {
-        type: "setupExperiment",
-        name: `final-0`,
-        flags: {
-          condition,
-          ...namedConditions[condition],
-          stimulus,
-        },
-      },
-      screen: "ExperimentScreen",
-      view: experimentView({ instructions: CapInstructions }),
-    },
+    trialScreen({
+      name: `final-0`,
+      condition,
+      stimulus,
+      instructions: CapInstructions,
+    }),
   ];
 }
 
@@ -328,7 +309,6 @@ const TaskDescription = () => (
 const StudyDesc = () => (
   <div>
     <h1>Study Preview</h1>
-
     <p>
       You'll use {baseConditions.length} different keyboard designs in this
       study.
@@ -342,7 +322,6 @@ const StudyDesc = () => (
       You will type a total of {baseConditions.length * TRIALS_PER_CONDITION}{" "}
       captions.
     </p>
-
     <p>Note:</p>
     <ul className="spaced">
       <li>
@@ -425,8 +404,26 @@ function experimentView(props) {
   };
 }
 
-let baseConditions = ["norecs", "general", "specific"];
+function trialScreen(props) {
+  let { name, condition, flags, instructions, stimulus, transcribe } = props;
+  return {
+    preEvent: {
+      type: "setupExperiment",
+      name,
+      flags: {
+        condition,
+        ...namedConditions[condition],
+        stimulus,
+        transcribe,
+        ...flags,
+      },
+    },
+    screen: "ExperimentScreen",
+    view: experimentView({ instructions }),
+  };
+}
 
+let baseConditions = ["norecs", "general", "specific"];
 
 export function createTaskState(clientId: string) {
   clientId = clientId || "";
@@ -449,24 +446,29 @@ export function createTaskState(clientId: string) {
   });
 
   function handleEvent(event: Event): Event[] {
-    if (event.type === 'next') {
+    if (event.type === "next") {
       if (state.screenNum === screens.length - 2) {
         let finalData = {
           screenTimes: state.screenTimes.map(screen => ({
             ...screen,
-            name: screens[screen.num].screen
+            name: screens[screen.num].screen,
           })),
           controlledInputs: state.controlledInputs.toJS(),
-          texts: Array.from(state.experiments.entries(), ([expName, expState]) => ({
-            name: expName,
-            condition: expState.flags.condition,
-            text: expState.curText
-          }))
+          texts: Array.from(
+            state.experiments.entries(),
+            ([expName, expState]) => ({
+              name: expName,
+              condition: expState.flags.condition,
+              text: expState.curText,
+            })
+          ),
         };
-        return [{
-          type: "finalData",
-          finalData
-        }];
+        return [
+          {
+            type: "finalData",
+            finalData,
+          },
+        ];
       }
     }
   }
