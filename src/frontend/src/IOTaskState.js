@@ -10,7 +10,7 @@ import type { Event } from "./Events";
 export type Screen = {
   screen: string,
   view?: any,
-  preEvent?: any,
+  preEvent?: Object,
   timer?: number,
 };
 
