@@ -22,6 +22,7 @@ type Config = {
   clientId: string,
   screens: Screen[],
   timeEstimate: string,
+  handleEvent?: (event: Event) => Event[]
 };
 
 export function getDemoConditionName(clientId: string): ?string {
@@ -149,6 +150,10 @@ export class MasterStateStore {
     }
     if (this.tutorialTasks) {
       this.tutorialTasks.handleEvent(event);
+    }
+    if (this.config.handleEvent) {
+      let res = this.config.handleEvent(event);
+      if (res) sideEffects = sideEffects.concat(res);
     }
 
     let screenAtStart = this.screenNum;

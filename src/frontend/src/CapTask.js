@@ -427,6 +427,7 @@ function experimentView(props) {
 
 let baseConditions = ["norecs", "general", "specific"];
 
+
 export function createTaskState(clientId: string) {
   clientId = clientId || "";
 
@@ -440,11 +441,37 @@ export function createTaskState(clientId: string) {
     screens = getScreens(conditions, stimuli);
   }
 
-  return new IOTaskState.MasterStateStore({
+  let state = new IOTaskState.MasterStateStore({
     clientId,
     screens,
+    handleEvent,
     timeEstimate: "20 minutes",
   });
+
+  function handleEvent(event: Event): Event[] {
+    if (event.type === 'next') {
+      if (state.screenNum === screens.length - 2) {
+        let finalData = {
+          screenTimes: state.screenTimes.map(screen => ({
+            ...screen,
+            name: screens[screen.num].screen
+          })),
+          controlledInputs: state.controlledInputs.toJS(),
+          texts: Array.from(state.experiments.entries(), ([expName, expState]) => ({
+            name: expName,
+            condition: expState.flags.condition,
+            text: expState.curText
+          }))
+        };
+        return [{
+          type: "finalData",
+          finalData
+        }];
+      }
+    }
+  }
+
+  return state;
 }
 
 export function screenToView(screenDesc: Screen) {
