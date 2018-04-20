@@ -32,7 +32,7 @@ export default class TutorialTasks {
     });
   }
 
-  handleEvent(event: Event) {
+  handleEvent(event: TSEvent) {
     let timestamp = event.jsTimestamp;
     switch(event.type) {
     case 'tapSuggestion':

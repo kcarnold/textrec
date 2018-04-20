@@ -4,7 +4,6 @@ import * as M from "mobx";
 import type { ObservableMap } from "mobx";
 import { ExperimentStateStore } from "./IOExperimentState";
 import TutorialTasks from "./TutorialTasks";
-import { seededShuffle } from "./shuffle";
 
 import type { Event } from "./Events";
 

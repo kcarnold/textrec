@@ -4,7 +4,6 @@ import * as M from "mobx";
 import range from "lodash/range";
 import map from "lodash/map";
 import countWords from "./CountWords";
-import seedrandom from "seedrandom";
 import type { Event } from "./Events";
 
 /**** Main experiment-screen state store!
@@ -39,11 +38,6 @@ visibleSuggestions is a pure computation based on the last suggestions received 
 
 */
 
-function randChoice(rng, choices) {
-  let unif = 1;
-  while (unif === 1) unif = rng();
-  return choices[Math.floor(unif * choices.length)];
-}
 
 type Stimulus = {
   type: string,
@@ -172,7 +166,7 @@ export class ExperimentStateStore {
           .concat(map(toInsert, () => this.contextSequenceNum))
           .concat(this.seqNums.slice(startIdx + deleteCount));
       }),
-      tapKey: M.action(event => {
+      tapKey: M.action((event: Event) => {
         let cursorPos = this.curText.length;
         let oldCurWord = this.curText.slice(this.lastSpaceIdx + 1);
 
@@ -371,7 +365,7 @@ export class ExperimentStateStore {
     return this.suggestionContext;
   }
 
-  handleEvent = event => {
+  handleEvent = (event: Event) => {
     let prevState = {
       curText: this.curText,
       tapLocations: this.tapLocations.slice(),
