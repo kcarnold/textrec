@@ -144,9 +144,9 @@ function experimentBlock(block: number, conditionName: string, stimuli: Stimulus
     {
       preEvent: {
         type: "setupExperiment",
-        condition: "general",
         name: `practice-${block}`,
         flags: {
+          condition: "general",
           ...namedConditions['general'],
           transcribe: tutorialStimulus.transcribe.toLowerCase(),
           stimulus: tutorialStimulus.stimulus
@@ -158,10 +158,9 @@ function experimentBlock(block: number, conditionName: string, stimuli: Stimulus
     ...stimuli.map((stimulus, idx) => ({
         preEvent: {
           type: "setupExperiment",
-          block,
-          condition: conditionName,
           name: `final-${block}-${idx}`,
           flags: {
+            condition: conditionName,
             ...namedConditions[conditionName],
             stimulus
           }
@@ -208,9 +207,9 @@ function getDemoScreens(condition: string, stimulus: Stimulus) {
     {
       preEvent: {
         type: "setupExperiment",
-        condition,
         name: `final-0`,
         flags: {
+          condition,
           ...namedConditions[condition],
           stimulus
         }
