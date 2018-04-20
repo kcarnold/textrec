@@ -425,7 +425,7 @@ span.replaceHighlight {
 }
 
 .Survey {
-  padding-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 /** Show scrollbars on instructions: https://stackoverflow.com/questions/22907777/make-scrollbar-visible-in-mobile-browsers **/
