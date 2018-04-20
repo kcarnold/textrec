@@ -137,7 +137,7 @@ def get_top_k(logits, vocab, k, prefix=None):
     result = []
     for idx in logits.topk(k * 2)[1]:
         word = vocab[idx]
-        if word[0] == '<':
+        if word[0] == '<' or word[0] == '.':
             continue
         result.append(word)
         if len(result) == k:
