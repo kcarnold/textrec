@@ -424,6 +424,11 @@ span.replaceHighlight {
   background: #87cc87;
 }
 
+
+ul.spaced li {
+  padding-bottom: 5px;
+}
+
 .Survey {
   margin-bottom: 20px;
 }

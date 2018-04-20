@@ -247,7 +247,7 @@ const TaskDescription = () => (
 
     <StimulusView stimulus={{ type: "img", content: 395402 }} />
 
-    <ul>
+    <ul className="spaced">
       <li>
         A dog with a collar is sitting in a carpeted room. &mdash;{" "}
         <b>Not specific.</b>
@@ -281,7 +281,7 @@ const TaskDescription = () => (
 
     <p>Which of the following captions is most likely to get the bonus?</p>
 
-    <ul>
+    <ul className="spaced">
       <li>
         exactly how are both the dog and the person going to fit on that
         skateboard?
@@ -293,9 +293,9 @@ const TaskDescription = () => (
       <li>a guy with a dog trying to climb on a skateboard </li>
     </ul>
 
-    <p style={{ marginBottom: 200 }}>Scroll down for answer</p>
+    <p style={{ marginBottom: 500 }}>Scroll down for answer...</p>
 
-    <ul>
+    <ul className="spaced">
       <li>
         exactly how are both the dog and the person going to fit on that
         skateboard? &mdash; <b>not a caption, also not specific</b>
@@ -344,7 +344,7 @@ const StudyDesc = () => (
     </p>
 
     <p>Note:</p>
-    <ul>
+    <ul className="spaced">
       <li>
         All of the keyboard designs have a simplified key layout: no caps, and
         only a few extra symbols.
@@ -359,6 +359,7 @@ const StudyDesc = () => (
         different keyboards. So <b>please try to remember which is which</b>!
       </li>
     </ul>
+    Ready to get started? <NextBtn />
   </div>
 );
 
