@@ -278,24 +278,6 @@ export class ExperimentStateStore {
     return [];
   }
 
-  handleSelectAlternative(event: Event) {
-    let wordToInsert = event.word;
-    let { curWord } = this.getSuggestionContext();
-    let charsToDelete = curWord.length;
-    let isNonWord = wordToInsert.match(/^\W$/);
-    let deleteSpace = this.lastSpaceWasAuto && isNonWord;
-    if (deleteSpace) {
-      charsToDelete++;
-    }
-    this.spliceText(
-      this.curText.length - charsToDelete,
-      charsToDelete,
-      wordToInsert + " "
-    );
-    this.lastSpaceWasAuto = true;
-    return [];
-  }
-
   handleUndo(event: Event): Event[] {
     if (this.prevState) {
       this.curText = this.prevState.curText;
@@ -391,8 +373,6 @@ export class ExperimentStateStore {
           return this.updateSuggestions(event);
         case "tapSuggestion":
           return this.handleTapSuggestion(event);
-        case "selectAlternative":
-          return this.handleSelectAlternative(event);
         case "updateDeleting":
           return this.handleDeleting(event);
         default:
@@ -440,7 +420,6 @@ decorate(ExperimentStateStore, {
   tapKey: action.bound,
   tapBackspace: action.bound,
   handleTapSuggestion: action.bound,
-  handleSelectAlternative: action.bound,
   handleUndo: action.bound,
   updateSuggestions: action.bound,
   handleDeleting: action.bound,
