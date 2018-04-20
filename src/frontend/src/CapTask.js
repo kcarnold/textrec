@@ -144,7 +144,6 @@ function experimentBlock(block: number, conditionName: string, stimuli: Stimulus
     {
       preEvent: {
         type: "setupExperiment",
-        block: block,
         condition: "general",
         name: `practice-${block}`,
         flags: {
@@ -209,7 +208,6 @@ function getDemoScreens(condition: string, stimulus: Stimulus) {
     {
       preEvent: {
         type: "setupExperiment",
-        block: 0,
         condition,
         name: `final-0`,
         flags: {

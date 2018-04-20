@@ -119,8 +119,6 @@ export class MasterStateStore {
       switch (preEvent.type) {
         case "setupExperiment":
           this.curExperiment = preEvent.name;
-          // TODO: remove this.block.
-          this.block = preEvent.block;
 
           let experimentObj = new ExperimentStateStore(preEvent.flags);
           this.experiments.set(preEvent.name, experimentObj);
