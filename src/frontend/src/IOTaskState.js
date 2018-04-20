@@ -14,8 +14,8 @@ export type Screen = {
   timer?: number,
 };
 
-type Experiment = {
-  handleEvent: (event: Event) => Event[],
+type ExperimentState = {
+  +handleEvent: (event: Event) => Event[],
 };
 
 type Config = {
@@ -48,14 +48,14 @@ export class MasterStateStore {
   screens: Array<Screen>;
 
   // Experiments
-  experiments: ObservableMap<*>;
+  experiments: ObservableMap<string, ExperimentState>;
   block: number;
   curExperiment: string;
-  experimentState: Experiment;
+  experimentState: ExperimentState;
   timerDur: number;
   timerStartedAt: number;
 
-  controlledInputs: ObservableMap<*>;
+  controlledInputs: ObservableMap<string, any>;
 
   tutorialTasks: TutorialTasks;
 

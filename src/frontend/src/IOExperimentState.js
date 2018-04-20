@@ -52,12 +52,13 @@ type Stimulus = {
 type IOExperimentFlags = {
   stimulus: Stimulus,
   modelSeesStimulus: boolean,
+  requestFlags: Object
 };
 
 export class ExperimentStateStore {
   outstandingRequests: number[] = [];
 
-  prevState: Object = null; // TODO
+  prevState: ?Object = null; // TODO
   tapLocations: Object[] = [];
   seqNums: number[] = [];
 
@@ -68,7 +69,7 @@ export class ExperimentStateStore {
   curText: string = "";
   contextSequenceNum: number = 0;
   lastSuggestionsFromServer: Object = {};
-  activeSuggestion: Object = null;
+  activeSuggestion: ?Object = null;
   lastSpaceWasAuto: boolean = false;
   electricDeleteLiveChars: ?number = null;
 
@@ -222,7 +223,7 @@ export class ExperimentStateStore {
     return [];
   }
 
-  tapBackspace(event: Event) {
+  tapBackspace(event: TapBackspace) {
     let { delta } = event;
     if (delta === undefined) delta = -1;
     this.spliceText(this.curText.length + delta, -delta, "");
@@ -344,7 +345,7 @@ export class ExperimentStateStore {
         stimulus: stimulus,
         sofar: prefix,
         cur_word: curWord,
-        flags: { ...this.sugFlags, promise },
+        flags: { ...this.flags.requestFlags, promise },
         request_id: this.contextSequenceNum,
       },
     };

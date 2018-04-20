@@ -405,7 +405,14 @@ function experimentView(props) {
   };
 }
 
-function trialScreen(props) {
+function trialScreen(props: {
+  name: string,
+  condition: string,
+  flags: ?Object,
+  instructions: React.Component,
+  stimulus: Stimulus,
+  transcribe: ?string
+}) {
   let { name, condition, flags, instructions, stimulus, transcribe } = props;
   return {
     preEvent: {
