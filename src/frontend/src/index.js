@@ -17,10 +17,11 @@ let topLevel;
 let query = window.location.search.slice(1);
 let initialPart = query.split("/", 1)[0] || query;
 
-if (initialPart === "panopt") {
-  let Panopticon = require("./Panopticon").default;
-  topLevel = <Panopticon />;
-} else if (initialPart === "showall") {
+// if (initialPart === "panopt") {
+//   let Panopticon = require("./Panopticon").default;
+//   topLevel = <Panopticon />;
+// } else
+if (initialPart === "showall") {
   let mod = require("./ShowAllScreens");
   let { createTaskState, screenToView } = getApp("cap");
   mod.init(createTaskState, screenToView, query.slice(initialPart.length + 1));
@@ -29,9 +30,9 @@ if (initialPart === "panopt") {
 } else if (initialPart === "bench") {
   let Bench = require("./Bench").default;
   topLevel = <Bench />;
-} else if (initialPart === "demos") {
-  let DemoList = require("./DemoList").default;
-  topLevel = <DemoList />;
+// } else if (initialPart === "demos") {
+//   let DemoList = require("./DemoList").default;
+//   topLevel = <DemoList />;
 } else if (query.slice(0, 3) === "new") {
   let params = query
     .split("&")
