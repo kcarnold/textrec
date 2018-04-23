@@ -73,6 +73,8 @@ export class ExperimentStateStore {
   lastSpaceWasAuto: boolean = false;
   electricDeleteLiveChars: ?number = null;
 
+  eventCounts: Object = {};
+
   constructor(flags: IOExperimentFlags) {
     this.flags = flags;
     this.stimulus = flags.stimulus;
@@ -354,6 +356,10 @@ export class ExperimentStateStore {
     return this.suggestionContext;
   }
 
+  countEvent(eventType: string) {
+    this.eventCounts[eventType] = (this.eventCounts[eventType] || 0) + 1;
+  }
+
   handleEvent(event: Event): Event[] {
     let prevState = {
       curText: this.curText,
@@ -366,13 +372,17 @@ export class ExperimentStateStore {
         case "undo":
           return this.handleUndo(event);
         case "tapKey":
+          this.countEvent('tapKey');
           return this.tapKey(event);
         case "tapBackspace":
+          this.countEvent('tapBackspace');
           return this.tapBackspace(event);
+        case "tapSuggestion":
+          let typ = this.hasPartialWord ? 'partial' : 'full';
+          this.countEvent(`tapSuggestion-${typ}`);
+          return this.handleTapSuggestion(event);
         case "backendReply":
           return this.updateSuggestions(event);
-        case "tapSuggestion":
-          return this.handleTapSuggestion(event);
         case "updateDeleting":
           return this.handleDeleting(event);
         default:
