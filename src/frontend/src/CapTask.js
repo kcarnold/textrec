@@ -50,7 +50,7 @@ let tutorialStimuli = [
   {
     stimulus: { type: "img", content: 133707 },
     transcribe:
-      "a black cat naps on a sunny unpainted wooden bench in front of a red wall",
+      "a black cat napping on a sunny unpainted wood bench in front of a red wall",
   },
   {
     stimulus: { type: "img", content: 533452 },
