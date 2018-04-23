@@ -6,7 +6,7 @@ import map from "lodash/map";
 var KEYLABELS = {
   " ": "space",
   "⌫": "",
-  "\r": "undo",
+  "\n": "return",
 };
 
 function getClosestKey(keyRects, touchX, touchY) {
@@ -101,7 +101,7 @@ export class Keyboard extends Component {
         onTouchMove={this.handleTouchMove}
         onTouchEnd={this.handleTouchEnd}
       >
-        {["qwertyuiop", "asdfghjkl", "'?zxcvbnm⌫", "-!, .\r"].map(function(
+        {["qwertyuiop", "asdfghjkl", "'?zxcvbnm⌫", "-!, .\n"].map(function(
           row,
           i
         ) {
@@ -111,7 +111,7 @@ export class Keyboard extends Component {
                 // if (layer === 'upper') key = key.toUpperCase();
                 var label = key in KEYLABELS ? KEYLABELS[key] : key;
                 var className = "key";
-                if ("\r⌫'-!,.?".indexOf(key) !== -1)
+                if ("\r\n⌫'-!,.?".indexOf(key) !== -1)
                   className += " key-reverse";
                 return (
                   <div
