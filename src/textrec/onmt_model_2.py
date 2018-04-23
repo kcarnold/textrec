@@ -3,6 +3,7 @@ from .paths import paths
 import argparse
 import codecs
 import torch
+import numpy as np
 
 from torch.autograd import Variable
 
@@ -15,9 +16,30 @@ import onmt.opts as opts
 
 from functools import lru_cache
 
-# HACK!!
-import sys
-sys.modules['onmt.modules.VecsEncoder'].override_h5_filename = str(paths.models / 'trainval_feats.small.h5')
+# HACK - monkey-patch, because the model stores the wrong data here.
+def fake_open_h5_file(self):
+    num_objs = 36
+    feature_dim = 2048
+    return num_objs, feature_dim
+
+def load_img_data(self, coco_ids):
+    coco_ids = coco_ids.data.numpy().tolist()
+    import h5py
+    with h5py.File(str(paths.models / "feats_by_imgid.h5"), 'r') as f:
+        batch_size = len(coco_ids)
+        vecs = np.empty((batch_size, self.num_objs, self.feature_dim))
+        for i, idx in enumerate(coco_ids):
+            vecs[i] = f[str(idx)][:]
+
+        # Features need to be first, since they're analogous to words.
+        vecs = vecs.transpose(1, 0, 2)
+        # vecs: objs x batch_size x feature_dim
+
+        return torch.FloatTensor(vecs)
+
+
+onmt.modules.VecsEncoder._open_h5_file = fake_open_h5_file
+onmt.modules.VecsEncoder.load_h5_data = load_img_data
 
 def main(opt):
     translator = make_translator(opt, report_score=True)

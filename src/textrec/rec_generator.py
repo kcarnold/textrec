@@ -4,9 +4,6 @@ from . import onmt_model_2
 
 from .paths import paths
 
-image_idx2id = [int(line.strip()) for line in open(paths.models / 'idx2id.txt')]
-image_id2idx = {image_id: idx for idx, image_id in enumerate(image_idx2id)}
-
 from nltk.tokenize.moses import MosesTokenizer
 mtokenizer = MosesTokenizer()
 
@@ -38,7 +35,7 @@ def handle_request_async(request):
             stimulus_content = '.'
         else:
             model_name = 'coco_cap'
-            stimulus_content = str(image_id2idx[int(stimulus['content'])])
+            stimulus_content = str(stimulus['content'])
 
     in_text = tokenize_stimulus(stimulus_content)
     tokens = tokenize(request['sofar'])
