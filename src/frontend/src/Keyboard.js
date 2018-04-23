@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import * as React from "react";
 import forOwn from "lodash/forOwn";
 import isEqual from "lodash/isEqual";
 import map from "lodash/map";
@@ -29,7 +29,11 @@ function getClosestKey(keyRects, touchX, touchY) {
   return closestKey;
 }
 
-export class Keyboard extends Component {
+export class Keyboard extends React.Component<{ useElectricDelete: string }> {
+  static defaultProps = {
+    useElectricDelete: false,
+  };
+
   lastKbdRect = null;
   deleteZeroX = null;
   lastUpdateDelta = null;
@@ -54,9 +58,13 @@ export class Keyboard extends Component {
     if (key === "\r") {
       dispatch({ type: "undo" });
     } else if (key === "⌫") {
-      this.deleteZeroX = clientX + 5;
-      this.lastUpdateDelta = -1;
-      dispatch({ type: "updateDeleting", delta: -1 });
+      if (this.props.useElectricDelete) {
+        this.deleteZeroX = clientX + 5;
+        this.lastUpdateDelta = -1;
+        dispatch({ type: "updateDeleting", delta: -1 });
+      } else {
+        this.props.dispatch({ type: "tapBackspace" });
+      }
     } else {
       dispatch({ type: "tapKey", key, x: clientX, y: clientY });
     }
