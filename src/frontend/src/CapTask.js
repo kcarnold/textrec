@@ -118,6 +118,24 @@ const StimulusView = ({ stimulus }) => {
   // }
 };
 
+const allStimuli = [...baseStimuli, ...tutorialStimuli.map(x => x.stimulus)];
+console.log("All stimuli: ", allStimuli.map(x => x.content).join(","));
+const PreloadView = () => (
+  <div style={{position: 'absolute'}}>
+    {allStimuli.map(({ content }) => (
+      <div
+        key={content}
+        style={{
+          background: `url(${urlForImage(content)}) no-repeat -9999px -9999px`,
+          width: "1px",
+          height: "1px",
+          display: "inline-block",
+        }}
+      />
+    ))}
+  </div>
+);
+
 const CapInstructions = iobs(({ state }) => (
   <div>
     Write the most specific and accurate description you can for the image
@@ -233,6 +251,7 @@ function getDemoScreens(condition: string, stimulus: Stimulus) {
 
 const TaskDescription = () => (
   <div>
+    <PreloadView />
     <p>
       In this study we're going to be writing captions for images. The captions
       should be <b>specific</b> and <b>accurate</b>.
