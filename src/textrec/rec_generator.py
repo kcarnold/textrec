@@ -2,8 +2,6 @@ from functools import lru_cache
 # from . import onmt_model
 from . import onmt_model_2
 
-from .paths import paths
-
 from nltk.tokenize.moses import MosesTokenizer
 mtokenizer = MosesTokenizer()
 

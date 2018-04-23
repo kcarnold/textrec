@@ -25,7 +25,7 @@ def fake_open_h5_file(self):
 def load_img_data(self, coco_ids):
     coco_ids = coco_ids.data.numpy().tolist()
     import h5py
-    with h5py.File(str(paths.models / "feats_by_imgid.h5"), 'r') as f:
+    with h5py.File(str(paths.imgdata_h5), 'r') as f:
         batch_size = len(coco_ids)
         vecs = np.empty((batch_size, self.num_objs, self.feature_dim))
         for i, idx in enumerate(coco_ids):

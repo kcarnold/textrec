@@ -10,3 +10,5 @@ class paths:
 
     cache = top_level / 'cache'
     models = top_level / 'models'
+
+    imgdata_h5 = models / "feats_by_imgid.subset.h5"
