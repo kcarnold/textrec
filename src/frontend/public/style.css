@@ -62,6 +62,23 @@ body {
   height: 75px;
 }
 
+.NextBtn {
+    background-color: white;
+    border: 0.1em solid #9b4dca;
+    border-radius: .4em;
+    color: black;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 1.1em;
+    font-weight: 700;
+    height: 2em;
+    line-height: 2em;
+    padding: 0 3.0em;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
 /*** TEXT ***/
 .CurText {
   white-space: pre-wrap;
