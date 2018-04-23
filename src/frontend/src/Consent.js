@@ -1,6 +1,6 @@
 import React from "react";
 
-const Consent = ({ timeEstimate, isMTurk, persuade }) => (
+const Consent = ({ timeEstimate, isMTurk }) => (
   <section
     className="container"
     style={{
@@ -8,26 +8,7 @@ const Consent = ({ timeEstimate, isMTurk, persuade }) => (
       padding: "10px 10px",
     }}
   >
-    {persuade ? (
-      <p>
-        <b>How persuasively can you write?</b>
-        <br />
-        <br />
-        Suppose someone is just moving to your town and wants to check out some
-        restaurants. Pick <b>two restaurants</b> that <b>they should visit</b>{" "}
-        and <b>one</b> that <b>they should avoid</b>. As part of this study, you
-        will write reviews of the three restaurants that convince your reader to
-        go, or not go.<br />
-        <br />
-        Bonuses are available for especially persuasive writing!
-      </p>
-    ) : (
-      <p>
-        We are testing apps to help people write, and we need your help to try
-        out writing with some of these apps. (It's actually just a webpage to
-        visit on your phone, nothing to install.)
-      </p>
-    )}
+    <p>Try out writing with a few different keyboard designs!</p>
 
     <hr />
     <p>
@@ -36,11 +17,7 @@ const Consent = ({ timeEstimate, isMTurk, persuade }) => (
       Participants should have normal or corrected-to-normal vision and
       experience entering text on a touchscreen device.{" "}
       <b>You will need a smartphone with WiFi to complete this task.</b>{" "}
-      Participants must be adults (at least 18 years old).{" "}
-      <strong>
-        If you have previously completed this study, please don't do it again.
-        If you realize partway through, that's ok, finish it and leave a note.
-      </strong>
+      Participants must be adults (at least 18 years old).
     </p>
     <p>
       Your phone will need to have a good connection with our server for this
