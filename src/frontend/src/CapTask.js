@@ -89,23 +89,9 @@ const urlForImage = content => {
   while (padded.length < 12) padded = "0" + padded;
   console.assert(padded.length === 12);
   return `http://images.cocodataset.org/train2017/${padded}.jpg`;
-  // return `http://visualqa.org/data/abstract_v002/scene_img/img/${content}.png`;
 };
 
 const StimulusView = ({ stimulus }) => {
-  // if (stimulus.type === "doc") {
-  //   return (
-  //     <div
-  //       style={{
-  //         whiteSpace: "pre-line",
-  //         background: "white",
-  //         margin: "5px 2px"
-  //       }}
-  //     >
-  //       {stimulus.content}
-  //     </div>
-  //   );
-  // } else if (stimulus.type === "img") {
   return (
     <div>
       <img
@@ -119,7 +105,7 @@ const StimulusView = ({ stimulus }) => {
 };
 
 const allStimuli = [...baseStimuli, ...tutorialStimuli.map(x => x.stimulus)];
-console.log("All stimuli: ", allStimuli.map(x => x.content).join(","));
+// console.log("All stimuli: ", allStimuli.map(x => x.content).join(","));
 const PreloadView = () => (
   <div style={{position: 'absolute'}}>
     {allStimuli.map(({ content }) => (
