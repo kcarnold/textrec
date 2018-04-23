@@ -263,15 +263,6 @@ const TaskDescription = () => (
     </ul>
 
     <p>
-      Why? Other people will be shown your caption and they'll have to pick out
-      the right image from a line-up, like this:
-    </p>
-
-    <StimulusView stimulus={{ type: "img", content: 395402 }} />
-    <StimulusView stimulus={{ type: "img", content: 6710 }} />
-    <StimulusView stimulus={{ type: "img", content: 250868 }} />
-
-    <p>
       A bonus of $0.50 will be available to the most specific and accurate
       captions!
     </p>
