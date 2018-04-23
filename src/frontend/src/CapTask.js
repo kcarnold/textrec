@@ -48,16 +48,19 @@ let baseStimuli: Stimulus[] = [
 
 let tutorialStimuli = [
   {
-    stimulus: { type: "img", content: 416308 },
-    transcribe: "a group of people on a beach preparing to paraglide.",
+    stimulus: { type: "img", content: 133707 },
+    transcribe:
+      "a black cat naps on a sunny unpainted wooden bench in front of a red wall",
   },
   {
-    stimulus: { type: "img", content: 459515 },
-    transcribe: "a grilled pizza with chicken, broccoli and cheese.",
+    stimulus: { type: "img", content: 533452 },
+    transcribe:
+      "a man with black hair and glasses placing a large turkey into an upper oven",
   },
   {
-    stimulus: { type: "img", content: 165204 },
-    transcribe: "placeholder fixme", // FIXME!
+    stimulus: { type: "img", content: 314515 },
+    transcribe:
+      "a black and red pontiac vehicle with a group of bikes on top of it and people standing near by with umbrellas.",
   },
 ];
 
@@ -152,9 +155,9 @@ function experimentBlock(
       screen: "Instructions",
       view: () => (
         <div>
-          About to start using
-          <h1>Keyboard design {block + 1}</h1>
-          Tap Next when ready: <NextBtn />
+          Now we'll be using
+          <h1>Keyboard Design {block + 1}</h1>
+          We'll start with a practice round. <NextBtn />
         </div>
       ),
     },
@@ -165,6 +168,16 @@ function experimentBlock(
       stimulus: tutorialStimulus.stimulus,
       instructions: TutorialInstructions(block),
     }),
+    {
+      screen: "Ready",
+      view: () => (
+        <div>
+          About to start writing captions using
+          <h1>Keyboard design {block + 1}</h1>
+          Tap Next when ready: <NextBtn />
+        </div>
+      ),
+    },
     ...stimuli.map((stimulus, idx) =>
       trialScreen({
         name: `final-${block}-${idx}`,
@@ -176,7 +189,7 @@ function experimentBlock(
     {
       screen: "PostTaskSurvey",
       view: surveyView({
-        title: "After-Writing Survey",
+        title: `Survey for Keyboard Design ${block + 1}`,
         basename: `postTask-${block}`,
         questions: [
           // likert("specific", "How specific was the caption you wrote?", 7, [
@@ -196,7 +209,7 @@ function experimentBlock(
 const TutorialInstructions = block =>
   iobs(({ state }) => (
     <div>
-      <h1>Practice with Keyboard {block + 1}</h1>
+      <h1>Practice with Keyboard Design {block + 1}</h1>
 
       <b>Type this caption:</b>
       <br />
@@ -411,7 +424,7 @@ function trialScreen(props: {
   flags: ?Object,
   instructions: React.Component,
   stimulus: Stimulus,
-  transcribe: ?string
+  transcribe: ?string,
 }) {
   let { name, condition, flags, instructions, stimulus, transcribe } = props;
   return {
