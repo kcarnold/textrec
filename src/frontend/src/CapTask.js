@@ -311,7 +311,7 @@ const TaskDescription = () => (
 
     <p>Which of the following captions is most likely to get the bonus?</p>
 
-    <ul className="spaced">
+    <ol className="spaced">
       <li>
         exactly how are both the dog and the person going to fit on that
         skateboard?
@@ -321,11 +321,11 @@ const TaskDescription = () => (
         a person in shorts and a black dog both have one foot on a skateboard.
       </li>
       <li>a guy with a dog trying to climb on a skateboard </li>
-    </ul>
+    </ol>
 
     <p style={{ marginBottom: 500 }}>Scroll down for answer...</p>
 
-    <ul className="spaced">
+    <ol className="spaced">
       <li>
         exactly how are both the dog and the person going to fit on that
         skateboard? &mdash; <b>not a caption, also not specific</b>
@@ -349,7 +349,7 @@ const TaskDescription = () => (
         a guy with a dog trying to climb on a skateboard &mdash;{" "}
         <b>unclear: is the guy holding the dog? inaccurate.</b>
       </li>
-    </ul>
+    </ol>
 
     <NextBtn />
   </div>
@@ -375,13 +375,13 @@ const StudyDesc = () => (
     <ul className="spaced">
       <li>
         All of the keyboard designs have a simplified key layout: no caps, and
-        only a few extra symbols.
+        only a few symbols.
       </li>
       <li>
-        You can't edit text you've already entered, other than by deleting and
-        retyping it. Sorry.
+        You can't edit text you've already entered, other than by backspacing and
+        retyping it.
       </li>
-      <li>Autocorrect doesn't work. Please try to avoid typos.</li>
+      <li>Autocorrect doesn't work. If you make a typo, please backspace and correct it.</li>
       <li>
         At the end, you will be comparing your experiencecs between the
         different keyboards. So <b>please try to remember which is which</b>!
