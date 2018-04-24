@@ -451,7 +451,7 @@ export function createTaskState(clientId: string) {
     screens = getDemoScreens(demoConditionName, baseStimuli[0]);
   } else {
     let conditions = seededShuffle(`${clientId}-conditions`, baseConditions);
-    stimuli = seededShuffle(`${clientId}-stimuli`, baseStimuli);
+    stimuli = baseStimuli.slice();
     screens = getScreens(conditions, stimuli);
   }
 
