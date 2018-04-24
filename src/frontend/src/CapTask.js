@@ -61,7 +61,7 @@ let tutorialStimuli = [
   {
     stimulus: { type: "img", content: 314515 },
     transcribe:
-      "a black and red pontiac vehicle with a group of bikes on top of it and people standing near by with umbrellas.",
+      "a black and red vehicle with bikes on top and people standing nearby with umbrellas.",
   },
 ];
 
