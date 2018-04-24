@@ -356,6 +356,34 @@ export class ExperimentStateStore {
     return this.suggestionContext;
   }
 
+  getTranscriptionStatus() {
+    let curText = this.curText.trim();
+    let transcribe = this.flags.transcribe.trim();
+
+    // Get longest common prefix between curText and transcribe
+    let prefixLength = 0;
+    while (prefixLength < transcribe.length) {
+      if (curText[prefixLength] == transcribe[prefixLength]) {
+        prefixLength++;
+      } else {
+        break;
+      }
+    }
+
+    let isCorrectSoFar = curText.length === prefixLength;
+    let result = {
+      commonPrefix: transcribe.slice(0, prefixLength),
+    };
+    if (isCorrectSoFar) {
+      result.incorrect = '';
+      result.todo = transcribe.slice(curText.length);
+    } else {
+      result.incorrect = transcribe.slice(prefixLength);
+      result.todo = '';
+    }
+    return result;
+  }
+
   countEvent(eventType: string) {
     this.eventCounts[eventType] = (this.eventCounts[eventType] || 0) + 1;
   }

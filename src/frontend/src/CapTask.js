@@ -108,7 +108,7 @@ const StimulusView = ({ stimulus }) => {
 const allStimuli = [...baseStimuli, ...tutorialStimuli.map(x => x.stimulus)];
 // console.log("All stimuli: ", allStimuli.map(x => x.content).join(","));
 const PreloadView = () => (
-  <div style={{position: 'absolute'}}>
+  <div style={{ position: "absolute" }}>
     {allStimuli.map(({ content }) => (
       <div
         key={content}
@@ -127,35 +127,49 @@ const CapInstructions = iobs(({ state }) => (
   <div>
     Write the most specific and accurate description you can for the image
     below. After you're done, tap here:{" "}
-    <NextBtn disabled={state.experimentState.wordCount < 10} />
+    <NextBtn disabled={state.experimentState.wordCount < 2} />
     <StimulusView stimulus={state.experimentState.stimulus} />
   </div>
 ));
 
-const PostPractice = block => iobs(({state, dispatch}) => {
-  let { eventCounts, flags } = state.experimentState;
-  let totalRecs = eventCounts['tapSugg_part'] + eventCounts['tapSugg_full'];
-  if (flags.hideRecs) {
-    return <div>
+const PostPractice = block =>
+  iobs(({ state, dispatch }) => {
+    let { eventCounts, flags } = state.experimentState;
+    let totalRecs = (eventCounts["tapSugg_partial"] || 0) + (eventCounts["tapSugg_full"] || 0);
+    if (flags.hideRecs) {
+      return (
+        <div>
           About to start writing captions using
           <h1>Keyboard design {block + 1}</h1>
           Tap Next when ready: <NextBtn />
-        </div>;
-  }
+        </div>
+      );
+    }
 
-  if (totalRecs > MIN_REC_THRESHOLD) {
-    return <div>
-      Great, it looks like you know how to use Keyboard Design {block + 1}!
-      <p>Ready to start writing captions using Keyboard Design {block + 1}?</p>
-      <NextBtn />
-    </div>;
-  } else {
-    return <div>
-      Predictions were available, but it looks like you didn't use them.
-      <button className="NextBtn" onClick={() => dispatch({type: 'next', delta: -1})}>Try again</button>
-    </div>;
-  }
-});
+    if (totalRecs > MIN_REC_THRESHOLD) {
+      return (
+        <div>
+          Great, it looks like you know how to use Keyboard Design {block + 1}!
+          <p>
+            <b>Ready to start writing captions using Keyboard Design {block + 1}?</b>
+          </p>
+          <NextBtn />
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          Predictions were available, but it looks like you didn't use them.
+          <button
+            className="NextBtn"
+            onClick={() => dispatch({ type: "next", delta: -1 })}
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
+  });
 
 function experimentBlock(
   block: number,
@@ -200,7 +214,7 @@ function experimentBlock(
     }),
     {
       screen: "PostPractice",
-      view: PostPractice(block)
+      view: PostPractice(block),
     },
     ...stimuli.map((stimulus, idx) =>
       trialScreen({
@@ -231,18 +245,23 @@ function experimentBlock(
 }
 
 const TutorialInstructions = block =>
-  iobs(({ state }) => (
-    <div>
-      <h1>Practice with Keyboard Design {block + 1}</h1>
+  iobs(({ state }) => {
+    let { commonPrefix, incorrect, todo } = state.experimentState.getTranscriptionStatus();
+    return (
+      <div>
+        <h1>Practice with Keyboard Design {block + 1}</h1>
 
-      <b>Type this caption:</b>
-      <br />
-      <div style={{ background: "white" }}>
-        {state.experimentState.transcribe}
+        <b>Type this caption:</b>
+        <br />
+        <div style={{ background: "white" }}>
+          <span style={{ color: "grey" }}>{commonPrefix}</span>
+          <span style={{ color: "red" }}>{incorrect}</span>
+          <span>{todo}</span>
+        </div>
+        <NextBtn disabled={incorrect.length !== 0 || todo.length !== 0}/>
       </div>
-      <NextBtn />
-    </div>
-  ));
+    );
+  });
 
 function getDemoScreens(condition: string, stimulus: Stimulus) {
   return [
