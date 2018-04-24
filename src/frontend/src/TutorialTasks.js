@@ -32,9 +32,8 @@ export default class TutorialTasks {
     });
   }
 
-  handleEvent(evt: TSEvent) {
-    let timestamp = evt.jsTimestamp;
-    let event = ((evt: any): Event); // Work around a Flow limitation??
+  handleEvent(event: TSEvent) {
+    let timestamp = event.jsTimestamp;
     if (event.type === "tapSuggestion") {
       this.tasks["tapSuggestion"] = true;
       if (event.which === "predictions") {
