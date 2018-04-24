@@ -379,7 +379,7 @@ export class ExperimentStateStore {
           return this.tapBackspace(event);
         case "tapSuggestion":
           let typ = this.hasPartialWord ? 'partial' : 'full';
-          this.countEvent(`tapSuggestion-${typ}`);
+          this.countEvent(`tapSugg_${typ}`);
           return this.handleTapSuggestion(event);
         case "backendReply":
           return this.updateSuggestions(event);

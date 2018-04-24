@@ -21,6 +21,7 @@ import type { Screen } from "./IOTaskState";
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
 const TRIALS_PER_CONDITION = 2;
+const MIN_REC_THRESHOLD = 1;
 
 function surveyView(props) {
   return () => React.createElement(Survey, props);
@@ -131,6 +132,31 @@ const CapInstructions = iobs(({ state }) => (
   </div>
 ));
 
+const PostPractice = block => iobs(({state, dispatch}) => {
+  let { eventCounts, flags } = state.experimentState;
+  let totalRecs = eventCounts['tapSugg_part'] + eventCounts['tapSugg_full'];
+  if (flags.hideRecs) {
+    return <div>
+          About to start writing captions using
+          <h1>Keyboard design {block + 1}</h1>
+          Tap Next when ready: <NextBtn />
+        </div>;
+  }
+
+  if (totalRecs > MIN_REC_THRESHOLD) {
+    return <div>
+      Great, it looks like you know how to use Keyboard Design {block + 1}!
+      <p>Ready to start writing captions using Keyboard Design {block + 1}?</p>
+      <NextBtn />
+    </div>;
+  } else {
+    return <div>
+      Predictions were available, but it looks like you didn't use them.
+      <button className="NextBtn" onClick={() => dispatch({type: 'next', delta: -1})}>Try again</button>
+    </div>;
+  }
+});
+
 function experimentBlock(
   block: number,
   conditionName: string,
@@ -173,14 +199,8 @@ function experimentBlock(
       instructions: TutorialInstructions(block),
     }),
     {
-      screen: "Ready",
-      view: () => (
-        <div>
-          About to start writing captions using
-          <h1>Keyboard design {block + 1}</h1>
-          Tap Next when ready: <NextBtn />
-        </div>
-      ),
+      screen: "PostPractice",
+      view: PostPractice(block)
     },
     ...stimuli.map((stimulus, idx) =>
       trialScreen({

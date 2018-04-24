@@ -165,7 +165,7 @@ export class MasterStateStore {
         }
         break;
       case "next":
-        this.screenNum++;
+        this.screenNum += (event.delta == null ? 1 : event.delta);
         break;
       case "setScreen":
         this.screenNum = event.screen;

@@ -1,5 +1,6 @@
 // @flow
 
+export type Next = {| type: "next", delta?: number |};
 export type TapSuggestion = {|
   type: "tapSuggestion",
   which: string,
@@ -25,5 +26,5 @@ export type Timestamped = {| jsTimestamp: number |};
 
 export type TSEvent = {|
   ...Event,
-  ...Timestamped
+  ...Timestamped,
 |};
