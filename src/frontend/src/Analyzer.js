@@ -2,6 +2,10 @@ import _ from "lodash";
 
 const INCOMPLETE_BUT_OK = "".split(/s/);
 
+function getCurCondition(state) {
+  return state.conditionName || state.experimentState.flags.condition;
+}
+
 export function processLogGivenState(state, log) {
   let { participant_id } = log[0];
   let byExpPage = {};
@@ -13,7 +17,7 @@ export function processLogGivenState(state, log) {
     if (!byExpPage[page]) {
       let pageData = {
         displayedSuggs: [],
-        condition: state.experimentState.flags.condition,
+        condition: getCurCondition(state),
         finalText: "",
         actions: [],
         annotatedFinalText: [],

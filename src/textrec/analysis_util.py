@@ -6,6 +6,11 @@ import subprocess
 from .util import mem
 from .paths import paths
 
+rev_overrides = {
+    '8b70b51': '4d07df8',
+    '024ef59': '3f52c04',
+}
+
 def get_rev(logpath):
     with open(logpath) as logfile:
         for line in logfile:
@@ -18,8 +23,7 @@ def get_rev(logpath):
 @mem.cache
 def get_log_analysis_raw(logpath, logfile_size, git_rev, analysis_files=None):
     # Ignore analysis_files; just use them to know when to invalidate the cache.
-    if not os.path.isdir(paths.old_code / git_rev):
-        subprocess.check_call([paths.scripts / 'checkout-old.sh', git_rev])
+    subprocess.check_call([paths.scripts / 'checkout-old.sh', git_rev, rev_overrides.get(git_rev, git_rev)])
     analyzer_path = str(paths.frontend / 'run-analysis')
     with open(logpath) as logfile:
         result = subprocess.check_output([analyzer_path], stdin=logfile)
