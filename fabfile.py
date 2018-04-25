@@ -29,4 +29,4 @@ def deploy():
         local(f'sentry-cli releases -o kenneth-arnold -p suggestionfrontend files {git_rev} upload-sourcemaps src build')
 
 def get_data():
-    subprocess.run(['./pull-logs'], env=dict(os.environ, SERVER='gcp1'))
+    subprocess.run(['./scripts/pull-logs'], env=dict(os.environ, SERVER='gcp1'))
