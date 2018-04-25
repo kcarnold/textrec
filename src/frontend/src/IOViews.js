@@ -10,8 +10,6 @@ import Consent from './Consent';
 
 const SITE_DOWN = false;
 
-const hostname = window.location.host;
-
 const wordCountTarget = 75;
 const askKnowWhatToSay = false;
 
