@@ -190,7 +190,7 @@ export class ExperimentStateStore {
     let deleteSpace = this.lastSpaceWasAuto && isNonWord;
     let toInsert = event.key;
     let taps = [{ x: event.x, y: event.y }];
-    let autoSpace = isNonWord && !(event.key.match(/[\-\s\']/));
+    let autoSpace = isNonWord && !(event.key.match(/[-\s']/));
     if (autoSpace) {
       toInsert += " ";
       taps.push({});
@@ -363,7 +363,7 @@ export class ExperimentStateStore {
     // Get longest common prefix between curText and transcribe
     let prefixLength = 0;
     while (prefixLength < transcribe.length) {
-      if (curText[prefixLength] == transcribe[prefixLength]) {
+      if (curText[prefixLength] === transcribe[prefixLength]) {
         prefixLength++;
       } else {
         break;

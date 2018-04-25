@@ -8,7 +8,7 @@ import * as Views from "./IOViews";
 import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
 import {
-  personalityBlock,
+  // personalityBlock,
   tlxQuestions,
   miscQuestions,
   closingSurveyQuestions,
@@ -93,6 +93,7 @@ const urlForImage = content => {
 };
 
 const StimulusView = ({ stimulus }) => {
+  /* eslint-disable jsx-a11y/img-redundant-alt */
   return (
     <div>
       <img
@@ -102,7 +103,7 @@ const StimulusView = ({ stimulus }) => {
       />
     </div>
   );
-  // }
+  /* eslint-enable jsx-a11y/img-redundant-alt */
 };
 
 const allStimuli = [...baseStimuli, ...tutorialStimuli.map(x => x.stimulus)];
@@ -135,7 +136,9 @@ const CapInstructions = iobs(({ state }) => (
 const PostPractice = block =>
   iobs(({ state, dispatch }) => {
     let { eventCounts, flags } = state.experimentState;
-    let totalRecs = (eventCounts["tapSugg_partial"] || 0) + (eventCounts["tapSugg_full"] || 0);
+    let totalRecs =
+      (eventCounts["tapSugg_partial"] || 0) +
+      (eventCounts["tapSugg_full"] || 0);
     if (flags.hideRecs) {
       return (
         <div>
@@ -151,7 +154,9 @@ const PostPractice = block =>
         <div>
           Great, it looks like you know how to use Keyboard Design {block + 1}!
           <p>
-            <b>Ready to start writing captions using Keyboard Design {block + 1}?</b>
+            <b>
+              Ready to start writing captions using Keyboard Design {block + 1}?
+            </b>
           </p>
           <NextBtn />
         </div>
@@ -246,7 +251,11 @@ function experimentBlock(
 
 const TutorialInstructions = block =>
   iobs(({ state }) => {
-    let { commonPrefix, incorrect, todo } = state.experimentState.getTranscriptionStatus();
+    let {
+      commonPrefix,
+      incorrect,
+      todo,
+    } = state.experimentState.getTranscriptionStatus();
     return (
       <div>
         <h1>Practice with Keyboard Design {block + 1}</h1>
@@ -258,7 +267,7 @@ const TutorialInstructions = block =>
           <span style={{ color: "red" }}>{incorrect}</span>
           <span>{todo}</span>
         </div>
-        <NextBtn disabled={incorrect.length !== 0 || todo.length !== 0}/>
+        <NextBtn disabled={incorrect.length !== 0 || todo.length !== 0} />
       </div>
     );
   });
@@ -378,10 +387,13 @@ const StudyDesc = () => (
         only a few symbols.
       </li>
       <li>
-        You can't edit text you've already entered, other than by backspacing and
-        retyping it.
+        You can't edit text you've already entered, other than by backspacing
+        and retyping it.
       </li>
-      <li>Autocorrect doesn't work. If you make a typo, please backspace and correct it.</li>
+      <li>
+        Autocorrect doesn't work. If you make a typo, please backspace and
+        correct it.
+      </li>
       <li>
         At the end, you will be comparing your experiencecs between the
         different keyboards. So <b>please try to remember which is which</b>!

@@ -2,7 +2,7 @@
 import * as M from "mobx";
 import every from "lodash/every";
 
-import type { TSEvent, Event } from "./Events";
+import type { TSEvent } from "./Events";
 
 let multiTapThresholdMs = 500;
 

@@ -25,7 +25,7 @@ ws.setHello([{ type: "init", participantId: panopticode, kind: panopt }]);
 ws.connect();
 
 // Logs are not observable, for minimal overhead.
-var logs = {};
+// var logs = {};
 var oldCodes = {};
 var masterViews = {};
 
@@ -98,9 +98,9 @@ function replay(log, state) {
 ws.onmessage = async function(msg) {
   if (msg.type === "logs") {
     let { participant_id, logs } = msg
-    logs[participant_id] = msg.logs;
+    // logs[participant_id] = msg.logs;
     oldCodes[participant_id] = await getOldCode(logs);
-    let { config, createTaskState, screenToView } = oldCodes[participant_id];
+    let { createTaskState, screenToView } = oldCodes[participant_id];
     let state = createTaskState(participant_id);
     masterViews[participant_id] = MasterViewFactory(screenToView);
     store.states.set(participant_id, state);
