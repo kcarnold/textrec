@@ -1,18 +1,24 @@
 import React, { Component } from "react";
-import * as M from "mobx";
+import {
+  decorate,
+  observable,
+  action,
+  toJS,
+} from "mobx";
 import moment from "moment";
 import { observer, Provider } from "mobx-react";
 import WSClient from "./wsclient";
-import { MasterStateStore } from "./MasterStateStore";
-import { MasterView } from "./MasterView";
 import map from "lodash/map";
 import filter from "lodash/filter";
+import { getOldCode } from "./Analyzer";
+import { MasterView as MasterViewFactory } from "./MasterView";
 
-let match = window.location.search.slice(1).match(/^(\w+)-(\w+)$/);
+
+let match = window.location.search.slice(1).match(/^(\w+)\/(\w+)$/);
 let panopt = match[1],
   panopticode = match[2];
 
-const SHOW_REPLAY = false;
+const SHOW_REPLAY = true;
 
 var ws = new WSClient(`ws://${window.location.host}/ws`);
 ws.setHello([{ type: "init", participantId: panopticode, kind: panopt }]);
@@ -20,35 +26,37 @@ ws.connect();
 
 // Logs are not observable, for minimal overhead.
 var logs = {};
+var oldCodes = {};
+var masterViews = {};
 
-export class PanoptStore {
-  constructor(clientId, kind) {
-    M.extendObservable(this, {
-      showingIds: [],
-      states: M.observable.shallowMap({}),
-      startTimes: M.observable.shallowMap({}),
-      times: M.observable.shallowMap({}),
-      acceleration: 10,
-      analyses: M.observable.shallowMap(),
-    });
-  }
+class PanoptStore {
+  showingIds = [];
+  acceleration = 10;
 
-  addViewer = M.action(id => {
+  states = observable.map({}, { deep: false });
+  startTimes = observable.map({}, { deep: false });
+  times = observable.map({}, { deep: false });
+  analyses = observable.map({}, { deep: false });
+
+  addViewer(id) {
     if (this.showingIds.indexOf(id) !== -1) return; // Already a viewer.
     this.showingIds.push(id);
-    if (!this.states.has(id)) {
-      this.states.set(id, new MasterStateStore(id));
-      if (SHOW_REPLAY) {
-        ws.send({ type: "get_logs", participantId: id });
-      }
-      ws.send({ type: "get_analyzed", participantId: id });
+    if (SHOW_REPLAY) {
+      ws.send({ type: "get_logs", participantId: id });
     }
-  });
+    ws.send({ type: "get_analyzed", participantId: id });
+  }
 
-  addViewers = M.action(ids => {
+  addViewers(ids) {
     ids.split(/\s/).forEach(id => this.addViewer(id));
-  });
+  }
 }
+decorate(PanoptStore, {
+  showingIds: observable,
+  addViewer: action,
+  addViewers: action
+});
+
 
 var store = new PanoptStore();
 
@@ -87,11 +95,15 @@ function replay(log, state) {
   tick();
 }
 
-ws.onmessage = function(msg) {
+ws.onmessage = async function(msg) {
   if (msg.type === "logs") {
-    let participantId = msg.participant_id;
-    logs[participantId] = msg.logs;
-    let state = store.states.get(participantId);
+    let { participant_id, logs } = msg
+    logs[participant_id] = msg.logs;
+    oldCodes[participant_id] = await getOldCode(logs);
+    let { config, createTaskState, screenToView } = oldCodes[participant_id];
+    let state = createTaskState(participant_id);
+    masterViews[participant_id] = MasterViewFactory(screenToView);
+    store.states.set(participant_id, state);
     replay(msg.logs, state);
     state.replaying = false;
     // store.startTimes.set(participantId, msg.logs[0].jsTimestamp);
@@ -249,7 +261,8 @@ const AnalyzedView = observer(({ store, participantId }) => {
 
 const ReplayView = observer(({ store, participantId }) => {
   let state = store.states.get(participantId);
-  if (!state.masterConfig) return null;
+  if (!state) return null;
+  let MasterView = masterViews[participantId];
 
   return (
     <div style={{ display: "flex", flexFlow: "row" }}>
@@ -272,33 +285,14 @@ const ReplayView = observer(({ store, participantId }) => {
           <MasterView kind={"p"} />
         </Provider>
       </div>
-      <div
-        style={{
-          overflow: "hidden",
-          width: 500,
-          height: 700,
-          border: "1px solid black",
-          flex: "0 0 auto",
-        }}
-      >
-        <Provider
-          state={state}
-          dispatch={nullDispatch}
-          clientId={participantId}
-          clientKind={"c"}
-          spying={true}
-        >
-          <MasterView kind={"c"} />
-        </Provider>
-      </div>
       <div style={{ flex: "1 1 auto" }}>
-        {state.experiments.entries().map(([name, expState]) => (
+        {/*state.experiments.entries().map(([name, expState]) => (
           <div key={name}>
             <b>{name}</b>
             <br />
             {expState.curText}
           </div>
-        ))}
+        ))*/}
       </div>
     </div>
   );
@@ -349,18 +343,7 @@ const Panopticon = observer(
 export default Panopticon;
 
 // Globals
-window.M = M;
+window.toJS = toJS;
 window.store = store;
 
-// store.addViewers('c104c0 feebe1 50b0c9 50b80b 99c66d')
-// store.addViewers('2wr5j9 v4w898 7jqggr')
-// store.addViewers('9qxf5g hfj33r jcqf4w')
-// store.addViewers('7jqggr');
-// store.addViewers('w5hfrr 376j3q vcgfhq');
-// store.addViewers('7x3v6q h72hhj')
-store.addViewers(
-  // '2vgwmf gfhfhx rwq22w'
-  // 'rwq22w'
-  // 'w5325r',
-  "rwq22w 2vgwmf gfhfhx 9mvhv7 c8c75v w5325r 846ch3 g3h79x c97rm4 6cxf2g 7fvfhm w832c6"
-);
+store.addViewers("3hv6xw 7w2xff");

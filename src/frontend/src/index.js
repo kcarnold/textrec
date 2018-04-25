@@ -17,11 +17,10 @@ let topLevel;
 let query = window.location.search.slice(1);
 let initialPart = query.split("/", 1)[0] || query;
 
-// if (initialPart === "panopt") {
-//   let Panopticon = require("./Panopticon").default;
-//   topLevel = <Panopticon />;
-// } else
-if (initialPart === "showall") {
+if (initialPart === "panopt") {
+  let Panopticon = require("./Panopticon").default;
+  topLevel = <Panopticon />;
+} else if (initialPart === "showall") {
   let mod = require("./ShowAllScreens");
   let { createTaskState, screenToView } = getApp("cap");
   mod.init(createTaskState, screenToView, query.slice(initialPart.length + 1));

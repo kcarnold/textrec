@@ -266,7 +266,7 @@ export function processLogGivenState(state, log) {
   };
 }
 
-function getRev(log) {
+export function getRev(log) {
   for (let i = 0; i < log.length; i++) {
     let entry = log[i];
     if ("rev" in entry) {
@@ -275,12 +275,21 @@ function getRev(log) {
   }
 }
 
-async function getState(log) {
+export async function getOldCode(log) {
   let { participant_id, config } = log[0];
   let rev = getRev(log);
-  let getApp = (await import(`../../../old-code/${rev}/src/Apps`)).default;
-  let { createTaskState } = getApp(config);
-  return createTaskState(participant_id);
+  let getApp = (await import(`./old_versions/${rev}/src/Apps.js`)).default;
+  return {
+    participantId: participant_id,
+    rev,
+    config,
+    ...getApp(config),
+  };
+}
+
+export async function getState(log) {
+  let { participantId, createTaskState } = await getOldCode(log);
+  return createTaskState(participantId);
 }
 
 export async function analyzeLog(log) {
