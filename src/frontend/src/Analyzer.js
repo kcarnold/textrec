@@ -13,7 +13,7 @@ export function processLogGivenState(state, log) {
     if (!byExpPage[page]) {
       let pageData = {
         displayedSuggs: [],
-        condition: state.conditionName,
+        condition: state.experimentState.flags.condition,
         finalText: "",
         actions: [],
         annotatedFinalText: [],
@@ -261,7 +261,6 @@ export function processLogGivenState(state, log) {
     byExpPage,
     pageSeq,
     screenTimes,
-    conditions: state.conditions,
     allControlledInputs: state.controlledInputs.toJS(),
   };
 }
