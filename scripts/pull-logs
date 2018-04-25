@@ -1,0 +1,12 @@
+#!/bin/sh
+set -u
+set -e
+if ! [ -d logs/.git ]; then
+    echo "Oops, logs isn't a git repo"
+    exit 1
+fi
+LOGDIR="logs-${SERVER}"
+mkdir -pv "${LOGDIR}"
+rsync -Paxz "${SERVER}:~/code/textrec/logs/" "${LOGDIR}"/
+rsync -a "${LOGDIR}"/ logs/
+(cd logs && git add *.jsonl && git diff --cached --stat && git commit -m "inc logs")
