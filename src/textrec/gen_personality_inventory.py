@@ -84,10 +84,16 @@ def gen_invertory_internal(traits_to_use):
 
 @click.command()
 @click.option('--trait', multiple=True, type=click.Choice(list(personality_data.keys())))
-def gen_inventory(trait):
+@click.option('--export-name', default='')
+@click.option('--out', type=click.File(mode='w'), default='-')
+def gen_inventory(trait, export_name, out):
     items = gen_invertory_internal(trait)
-    json.dump(items, sys.stdout, indent=2)
-    # print('\n'.join(item[-1] for item in items))
+    if export_name:
+        out.write(f"// AUTO-GENERATED\nexport const {export_name} = ")
+    json.dump(items, out, indent=2)
+    if export_name:
+        out.write(f";\nexport default {export_name};\n")
+        print(f"{len(items)} traits written", file=sys.stderr)
 
 if __name__ == '__main__':
     gen_inventory()
