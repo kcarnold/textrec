@@ -214,6 +214,12 @@ const closingSurveyQuestions = [
   SurveyData.gender,
   SurveyData.english_proficiency,
   SurveyData.techDiff,
+  {
+    type: 'options',
+    text: <span>Is there any reason that we shouldn't use your data? <b>There's no penalty for answering Yes here.</b> If yes, please explain in the next question.</span>,
+    options: ["Yes", "No"],
+    name: "shouldExclude"
+  },
   SurveyData.otherFinal];
 
 

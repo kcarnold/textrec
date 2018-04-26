@@ -22,6 +22,11 @@ def summarize(batch):
         print(pid)
         analyzed = analysis_util.get_log_analysis(pid)
 
+        controlledInputsDict = dict(analyzed['allControlledInputs'])
+        if controlledInputsDict.get('shouldExclude', "No") == "Yes":
+            print("****** EXCLUDE! **********")
+            assert False
+
         for name, page in analyzed['byExpPage'].items():
             print(':'.join((name, page['condition'], page['finalText'])))
 
