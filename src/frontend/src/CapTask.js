@@ -3,6 +3,7 @@ import React from "react";
 import { observer, inject } from "mobx-react";
 
 import flatMap from "lodash/flatMap";
+import range from "lodash/range";
 import * as IOTaskState from "./IOTaskState";
 import * as Views from "./IOViews";
 import { NextBtn } from "./BaseViews";
@@ -173,7 +174,41 @@ const PostPractice = block =>
 
 /** Surveys **/
 
+const WritingsView = iobs(({state}) => <div>
+      For reference, here's what you wrote with each keyboard design:<br/><br/>
+      {range(baseConditions.length).map(block => <div key={block}>
+        Keyboard Design {block + 1}
+        <ul>
+          {range(TRIALS_PER_CONDITION).map(idx => <li key={idx}>
+            {state.experiments.get(`final-${block}-${idx}`).curText}
+            </li>
+            )}
+        </ul>
+        </div>)}
+    </div>);
+
+const helpfulRank = (attr, text) => [
+  {
+    text: <span>For writing {text}, which keyboard design was <b>most</b> helpful?</span>,
+    responseType: "options",
+    name: `helpfulRank-${attr}-most`,
+    options: ["Keyboard Design 1", "Keyboard Design 2", "Keyboard Design 3"],
+  },
+  {
+    text: <span>For writing {text}, which keyboard design was <b>least</b> helpful?</span>,
+    responseType: "options",
+    name: `helpfulRank-${attr}-least`,
+    options: ["Keyboard Design 1", "Keyboard Design 2", "Keyboard Design 3"],
+  },
+];
+
 const closingSurveyQuestions = [
+  {
+    text: <WritingsView />
+  },
+  ...helpfulRank('specific', <span>captions that were very <b>specific</b></span>),
+  ...helpfulRank('accurate', <span>captions that were very <b>accurate</b></span>),
+  ...helpfulRank('quick', <span>captions very <b>quickly</b></span>),
   SurveyData.verbalized_during,
   SurveyData.age,
   SurveyData.gender,
