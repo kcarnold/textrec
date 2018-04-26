@@ -435,34 +435,46 @@ const TaskDescription = () => (
       <li>
         a person in shorts and a black dog both have one foot on a skateboard.
       </li>
-      <li>a guy with a dog trying to climb on a skateboard </li>
+      <li>
+        a dog with a black head and black legs and ears standing up has one
+        black paw on a black skateboard with white wheels and a guy with black
+        and white shoes and white socks has one foot on the skateboard also and
+        there are bikes and other people in the background
+      </li>
     </ol>
 
     <p style={{ marginBottom: 500 }}>Scroll down for answer...</p>
 
     <ol className="spaced">
       <li>
-        exactly how are both the dog and the person going to fit on that
-        skateboard? &mdash; <b>not a caption, also not specific</b>
+        {"\u2718"} exactly how are both the dog and the person going to fit on
+        that skateboard? &mdash; <b>not a caption, also not specific</b>
       </li>
       <li>
-        the dark haired dog is trying to ride on the skateboard. &mdash;{" "}
+        {"\u2718"} the dark haired dog is trying to ride on the skateboard.
+        &mdash;{" "}
         <b>
           would better fit an image where the dog is actually on the skateboard.
           Doesn't describe the person: not specific.
         </b>
       </li>
       <li>
-        a person in shorts and a black dog both have one foot on a skateboard.
-        &mdash;{" "}
+        {"\u2714"} a person in shorts and a black dog both have one foot on a
+        skateboard. &mdash;{" "}
         <b>
           Most likely to get bonus, because it describes this image correctly
           (accurate), and probably fits few other images (specific).
         </b>
       </li>
       <li>
-        a guy with a dog trying to climb on a skateboard &mdash;{" "}
-        <b>unclear: is the guy holding the dog? inaccurate.</b>
+        {"\u2718"} a dog with a black head and black legs and ears standing up
+        has one black paw on a black skateboard with white wheels and a guy with
+        black and white shoes and white socks has one foot on the skateboard
+        also and there are bikes and other people in the background &mdash;{" "}
+        <b>
+          accurate and specific, but some raters might stop reading before they
+          even get to the skateboard!
+        </b>
       </li>
     </ol>
 
