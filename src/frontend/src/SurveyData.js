@@ -2,22 +2,13 @@ import React from "react";
 
 import { likert } from "./SurveyViews";
 
-export const miscQuestions = [
-  {
-    text:
-      "Did you experience any technical difficulties that you haven't reported already?",
-    responseType: "text",
-    name: "techDiff",
-    flags: { multiline: true },
-  },
-  {
-    text:
-      "Any other comments? (There will be more surveys before the end of the experiment.)",
-    responseType: "text",
-    name: "other",
-    flags: { multiline: true },
-  },
-];
+export const otherMid = {
+  text:
+    "Any other comments? (There will be more surveys before the end of the experiment.)",
+  responseType: "text",
+  name: "other",
+  flags: { multiline: true },
+};
 
 /*
 const postTaskBaseQuestions = [
@@ -199,7 +190,7 @@ export const techDiff = {
   flags: { multiline: true },
 };
 
-export const other = {
+export const otherFinal = {
   text:
     "Aaaand... we're done! How was this experiment? What went well? What could have been better? Any ideas?",
   responseType: "text",

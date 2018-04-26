@@ -179,7 +179,7 @@ const closingSurveyQuestions = [
   SurveyData.gender,
   SurveyData.english_proficiency,
   SurveyData.techDiff,
-  SurveyData.other];
+  SurveyData.otherFinal];
 
 
 /** Experiment Blocks **/
@@ -251,7 +251,8 @@ function experimentBlock(
           ...designQuestions,
           ...SurveyData.tlxQuestions,
           // ...personalityBlock(block + 1),
-          ...SurveyData.miscQuestions,
+          SurveyData.techDiff,
+          SurveyData.otherMid,
         ],
       }),
     },
