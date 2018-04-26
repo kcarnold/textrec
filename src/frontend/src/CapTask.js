@@ -9,6 +9,7 @@ import * as Views from "./IOViews";
 import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
+import traitData from "./TraitData";
 
 import { seededShuffle } from "./shuffle";
 
@@ -173,29 +174,57 @@ const PostPractice = block =>
   });
 
 /** Surveys **/
+function splitPersonalityBlocks(numBlocks, questionsPerBlock) {
+  console.assert(traitData.length === numBlocks * questionsPerBlock);
+  let blocks = range(numBlocks).map(blockIdx =>
+    traitData.slice(questionsPerBlock * blockIdx).slice(0, questionsPerBlock)
+  );
+  return blocks.map(block => [
+    SurveyData.personalityHeader,
+    ...block.map(item => SurveyData.traitQuestion(item)),
+    { text: "" },
+  ]);
+}
 
-const WritingsView = iobs(({state}) => <div>
-      For reference, here's what you wrote with each keyboard design:<br/><br/>
-      {range(baseConditions.length).map(block => <div key={block}>
+const personalityBlocks = splitPersonalityBlocks(5, 4);
+console.log(personalityBlocks);
+
+const WritingsView = iobs(({ state }) => (
+  <div>
+    For reference, here's what you wrote with each keyboard design:<br />
+    <br />
+    {range(baseConditions.length).map(block => (
+      <div key={block}>
         Keyboard Design {block + 1}
         <ul>
-          {range(TRIALS_PER_CONDITION).map(idx => <li key={idx}>
-            {state.experiments.get(`final-${block}-${idx}`).curText}
+          {range(TRIALS_PER_CONDITION).map(idx => (
+            <li key={idx}>
+              {state.experiments.get(`final-${block}-${idx}`).curText}
             </li>
-            )}
+          ))}
         </ul>
-        </div>)}
-    </div>);
+      </div>
+    ))}
+  </div>
+));
 
 const helpfulRank = (attr, text) => [
   {
-    text: <span>For writing {text}, which keyboard design was <b>most</b> helpful?</span>,
+    text: (
+      <span>
+        For writing {text}, which keyboard design was <b>most</b> helpful?
+      </span>
+    ),
     responseType: "options",
     name: `helpfulRank-${attr}-most`,
     options: ["Keyboard Design 1", "Keyboard Design 2", "Keyboard Design 3"],
   },
   {
-    text: <span>For writing {text}, which keyboard design was <b>least</b> helpful?</span>,
+    text: (
+      <span>
+        For writing {text}, which keyboard design was <b>least</b> helpful?
+      </span>
+    ),
     responseType: "options",
     name: `helpfulRank-${attr}-least`,
     options: ["Keyboard Design 1", "Keyboard Design 2", "Keyboard Design 3"],
@@ -204,27 +233,48 @@ const helpfulRank = (attr, text) => [
 
 const closingSurveyQuestions = [
   {
-    text: <WritingsView />
+    text: <WritingsView />,
   },
-  ...helpfulRank('specific', <span>captions that were very <b>specific</b></span>),
-  ...helpfulRank('accurate', <span>captions that were very <b>accurate</b></span>),
-  ...helpfulRank('quick', <span>captions very <b>quickly</b></span>),
+  ...helpfulRank(
+    "specific",
+    <span>
+      captions that were very <b>specific</b>
+    </span>
+  ),
+  ...helpfulRank(
+    "accurate",
+    <span>
+      captions that were very <b>accurate</b>
+    </span>
+  ),
+  ...helpfulRank(
+    "quick",
+    <span>
+      captions very <b>quickly</b>
+    </span>
+  ),
+  ...personalityBlocks[4],
   SurveyData.verbalized_during,
   SurveyData.age,
   SurveyData.gender,
   SurveyData.english_proficiency,
   SurveyData.techDiff,
   {
-    type: 'options',
-    text: <span>Is there any reason that we shouldn't use your data? <b>There's no penalty for answering Yes here.</b> If yes, please explain in the next question.</span>,
+    type: "options",
+    text: (
+      <span>
+        Is there any reason that we shouldn't use your data?{" "}
+        <b>There's no penalty for answering Yes here.</b> If yes, please explain
+        in the next question.
+      </span>
+    ),
     options: ["Yes", "No"],
-    name: "shouldExclude"
+    name: "shouldExclude",
   },
-  SurveyData.otherFinal];
-
+  SurveyData.otherFinal,
+];
 
 /** Experiment Blocks **/
-
 
 function experimentBlock(
   block: number,
@@ -291,7 +341,7 @@ function experimentBlock(
           // ]),
           ...designQuestions,
           ...SurveyData.tlxQuestions,
-          // ...personalityBlock(block + 1),
+          ...personalityBlocks[block + 1],
           SurveyData.techDiff,
           SurveyData.otherMid,
         ],
@@ -455,6 +505,7 @@ const StudyDesc = () => (
 );
 
 // Surveys
+
 const introSurvey = {
   title: "Opening Survey",
   basename: "intro",
@@ -472,7 +523,7 @@ const introSurvey = {
       options: ["Yes", "No"],
     },
 
-    // ...personalityBlock(0)
+    ...personalityBlocks[0],
   ],
 };
 

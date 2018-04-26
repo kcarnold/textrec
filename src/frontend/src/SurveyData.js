@@ -75,83 +75,24 @@ export const tlxQuestions = [
   ),
 ];
 
-const traitItems = `
-I like to solve complex problems.
-I often feel blue.
-I feel comfortable around people.
-I believe in the importance of art.
-I rarely get irritated.
-I am not interested in abstract ideas.
-I have little to say.
-I have difficulty understanding abstract ideas.
-I make friends easily.
-I need things explained only once.
-I have a vivid imagination.
-I dislike myself.
-I seldom feel blue.
-I do not like art.
-I keep in the background.
-I try to avoid complex people.
-I tend to vote for liberal political candidates.
-I am skilled in handling social situations.
-I can handle a lot of information.
-I am often down in the dumps.
-I would describe my experiences as somewhat dull.
-I avoid difficult reading material.
-I avoid philosophical discussions.
-I feel comfortable with myself.
-I am the life of the party.
-I have frequent mood swings.
-I love to think up new ways of doing things.
-I carry the conversation to a higher level.
-I don't like to draw attention to myself.
-I avoid philosophical discussions.
-I do not enjoy going to art museums.
-I am not easily bothered by things.
-I know how to captivate people.
-I enjoy hearing new ideas.
-I am quick to understand things.
-I panic easily.
-I tend to vote for conservative political candidates.
-I am very pleased with myself.
-I don't talk a lot.
-I love to read challenging material.
-`
-  .trim()
-  .split(/\n/);
+export const personalityHeader = {
+  text: (
+    <p>
+      Describe yourself as you generally are now, not as you wish to be in the
+      future. Describe yourself as you honestly see yourself, in relation to
+      other people you know of the same sex as you are, and roughly your same
+      age. So that you can describe yourself in an honest manner, your responses
+      will be kept in absolute confidence.
+    </p>
+  ),
+};
 
-export function personalityBlock(blockIdx) {
-  const traitsPerBatch = 8;
-  let traitBatch = traitItems.slice(
-    traitsPerBatch * blockIdx,
-    traitsPerBatch * (blockIdx + 1)
-  );
-  return [
-    {
-      text: (
-        <p>
-          <b>Personality</b>
-          <br />
-          <br />
-          Describe yourself as you generally are now, not as you wish to be in
-          the future. Describe yourself as you honestly see yourself, in
-          relation to other people you know of the same sex as you are, and
-          roughly your same age. So that you can describe yourself in an honest
-          manner, your responses will be kept in absolute confidence.
-        </p>
-      ),
-    },
-    ...traitBatch.map(item => ({
-      text: item,
-      name: item,
-      responseType: "likert",
-      options: ["Very Inaccurate", "", "", "", "Very Accurate"],
-    })),
-    {
-      text: "",
-    },
-  ];
-}
+export const traitQuestion = ({item}) => ({
+  text: item,
+  name: item,
+  responseType: "likert",
+  options: ["Very Inaccurate", "", "", "", "Very Accurate"],
+});
 
 export const verbalized_during = {
   text:
