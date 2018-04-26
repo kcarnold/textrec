@@ -416,6 +416,11 @@ const TaskDescription = () => (
       captions!
     </p>
 
+    <p>
+      <b>Write compactly</b>: You can write as much as you want, but some of our
+      raters will only look at the first 15-20 words of your captions.
+    </p>
+
     <h3>Quiz</h3>
     <StimulusView stimulus={{ type: "img", content: 251368 }} />
 
