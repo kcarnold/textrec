@@ -7,12 +7,7 @@ import * as IOTaskState from "./IOTaskState";
 import * as Views from "./IOViews";
 import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
-import {
-  // personalityBlock,
-  tlxQuestions,
-  miscQuestions,
-  closingSurveyQuestions,
-} from "./SurveyData";
+import * as SurveyData from "./SurveyData";
 
 import { seededShuffle } from "./shuffle";
 
@@ -176,6 +171,20 @@ const PostPractice = block =>
     }
   });
 
+/** Surveys **/
+
+const closingSurveyQuestions = [
+  SurveyData.verbalized_during,
+  SurveyData.age,
+  SurveyData.gender,
+  SurveyData.english_proficiency,
+  SurveyData.techDiff,
+  SurveyData.other];
+
+
+/** Experiment Blocks **/
+
+
 function experimentBlock(
   block: number,
   conditionName: string,
@@ -240,9 +249,9 @@ function experimentBlock(
           //   "Very specific"
           // ]),
           ...designQuestions,
-          ...tlxQuestions,
+          ...SurveyData.tlxQuestions,
           // ...personalityBlock(block + 1),
-          ...miscQuestions,
+          ...SurveyData.miscQuestions,
         ],
       }),
     },

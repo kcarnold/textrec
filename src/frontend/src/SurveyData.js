@@ -162,55 +162,47 @@ export function personalityBlock(blockIdx) {
   ];
 }
 
-export const closingSurveyQuestions = [
-  {
+export const verbalized_during = {
     text:
       "While you were writing, did you speak or whisper what you were writing?",
     responseType: "options",
     name: "verbalized_during",
     options: ["Yes", "No"],
-  },
+  };
 
-  {
-    text: <h2>Demographics</h2>,
-    responseType: null,
-  },
-
-  {
+export const age = {
     text: "How old are you?",
     responseType: "text",
     name: "age",
     flags: { type: "number" },
-  },
+  };
 
-  {
+export const gender = {
     text: "What is your gender?",
     responseType: "options",
     name: "gender",
     options: ["Male", "Female", "Something else, or I'd prefer not to say"],
-  },
+  };
 
-  {
+export const english_proficiency = {
     text: "How proficient would you say you are in English?",
     responseType: "options",
     name: "english_proficiency",
     options: ["Basic", "Conversational", "Fluent", "Native or bilingual"],
-  },
+  };
 
-  // ...personalityBlock(4),
-
-  {
+export const techDiff = {
     text:
       "Did you experience any technical difficulties that you haven't reported already?",
     responseType: "text",
     name: "techDiff",
     flags: { multiline: true },
-  },
-  {
+  };
+
+export const other = {
     text:
       "Aaaand... we're done! How was this experiment? What went well? What could have been better? Any ideas?",
     responseType: "text",
     name: "other",
     flags: { multiline: true },
-  },
-];
+  };
