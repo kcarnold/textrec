@@ -3,6 +3,7 @@ import json
 import re
 import numpy as np
 import subprocess
+import hashlib
 from .util import mem
 from .paths import paths
 
@@ -33,7 +34,7 @@ def get_log_analysis_raw(logpath, logfile_size, git_rev, analysis_files=None):
 
 def get_log_analysis(participant, git_rev=None):
     analysis_files = {
-        name: open(paths.frontend / name).read()
+        name: hashlib.sha1(open(paths.frontend / name, 'rb').read()).hexdigest()
         for name in ['analyze.js', 'run-analysis', 'src/Analyzer.js']
     }
     logpath = paths.top_level / 'logs' / (participant+'.jsonl')
@@ -41,7 +42,7 @@ def get_log_analysis(participant, git_rev=None):
         git_rev = get_rev(logpath)
     logfile_size = os.path.getsize(logpath)
 
-    result = get_log_analysis_raw(logpath, logfile_size, git_rev=git_rev, analysis_files=analysis_files)
+    result = get_log_analysis_raw(str(logpath), logfile_size, git_rev=git_rev, analysis_files=analysis_files)
     analyzed = json.loads(result)
     analyzed['git_rev'] = git_rev
     return analyzed
