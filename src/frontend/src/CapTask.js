@@ -17,7 +17,7 @@ import type { Screen } from "./IOTaskState";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
-const TRIALS_PER_CONDITION = 2;
+const TRIALS_PER_CONDITION = 3;
 const MIN_REC_THRESHOLD = 1;
 
 function surveyView(props) {
@@ -32,16 +32,16 @@ type Stimulus = {
 let baseStimuli: Stimulus[] = [
   { type: "img", content: 150367 },
   { type: "img", content: 524881 },
+  { type: "img", content: 107610 },
   { type: "img", content: 127298 },
   { type: "img", content: 232689 },
-  { type: "img", content: 283426 },
+  { type: "img", content: 93272 },
+  // { type: "img", content: 283426 },
   { type: "img", content: 275075 },
-  // { type: "img", content: "000000107610" },
-  // { type: "img", content: "000000093272" },
-  // { type: "img", content: "000000218224" },
-  // { type: "img", content: "000000138629" },
-  // { type: "img", content: "000000306670" },
-  // { type: "img", content: "000000165203" },
+  // { type: "img", content: 218224 },
+  // { type: "img", content: 138629 },
+  { type: "img", content: 306670 },
+  { type: "img", content: 165203 },
 ];
 
 let tutorialStimuli = [
