@@ -21,6 +21,7 @@ def deploy():
     with cd('~/code/textrec'):
         run('git pull')
     with lcd(FRONTEND):
+        local('rm -rf src/old_versions/*')
         local('npm run build')
     rsync_project(remote_dir=os.path.join(FRONTEND_ON_REMOTE, 'build/'), local_dir=os.path.join(FRONTEND, 'build/'), delete=True)
     # rsync -Pax models/ megacomplete-aws:/home/ubuntu/code/textrec/models/
