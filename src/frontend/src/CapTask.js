@@ -629,7 +629,7 @@ export function createTaskState(clientId: string) {
     clientId,
     screens,
     handleEvent,
-    timeEstimate: "20 minutes",
+    timeEstimate: "20-25 minutes",
   });
 
   function handleEvent(event: Event): Event[] {
