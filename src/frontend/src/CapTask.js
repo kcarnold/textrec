@@ -600,7 +600,7 @@ function trialScreen(props: {
   name: string,
   condition: string,
   flags: ?Object,
-  instructions: React.Component,
+  instructions: React.Element,
   stimulus: Stimulus,
   transcribe: ?string,
 }) {

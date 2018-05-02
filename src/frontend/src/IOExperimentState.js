@@ -52,7 +52,14 @@ type Stimulus = {
 type IOExperimentFlags = {
   stimulus: Stimulus,
   modelSeesStimulus: boolean,
-  requestFlags: Object
+  requestFlags: Object,
+  showRelevanceHints: boolean,
+  transcribe?: string
+};
+
+type Tap = {
+  x?: ?number,
+  y?: ?number
 };
 
 export class ExperimentStateStore {
@@ -164,7 +171,7 @@ export class ExperimentStateStore {
 
   // Actions
 
-  spliceText(startIdx, deleteCount, toInsert, taps) {
+  spliceText(startIdx: number, deleteCount: number, toInsert: string, taps?: Tap[]) {
     if (!taps) {
       taps = map(toInsert, () => null);
     }
