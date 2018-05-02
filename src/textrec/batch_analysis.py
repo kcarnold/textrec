@@ -50,3 +50,29 @@ def summarize(batch):
              - analyzed['screenTimes'][0]['timestamp']) / 1000 / 60
         print(f"\nTotal time: {total_time:.1f}m")
         print('\n'.join('{}: {:.1f}'.format(name, secs) for name, secs in c.most_common()))
+
+
+def get_trial_data(batch):
+    results = []
+    for pid in get_participants_by_batch()[batch]:
+        analyzed = analysis_util.get_log_analysis(pid)
+
+        controlledInputsDict = dict(analyzed['allControlledInputs'])
+        if controlledInputsDict.get('shouldExclude', "No") == "Yes":
+            print("****** EXCLUDE! **********")
+            assert False
+
+        for name, page in analyzed['byExpPage'].items():
+            if not name.startswith('final'):
+                continue
+            block, idx = name.split('-')[1:]
+            block = int(block)
+            idx = int(idx)
+            results.append(dict(
+                participant=pid,
+                block=block,
+                idx_in_block=idx,
+                condition=page['condition'],
+                text=page['finalText']))
+
+    return results
