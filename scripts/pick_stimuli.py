@@ -5,8 +5,10 @@ import scipy.sparse
 import toolz
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from textrec.util import get_coco_captions
+from textrec.util import get_coco_captions, get_coco_id2url
+from textrec.paths import paths
 
+print("Loading captions", flush=True)
 images = get_coco_captions()
 images_by_split = toolz.groupby('split', images)
 valid_images = images_by_split['val']
@@ -14,6 +16,7 @@ valid_images = images_by_split['val']
 def img_analyzer(image):
     return [tok for sent in image['sentences'] for tok in sent['tokens']]
 
+print("Vectorizing", flush=True)
 vectorizer = TfidfVectorizer(analyzer=img_analyzer, min_df=5)
 vectorizer.fit(images)
 valid_img_by_word = vectorizer.transform(images_by_split['val'])
@@ -43,7 +46,26 @@ def get_stimulus_images():
         rs.shuffle(pair)
     return similar_pairs
 
+print("Getting similar unique pairs", flush=True)
 stimuli = get_stimulus_images()
 
+print("Getting id2url", flush=True)
+id2url = get_coco_id2url()
 
-print(json.dumps([[valid_images[i]['cocoid'] for i in pair] for pair in stimuli]))
+def img_to_json(img):
+    cocoid = img['cocoid']
+    return dict(
+        id=cocoid,
+        url=id2url[cocoid])
+
+
+stimulus_data = [[img_to_json(valid_images[i]) for i in pair] for pair in stimuli]
+
+with open(paths.data / 'stimulusPairs.json', 'w') as out:
+    json.dump(stimulus_data, out)
+
+with open(paths.frontend / 'src' / 'stimulusPairs.js', 'w') as out:
+    export_name = 'stimulusPairs'
+    out.write(f"// AUTO-GENERATED\nexport const {export_name} = ")
+    json.dump(stimulus_data, out, indent=2)
+    out.write(f";\nexport default {export_name};\n")

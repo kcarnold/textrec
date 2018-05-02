@@ -12,6 +12,7 @@ import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import traitData from "./TraitData";
+import stimulusPairs from "./stimulusPairs";
 
 import { seededShuffle } from "./shuffle";
 
@@ -29,42 +30,40 @@ function surveyView(props) {
 type Stimulus = {
   type: "img",
   content: number,
+  url: string,
 };
-
-// This comes from "scripts/pick_stimuli.py"
-const stimulusPairs = [
-  [275449, 349130],
-  [396295, 301595],
-  [431140, 341011],
-  [227326, 523217],
-  [200451, 313214],
-  [223777, 401320],
-  [247576, 315976],
-  [71815, 240739],
-  [240275, 476864],
-  [527375, 164170],
-  [236272, 467791],
-  [280480, 440500],
-];
 
 let baseStimuli: Stimulus[] = stimulusPairs.map(([stim, foil]) => ({
   type: "img",
-  content: stim,
+  content: stim.id,
+  url: stim.url,
 }));
 
 let tutorialStimuli = [
   {
-    stimulus: { type: "img", content: 133707 },
+    stimulus: {
+      type: "img",
+      content: 133707,
+      url: "http://images.cocodataset.org/train2017/000000133707.jpg",
+    },
     transcribe:
       "a black cat napping on a sunny unpainted wood bench in front of a red wall",
   },
   {
-    stimulus: { type: "img", content: 533452 },
+    stimulus: {
+      type: "img",
+      content: 533452,
+      url: "http://images.cocodataset.org/train2017/000000533452.jpg",
+    },
     transcribe:
       "a man with black hair and glasses placing a large turkey into an upper oven",
   },
   {
-    stimulus: { type: "img", content: 314515 },
+    stimulus: {
+      type: "img",
+      content: 314515,
+      url: "http://images.cocodataset.org/train2017/000000314515.jpg",
+    },
     transcribe:
       "a black and red vehicle with bikes on top and people standing nearby with umbrellas.",
   },
@@ -90,23 +89,12 @@ const namedConditions = {
   },
 };
 
-const urlForImage = content => {
-  let split = 'train';
-  if (content === 431140) {
-    split = 'val';
-  }
-  let padded = `${content}`;
-  while (padded.length < 12) padded = "0" + padded;
-  console.assert(padded.length === 12);
-  return `http://images.cocodataset.org/${split}2017/${padded}.jpg`;
-};
-
 const StimulusView = ({ stimulus }) => {
   /* eslint-disable jsx-a11y/img-redundant-alt */
   return (
     <div>
       <img
-        src={urlForImage(stimulus.content)}
+        src={stimulus.url}
         style={{ width: "100%" }}
         alt="(image to caption should display here)"
       />
@@ -120,11 +108,11 @@ export const allStimuliContent = allStimuli.map(x => x.content);
 // console.log("All stimuli: ", allStimuliContent.join(","));
 const PreloadView = () => (
   <div style={{ position: "absolute" }}>
-    {allStimuli.map(({ content }) => (
+    {allStimuli.map(({ content, url }) => (
       <div
         key={content}
         style={{
-          background: `url(${urlForImage(content)}) no-repeat -9999px -9999px`,
+          background: `url(${url}) no-repeat -9999px -9999px`,
           width: "1px",
           height: "1px",
           display: "inline-block",
@@ -406,7 +394,13 @@ const TaskDescription = () => (
 
     <h3>Example</h3>
 
-    <StimulusView stimulus={{ type: "img", content: 395402 }} />
+    <StimulusView
+      stimulus={{
+        type: "img",
+        content: 395402,
+        url: "http://images.cocodataset.org/train2017/000000395402.jpg",
+      }}
+    />
 
     <ul className="spaced">
       <li>
@@ -434,7 +428,13 @@ const TaskDescription = () => (
     </p>
 
     <h3>Quiz</h3>
-    <StimulusView stimulus={{ type: "img", content: 251368 }} />
+    <StimulusView
+      stimulus={{
+        type: "img",
+        content: 251368,
+        url: "http://images.cocodataset.org/train2017/000000251368.jpg",
+      }}
+    />
 
     <p>Which of the following captions is most likely to get the bonus?</p>
 
