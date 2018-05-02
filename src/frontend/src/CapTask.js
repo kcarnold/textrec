@@ -112,7 +112,8 @@ const StimulusView = ({ stimulus }) => {
 };
 
 const allStimuli = [...baseStimuli, ...tutorialStimuli.map(x => x.stimulus)];
-// console.log("All stimuli: ", allStimuli.map(x => x.content).join(","));
+export const allStimuliContent = allStimuli.map(x => x.content);
+// console.log("All stimuli: ", allStimuliContent.join(","));
 const PreloadView = () => (
   <div style={{ position: "absolute" }}>
     {allStimuli.map(({ content }) => (
