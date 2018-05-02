@@ -4,6 +4,9 @@ import subprocess
 import os
 import pathlib
 
+module_dir = pathlib.Path(__file__).resolve().parent
+assert os.getcwd() == str(module_dir)
+
 PATH_ON_REMOTE = '~/code/textrec'
 FRONTEND = 'src/frontend'
 FRONTEND_ON_REMOTE = os.path.join(PATH_ON_REMOTE, FRONTEND)
