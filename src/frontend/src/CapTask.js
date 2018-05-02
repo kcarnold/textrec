@@ -558,7 +558,7 @@ const introSurvey = {
 
 function getScreens(conditions: string[], stimuli: Stimulus[]): Screen[] {
   // Group stimuli by block.
-  console.assert(stimuli.length === conditions.length * TRIALS_PER_CONDITION);
+  console.assert(stimuli.length >= conditions.length * TRIALS_PER_CONDITION);
   let blocks = conditions.map((condition, idx) => ({
     condition,
     stimuli: stimuli
