@@ -66,7 +66,7 @@ export class ExperimentStateStore {
   outstandingRequests: number[] = [];
 
   prevState: ?Object = null; // TODO
-  tapLocations: Object[] = [];
+  tapLocations: (?Tap)[] = [];
   seqNums: number[] = [];
 
   flags: IOExperimentFlags;
@@ -171,9 +171,10 @@ export class ExperimentStateStore {
 
   // Actions
 
-  spliceText(startIdx: number, deleteCount: number, toInsert: string, taps?: Tap[]) {
+  spliceText(startIdx: number, deleteCount: number, toInsert: string, taps?: (?Tap)[]) {
+    let toInsert_range = range(toInsert.length);
     if (!taps) {
-      taps = map(toInsert, () => null);
+      taps = map(toInsert_range, () => null);
     }
     this.curText =
       this.curText.slice(0, startIdx) +
@@ -185,7 +186,7 @@ export class ExperimentStateStore {
       .concat(this.tapLocations.slice(startIdx + deleteCount));
     this.seqNums = this.seqNums
       .slice(0, startIdx)
-      .concat(map(toInsert, () => this.contextSequenceNum))
+      .concat(map(toInsert_range, () => this.contextSequenceNum))
       .concat(this.seqNums.slice(startIdx + deleteCount));
   }
 
@@ -365,7 +366,9 @@ export class ExperimentStateStore {
 
   getTranscriptionStatus() {
     let curText = this.curText.trim();
-    let transcribe = this.flags.transcribe.trim();
+    let transcribe = this.flags.transcribe;
+    if (!transcribe) return null;
+    transcribe = transcribe.trim();
 
     // Get longest common prefix between curText and transcribe
     let prefixLength = 0;

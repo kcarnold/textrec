@@ -1,7 +1,7 @@
 // @flow
 import "core-js/fn/array/from";
 
-import React from "react";
+import * as React from 'react';
 import { observer, inject } from "mobx-react";
 
 import flatMap from "lodash/flatMap";
@@ -103,7 +103,7 @@ const StimulusView = ({ stimulus }) => {
   /* eslint-enable jsx-a11y/img-redundant-alt */
 };
 
-const allStimuli = [...baseStimuli, ...tutorialStimuli.map(x => x.stimulus)];
+const allStimuli: Stimulus[] = [...baseStimuli, ...tutorialStimuli.map(x => x.stimulus)];
 export const allStimuliContent = allStimuli.map(x => x.content);
 // console.log("All stimuli: ", allStimuliContent.join(","));
 const PreloadView = () => (
@@ -600,7 +600,7 @@ function trialScreen(props: {
   name: string,
   condition: string,
   flags: ?Object,
-  instructions: React.Element,
+  instructions: React.ComponentType<any>,
   stimulus: Stimulus,
   transcribe: ?string,
 }) {
