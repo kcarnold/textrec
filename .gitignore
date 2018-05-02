@@ -80,3 +80,6 @@ target/
 
 /logs
 /logs-gcp1
+
+/models
+/cache
