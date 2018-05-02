@@ -34,15 +34,31 @@ model = lang_model.Model.get_or_load_model('coco_train')
 model.score_seq(model.bos_state, 'a person standing inside of a phone booth'.split())
 # In[31]:
 model.score_seq(model.bos_state, 'a group of people'.split())
+#%%
+from IPython.display import Image
+Image(coco_url(236272))
+#%%
+training_captions = [
+    (0, 'A baseball player swinging his bat at a baseball game.'),
+    (0, 'A baseball player has just swung his bat.'),
+    (0, 'A baseball hitter swinging his bat during a baseball game.'),
+    (0, 'A baseball player playing on a baseball field.'),
+    (0, 'A baseball batter swinging at a baseball pitch.'),
+    (1, 'A man with white pants, a black and red shirt, and a black hat just swung a baseball bat as people in white and blue look on from behind a blue wall.'),
+    (1, 'A baseball hitter just swung his black, red, and white bat.')
+]
+
 # In[17]:
 example_captions = [
-    'plate with pancakes topped with banana slices, bacon, and blackberries, in front of a mug and maple syrup',
-    'a plate with blueberries, bacon, and pancakes topped with bananas',
+    (1, 'plate with pancakes topped with banana slices, bacon, and blackberries, in front of a mug and maple syrup'),
+    (1, 'a plate with blueberries, bacon, and pancakes topped with bananas'),
+    (0, 'a man'),
+    (0, 'a person'),
 ]
 # In[94]:
 def tokenize(caption):
     # FIXME: Karpathy seems to have killed commas and periods.
-    return ["<s>"] + nltk.word_tokenize(caption.replace(',', ' ').replace('.', ' '))
+    return ["<s>"] + nltk.word_tokenize(caption.lower().replace(',', ' ').replace('.', ' '))
 
 
 # In[96]:
@@ -71,15 +87,20 @@ class Suggestr:
     def __init__(self, base_model, examples):
         self.base_model = base_model
         dataset = defaultdict(dict)
-        for cap in examples:
+        for label, cap in examples:
             toks = tokenize(cap)
+            if any(model.model.vocab_index(tok) == 0 for tok in toks):
+                print("Skipping example", cap)
+                continue
             for idx in range(1, len(toks)):
                 context = ' '.join(toks[:idx])
                 tok = toks[idx]
-                dataset[context][tok] = 1
+                dataset[context][tok] = label
         self.dataset = dataset
 
     def add_data(self, context, recs, labels):
+        if isinstance(recs, str):
+            recs = recs.split()
         assert len(recs) == len(labels)
         for tok, label in zip(recs, labels):
             self.dataset[context][tok] = label
@@ -101,6 +122,7 @@ class Suggestr:
                 unigram_feat = no_hot
             return np.r_[
                 ngram_dist[word_idx],
+                model.unigram_probs[word_idx],
                 unigram_feat
             ]
         self._featurize = _featurize
@@ -125,7 +147,7 @@ class Suggestr:
             print("Warning: classifier underfit")
             for idx in diffs:
                 c, w, l = examples[idx]
-                print(c, w, l, predictions[idx])
+                print(f'{c}: {w} label={l} predicted={predictions[idx]}')
 
     def featurize(self, context_toks, toks):
         _featurize = self._featurize
@@ -133,43 +155,109 @@ class Suggestr:
         return np.array([_featurize(ngram_dist, tok) for tok in toks])
 
     def generate_recs(self, context, n=10):
-        context_toks = context.split()
+        if isinstance(context, str):
+            context = context.split()
         candidates = [
                 model.id2str[id]
-                for id in model.filtered_bigrams[model.model.vocab_index(context_toks[-1])]]
-        feature_vecs = self.featurize(context_toks, candidates)
+                for id in model.filtered_bigrams[model.model.vocab_index(context[-1])]]
+        feature_vecs = self.featurize(context, candidates)
         clf_logprobs = self.clf.predict_proba(feature_vecs)[:,1]
-        return [candidates[i] for i in np.argsort(clf_logprobs)[-n:]]
+        return [candidates[i] for i in np.argsort(clf_logprobs)[-n:][::-1]]
 
+    def generate_phrase_recs(self, context, n=3, k=3):
+        if isinstance(context, str):
+            context = context.split()
+        hypotheses = [context]
+        for i in range(k):
+            new_hypotheses = []
+            for ctx in hypotheses:
+                if ctx[-1] == '</s>':
+                    new_hypotheses.append(ctx)
+                    continue
+                for rec in self.generate_recs(ctx, n=n):
+                    new_hypotheses.append(ctx + [rec])
+            hypotheses = new_hypotheses
+        return hypotheses
+#%%
 
-sugr = Suggestr(model, example_captions)
+sugr = Suggestr(model, [
+    (1, 'plate with pancakes topped with banana slices, bacon, and blackberries, in front of a mug and maple syrup'),
+    (1, 'a plate with blueberries, bacon, and pancakes topped with bananas'),
+    (1, 'white plate with pancakes, bacon, and blackberries'),
+    (0, 'a man'),
+    (0, 'a person')
+])
 sugr.add_data(
         '<s>',
-        'this some several people three there an the two a'.split(),
-        [0, 1, 0, 0, 0, 1, 0, 0, 0, 1])
+        'and bananas motorcycles fresh snow living big zebra surfer stuffed',
+        [0, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 sugr.add_data(
-        '<s> a',
-        'sitting fence on wave is in of a and with'.split(),
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        '<s>',
+        'plate bananas two the white an there three in people',
+        [1, 1, 0, 0, 1, 0, 0, 0, 0, 0])
 sugr.add_data(
-        '<s> a',
-        'white small couple young large group person woman man plate'.split(),
-        [1, 0, 0, 0, 1, 0, 0, 0, 0, 1])
+        '<s> plate with',
+        'with bananas white and',
+        [0, 1, 0, 0])
 sugr.add_data(
-        '<s> a plate',
-        'holds containing has filled full that and of topped with'.split(),
-        [0, 0, 0, 0, 0, 0, 0, 1, 0, 1])
-sugr.add_data(
-        '<s> a plate with',
-        'different pizza meat broccoli white food with bananas some a'.split(),
-        [0, 0, 0, 0, 0, 0, 0, 1, 1, 0])
-sugr.add_data(
-        '<s> a plate with',
-        'white vegetables fruit various large carrots with a bananas some'.split(),
-        [0, 0, 0, 0, 0, 0, 0, 1, 1, 1])
+        '<s> plate of',
+        'with bananas food',
+        [0, 0, 1])
+#sugr.add_data(
+#        '<s>',
+#        'this some several people three there an the two a'.split(),
+#        [0, 1, 0, 0, 0, 1, 0, 0, 0, 1])
+#sugr.add_data(
+#        '<s> a',
+#        'sitting fence on wave is in of a and with'.split(),
+#        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+#sugr.add_data(
+#        '<s> a',
+#        'white small couple young large group person woman man plate'.split(),
+#        [1, 0, 0, 0, 1, 0, 0, 0, 0, 1])
+#sugr.add_data(
+#        '<s> a plate',
+#        'holds containing has filled full that and of topped with'.split(),
+#        [0, 0, 0, 0, 0, 0, 0, 1, 0, 1])
+#sugr.add_data(
+#        '<s> a plate with',
+#        'different pizza meat broccoli white food with bananas some a'.split(),
+#        [0, 0, 0, 0, 0, 0, 0, 1, 1, 0])
+#sugr.add_data(
+#        '<s> a plate with',
+#        'white vegetables fruit various large carrots with a bananas some'.split(),
+#        [0, 0, 0, 0, 0, 0, 0, 1, 1, 1])
 sugr.train_classifier()
-' '.join(sugr.generate_recs(context='<s> a plate with'))
+#' '.join(sugr.generate_recs(context='<s>'))
+sugr.generate_phrase_recs(context='<s>')
 #%%
-' '.join(sugr.generate_recs(context='<s>'))
+' '.join(sugr.generate_recs(context='<s> plate with pancakes topped with'))
+#%%
+' '.join(sugr.generate_recs(context='<s> a'))
 
-
+#%%
+valid_imgs = images_by_split['val']
+perm = np.random.RandomState(0).permutation(len(valid_imgs))
+neg_examples = [sent['raw'] for idx in perm[:30] for sent in valid_imgs[idx]['sentences']]
+neg_examples
+#%%
+sugr = Suggestr(model, [
+    (0, 'A baseball player swinging his bat at a baseball game.'),
+    (1, 'A baseball player has just swung his bat.'),
+    (0, 'A baseball hitter swinging his bat during a baseball game.'),
+    (0, 'A baseball player playing on a baseball field.'),
+    (0, 'A baseball batter swinging at a baseball pitch.'),
+    (1, 'A man with white pants, a black and red shirt, and a black hat just swung a baseball bat as people in white and blue look on from behind a blue wall.'),
+    (1, 'A baseball hitter just swung his black, red, and white bat.'),
+    (0, 'A young man holding an umbrella next to a herd of cattle.'),
+    (0, 'A baseball player swinging his bat in front of a crowd.'),
+    (0, 'A man and a woman sitting on a bench'),
+    (0, 'A white, black, and blue sign'),
+    (0, 'A red traffic light')
+] + [(0, sent) for sent in neg_examples])
+sugr.add_data(
+        '<s>',
+        'and',
+        [0])
+sugr.train_classifier()
+sugr.generate_phrase_recs(context='<s>')
