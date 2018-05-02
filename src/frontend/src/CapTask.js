@@ -1,4 +1,6 @@
 // @flow
+import 'core-js/fn/array/from';
+
 import React from "react";
 import { observer, inject } from "mobx-react";
 
