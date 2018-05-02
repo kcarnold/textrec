@@ -33,6 +33,7 @@ export function processLogGivenState(state, log) {
   let lastScreenNum = null;
   let tmpSugRequests = null;
   let lastDisplayedSuggs = null;
+  let finalData = null;
 
   log.forEach((entry, logIdx) => {
     // We need to track context sequence numbers instead of curText because
@@ -73,7 +74,30 @@ export function processLogGivenState(state, log) {
 
     if (entry.kind !== "meta") {
       // if (entry.type !== 'receivedSuggestions' || isValidSugUpdate)
-      state.handleEvent(entry);
+      let sideEffects = state.handleEvent(entry);
+      if (sideEffects) {
+        sideEffects.forEach(effect => {
+          if (effect.type === 'finalData') {
+            finalData = JSON.parse(JSON.stringify(effect.finalData));
+          }
+        });
+      }
+
+      if (entry.type === 'finalData') {
+        let loggedFinalData = JSON.parse(JSON.stringify(entry.finalData));
+        if (_.isEqual(loggedFinalData.controlledInputs, {})) {
+          // Unfortunately some early logs missed this because it was a Mobx map.
+          delete loggedFinalData.controlledInputs;
+          delete finalData.controlledInputs;
+        }
+        // Timestamps on the login event are ok to be inconsistent.
+        finalData.screenTimes[0].timestamp = loggedFinalData.screenTimes[0].timestamp;
+        if (!_.isEqual(loggedFinalData, finalData)) {
+          console.log("loggedFinalData", loggedFinalData);
+          console.log("finalData", finalData);
+          console.assert(false, "finalData mismatch!");
+        }
+      }
     }
 
     if (state.screenNum !== lastScreenNum) {
