@@ -31,20 +31,26 @@ type Stimulus = {
   content: number,
 };
 
-let baseStimuli: Stimulus[] = [
-  { type: "img", content: 150367 },
-  { type: "img", content: 524881 },
-  { type: "img", content: 107610 },
-  { type: "img", content: 127298 },
-  { type: "img", content: 232689 },
-  { type: "img", content: 93272 },
-  // { type: "img", content: 283426 },
-  { type: "img", content: 275075 },
-  // { type: "img", content: 218224 },
-  // { type: "img", content: 138629 },
-  { type: "img", content: 306670 },
-  { type: "img", content: 165203 },
+// This comes from "scripts/pick_stimuli.py"
+const stimulusPairs = [
+  [275449, 349130],
+  [396295, 301595],
+  [431140, 341011],
+  [227326, 523217],
+  [200451, 313214],
+  [223777, 401320],
+  [247576, 315976],
+  [71815, 240739],
+  [240275, 476864],
+  [527375, 164170],
+  [236272, 467791],
+  [280480, 440500],
 ];
+
+let baseStimuli: Stimulus[] = stimulusPairs.map(([stim, foil]) => ({
+  type: "img",
+  content: stim,
+}));
 
 let tutorialStimuli = [
   {
