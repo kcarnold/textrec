@@ -670,6 +670,7 @@ export function createTaskState(clientId: string) {
         ];
       }
     }
+    return [];
   }
 
   return state;

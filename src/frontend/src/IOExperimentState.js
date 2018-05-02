@@ -186,7 +186,7 @@ export class ExperimentStateStore {
     let cursorPos = this.curText.length;
     let oldCurWord = this.curText.slice(this.lastSpaceIdx + 1);
 
-    let isNonWord = event.key.match(/\W/);
+    let isNonWord = !!event.key.match(/\W/);
     let deleteSpace = this.lastSpaceWasAuto && isNonWord;
     let toInsert = event.key;
     let taps = [{ x: event.x, y: event.y }];
@@ -240,19 +240,19 @@ export class ExperimentStateStore {
     let wordToInsert = tappedSuggestion.words[0];
     if (!wordToInsert) return [];
     if (which === "synonyms") {
-      // Replace the _previous_ word.
-      let [startIdx, endIdx] = this.visibleSuggestions["replacement_range"];
-      // Actually, kill all remaining text.
-      endIdx = this.curText.length;
-      let autoSpace = endIdx === this.curText.length;
-      this.spliceText(startIdx, endIdx - startIdx, wordToInsert);
-      if (autoSpace) {
-        // Add a space.
-        this.spliceText(this.curText.length, 0, " ");
-      }
-      if (this.curText.slice(-1) === " ") {
-        this.lastSpaceWasAuto = true;
-      }
+      // // Replace the _previous_ word.
+      // let [startIdx, endIdx] = this.visibleSuggestions["replacement_range"];
+      // // Actually, kill all remaining text.
+      // endIdx = this.curText.length;
+      // let autoSpace = endIdx === this.curText.length;
+      // this.spliceText(startIdx, endIdx - startIdx, wordToInsert);
+      // if (autoSpace) {
+      //   // Add a space.
+      //   this.spliceText(this.curText.length, 0, " ");
+      // }
+      // if (this.curText.slice(-1) === " ") {
+      //   this.lastSpaceWasAuto = true;
+      // }
     } else {
       if (tappedSuggestion.words.length > 1) {
         this.activeSuggestion = {
@@ -373,13 +373,13 @@ export class ExperimentStateStore {
     let isCorrectSoFar = curText.length === prefixLength;
     let result = {
       commonPrefix: transcribe.slice(0, prefixLength),
+      incorrect: '',
+      todo: ''
     };
     if (isCorrectSoFar) {
-      result.incorrect = '';
       result.todo = transcribe.slice(curText.length);
     } else {
       result.incorrect = transcribe.slice(prefixLength);
-      result.todo = '';
     }
     return result;
   }
