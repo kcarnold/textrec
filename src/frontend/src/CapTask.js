@@ -187,7 +187,6 @@ function splitPersonalityBlocks(numBlocks, questionsPerBlock) {
 }
 
 const personalityBlocks = splitPersonalityBlocks(5, 4);
-console.log(personalityBlocks);
 
 const WritingsView = iobs(({ state }) => (
   <div>
