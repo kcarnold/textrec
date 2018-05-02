@@ -10,6 +10,7 @@ from .paths import paths
 rev_overrides = {
     '8b70b51': '4d07df8',
     '024ef59': '3f52c04',
+    '3761b2d': '66b19ec'
 }
 
 def get_rev(logpath):
