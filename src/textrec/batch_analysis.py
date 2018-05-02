@@ -73,6 +73,7 @@ def get_trial_data(batch):
                 block=block,
                 idx_in_block=idx,
                 condition=page['condition'],
-                text=page['finalText']))
+                text=page['finalText'],
+                stimulus=page.get('stimulus', {}).get('content')))
 
     return results
