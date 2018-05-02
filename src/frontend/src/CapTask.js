@@ -639,7 +639,7 @@ export function createTaskState(clientId: string) {
             ...screen,
             name: screens[screen.num].screen,
           })),
-          controlledInputs: state.controlledInputs.toJS(),
+          controlledInputs: [...state.controlledInputs.toJS()],
           texts: Array.from(
             state.experiments.entries(),
             ([expName, expState]) => ({
