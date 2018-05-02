@@ -91,10 +91,14 @@ const namedConditions = {
 };
 
 const urlForImage = content => {
+  let split = 'train';
+  if (content === 431140) {
+    split = 'val';
+  }
   let padded = `${content}`;
   while (padded.length < 12) padded = "0" + padded;
   console.assert(padded.length === 12);
-  return `http://images.cocodataset.org/train2017/${padded}.jpg`;
+  return `http://images.cocodataset.org/${split}2017/${padded}.jpg`;
 };
 
 const StimulusView = ({ stimulus }) => {
