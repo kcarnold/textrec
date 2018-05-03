@@ -373,15 +373,15 @@ const TutorialInstructions = block =>
     );
   });
 
-function getDemoScreens(condition: string, stimulus: Stimulus) {
-  return [
+function getDemoScreens(condition: string) {
+  return baseStimuli.map(stimulus =>
     trialScreen({
       name: `final-0`,
       condition,
       stimulus,
       instructions: CapInstructions,
     }),
-  ];
+  );
 }
 
 const TaskDescription = () => (
@@ -630,7 +630,7 @@ export function createTaskState(clientId: string) {
   let screens, stimuli;
   let demoConditionName = IOTaskState.getDemoConditionName(clientId);
   if (demoConditionName != null) {
-    screens = getDemoScreens(demoConditionName, baseStimuli[0]);
+    screens = getDemoScreens(demoConditionName);
   } else {
     let conditions = seededShuffle(`${clientId}-conditions`, baseConditions);
     stimuli = baseStimuli.slice();
