@@ -4,6 +4,7 @@ import argparse
 import codecs
 import torch
 import numpy as np
+import copy
 
 from torch.autograd import Variable
 
@@ -110,6 +111,12 @@ class ONMTModelWrapper:
                 volatile=True) # [tgt_len]
             tgt_in = tgt_in.unsqueeze(1)  # [tgt_len x batch=1]
             tgt_in = tgt_in.unsqueeze(1)  # [tgt_len x batch=1 x nfeats=1]
+
+            # Prepare to call the decoder. Unfortunately the decoder mutates the state passed in!
+            memory_bank = copy.deepcopy(memory_bank)
+            assert isinstance(prev_state.hidden, tuple)
+            prev_state.hidden = tuple(v.detach() for v in prev_state.hidden)
+            prev_state = copy.deepcopy(prev_state)
 
             dec_out, dec_states, attn = translator.model.decoder(
                 tgt_in, memory_bank, prev_state)
