@@ -1,3 +1,5 @@
+import json
+import traceback
 from functools import lru_cache
 # from . import onmt_model
 from . import onmt_model_2
@@ -37,6 +39,11 @@ def handle_request_async(request):
 
     in_text = tokenize_stimulus(stimulus_content)
     tokens = tokenize(request['sofar'])
-    recs = onmt_model_2.get_recs(model_name, in_text, tokens, prefix=prefix)
+    try:
+        recs = onmt_model_2.get_recs(model_name, in_text, tokens, prefix=prefix)
+    except Exception:
+        traceback.print_exc()
+        print("Failing request:", json.dumps(request))
+        recs = []
     recs_wrapped = [dict(words=[word], meta=None) for word in recs]
     return dict(predictions=recs_wrapped, request_id=request_id)
