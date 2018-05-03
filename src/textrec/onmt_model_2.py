@@ -138,6 +138,7 @@ class ONMTModelWrapper:
         self.fields = fields
         self.translator = translator
         self.encode = encode
+        self.get_decoder_state = get_decoder_state
         self.generate_completions = generate_completions
 
 
