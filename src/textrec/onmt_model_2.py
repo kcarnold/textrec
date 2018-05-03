@@ -41,23 +41,6 @@ def load_img_data(self, coco_ids):
 onmt.modules.VecsEncoder._open_h5_file = fake_open_h5_file
 onmt.modules.VecsEncoder.load_h5_data = load_img_data
 
-def main(opt):
-    translator = make_translator(opt, report_score=True)
-    translator.translate(opt.src_dir, opt.src, opt.tgt,
-                         opt.batch_size, opt.attn_debug)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description='translate.py',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    onmt.opts.add_md_help_argument(parser)
-    onmt.opts.translate_opts(parser)
-
-    opt = parser.parse_args()
-    main(opt)
-
-
 
 class ONMTModelWrapper:
     def __init__(self, model_filename, cmdline_args):
