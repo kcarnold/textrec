@@ -21,7 +21,7 @@ def handle_request_async(request):
     prefix = None
     if 'cur_word' in request:
         prefix = ''.join([ent['letter'] for ent in request['cur_word']])
-    stimulus = request.get('stimulus')
+    stimulus = request['stimulus']
     if stimulus['type'] == 'doc':
         if stimulus['content'] is None:
             model_name = 'cnndm_lm'
