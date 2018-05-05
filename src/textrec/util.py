@@ -1,6 +1,7 @@
 import joblib
 import json
 from .paths import paths
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 mem = joblib.Memory(str(paths.cache), mmap_mode='r')
 
@@ -44,3 +45,25 @@ def get_coco_id2url():
     train_captions = json.load(open(train_captions_json))['images']
     val_captions = json.load(open(val_captions_json))['images']
     return {img['id']: img['coco_url'] for img in train_captions + val_captions}
+
+
+def join_captions(image):
+    return '\n'.join(' '.join(sent['tokens']) for sent in image['sentences'])
+
+@mem.cache
+def get_caption_vectorizer(ngram_range=(1, 1), min_df=5):
+    vectorizer = TfidfVectorizer(ngram_range=ngram_range, min_df=min_df)
+    images = get_coco_captions()
+    joined_captions = [join_captions(image) for image in images]
+    vectorizer.fit(joined_captions)
+    return vectorizer
+
+@mem.cache
+def get_vectorized_captions(*, vectorizer_kwargs={}, split=None):
+    images = get_coco_captions()
+    if split is not None:
+        images = [img for img in images if img['split'] == split]
+        assert len(split)
+    joined_captions = [join_captions(image) for image in images]
+    vectorizer = get_caption_vectorizer(**vectorizer_kwargs)
+    return vectorizer, vectorizer.transform(joined_captions)
