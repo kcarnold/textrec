@@ -1,0 +1,58 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<style>
+#submitButton{
+  white-space: normal;
+}
+
+.instructions {
+  border: 2px solid blue;
+}
+</style>
+
+<!-- The following snippet enables the 'responsive' behavior on smaller screens -->
+<meta content="width=device-width,initial-scale=1" name="viewport" />
+<section class="outer-container">
+  <section class="instructions">
+    Consider the description <b style="font-size: 200%">&ldquo;{{description}}&rdquo;</b>.
+
+    <ol>
+      <li>For each of the {{images.length}} images below, check the box if the description applies to the image or any part of the image.<br><br>For example, if the description is "a person is smiling", check the box if there are any smiling people in the image, even if the person is in the background.<br><br></li>
+      <li>Pick which of the {{images.length}} images the description describes <b>best</b>.</li>
+    </ol>
+
+    <p>If any of the images doesn't load, make a note in the feedback section and submit the HIT incomplete.</p>
+  </section>
+
+
+{% for url in images %}
+<div class="row" style="padding: 10px 0">
+<div class="col-xs-12 col-sm-6 col-md-6">
+  <img src="{{url}}" style="max-width: 100%; max-height: 400px; display: inline-block; border: 1px solid black;">
+</div>
+<div class="col-xs-12 col-sm-6 col-md-6">
+  <h4>
+    Image {{loop.index}}
+  </h4>
+<label><input type="checkbox" name="im{{loop.index0}}"> The description fits all or part of this image</label>
+<p>Reminder: description was &ldquo;${description}&rdquo;.</p>
+</div>
+</div>
+{% endfor %}
+
+  <div>
+    Which image does the description &ldquo;{{description}}&rdquo; fit <b>best</b>?
+    {% for url in images %}
+    <div>
+      <label><input type="radio" name="best" value="{{loop.index0}}"> Image {{loop.index}}</label>
+    </div>
+    {% endfor %}
+  </div>
+
+  <p>
+    This is a new HIT, so we&#39;d appreciate your feedback: are the instructions clear? Is the payment fair? Any technical difficulties? Anything else?<br>
+  <textarea cols="80" name="feedback" placeholder="optional feedback" rows="4"></textarea>
+  </p>
+</section>
+
+<input id="data-description" type="hidden" name="description" value="{{description}}">
+<input id="data-images" type="hidden" name="images" value="{{images|join('|')}}">
