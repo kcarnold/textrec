@@ -176,13 +176,6 @@ function trialScreen(props: {
       suggestions.predictions.forEach(({ words }) => {
         if (correctNextWord === words.join(' ')) anyIsCorrect = true;
       });
-      console.log(
-        suggestions.predictions.map(x => x.words.join(' ')),
-        transcribe,
-        transcriptionStatus,
-        correctNextWord,
-        anyIsCorrect
-      );
       if (anyIsCorrect) {
         return suggestions;
       } else {
