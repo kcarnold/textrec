@@ -125,6 +125,7 @@ class ONMTModelWrapper:
             return dec_out[0], dec_states
 
         def generate_completions(in_text, tokens_so_far):
+            tokens_so_far = [onmt.io.BOS_WORD] + tokens_so_far
             tokens_so_far = tuple(tokens_so_far) # Make it hashable
             dec_out, dec_states = get_decoder_state(in_text, tokens_so_far)
             logits = model.generator.forward(dec_out).data
@@ -156,6 +157,7 @@ def get_top_k(logits, vocab, k, prefix=None):
         if len(result) == k:
             break
     return result
+
 
 print("Loading ONMT models...")
 model_specs = {
@@ -189,15 +191,5 @@ print("Ready.")
 
 def get_recs(model_name, in_text, tokens_so_far, *, prefix=None):
     wrapper = models[model_name]
-    logits, vocab = wrapper.generate_completions(
-        in_text, [onmt.io.BOS_WORD] + tokens_so_far)
+    logits, vocab = wrapper.generate_completions(in_text, tokens_so_far)
     return get_top_k(logits, vocab, k=3, prefix=prefix)
-
-
-if __name__ == '__main__':
-    model_filename = '/Users/kcarnold/code/textrec/models/coco_cap_2_acc_42.97_ppl_18.83_e20.pt'
-    wrapper = ONMTModelWrapper(model_filename, ['-data_type', 'vecs'])
-    encoder_out = wrapper.encode('1')
-    logits, vocab = wrapper.generate_completions(encoder_out, [onmt.io.BOS_WORD, 'airplane'])
-    print(get_top_k(logits, vocab, 5))
-
