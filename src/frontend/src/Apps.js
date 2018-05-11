@@ -4,6 +4,8 @@ function getApp(config) {
     return require("./SumTask");
   } else if (config === "cap") {
     return require("./CapTask");
+  } else if (config === "xs") {
+    return require("./TranscribeTask");
   }
 }
 

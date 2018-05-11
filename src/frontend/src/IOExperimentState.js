@@ -128,6 +128,10 @@ export class ExperimentStateStore {
       ].highlightChars = this.activeSuggestion.highlightChars;
     }
 
+    if (this.flags.suggestionFilter) {
+      result = this.flags.suggestionFilter(result, this);
+    }
+
     return result;
   }
 

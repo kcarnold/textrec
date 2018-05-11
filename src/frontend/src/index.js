@@ -13,7 +13,7 @@ if (process.env.NODE_ENV === "production") {
     .install();
 }
 
-let topLevel;
+let topLevel = <h3>Invalid URL</h3>;
 let query = window.location.search.slice(1);
 let initialPart = query.split("/", 1)[0] || query;
 
@@ -55,22 +55,29 @@ if (initialPart === "panopt") {
   };
   xhr.send(JSON.stringify({ params, jsTimestamp: +new Date() }));
 } else {
-  let match = query.match(/^(\w+)-(\w+)$/);
+  let match = query.match(/^(\w+-)?(\w+)-(\w+)$/);
   if (match) {
-    let clientId = match[1];
-    let clientKind = match[2];
-    let { createTaskState, screenToView } = getApp("cap");
-    let MasterViewFactory = require("./MasterView").default;
-    let MasterView = MasterViewFactory(screenToView);
-    let state = createTaskState(clientId || "");
-    let globalState = Wrapper.init(state, clientId, clientKind);
-    topLevel = (
-      <Wrapper.View global={globalState}>
-        <MasterView kind={clientKind} />
-      </Wrapper.View>
-    );
-  } else {
-    topLevel = <h3>Invalid URL</h3>;
+    let appName;
+    if (match[1]) {
+      appName = match[1].slice(0, -1);
+    } else {
+      appName = 'cap';
+    }
+    let clientId = match[2];
+    let clientKind = match[3];
+    let app = getApp(appName);
+    if (app != null) {
+      let { createTaskState, screenToView } = app;
+      let MasterViewFactory = require("./MasterView").default;
+      let MasterView = MasterViewFactory(screenToView);
+      let state = createTaskState(clientId || "");
+      let globalState = Wrapper.init(state, clientId, clientKind);
+      topLevel = (
+        <Wrapper.View global={globalState}>
+          <MasterView kind={clientKind} />
+        </Wrapper.View>
+      );
+    }
   }
 }
 
