@@ -24,6 +24,46 @@
 <meta content="width=device-width,initial-scale=1" name="viewport" />
 <section class="outer-container">
 
+  <section class="consent">
+<div class="panel panel-primary"><!-- WARNING: the ids "collapseTrigger" and "instructionBody" are being used to enable expand/collapse feature --><a class="panel-heading" href="javascript:void(0);" id="collapseTrigger"><strong>Consent to Participate in Academic Research</strong> <span class="collapse-text">(Click to expand)</span> </a>
+<div class="panel-body" id="instructionBody">
+
+<p><b>Study Title</b>: Predictive typing with long suggestions<br>
+<b>Researcher</b>: Kenneth C. Arnold</p>
+
+<p><b>Participation is voluntary</b>: It is your choice whether or not to participate in this research.  If you choose to participate, you may change your mind and leave the study at any time by returning the HIT.  Refusal to participate or stopping your participation will involve no penalty or loss of benefits to which you are otherwise entitled. Note that for technical reasons we can only provide payment for fully completed HITs. Participants must be adults 18+.</p>
+
+<p><b>What is the purpose of this research?</b> We are studying how different touchscreen keyboards affect the writing process, writing outcome, and the author’s subjective experience, and how psychological factors may influence those effects.</p>
+
+<p><b>What can I expect if I take part in this research? What is the time commitment?</b>
+You will provide feedback on one or more writing samples produced by prior study participants.</p>
+
+<p><b>What are the risks and possible discomforts?</b>
+There are no anticipated risks beyond normal use of a computer or smartphone. Please take a break if you start to feel any discomfort from prolonged computer use.</p>
+
+<p><b>Are there any benefits from being in this research study?</b>
+We cannot promise any benefits to you or others from your taking part in this research. The results of this research may inform future advances in computer systems that assist writing.</p>
+
+<p><b>Will I be compensated for participating in this research?</b>
+The target payment for this task is $9/hr. Your payment will in no way depend on how you use the unusual features of the app being tested, if any. The reward for a specific study will be determined based on the estimated time to complete the task.</p>
+
+<p><b>If I take part in this research, how will my privacy be protected? What happens to the information you collect?</b> We will not record any personally identifying information. De-identified data may be shared with other researchers and other participants in this study. <br><br>
+
+The MTurk platform provides access to your worker ID, which in some cases can be mapped to your name and work history. We are relying on the security of that platform to maintain your confidentiality. To partially mitigate the risk of re-identification, we will assign you a random identifier specific to this study and delete the mapping between this identifier and your worker ID 6 months after the experiment concludes. But if the security of the MTurk platform or our account is breached, it may be possible to re-identify your work, as with any MTurk task. Please make sure to mark your Amazon Profile as private if you do not want it to be found from your Mechanical Turk Worker ID.</p>
+
+<p><b>If I have any questions, concerns or complaints about this research study, who can I talk to?</b> The researcher for this study is Kenneth C. Arnold who can be reached at kcarnold@seas.harvard.edu, 617-299-6536, or 33 Oxford St MD 240, Cambridge MA 02138. The faculty sponsor is Krzysztof Z. Gajos who can be reached at kgajos@seas.harvard.edu.<br><br>This research has been reviewed and approved by the Harvard University Area Institutional Review Board (“IRB”). You may talk to them at (617) 496-2847 or cuhs@harvard.edu if:
+<ul>
+<li>Your questions, concerns, or complaints are not being answered by the research team.</li>
+<li>You cannot reach the research team.</li>
+<li>You want to talk to someone besides the research team.</li>
+<li>You have questions about your rights as a research subject.</li>
+<li>You want to get information or provide input about this research.</li>
+</ul>
+</div>
+</div>
+
+  </section>
+
   <section class="instructions">
     <p>Someone wrote this description for one of the {{images|length}} images below:</p>
 
@@ -35,7 +75,7 @@
   </section>
 
 
-<div style="flex: 1 0 0; overflow: auto; display: flex; flex-flow: row wrap; align-items: center;">
+<div style="flex: 1 0 0; overflow: auto; display: flex; flex-flow: row wrap; align-items: center;" id="image-container">
 {% for url in images %}
 <div style="flex: 0 0 300px; padding: 10px;" class="image-option" data-idx="{{loop.index0}}">
   <button class="guess">
@@ -54,7 +94,7 @@
 
 <input id="data-description" type="hidden" name="description" value="{{description}}">
 <input id="data-images" type="hidden" name="images" value="{{images|join('|')}}">
-<input id="data-correct-idx" type="hidden" name="correctIdx" values="{{correct_idx}}">
+<input id="data-correct-idx" type="hidden" name="correctIdx" value="${correct_idx}">
 <input id="data-guesses" type="hidden" name="guesses" value="[]">
 
 <script
@@ -65,6 +105,12 @@
 var correctIdx = ${correct_idx};
 var guesses = [];
 $(function() {
+  // Shuffle: https://stackoverflow.com/a/11972692/69707
+  var container = document.getElementById("image-container");
+  for (var i = container.children.length; i >= 0; i--) {
+      container.appendChild(container.children[Math.random() * i | 0]);
+  }
+
   $('.image-option').on('click', 'button.guess', function(event) {
     var idx = +$(event.delegateTarget).attr('data-idx');
     console.log('click', idx);
@@ -80,6 +126,24 @@ $(function() {
     } else {
       alert("Oops, try again!");
     }
+    return false;
   });
+
+    // Instructions expand/collapse
+    var content = $('#instructionBody');
+    var trigger = $('#collapseTrigger');
+    content.hide();
+    $('.collapse-text').text('(Click to expand)');
+    trigger.click(function(){
+      content.toggle();
+      var isVisible = content.is(':visible');
+      if(isVisible){
+        $('.collapse-text').text('(Click to collapse)');
+      }else{
+        $('.collapse-text').text('(Click to expand)');
+      }
+    });
+    // end expand/collapse
+
 });
 </script>
