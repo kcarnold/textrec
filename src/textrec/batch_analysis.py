@@ -62,18 +62,22 @@ def get_trial_data(batch):
             print("****** EXCLUDE! **********")
             assert False
 
-        for name, page in analyzed['byExpPage'].items():
+        trial_idx = 0
+        for name in analyzed['pageSeq']:
             if not name.startswith('final'):
                 continue
             block, idx = name.split('-')[1:]
             block = int(block)
             idx = int(idx)
+            page = analyzed['byExpPage'][name]
             results.append(dict(
                 participant=pid,
                 block=block,
                 idx_in_block=idx,
+                idx=trial_idx,
                 condition=page['condition'],
                 text=page['finalText'],
                 stimulus=page.get('stimulus', {}).get('content')))
+            trial_idx += 1
 
     return results
