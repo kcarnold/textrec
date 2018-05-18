@@ -1,6 +1,10 @@
 #!/bin/bash
 PRODUCT=guesses
 DIR=$PRODUCT-s3
-mkdir -p $DIR
-cp style.css script.js $DIR
+rm -rf "$DIR"
+mkdir "$DIR"
+for file in style.css script.js; do
+    md5=$(md5sum "$file" | cut -d ' ' -f 1)
+    cp "$file" "$DIR/$md5-$file"
+done
 aws --profile kca-s3 s3 sync $DIR/ "s3://megacomplete.net/$PRODUCT/" --acl public-read

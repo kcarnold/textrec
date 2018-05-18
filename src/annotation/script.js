@@ -1,3 +1,5 @@
+var res = Vue.compile(template);
+
 var procData = _.map(taskData, function(page, pageIdx) {
   return {
     pageIdx: pageIdx,
@@ -14,8 +16,11 @@ var procData = _.map(taskData, function(page, pageIdx) {
   };
 });
 
+
 var app = new Vue({
     el: "#app",
+    render: res.render,
+    staticRenderFns: res.staticRenderFns,
     data: {
         tasks: procData,
         taskIdx: 0,
