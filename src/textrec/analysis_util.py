@@ -28,7 +28,13 @@ def get_log_analysis_raw(logpath, logfile_size, git_rev, analysis_files=None):
     subprocess.check_call([paths.scripts / 'checkout-old.sh', git_rev, rev_overrides.get(git_rev, git_rev)])
     analyzer_path = str(paths.frontend / 'run-analysis')
     with open(logpath) as logfile:
-        result = subprocess.check_output([analyzer_path], stdin=logfile)
+        completion = subprocess.run(
+            [analyzer_path],
+            stdin=logfile, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if len(completion.stderr) != 0:
+            stderr = completion.stderr.decode('utf-8')
+            raise Exception(f"Analysis exception: {stderr!r}")
+        result = completion.stdout
         assert len(result) > 0
         return result
 
