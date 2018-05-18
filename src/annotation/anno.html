@@ -1,0 +1,93 @@
+{% raw %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<script src="https://unpkg.com/vue"></script>
+<script src="https://cdn.jsdelivr.net/lodash/4.17.4/lodash.js"></script>
+<meta content="width=device-width,initial-scale=1" name="viewport" />
+{% endraw %}
+<link rel="stylesheet" href="{{css}}">
+{% raw %}
+<div id="app" v-cloak>
+
+<section class="outer-container">
+
+  <section class="consent">
+    <div class="panel panel-primary">
+        <strong>Consent to Participate in Academic Research</strong> <button v-on:click="toggleConsent">{{consentVisible ? 'Collapse' : 'Expand'}}</button>
+<div class="panel-body" v-if="consentVisible">
+
+<p><b>Study Title</b>: Predictive typing with long suggestions<br>
+<b>Researcher</b>: Kenneth C. Arnold</p>
+
+<p><b>Participation is voluntary</b>: It is your choice whether or not to participate in this research.  If you choose to participate, you may change your mind and leave the study at any time by returning the HIT.  Refusal to participate or stopping your participation will involve no penalty or loss of benefits to which you are otherwise entitled. Note that for technical reasons we can only provide payment for fully completed HITs. Participants must be adults 18+.</p>
+
+<p><b>What is the purpose of this research?</b> We are studying how different touchscreen keyboards affect the writing process, writing outcome, and the author’s subjective experience, and how psychological factors may influence those effects.</p>
+
+<p><b>What can I expect if I take part in this research? What is the time commitment?</b>
+You will provide feedback on one or more writing samples produced by prior study participants.</p>
+
+<p><b>What are the risks and possible discomforts?</b>
+There are no anticipated risks beyond normal use of a computer or smartphone. Please take a break if you start to feel any discomfort from prolonged computer use.</p>
+
+<p><b>Are there any benefits from being in this research study?</b>
+We cannot promise any benefits to you or others from your taking part in this research. The results of this research may inform future advances in computer systems that assist writing.</p>
+
+<p><b>Will I be compensated for participating in this research?</b>
+The target payment for this task is $9/hr. Your payment will in no way depend on how you use the unusual features of the app being tested, if any. The reward for a specific study will be determined based on the estimated time to complete the task.</p>
+
+<p><b>If I take part in this research, how will my privacy be protected? What happens to the information you collect?</b> We will not record any personally identifying information. De-identified data may be shared with other researchers and other participants in this study. <br><br>
+
+The MTurk platform provides access to your worker ID, which in some cases can be mapped to your name and work history. We are relying on the security of that platform to maintain your confidentiality. To partially mitigate the risk of re-identification, we will assign you a random identifier specific to this study and delete the mapping between this identifier and your worker ID 6 months after the experiment concludes. But if the security of the MTurk platform or our account is breached, it may be possible to re-identify your work, as with any MTurk task. Please make sure to mark your Amazon Profile as private if you do not want it to be found from your Mechanical Turk Worker ID.</p>
+
+<p><b>If I have any questions, concerns or complaints about this research study, who can I talk to?</b> The researcher for this study is Kenneth C. Arnold who can be reached at kcarnold@seas.harvard.edu, 617-299-6536, or 33 Oxford St MD 240, Cambridge MA 02138. The faculty sponsor is Krzysztof Z. Gajos who can be reached at kgajos@seas.harvard.edu.<br><br>This research has been reviewed and approved by the Harvard University Area Institutional Review Board (“IRB”). You may talk to them at (617) 496-2847 or cuhs@harvard.edu if:
+<ul>
+<li>Your questions, concerns, or complaints are not being answered by the research team.</li>
+<li>You cannot reach the research team.</li>
+<li>You want to talk to someone besides the research team.</li>
+<li>You have questions about your rights as a research subject.</li>
+<li>You want to get information or provide input about this research.</li>
+</ul>
+</div>
+</div>
+
+  </section>
+
+<div v-if="!isDone">
+  <section class="instructions">
+    Task {{taskIdx + 1}} of {{tasks.length}}
+
+    <p>Someone wrote this description for one of the {{curTask.images.length}} images below:</p>
+
+    <blockquote><b style="font-size: 200%">&ldquo;{{curTask.description}}&rdquo;</b></blockquote>
+
+    <p>Try to guess which of the {{curTask.images.length}} images this description was written for. Click an image to guess it. Try to get it in as few guesses as possible.</p>
+
+    <p>If any of the images doesn't load, make a note in the feedback section and submit the HIT incomplete.</p>
+  </section>
+
+
+<div style="flex: 1 0 0; overflow: auto; display: flex; flex-flow: row wrap; align-items: center;" id="image-container" :key="taskIdx">
+<div style="flex: 0 0 300px; padding: 10px;" class="image-option" v-for="(image, idx) in curTask.images">
+  <button class="guess" @click="guessImage(idx)" :disabled="image.alreadyGuessed">
+    <img :src="image.url" style="max-width: 100%; max-height: 400px; display: inline-block;" :alt="'Image '+idx+' should appear here'">
+  </button>
+</div>
+</div>
+
+</div>
+<div v-else>
+  Done! You can submit the HIT now.
+</div>
+</section>
+
+    <input type="hidden" name="results" v-bind:value="JSON.stringify(tasks)">
+
+</div>
+
+<p>We&#39;re still refining this HIT, so we&#39;d appreciate your feedback: are the instructions clear? How long did it actually take you? Is the payment fair? Any technical difficulties? Anything else?</p>
+<textarea cols="80" name="feedback" placeholder="totally optional feedback" rows="4"></textarea>
+
+{% endraw %}
+<script>
+var taskData = {{task}};
+</script>
+<script src="{{js}}"></script>

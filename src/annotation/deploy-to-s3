@@ -1,0 +1,6 @@
+#!/bin/bash
+PRODUCT=guesses
+DIR=$PRODUCT-s3
+mkdir -p $DIR
+cp style.css script.js $DIR
+aws --profile kca-s3 s3 sync $DIR/ "s3://megacomplete.net/$PRODUCT/" --acl public-read

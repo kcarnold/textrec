@@ -1,0 +1,24 @@
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+[v-cloak] {
+    display: none;
+}
+
+#app {
+    /*width: 700px;*/
+    margin: 0 auto;
+    padding: 10px;
+}
+
+.outer-container {
+}
+
+.image-option button:disabled {
+  cursor: not-allowed;
+  opacity: .25;
+}
