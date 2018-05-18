@@ -28,7 +28,8 @@ assignments = [
     for hit in relevant_hits
     for assignment in json.load(open(root / hit['HITId'] / 'assignments.json'))]
 
-for worker_id, worker_assignments in toolz.groupby('WorkerId', assignments).items():
+assignments_by_worker = toolz.groupby('WorkerId', assignments)
+for worker_id, worker_assignments in assignments_by_worker.items():
     prev_hits = []
     for assignment in sorted(worker_assignments, key=lambda x: x['SubmitTime']):
         hit_type = titles[id2hit[assignment['HITId']]['Title']]
@@ -46,3 +47,7 @@ for worker_id, worker_assignments in toolz.groupby('WorkerId', assignments).item
                 print("Anno after writing:", worker_id)
                 break
         prev_hits.append((hit_type, assignment))
+
+
+def add_qualification(client):
+    client.qualify_workers(client.get_qualification_id('did-captioning'), assignments_by_worker.keys())
