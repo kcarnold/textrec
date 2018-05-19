@@ -232,6 +232,14 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
                 participant = Participant.get_participant(participant_id)
                 self.send_json(type='logs', participant_id=participant_id, logs=participant.get_log_entries())
 
+            elif request['type'] == 'get_analyzed':
+                assert self.participant.is_panopticon
+                participant_id = request['participantId']
+                validate_participant_id(participant_id)
+                from .analysis_util import get_log_analysis
+                analysis = get_log_analysis(participant_id)
+                self.send_json(type='analyzed', participant_id=participant_id, analysis=analysis)
+
             elif request['type'] == 'log':
                 event = request['event']
                 self.log(event)
