@@ -51,3 +51,8 @@ for worker_id, worker_assignments in assignments_by_worker.items():
 
 def add_qualification(client):
     client.qualify_workers(client.get_qualification_id('did-captioning'), assignments_by_worker.keys())
+
+if __name__ == '__main__':
+    from mturk import MTurkClient
+    client = MTurkClient(profile_name='iismturk', region_name='us-east-1')
+    add_qualification(client)
