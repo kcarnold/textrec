@@ -1,3 +1,4 @@
+import pandas as pd
 from .paths import paths
 from . import analysis_util
 from collections import Counter
@@ -17,10 +18,10 @@ def get_participants_by_batch():
 
 def summarize(batch):
     participants = get_participants_by_batch()[batch]
-    for pid in participants:
+    for participant_id in participants:
         print()
-        print(pid)
-        analyzed = analysis_util.get_log_analysis(pid)
+        print(participant_id)
+        analyzed = analysis_util.get_log_analysis(participant_id)
 
         controlledInputsDict = dict(analyzed['allControlledInputs'])
         if controlledInputsDict.get('shouldExclude', "No") == "Yes":
@@ -52,10 +53,10 @@ def summarize(batch):
         print('\n'.join('{}: {:.1f}'.format(name, secs) for name, secs in c.most_common()))
 
 
-def get_trial_data(batch):
+def get_trial_data(participants):
     results = []
-    for pid in get_participants_by_batch()[batch]:
-        analyzed = analysis_util.get_log_analysis(pid)
+    for participant_id in participants:
+        analyzed = analysis_util.get_log_analysis(participant_id)
 
         controlledInputsDict = dict(analyzed['allControlledInputs'])
         if controlledInputsDict.get('shouldExclude', "No") == "Yes":
@@ -71,7 +72,7 @@ def get_trial_data(batch):
             idx = int(idx)
             page = analyzed['byExpPage'][name]
             results.append(dict(
-                participant=pid,
+                participant=participant_id,
                 block=block,
                 idx_in_block=idx,
                 idx=trial_idx,
@@ -81,3 +82,45 @@ def get_trial_data(batch):
             trial_idx += 1
 
     return results
+
+
+def get_survey_data(participants):
+    block_level = []
+    experiment_level = []
+
+    for participant_id in participants:
+        analyzed = analysis_util.get_log_analysis(participant_id)
+        survey_data = dict(analyzed['allControlledInputs'])
+        conditions = [analyzed['byExpPage'][page]['condition'] for page in analyzed['pageSeq']]
+        assert len(conditions) == 12
+        conditions = conditions[::4]
+        assert len(set(conditions)) == 3
+
+
+        for k, v in analyzed['allControlledInputs']:
+            segment, rest = k.split('-', 1)
+            if segment == 'intro':
+                experiment_level.append((participant_id, rest, v))
+            elif segment == 'postTask':
+                block, rest = rest.split('-', 1)
+                block = int(block)
+                if ' ' in rest:
+                    # Traits, TODO
+                    experiment_level.append((participant_id, rest, v))
+                else:
+                    block_level.append((participant_id, block, rest, v))
+            elif segment == 'postExp':
+                if rest == 'age':
+                    v = int(v)
+                if rest.startswith('helpfulRank'):
+                    # Decode which keyboard they're talking about
+                    assert v.startswith('Keyboard Design ')
+                    condition_idx = int(v[-1]) - 1
+                    experiment_level.append((participant_id, f'{rest}-idx', condition_idx))
+                    experiment_level.append((participant_id, f'{rest}-condition', conditions[condition_idx]))
+                else:
+                    experiment_level.append((participant_id, rest, v))
+
+    return (
+        pd.DataFrame(block_level, columns='participant block name value'.split()),
+        pd.DataFrame(experiment_level, columns='participant name value'.split()))
