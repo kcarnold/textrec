@@ -3,6 +3,30 @@ textrec
 
 Experiments in recommending text for composition tasks.
 
+Workflows
+-----
+
+### Train the model
+
+(TODO: write up)
+
+### Post writing task
+
+1. Deploy code to production: `fab deploy`. Test on server.
+2. Post HIT (HITs/2018-04-09.html).
+
+
+### Qualify workers who completed the writing task
+
+1. Download MTurk metadata: `scripts/backup_mturk.py`.
+2. Run script on downloaded data: `scripts/find_invalid_workers.py`.
+
+
+
+Ignore the below...
+
+
+
 Project Organization
 ------------
 
