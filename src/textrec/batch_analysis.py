@@ -71,7 +71,18 @@ def get_trial_data(participants):
             block = int(block)
             idx = int(idx)
             page = analyzed['byExpPage'][name]
+            action_counts = dict(
+                Counter(toolz.pluck('annoType', page['actions'])))
+            action_counts.pop('backendReply', None)
+            action_counts = {
+                f'num_{typ}': count
+                for typ, count in action_counts.items()
+            }
+            action_counts['num_tapSugg_any'] = sum(
+                v for k, v in action_counts.items()
+                if k.startswith('num_tapSugg'))
             results.append(dict(
+                action_counts,
                 participant=participant_id,
                 block=block,
                 idx_in_block=idx,
