@@ -346,4 +346,7 @@ export default Panopticon;
 window.toJS = toJS;
 window.store = store;
 
-store.addViewers("h52x67");
+store.addViewers(
+  //"h52x67"
+  "jvccx2"
+  );
