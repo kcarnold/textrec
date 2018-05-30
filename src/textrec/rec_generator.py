@@ -45,5 +45,5 @@ def handle_request_async(request):
         traceback.print_exc()
         print("Failing request:", json.dumps(request))
         recs = []
-    recs_wrapped = [dict(words=[word], meta=None) for word in recs]
+    recs_wrapped = [dict(words=[word], meta=None) for word, prob in recs]
     return dict(predictions=recs_wrapped, request_id=request_id)
