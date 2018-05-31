@@ -68,6 +68,21 @@ def count_actions(actions):
     return action_counts
 
 
+def compute_speeds(page_data):
+    typing_timestamps = [
+        action['jsTimestamp'] / 1000
+        for action in page_data['actions']
+        if action['type'].startswith('tap')]
+    seconds_spent_typing = typing_timestamps[-1] - typing_timestamps[0]
+    return dict(
+        delay_before_start=typing_timestamps[0] - (page_data['firstEventTimestamp'] / 1000),
+        num_taps=len(typing_timestamps),
+        seconds_spent_typing=seconds_spent_typing,
+        taps_per_second=len(typing_timestamps) / seconds_spent_typing,
+        characters_per_sec=len(page_data['finalText']) / seconds_spent_typing,
+    )
+
+
 def get_trial_data(participants):
     results = []
     for participant_id in participants:
@@ -101,7 +116,7 @@ def get_trial_data(participants):
             )
 
             data.update(count_actions(page['actions']))
-
+            data.update(compute_speeds(page))
 
             results.append(data)
 
