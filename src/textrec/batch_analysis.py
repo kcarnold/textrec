@@ -1,6 +1,7 @@
 import pandas as pd
 from .paths import paths
 from . import analysis_util
+from . import automated_analyses
 from collections import Counter
 import toolz
 
@@ -53,6 +54,20 @@ def summarize(batch):
         print('\n'.join('{}: {:.1f}'.format(name, secs) for name, secs in c.most_common()))
 
 
+def count_actions(actions):
+    action_counts = dict(
+        Counter(toolz.pluck('annoType', actions)))
+    action_counts.pop('backendReply', None)
+    action_counts = {
+        f'num_{typ}': count
+        for typ, count in action_counts.items()
+    }
+    action_counts['num_tapSugg_any'] = sum(
+        v for k, v in action_counts.items()
+        if k.startswith('num_tapSugg'))
+    return action_counts
+
+
 def get_trial_data(participants):
     results = []
     for participant_id in participants:
@@ -67,29 +82,29 @@ def get_trial_data(participants):
         for name in analyzed['pageSeq']:
             if not name.startswith('final'):
                 continue
-            block, idx = name.split('-')[1:]
-            block = int(block)
-            idx = int(idx)
             page = analyzed['byExpPage'][name]
-            action_counts = dict(
-                Counter(toolz.pluck('annoType', page['actions'])))
-            action_counts.pop('backendReply', None)
-            action_counts = {
-                f'num_{typ}': count
-                for typ, count in action_counts.items()
-            }
-            action_counts['num_tapSugg_any'] = sum(
-                v for k, v in action_counts.items()
-                if k.startswith('num_tapSugg'))
-            results.append(dict(
-                action_counts,
+
+            block, idx = name.split('-')[1:]
+            text = page['finalText'].strip()
+            stimulus = page.get('stimulus', {}).get('content')
+            data = dict(
                 participant=participant_id,
-                block=block,
-                idx_in_block=idx,
+                block=int(block),
+                idx_in_block=int(idx),
                 idx=trial_idx,
                 condition=page['condition'],
-                text=page['finalText'],
-                stimulus=page.get('stimulus', {}).get('content')))
+                text=text,
+                stimulus=stimulus,
+                num_adj=automated_analyses.count_adj(text),
+                logprob_conditional=automated_analyses.eval_logprobs_conditional(stimulus, text),
+                logprob_unconditional=automated_analyses.eval_logprobs_unconditional(text),
+            )
+
+            data.update(count_actions(page['actions']))
+
+
+            results.append(data)
+
             trial_idx += 1
 
     return results
