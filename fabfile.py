@@ -34,3 +34,8 @@ def deploy():
 
 def get_data():
     subprocess.run(['./scripts/pull-logs'], env=dict(os.environ, SERVER='gcp1'))
+
+
+def gen_triats():
+    local('python -m textrec.gen_personality_inventory --trait NFC --trait Extraversion --out data/trait_data.json')
+    local('python -m textrec.gen_personality_inventory --trait NFC --trait Extraversion --export-name traitData --out src/frontend/src/TraitData.js')
