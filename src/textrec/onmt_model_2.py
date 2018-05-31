@@ -7,6 +7,7 @@ import numpy as np
 import copy
 
 from torch.autograd import Variable
+import torch.nn.functional as F
 
 import onmt
 import onmt.io
@@ -149,12 +150,29 @@ class ONMTModelWrapper:
             logits = logits[0]
             return logits, vocab
 
+        def eval_logprobs(in_text, tokens, *, use_eos):
+            encoder_out = encode(in_text)
+            enc_states = encoder_out['enc_states']
+            memory_bank = encoder_out['memory_bank']
+            src = encoder_out['src']
+
+            tokens = [onmt.io.BOS_WORD] + tokens
+            if use_eos:
+                tokens = tokens + [onmt.io.EOS_WORD]
+
+            decoder_state = model.decoder.init_decoder_state(src, memory_bank=memory_bank, encoder_final=enc_states)
+            tgt = Variable(torch.LongTensor([tgt_vocab.stoi[tok] for tok in tokens]).unsqueeze(1).unsqueeze(1))
+            dec_out, dec_states, attn = model.decoder(tgt[:-1], memory_bank, decoder_state)
+            logits = model.generator(dec_out)
+            return F.nll_loss(logits.squeeze(1), tgt[1:].squeeze(1).squeeze(1), reduce=False, size_average=False).data.numpy()
+
         self.model = model
         self.fields = fields
         self.translator = translator
         self.encode = encode
         self.get_decoder_state = get_decoder_state
         self.generate_completions = generate_completions
+        self.eval_logprobs = eval_logprobs
 
 
 def get_top_k(logits, vocab, k, prefix=None):
