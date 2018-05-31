@@ -1,19 +1,6 @@
 import json
 import traceback
-from functools import lru_cache
-# from . import onmt_model
 from . import onmt_model_2
-
-from nltk.tokenize.moses import MosesTokenizer
-mtokenizer = MosesTokenizer()
-
-def tokenize(text):
-    return mtokenizer.tokenize(text)
-
-
-@lru_cache()
-def tokenize_stimulus(stimulus):
-    return ' '.join(tokenize(stimulus))
 
 
 def handle_request_async(request):
@@ -37,8 +24,8 @@ def handle_request_async(request):
             model_name = 'coco_cap'
             stimulus_content = str(stimulus['content'])
 
-    in_text = tokenize_stimulus(stimulus_content)
-    tokens = tokenize(request['sofar'])
+    in_text = onmt_model_2.tokenize_stimulus(stimulus_content)
+    tokens = onmt_model_2.tokenize(request['sofar'])
     try:
         recs = onmt_model_2.get_recs(model_name, in_text, tokens, prefix=prefix)
     except Exception:

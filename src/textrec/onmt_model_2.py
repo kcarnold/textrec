@@ -43,6 +43,20 @@ onmt.modules.VecsEncoder._open_h5_file = fake_open_h5_file
 onmt.modules.VecsEncoder.load_h5_data = load_img_data
 
 
+from nltk.tokenize.moses import MosesTokenizer
+mtokenizer = MosesTokenizer()
+
+def tokenize(text):
+    return mtokenizer.tokenize(text)
+
+
+@lru_cache()
+def tokenize_stimulus(stimulus):
+    return ' '.join(tokenize(stimulus))
+
+
+
+
 class ONMTModelWrapper:
     def __init__(self, model_filename, cmdline_args):
         parser = argparse.ArgumentParser(
