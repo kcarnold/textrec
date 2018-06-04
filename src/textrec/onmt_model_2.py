@@ -175,14 +175,45 @@ class ONMTModelWrapper:
         self.eval_logprobs = eval_logprobs
 
 
+def logsumexp(tensor: torch.Tensor,
+              dim: int = -1,
+              keepdim: bool = False) -> torch.Tensor:
+    # Borrowed from https://github.com/allenai/allennlp/blob/d47ac92f1f7fcd905618f4c928f5b95556a2997c/allennlp/nn/util.py#L554
+    # until we upgrade to PyTorch 0.4.
+
+    """
+    A numerically stable computation of logsumexp. This is mathematically equivalent to
+    `tensor.exp().sum(dim, keep=keepdim).log()`.  This function is typically used for summing log
+    probabilities.
+
+    Parameters
+    ----------
+    tensor : torch.FloatTensor, required.
+        A tensor of arbitrary size.
+    dim : int, optional (default = -1)
+        The dimension of the tensor to apply the logsumexp to.
+    keepdim: bool, optional (default = False)
+        Whether to retain a dimension of size one at the dimension we reduce over.
+    """
+    max_score, _ = tensor.max(dim, keepdim=keepdim)
+    if keepdim:
+        stable_vec = tensor - max_score
+    else:
+        stable_vec = tensor - max_score.unsqueeze(dim)
+    return max_score + (stable_vec.exp().sum(dim, keepdim=keepdim)).log()
+
+
+
 def get_top_k(logits, vocab, k, prefix=None):
     if prefix is not None:
         offset = torch.FloatTensor(
             [100.0 * (not x.startswith(prefix)) for x in vocab])
         logits = logits - offset
+        logits -= logsumexp(logits)
     result = []
     for idx in logits.topk(k * 2)[1]:
         word = vocab[idx]
+        # TODO: run this filter before the logsumexp
         if word[0] == '<' or word[0] == '.':
             continue
         result.append((word, logits[idx]))

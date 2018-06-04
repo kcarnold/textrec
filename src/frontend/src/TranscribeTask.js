@@ -67,11 +67,25 @@ let tutorialStimuli = [
 ];
 
 const namedConditions = {
-  gated: {
+  perfect: {
     requestFlags: {},
     modelSeesStimulus: true,
     onlyShowIfAccurate: true,
   },
+
+  lowConfidence: {
+    requestFlags: {
+      threshold: -0.45656539 // From Gating notebook
+    },
+    modelSeesStimulus: true,
+  },
+
+  highConfidence: {
+    requestFlags: {
+      threshold: -2.12771965
+    },
+    modelSeesStimulus: true,
+  }
 };
 
 const StimulusView = ({ stimulus }) => {
@@ -166,6 +180,7 @@ function trialScreen(props: {
 }) {
   let { name, condition, flags, instructions, stimulus, transcribe } = props;
   let suggestionFilter = null;
+  const blankRec = { words: [] };
   if (namedConditions[condition].onlyShowIfAccurate) {
     suggestionFilter = (suggestions, experimentState) => {
       let transcriptionStatus = experimentState.getTranscriptionStatus();
@@ -179,11 +194,19 @@ function trialScreen(props: {
       if (anyIsCorrect) {
         return suggestions;
       } else {
-        const blankRec = { words: [] };
         let predictions = range(3).map(() => blankRec);
         return { predictions };
       }
     };
+  } else {
+    suggestionFilter = (suggestions, experimentState) => {
+      let reply = experimentState.lastSuggestionsFromServer;
+      if ('show' in reply && !reply.show) {
+        return { predictions: range(3).map(() => blankRec) };
+      }
+      return suggestions;
+    }
+
   }
   return {
     preEvent: {

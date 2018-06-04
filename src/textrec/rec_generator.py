@@ -5,6 +5,7 @@ from . import onmt_model_2
 
 def handle_request_async(request):
     request_id = request.get('request_id')
+    flags = request.get('flags', {})
     prefix = None
     if 'cur_word' in request:
         prefix = ''.join([ent['letter'] for ent in request['cur_word']])
@@ -32,5 +33,10 @@ def handle_request_async(request):
         traceback.print_exc()
         print("Failing request:", json.dumps(request))
         recs = []
+
     recs_wrapped = [dict(words=[word], meta=None) for word, prob in recs]
-    return dict(predictions=recs_wrapped, request_id=request_id)
+    result = dict(predictions=recs_wrapped, request_id=request_id)
+    if 'threshold' in flags:
+        print("threshold", flags['threshold'])
+        result['show'] = max(prob for word, prob in recs) > flags['threshold']
+    return result
