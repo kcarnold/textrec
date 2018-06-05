@@ -5,6 +5,9 @@ from . import automated_analyses
 from collections import Counter
 import toolz
 
+NUM_LIKERT_DEGREES_FOR_TRAITS = 5
+
+
 def get_participants_by_batch():
     participants_by_batch = {}
     with open(paths.data / 'participants.txt') as f:
@@ -110,6 +113,7 @@ def get_trial_data(participants):
                 condition=page['condition'],
                 text=text,
                 stimulus=stimulus,
+                text_len=len(text),
                 num_adj=automated_analyses.count_adj(text),
                 logprob_conditional=automated_analyses.eval_logprobs_conditional(stimulus, text),
                 logprob_unconditional=automated_analyses.eval_logprobs_unconditional(text),
@@ -149,7 +153,8 @@ def get_survey_data(participants):
                     # Traits, TODO
                     experiment_level.append((participant_id, rest, v))
                 else:
-                    block_level.append((participant_id, block, rest, v))
+                    condition = conditions[block]
+                    block_level.append((participant_id, block, condition, rest, v))
             elif segment == 'postExp':
                 if rest == 'age':
                     v = int(v)
@@ -163,5 +168,91 @@ def get_survey_data(participants):
                     experiment_level.append((participant_id, rest, v))
 
     return (
-        pd.DataFrame(block_level, columns='participant block name value'.split()),
+        pd.DataFrame(block_level, columns='participant block condition name value'.split()),
         pd.DataFrame(experiment_level, columns='participant name value'.split()))
+
+
+def decode_experiment_level(experiment_level):
+    experiment_level_pivot = experiment_level.pivot(
+        index='participant', columns='name', values='value')
+
+    # "Which is most helpful?"
+    helpful_ranks = experiment_level_pivot[[col for col in experiment_level_pivot.columns if col.startswith('helpfulRank')]]
+    helpful_ranks = helpful_ranks.rename(columns={col: col[len('helpfulRank-'):] for col in helpful_ranks.columns})
+
+    helpful_ranks_by_condition = helpful_ranks[[col for col in helpful_ranks.columns if col.endswith('condition')]].apply(pd.value_counts).loc[['norecs', 'general', 'specific']]
+    helpful_ranks_by_idx = helpful_ranks[[col for col in helpful_ranks.columns if col.endswith('idx')]].apply(pd.value_counts)
+
+    import json
+    trait_data = json.load(open(paths.data / 'trait_data.json'))
+
+    for trait, items in toolz.groupby('trait', trait_data).items():
+        experiment_level_pivot[trait] = sum(
+            (-1 if item['is_negated'] else 1) * pd.to_numeric(experiment_level_pivot[item['item']])
+            for item in items
+        ) / (NUM_LIKERT_DEGREES_FOR_TRAITS * len(items))
+
+
+    experiment_level_pivot = experiment_level_pivot.drop([datum['item'] for datum in trait_data], axis=1)
+
+    return dict(
+        experiment_level=experiment_level_pivot,
+        helpful_ranks_by_condition=helpful_ranks_by_condition,
+        helpful_ranks_by_idx=helpful_ranks_by_idx)
+
+
+def decode_block_level(block_level):
+    block_level_pivot = block_level.set_index(['participant', 'block', 'condition', 'name']).value.unstack(-1)
+    tlx_columns = 'mental physical temporal performance effort frustration'.split()
+    block_level_pivot[tlx_columns] = block_level_pivot[tlx_columns].apply(pd.to_numeric)
+    block_level_pivot['TLX_sum'] = sum(
+        block_level_pivot[component] for component in tlx_columns)
+    return block_level_pivot
+
+
+def clean_merge(*a, must_match=[], combine_cols=[], **kw):
+    res = pd.merge(*a, **kw)
+    unclean = [col for col in res.columns if col.endswith('_x') or col.endswith('_y')]
+    assert len(unclean) == 0, unclean
+    assert 'index' not in res
+    return res
+
+
+def analyze_all(participants):
+    trial_data = get_trial_data(participants)
+
+    # I had the wrong URL for one image when one person ran it.
+    # trial_data = [trial for trial in trial_data if not (trial['stimulus'] == 431140 and trial['participant'] == 'h52x67')]
+    trial_data = [trial for trial in trial_data if not trial['participant'] == 'h52x67']
+
+    # Apply exclusions
+    for trial in trial_data:
+        trial['used_any_suggs'] = trial['num_tapSugg_any'] != 0
+        if trial['condition'] == 'norecs':
+            assert not trial['used_any_suggs']
+
+    print("Randomization counts")
+    print(
+        pd.DataFrame([(k, ','.join(list(toolz.pluck('condition', v))[::4])) for k,v in toolz.groupby('participant', trial_data).items()],
+             columns='participant conditions'.split()).conditions.value_counts())
+
+    # Get survey data
+    _block_level, _experiment_level = get_survey_data(participants)
+    block_level = decode_block_level(_block_level)
+    result = decode_experiment_level(_experiment_level)
+
+    result['block_level'] = pd.merge(
+        result['experiment_level'].reset_index(),
+        block_level.reset_index(),
+        on='participant',
+        suffixes=('_exp', '_block'),
+        validate='1:m')
+
+    result['trial_level'] = pd.merge(
+        result['block_level'],
+        pd.DataFrame(trial_data),
+        on=('participant', 'block', 'condition'),
+        suffixes=('_block', '_trial'),
+        validate='1:m')
+
+    return result
