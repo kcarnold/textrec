@@ -51,7 +51,7 @@ export const OptionsResponse = inject("dispatch", "state", "spying")(
               padding: "10px 3px",
               width: "100%",
             }}
-            title={spying && `${name}=${option}`}
+            title={spying ? `${name}=${option}` : undefined}
           >
             <input
               type="radio"
@@ -84,7 +84,7 @@ export const LikertResponse = inject("dispatch", "state", "spying")(
       >
         {question.options.map((label, idx) => (
           <div key={idx} style={{ textAlign: "center", flex: "1 1 0" }}>
-            <label title={spying && `${name}=${idx}`}>
+            <label title={spying ? `${name}=${idx}` : undefined}>
               <input
                 type="radio"
                 checked={choice === idx}
