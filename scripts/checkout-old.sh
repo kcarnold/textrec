@@ -1,4 +1,5 @@
 #!/bin/bash
+cd "$(dirname ${BASH_SOURCE[0]})/.."
 OLD_CODE_ROOT=src/frontend/src/old_versions
 TGT_REV_DIR=$1
 REAL_REV=$2
