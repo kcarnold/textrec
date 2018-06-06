@@ -44,7 +44,6 @@ export function init(state, clientId, clientKind) {
         browserMeta,
         git_rev: process.env.REACT_APP_GIT_REV,
         messageCount: messageCount,
-        masterConfig: state.masterConfig,
       },
     ]);
   }
