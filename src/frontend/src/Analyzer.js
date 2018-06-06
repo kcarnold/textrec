@@ -1,7 +1,5 @@
 import _ from "lodash";
 
-const INCOMPLETE_BUT_OK = "".split(/s/);
-
 function getCurCondition(state) {
   return state.conditionName || state.experimentState.flags.condition;
 }
@@ -264,28 +262,20 @@ export function processLogGivenState(state, log) {
     pageData.words = words;
   });
 
-  // One log didn't get to the last
-  if (INCOMPLETE_BUT_OK.indexOf(participant_id) === -1) {
-    console.assert(
-      state.curScreen.screen === "Done" ||
-        state.curScreen.screen === "IntroSurvey",
-      "Incomplete log file %s (on screen %s)",
-      participant_id,
-      state.curScreen.screen || state.curScreen.controllerScreen
-    );
-  }
+  let isComplete = state.curScreen.screen === "Done";
 
   let screenTimes = state.screenTimes.map(screen => {
     let screenDesc = state.screens[screen.num];
     return {
       ...screen,
-      name: screenDesc.screen || screenDesc.controllerScreen,
+      name: screenDesc.screen,
     };
   });
 
   return {
     participant_id,
     config: state.masterConfigName,
+    isComplete,
     byExpPage,
     pageSeq,
     screenTimes,

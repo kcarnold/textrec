@@ -114,12 +114,14 @@ def get_participants_by_batch():
     return participants_by_batch
 
 
-def summarize(batch):
-    participants = get_participants_by_batch()[batch]
+def summarize(participants, incomplete_ok=False):
     for participant_id in participants:
         print()
         print(participant_id)
         analyzed = analysis_util.get_log_analysis(participant_id)
+
+        if not incomplete_ok:
+            assert analyzed['isComplete'], f'INCOMPLETE! {participant_id}'
 
         controlledInputsDict = dict(analyzed['allControlledInputs'])
         if controlledInputsDict.get('shouldExclude', "No") == "Yes":
