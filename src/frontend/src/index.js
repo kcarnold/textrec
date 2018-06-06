@@ -21,9 +21,11 @@ if (initialPart === "panopt") {
   let Panopticon = require("./Panopticon").default;
   topLevel = <Panopticon />;
 } else if (initialPart === "showall") {
+  // e.g., /?showall/cap
   let mod = require("./ShowAllScreens");
-  let { createTaskState, screenToView } = getApp("cap");
-  mod.init(createTaskState, screenToView, query.slice(initialPart.length + 1));
+  let config = query.slice(initialPart.length + 1);
+  let { createTaskState, screenToView } = getApp(config);
+  mod.init(createTaskState, screenToView, config);
   let ShowAllScreens = mod.default;
   topLevel = <ShowAllScreens />;
 } else if (initialPart === "bench") {
@@ -33,6 +35,7 @@ if (initialPart === "panopt") {
 //   let DemoList = require("./DemoList").default;
 //   topLevel = <DemoList />;
 } else if (query.slice(0, 3) === "new") {
+  // e.g., http://localhost:3000/?new&c=gcap
   let params = query
     .split("&")
     .slice(1)

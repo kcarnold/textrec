@@ -13,6 +13,7 @@ import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import traitData from "./TraitData";
 import stimulusPairs from "./stimulusPairs";
+import { gatingSuggestionFilter } from './misc';
 
 import { seededShuffle } from "./shuffle";
 
@@ -199,14 +200,7 @@ function trialScreen(props: {
       }
     };
   } else {
-    suggestionFilter = (suggestions, experimentState) => {
-      let reply = experimentState.lastSuggestionsFromServer;
-      if ('show' in reply && !reply.show) {
-        return { predictions: range(3).map(() => blankRec) };
-      }
-      return suggestions;
-    }
-
+    suggestionFilter = gatingSuggestionFilter;
   }
   return {
     preEvent: {
