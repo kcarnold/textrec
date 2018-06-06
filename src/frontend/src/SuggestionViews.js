@@ -56,13 +56,19 @@ export const SuggestionsBar = inject("state", "dispatch")(
           beforeText,
           showPhrase,
         } = this.props;
+        let sugViews = (suggestions || []).map((sugg, slot) => ({
+          sugg, slot
+        }));
+        if (sugViews.length > 2) {
+          sugViews = [sugViews[1], sugViews[0], ...sugViews.slice(2)];
+        }
         return (
           <div className={"SuggestionsBar " + which}>
-            {(suggestions || []).map((sugg, i) => (
+            {sugViews.map(({sugg, slot}) => (
               <Suggestion
-                key={i}
+                key={slot}
                 onTap={evt => {
-                  dispatch({ type: "tapSuggestion", slot: i, which });
+                  dispatch({ type: "tapSuggestion", slot, which });
                   evt.preventDefault();
                   evt.stopPropagation();
                 }}
