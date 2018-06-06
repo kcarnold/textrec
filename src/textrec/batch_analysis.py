@@ -7,6 +7,100 @@ import toolz
 
 NUM_LIKERT_DEGREES_FOR_TRAITS = 5
 
+class ColType:
+    def __init__(self, type, **flags):
+        self.type = type
+        self.flags = flags
+
+Count = ColType(int, fill=0)
+
+columns = {
+    'experiment': {
+        'participant': str,
+        'age': float,
+        'english_proficiency': str,
+        'gender': str,
+        'helpfulRank-accurate-least-condition': str,
+        'helpfulRank-accurate-least-idx': int,
+        'helpfulRank-accurate-most-condition': str,
+        'helpfulRank-accurate-most-idx': int,
+        'helpfulRank-quick-least-condition': str,
+        'helpfulRank-quick-least-idx': int,
+        'helpfulRank-quick-most-condition': str,
+        'helpfulRank-quick-most-idx': int,
+        'helpfulRank-specific-least-condition': str,
+        'helpfulRank-specific-least-idx': int,
+        'helpfulRank-specific-most-condition': str,
+        'helpfulRank-specific-most-idx': int,
+        'other': str,
+        'techDiff': str,
+        'total_time': float,
+        'use_predictive': bool,
+        'verbalized_during': bool,
+        'NFC': float,
+        'Extraversion': float,
+    },
+    'block': {
+        'participant': str,
+        'block': int,
+        'condition': str,
+        'mental': int,
+        'physical': int,
+        'temporal': int,
+        'performance': int,
+        'effort': int,
+        'frustration': int,
+        'TLX_sum': int,
+        'sys-accurate': int,
+        'sys-fast': int,
+        'sys-specific': int,
+        'techDiff': str,
+        'other': str,
+    },
+    'trial': {
+        'participant': str,
+        'block': int,
+        'condition': str,
+        'idx': int,
+        'idx_in_block': int,
+        'stimulus': str,
+        'text': str,
+        'text_len': int,
+
+        # Process
+        'num_tapBackspace': Count,
+        'num_tapKey': Count,
+        'num_tapSugg_any': Count,
+        'num_tapSugg_bos': Count,
+        'num_tapSugg_full': Count,
+        'num_tapSugg_part': Count,
+        'num_taps': Count,
+        'used_any_suggs': bool,
+
+        'characters_per_sec': float,
+        'delay_before_start': float,
+        'seconds_spent_typing': float,
+        'taps_per_second': float,
+
+        # Automated outcome analysis
+        'logprob_conditional': float,
+        'logprob_unconditional': float,
+        'num_adj': int,
+    }
+}
+
+def coerce_columns(df, column_types):
+    result = df[list(column_types.keys())]
+    extra_columns = set(df.columns) - set(column_types.keys())
+    assert len(extra_columns) == 0, sorted(extra_columns)
+    for column_name, typ in column_types.items():
+        if not isinstance(typ, ColType):
+            typ = ColType(typ)
+        if 'fill' in typ.flags:
+            result[column_name] = result[column_name].fillna(typ.flags['fill'])
+        result[column_name] = result[column_name].astype(typ.type)
+    return result
+
 
 def get_participants_by_batch():
     participants_by_batch = {}
@@ -60,7 +154,8 @@ def summarize(batch):
 def count_actions(actions):
     action_counts = dict(
         Counter(toolz.pluck('annoType', actions)))
-    action_counts.pop('backendReply', None)
+    for ignore in 'backendReply resized tapText'.split():
+        action_counts.pop(ignore, None)
     action_counts = {
         f'num_{typ}': count
         for typ, count in action_counts.items()
@@ -135,6 +230,17 @@ def get_survey_data(participants):
 
     for participant_id in participants:
         analyzed = analysis_util.get_log_analysis(participant_id)
+
+        controlledInputsDict = dict(analyzed['allControlledInputs'])
+        if controlledInputsDict.get('shouldExclude', "No") == "Yes":
+            print("****** EXCLUDE! **********")
+            assert False
+
+        total_time = (
+            analyzed['screenTimes'][-1]['timestamp']
+             - analyzed['screenTimes'][0]['timestamp']) / 1000 / 60
+        experiment_level.append((participant_id, 'total_time', total_time))
+
         survey_data = dict(analyzed['allControlledInputs'])
         conditions = [analyzed['byExpPage'][page]['condition'] for page in analyzed['pageSeq']]
         assert len(conditions) == 12
@@ -238,19 +344,24 @@ def analyze_all(participants):
 
     # Get survey data
     _block_level, _experiment_level = get_survey_data(participants)
-    block_level = decode_block_level(_block_level)
     result = decode_experiment_level(_experiment_level)
+    result['experiment_level'] = coerce_columns(
+        result['experiment_level'].reset_index(),
+        columns['experiment'])
+
+    block_level = decode_block_level(_block_level)
+    block_level = coerce_columns(block_level.reset_index(), columns['block'])
 
     result['block_level'] = pd.merge(
-        result['experiment_level'].reset_index(),
-        block_level.reset_index(),
+        result['experiment_level'],
+        block_level,
         on='participant',
         suffixes=('_exp', '_block'),
         validate='1:m')
 
     result['trial_level'] = pd.merge(
         result['block_level'],
-        pd.DataFrame(trial_data),
+        coerce_columns(pd.DataFrame(trial_data), columns['trial']),
         on=('participant', 'block', 'condition'),
         suffixes=('_block', '_trial'),
         validate='1:m')
