@@ -1,7 +1,7 @@
 // @flow
 import "core-js/fn/array/from";
 
-import * as React from 'react';
+import * as React from "react";
 import { observer, inject } from "mobx-react";
 
 import flatMap from "lodash/flatMap";
@@ -13,7 +13,7 @@ import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import traitData from "./TraitData_NfCEDTO";
 import stimulusPairs from "./stimulusPairs";
-import { gatingSuggestionFilter } from './misc';
+import { gatingSuggestionFilter } from "./misc";
 
 import { seededShuffle } from "./shuffle";
 
@@ -79,17 +79,17 @@ const namedConditions = {
 
   lowConfidence: {
     requestFlags: {
-      threshold: -0.45656539 // From Gating notebook
+      threshold: -0.45656539, // From Gating notebook
     },
     modelSeesStimulus: true,
   },
 
   highConfidence: {
     requestFlags: {
-      threshold: -2.12771965
+      threshold: -2.12771965,
     },
     modelSeesStimulus: true,
-  }
+  },
 };
 
 const StimulusView = ({ stimulus }) => {
@@ -106,7 +106,10 @@ const StimulusView = ({ stimulus }) => {
   /* eslint-enable jsx-a11y/img-redundant-alt */
 };
 
-const allStimuli: Stimulus[] = [...baseStimuli, ...tutorialStimuli.map(x => x.stimulus)];
+const allStimuli: Stimulus[] = [
+  ...baseStimuli,
+  ...tutorialStimuli.map(x => x.stimulus),
+];
 export const allStimuliContent = allStimuli.map(x => x.content);
 // console.log("All stimuli: ", allStimuliContent.join(","));
 const PreloadView = () => (
@@ -254,51 +257,51 @@ const helpfulRank = (attr, text) => [
 ];
 
 const closingSurvey = personalityBlock => ({
-    title: "Closing Survey",
-    basename: "postExp",
-    questions: [
-      {
-        text: <WritingsView />,
-      },
-      ...helpfulRank(
-        "specific",
+  title: "Closing Survey",
+  basename: "postExp",
+  questions: [
+    {
+      text: <WritingsView />,
+    },
+    ...helpfulRank(
+      "specific",
+      <span>
+        captions that were very <b>specific</b>
+      </span>
+    ),
+    ...helpfulRank(
+      "accurate",
+      <span>
+        captions that were very <b>accurate</b>
+      </span>
+    ),
+    ...helpfulRank(
+      "quick",
+      <span>
+        captions very <b>quickly</b>
+      </span>
+    ),
+    ...personalityBlock,
+    SurveyData.verbalized_during,
+    SurveyData.age,
+    SurveyData.gender,
+    SurveyData.english_proficiency,
+    SurveyData.techDiff,
+    {
+      type: "options",
+      text: (
         <span>
-          captions that were very <b>specific</b>
+          Is there any reason that we shouldn't use your data?{" "}
+          <b>There's no penalty for answering Yes here.</b> If yes, please
+          explain in the next question.
         </span>
       ),
-      ...helpfulRank(
-        "accurate",
-        <span>
-          captions that were very <b>accurate</b>
-        </span>
-      ),
-      ...helpfulRank(
-        "quick",
-        <span>
-          captions very <b>quickly</b>
-        </span>
-      ),
-      ...personalityBlock,
-      SurveyData.verbalized_during,
-      SurveyData.age,
-      SurveyData.gender,
-      SurveyData.english_proficiency,
-      SurveyData.techDiff,
-      {
-        type: "options",
-        text: (
-          <span>
-            Is there any reason that we shouldn't use your data?{" "}
-            <b>There's no penalty for answering Yes here.</b> If yes, please explain
-            in the next question.
-          </span>
-        ),
-        options: ["Yes", "No"],
-        name: "shouldExclude",
-      },
-      SurveyData.otherFinal,
-    ]
-  });
+      options: ["Yes", "No"],
+      name: "shouldExclude",
+    },
+    SurveyData.otherFinal,
+  ],
+});
 
 /** Experiment Blocks **/
 
@@ -306,7 +309,7 @@ function experimentBlock(
   block: number,
   conditionName: string,
   stimuli: Stimulus[],
-  personalityBlock,
+  personalityBlock
 ): Array<Screen> {
   let agreeLikert = (name, prompt) =>
     likert(name, prompt, 7, ["Strongly disagree", "Strongly agree"]);
@@ -407,7 +410,7 @@ function getDemoScreens(condition: string) {
       condition,
       stimulus,
       instructions: CapInstructions,
-    }),
+    })
   );
 }
 
@@ -560,8 +563,11 @@ const StudyDesc = () => (
   </div>
 );
 
-
-function getScreens(conditions: string[], stimuli: Stimulus[], personalityBlocks): Screen[] {
+function getScreens(
+  conditions: string[],
+  stimuli: Stimulus[],
+  personalityBlocks
+): Screen[] {
   // Group stimuli by block.
   console.assert(stimuli.length >= conditions.length * TRIALS_PER_CONDITION);
   let blocks = conditions.map((condition, idx) => ({
@@ -573,12 +579,20 @@ function getScreens(conditions: string[], stimuli: Stimulus[], personalityBlocks
 
   let result = [
     { screen: "Welcome" },
-    { screen: "IntroSurvey", view: surveyView(introSurvey(personalityBlocks[0])) },
+    {
+      screen: "IntroSurvey",
+      view: surveyView(introSurvey(personalityBlocks[0])),
+    },
     { screen: "TaskDescription", view: TaskDescription },
     { screen: "StudyDesc", view: StudyDesc },
 
     ...flatMap(blocks, (block, idx) =>
-      experimentBlock(idx, block.condition, block.stimuli, personalityBlocks[idx + 1])
+      experimentBlock(
+        idx,
+        block.condition,
+        block.stimuli,
+        personalityBlocks[idx + 1]
+      )
     ),
 
     {
