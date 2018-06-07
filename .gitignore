@@ -84,8 +84,9 @@ target/
 /models
 /models-local
 /cache
-mturk-backup
+/mturk-backup
 tmp.txt
 pred.txt
 textrec.sublime-project
 textrec.sublime-workspace
+/unused
