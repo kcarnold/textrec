@@ -190,7 +190,26 @@ function splitPersonalityBlocks(numBlocks, questionsPerBlock) {
   ]);
 }
 
-const personalityBlocks = splitPersonalityBlocks(5, 8);
+const introSurvey = personalityBlock => ({
+  title: "Opening Survey",
+  basename: "intro",
+  questions: [
+    {
+      text:
+        "There will be several short surveys like this as breaks from the writing task.",
+    },
+
+    // TODO: should we break this down into prediction, correction, gesture, etc.?
+    {
+      text: "Do you use predictive typing on your phone?",
+      responseType: "options",
+      name: "use_predictive",
+      options: ["Yes", "No"],
+    },
+
+    ...personalityBlock,
+  ],
+});
 
 const WritingsView = iobs(({ state }) => (
   <div>
@@ -234,55 +253,60 @@ const helpfulRank = (attr, text) => [
   },
 ];
 
-const closingSurveyQuestions = [
-  {
-    text: <WritingsView />,
-  },
-  ...helpfulRank(
-    "specific",
-    <span>
-      captions that were very <b>specific</b>
-    </span>
-  ),
-  ...helpfulRank(
-    "accurate",
-    <span>
-      captions that were very <b>accurate</b>
-    </span>
-  ),
-  ...helpfulRank(
-    "quick",
-    <span>
-      captions very <b>quickly</b>
-    </span>
-  ),
-  ...personalityBlocks[4],
-  SurveyData.verbalized_during,
-  SurveyData.age,
-  SurveyData.gender,
-  SurveyData.english_proficiency,
-  SurveyData.techDiff,
-  {
-    type: "options",
-    text: (
-      <span>
-        Is there any reason that we shouldn't use your data?{" "}
-        <b>There's no penalty for answering Yes here.</b> If yes, please explain
-        in the next question.
-      </span>
-    ),
-    options: ["Yes", "No"],
-    name: "shouldExclude",
-  },
-  SurveyData.otherFinal,
-];
+const closingSurvey = personalityBlock => ({
+    title: "Closing Survey",
+    basename: "postExp",
+    questions: [
+      {
+        text: <WritingsView />,
+      },
+      ...helpfulRank(
+        "specific",
+        <span>
+          captions that were very <b>specific</b>
+        </span>
+      ),
+      ...helpfulRank(
+        "accurate",
+        <span>
+          captions that were very <b>accurate</b>
+        </span>
+      ),
+      ...helpfulRank(
+        "quick",
+        <span>
+          captions very <b>quickly</b>
+        </span>
+      ),
+      ...personalityBlock,
+      SurveyData.verbalized_during,
+      SurveyData.age,
+      SurveyData.gender,
+      SurveyData.english_proficiency,
+      SurveyData.techDiff,
+      {
+        type: "options",
+        text: (
+          <span>
+            Is there any reason that we shouldn't use your data?{" "}
+            <b>There's no penalty for answering Yes here.</b> If yes, please explain
+            in the next question.
+          </span>
+        ),
+        options: ["Yes", "No"],
+        name: "shouldExclude",
+      },
+      SurveyData.otherFinal,
+    ]
+  });
 
 /** Experiment Blocks **/
 
 function experimentBlock(
   block: number,
   conditionName: string,
-  stimuli: Stimulus[]
+  stimuli: Stimulus[],
+  personalityBlock,
 ): Array<Screen> {
   let agreeLikert = (name, prompt) =>
     likert(name, prompt, 7, ["Strongly disagree", "Strongly agree"]);
@@ -344,7 +368,7 @@ function experimentBlock(
           // ]),
           ...designQuestions,
           ...SurveyData.tlxQuestions,
-          ...personalityBlocks[block + 1],
+          ...personalityBlock,
           SurveyData.techDiff,
           SurveyData.otherMid,
         ],
@@ -536,30 +560,8 @@ const StudyDesc = () => (
   </div>
 );
 
-// Surveys
 
-const introSurvey = {
-  title: "Opening Survey",
-  basename: "intro",
-  questions: [
-    {
-      text:
-        "There will be several short surveys like this as breaks from the writing task.",
-    },
-
-    // TODO: should we break this down into prediction, correction, gesture, etc.?
-    {
-      text: "Do you use predictive typing on your phone?",
-      responseType: "options",
-      name: "use_predictive",
-      options: ["Yes", "No"],
-    },
-
-    ...personalityBlocks[0],
-  ],
-};
-
-function getScreens(conditions: string[], stimuli: Stimulus[]): Screen[] {
+function getScreens(conditions: string[], stimuli: Stimulus[], personalityBlocks): Screen[] {
   // Group stimuli by block.
   console.assert(stimuli.length >= conditions.length * TRIALS_PER_CONDITION);
   let blocks = conditions.map((condition, idx) => ({
@@ -571,21 +573,17 @@ function getScreens(conditions: string[], stimuli: Stimulus[]): Screen[] {
 
   let result = [
     { screen: "Welcome" },
-    { screen: "IntroSurvey", view: surveyView(introSurvey) },
+    { screen: "IntroSurvey", view: surveyView(introSurvey(personalityBlocks[0])) },
     { screen: "TaskDescription", view: TaskDescription },
     { screen: "StudyDesc", view: StudyDesc },
 
     ...flatMap(blocks, (block, idx) =>
-      experimentBlock(idx, block.condition, block.stimuli)
+      experimentBlock(idx, block.condition, block.stimuli, personalityBlocks[idx + 1])
     ),
 
     {
       screen: "PostExpSurvey",
-      view: surveyView({
-        title: "Closing Survey",
-        basename: "postExp",
-        questions: [...closingSurveyQuestions],
-      }),
+      view: surveyView(closingSurvey(personalityBlocks[4])),
     },
     { screen: "Done" },
   ];
@@ -639,7 +637,8 @@ export function createTaskState(clientId: string) {
   } else {
     let conditions = seededShuffle(`${clientId}-conditions`, baseConditions);
     stimuli = baseStimuli.slice();
-    screens = getScreens(conditions, stimuli);
+    const personalityBlocks = splitPersonalityBlocks(5, 8);
+    screens = getScreens(conditions, stimuli, personalityBlocks);
   }
 
   let state = new IOTaskState.MasterStateStore({
