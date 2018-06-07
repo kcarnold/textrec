@@ -36,6 +36,12 @@ def get_data():
     subprocess.run(['./scripts/pull-logs'], env=dict(os.environ, SERVER='gcp1'))
 
 
-def gen_triats():
-    local('python -m textrec.gen_personality_inventory --trait NFC --trait Extraversion --out data/trait_data.json')
-    local('python -m textrec.gen_personality_inventory --trait NFC --trait Extraversion --export-name traitData --out src/frontend/src/TraitData.js')
+def gen_traits():
+    def traits_flags(traits):
+        return ' '.join(f'--trait {trait}' for trait in traits)
+    NfC_E = traits_flags(['NFC', 'Extraversion'])
+    local(f'python -m textrec.gen_personality_inventory {NfC_E} --export-name traitData --out src/frontend/src/TraitData.js')
+
+    NfC_E_DT_O = traits_flags(['NFC', 'Extraversion', 'Trust', 'Openness'])
+    local(f'python -m textrec.gen_personality_inventory {NfC_E_DT_O} --export-name traitData --out src/frontend/src/TraitData_NfCEDTO.js')
+    local(f'python -m textrec.gen_personality_inventory {NfC_E_DT_O} --out data/trait_data.json')

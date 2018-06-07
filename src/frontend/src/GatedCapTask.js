@@ -11,7 +11,7 @@ import * as Views from "./IOViews";
 import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
-import traitData from "./TraitData";
+import traitData from "./TraitData_NfCEDTO";
 import stimulusPairs from "./stimulusPairs";
 import { gatingSuggestionFilter } from './misc';
 
@@ -190,7 +190,7 @@ function splitPersonalityBlocks(numBlocks, questionsPerBlock) {
   ]);
 }
 
-const personalityBlocks = splitPersonalityBlocks(5, 4);
+const personalityBlocks = splitPersonalityBlocks(5, 8);
 
 const WritingsView = iobs(({ state }) => (
   <div>
