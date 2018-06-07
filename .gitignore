@@ -82,6 +82,7 @@ target/
 /logs-gcp1
 
 /models
+/models-local
 /cache
 mturk-backup
 tmp.txt

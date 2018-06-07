@@ -14,7 +14,7 @@ class paths:
     scripts = top_level / 'scripts'
 
     imgdata_h5_subset = models / "feats_by_imgid.subset.h5"
-    imgdata_h5_all = top_level / 'models-aside' / 'feats_by_imgid.h5'
+    imgdata_h5_all = top_level / 'models-local' / 'feats_by_imgid.h5'
     imgdata_h5 = imgdata_h5_subset
 
     old_code = frontend / 'src' / 'old_versions'
