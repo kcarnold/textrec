@@ -64,7 +64,7 @@ if (initialPart === "panopt") {
     if (match[1]) {
       appName = match[1].slice(0, -1);
     } else {
-      appName = 'cap';
+      appName = 'gcap';
     }
     let clientId = match[2];
     let clientKind = match[3];
