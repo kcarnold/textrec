@@ -83,3 +83,8 @@ target/
 
 /models
 /cache
+mturk-backup
+tmp.txt
+pred.txt
+textrec.sublime-project
+textrec.sublime-workspace
