@@ -186,9 +186,11 @@ function splitPersonalityBlocks(numBlocks, questionsPerBlock) {
   let blocks = range(numBlocks).map(blockIdx =>
     traitData.slice(questionsPerBlock * blockIdx).slice(0, questionsPerBlock)
   );
-  return blocks.map(block => [
+  return blocks.map((block, idx) => [
     SurveyData.personalityHeader,
-    ...block.map(item => SurveyData.traitQuestion(item)),
+    ...seededShuffle(`personality-{idx}`, block).map(item =>
+      SurveyData.traitQuestion(item)
+    ),
     { text: "" },
   ]);
 }
