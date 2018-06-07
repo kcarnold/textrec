@@ -207,7 +207,7 @@ def logsumexp(tensor: torch.Tensor,
 def get_top_k(logits, vocab, k, prefix=None):
     if prefix is not None:
         offset = torch.FloatTensor(
-            [100.0 * (not x.startswith(prefix)) for x in vocab])
+            [1000.0 * (not x.startswith(prefix)) for x in vocab])
         logits = logits - offset
         logits -= logsumexp(logits)
     result = []
@@ -216,7 +216,11 @@ def get_top_k(logits, vocab, k, prefix=None):
         # TODO: run this filter before the logsumexp
         if word[0] == '<' or word[0] == '.':
             continue
-        result.append((word, logits[idx]))
+        logit = logits[idx]
+        if logit > -100.:
+            result.append((word, logit))
+        else:
+            break
         if len(result) == k:
             break
     return result

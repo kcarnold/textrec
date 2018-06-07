@@ -34,9 +34,12 @@ def handle_request_async(request):
         print("Failing request:", json.dumps(request))
         recs = []
 
+    while len(recs) < 3:
+        recs.append(('', None))
+
     recs_wrapped = [dict(words=[word], meta=None) for word, prob in recs]
     result = dict(predictions=recs_wrapped, request_id=request_id)
     if 'threshold' in flags:
-        print("threshold", flags['threshold'])
-        result['show'] = max(prob for word, prob in recs) > flags['threshold']
+        print(recs)
+        result['show'] = max(prob for word, prob in recs if prob is not None) > flags['threshold']
     return result
