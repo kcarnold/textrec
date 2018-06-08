@@ -291,8 +291,15 @@ def decode_experiment_level(experiment_level):
     helpful_ranks = experiment_level_pivot[[col for col in experiment_level_pivot.columns if col.startswith('helpfulRank')]]
     helpful_ranks = helpful_ranks.rename(columns={col: col[len('helpfulRank-'):] for col in helpful_ranks.columns})
 
-    helpful_ranks_by_condition = helpful_ranks[[col for col in helpful_ranks.columns if col.endswith('condition')]].apply(pd.value_counts).loc[['norecs', 'general', 'specific']]
-    helpful_ranks_by_idx = helpful_ranks[[col for col in helpful_ranks.columns if col.endswith('idx')]].apply(pd.value_counts)
+    helpful_ranks_by_condition = (
+        helpful_ranks[[col for col in helpful_ranks.columns if col.endswith('condition')]]
+        .apply(pd.value_counts)
+        #.loc[['norecs', 'general', 'specific']]
+        .fillna(0).astype(int))
+    helpful_ranks_by_idx = (
+        helpful_ranks[[col for col in helpful_ranks.columns if col.endswith('idx')]]
+        .apply(pd.value_counts)
+        .fillna(0).astype(int))
 
     import json
     with open(paths.data / 'trait_data.json') as f:
