@@ -158,6 +158,9 @@ def count_actions(actions):
         Counter(toolz.pluck('annoType', actions)))
     for ignore in 'backendReply resized tapText'.split():
         action_counts.pop(ignore, None)
+    typs = ['tapBackspace', 'tapKey', 'tapSugg_any', 'tapSugg_bos', 'tapSugg_full', 'tapSugg_part']
+    for typ in typs:
+        action_counts.setdefault(typ, 0)
     action_counts = {
         f'num_{typ}': count
         for typ, count in action_counts.items()
