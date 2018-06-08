@@ -37,8 +37,6 @@ columns = {
         'total_time': float,
         'use_predictive': bool,
         'verbalized_during': bool,
-        'NFC': float,
-        'Extraversion': float,
     },
     'block': {
         'participant': str,
@@ -284,8 +282,16 @@ def get_survey_data(participants):
 
 
 def decode_experiment_level(experiment_level):
-    experiment_level_pivot = experiment_level.pivot(
-        index='participant', columns='name', values='value')
+    # Unfortunately one of the traits appears twice and complicates this.
+    dups = experiment_level.duplicated(['participant', 'name'], keep=False)
+    experiment_level = experiment_level[~dups].copy().append(
+        experiment_level[dups].groupby(['participant', 'name']).value.agg(
+            lambda x: x.astype(float).mean()).reset_index())
+
+    # Now we have an ordinary pivot-table.
+    experiment_level_pivot = (
+        experiment_level.set_index(['participant', 'name']).value
+        .unstack(-1))
 
     # "Which is most helpful?"
     helpful_ranks = experiment_level_pivot[[col for col in experiment_level_pivot.columns if col.startswith('helpfulRank')]]
@@ -337,7 +343,12 @@ def clean_merge(*a, must_match=[], combine_cols=[], **kw):
     return res
 
 
-def analyze_all(participants):
+def analyze_all(participants, traits='NFC Extraversion'):
+    traits = traits.split()
+    expected_experiment_columns = columns['experiment'].copy()
+    for trait in traits:
+        expected_experiment_columns[trait] = float
+
     trial_data = get_trial_data(participants)
 
     # I had the wrong URL for one image when one person ran it.
@@ -360,7 +371,7 @@ def analyze_all(participants):
     result = decode_experiment_level(_experiment_level)
     result['experiment_level'] = coerce_columns(
         result['experiment_level'].reset_index(),
-        columns['experiment'])
+        expected_experiment_columns)
 
     block_level = decode_block_level(_block_level)
     block_level = coerce_columns(block_level.reset_index(), columns['block'])
