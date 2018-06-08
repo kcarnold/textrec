@@ -3,21 +3,11 @@ import click
 import pathlib
 import json
 
-# from mturk import MTurkClient
-
-
-def download_gsheet(sheet_url):
-    if '/export' not in sheet_url:
-        sheet_url = sheet_url.replace('/edit#gid=', '/export?format=csv&gid=')
-    return pd.read_csv(sheet_url)
-
 
 @click.command()
-@click.option('--mturk_backup_path', default='mturk-backup')
-# @click.option('--profile_name', default='iismturk')
-# @click.option('--region_name', default='us-east-1')
-@click.option('--transactions', help="CSV of MTurk transaction history")
-@click.option('--charge_to', help="CSV of groups by HIT name")
+@click.option('--mturk_backup_path', default='mturk-backup', help="Output of the backup_mturk script")
+@click.option('--transactions', required=True, help="CSV of MTurk transaction history, downloaded from https://requester.mturk.com/transaction_history/search")
+@click.option('--charge_to', required=True, help="CSV of groups by HIT name, with columns Title and ChargeTo")
 def cli(mturk_backup_path, transactions, charge_to):
     # Load HIT data
     mturk_backup_path = pathlib.Path(mturk_backup_path)
@@ -61,17 +51,22 @@ def cli(mturk_backup_path, transactions, charge_to):
         on='HITId',
         how='left', validate='m:1', indicator=True)
 
-    # TODO: validate that all transactions got a chargeto.
+    xactions_without_chargeto = annotated_transactions[annotated_transactions['_merge'] == 'left_only']
+    if len(xactions_without_chargeto) > 0:
+        print("Warning: uncharged transactions:")
+        print('\n'.join(xactions_without_chargeto.Title))
 
+    assert annotated_transactions['_merge'].value_counts()['both'] == len(annotated_transactions), annotated_transactions['_merge'].value_counts()
     del annotated_transactions['_merge']
 
     for charge, transactions_for_charge in annotated_transactions.groupby('ChargeTo'):
-        for month, transactions_for_charge_month in transactions_for_charge.groupby(pd.Grouper(key='DatePosted', freq='M')):
-            if len(transactions_for_charge_month) == 0:
-                continue
-            month = month.strftime('%Y-%m')
-            transactions_for_charge_month.to_csv(f'transactions-{charge}-{month}.csv', index=False)
-            print(f'{charge} {month}: ${-transactions_for_charge_month.Amount.sum():.2f}')
-
+        transactions_for_charge = transactions_for_charge.sort_values('DatePosted', kind='mergesort')
+        earliest = transactions_for_charge.DatePosted.min().strftime('%Y-%m-%d')
+        latest = transactions_for_charge.DatePosted.max().strftime('%Y-%m-%d')
+        print(f'{charge} total: ${-transactions_for_charge.Amount.sum():.2f} ({earliest} to {latest})')
+        transactions_for_charge.drop(['ChargeTo'], axis=1).to_csv(f'transactions-{charge}_{earliest}_to_{latest}.csv', index=False)
+        for title, amount in (-transactions_for_charge.groupby('Title').Amount.sum()).items():
+            print(f' ${amount:0.2f} {title}')
+        print()
 if __name__ == '__main__':
     cli()
