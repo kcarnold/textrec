@@ -292,7 +292,8 @@ def decode_experiment_level(experiment_level):
     helpful_ranks_by_idx = helpful_ranks[[col for col in helpful_ranks.columns if col.endswith('idx')]].apply(pd.value_counts)
 
     import json
-    trait_data = json.load(open(paths.data / 'trait_data.json'))
+    with open(paths.data / 'trait_data.json') as f:
+        trait_data = json.load(f)
 
     for trait, items in toolz.groupby('trait', trait_data).items():
         experiment_level_pivot[trait] = sum(

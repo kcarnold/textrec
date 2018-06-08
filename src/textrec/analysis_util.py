@@ -39,9 +39,14 @@ def get_log_analysis_raw(logpath, logfile_size, git_rev, analysis_files=None):
         return result
 
 
+def sha1_file(filename):
+    with open(filename, 'rb') as f:
+        return hashlib.sha1(f.read()).hexdigest()
+
+
 def get_log_analysis(participant, git_rev=None):
     analysis_files = {
-        name: hashlib.sha1(open(paths.frontend / name, 'rb').read()).hexdigest()
+        name: sha1_file(paths.frontend / name)
         for name in ['analyze.js', 'run-analysis', 'src/Analyzer.js']
     }
     logpath = paths.top_level / 'logs' / (participant+'.jsonl')
