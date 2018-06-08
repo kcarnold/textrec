@@ -248,8 +248,8 @@ def get_survey_data(participants):
 
         survey_data = dict(analyzed['allControlledInputs'])
         conditions = [analyzed['byExpPage'][page]['condition'] for page in analyzed['pageSeq']]
-        assert len(conditions) == 12
-        conditions = conditions[::4]
+        assert len(conditions) % 3 == 0
+        conditions = conditions[::len(conditions) // 3]
         assert len(set(conditions)) == 3
 
 
