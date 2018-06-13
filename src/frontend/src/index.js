@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
-import * as Wrapper from "./Wrapper";
+import * as Dispatcher from "./Dispatcher";
 import getApp from "./Apps";
 
 import Raven from "raven-js";
@@ -13,9 +13,11 @@ if (process.env.NODE_ENV === "production") {
     .install();
 }
 
+let elt = document.getElementById("root");
 let topLevel = <h3>Invalid URL</h3>;
 let query = window.location.search.slice(1);
 let initialPart = query.split("/", 1)[0] || query;
+let remainder = query.slice(initialPart.length + 1);
 
 if (initialPart === "panopt") {
   let Panopticon = require("./Panopticon").default;
@@ -23,7 +25,7 @@ if (initialPart === "panopt") {
 } else if (initialPart === "showall") {
   // e.g., /?showall/cap
   let mod = require("./ShowAllScreens");
-  let config = query.slice(initialPart.length + 1);
+  let config = remainder;
   let { createTaskState, screenToView } = getApp(config);
   mod.init(createTaskState, screenToView, config);
   let ShowAllScreens = mod.default;
@@ -35,7 +37,7 @@ if (initialPart === "panopt") {
 //   let DemoList = require("./DemoList").default;
 //   topLevel = <DemoList />;
 } else if (query.slice(0, 3) === "new") {
-  // e.g., http://localhost:3000/?new&c=gcap
+  // e.g., http://localhost:3000/?new&b=gc1
   let params = query
     .split("&")
     .slice(1)
@@ -58,30 +60,20 @@ if (initialPart === "panopt") {
   };
   xhr.send(JSON.stringify({ params, jsTimestamp: +new Date() }));
 } else {
-  let match = query.match(/^(\w+-)?(\w+)-(\w+)$/);
+  let match = query.match(/^(.+)-(\w+)$/);
   if (match) {
-    let appName;
-    if (match[1]) {
-      appName = match[1].slice(0, -1);
-    } else {
-      appName = 'gcap';
-    }
-    let clientId = match[2];
-    let clientKind = match[3];
-    let app = getApp(appName);
-    if (app != null) {
-      let { createTaskState, screenToView } = app;
-      let MasterViewFactory = require("./MasterView").default;
-      let MasterView = MasterViewFactory(screenToView);
-      let state = createTaskState(clientId || "");
-      let globalState = Wrapper.init(state, clientId, clientKind);
-      topLevel = (
-        <Wrapper.View global={globalState}>
-          <MasterView kind={clientKind} />
-        </Wrapper.View>
-      );
-    }
+    let clientId = match[1];
+    let clientKind = match[2];
+    let dispatch = Dispatcher.init(clientId, clientKind, (loginEvent) => {
+      let app = getApp(loginEvent.config);
+      let state = app.createTaskState(loginEvent);
+      ReactDOM.render(
+        <app.MasterView state={state} dispatch={dispatch} clientId={clientId} clientKind={'p'} />,
+        elt);
+      return state;
+    });
+    topLevel = <h3>Loading...</h3>;
   }
 }
 
-ReactDOM.render(topLevel, document.getElementById("root"));
+ReactDOM.render(topLevel, elt);

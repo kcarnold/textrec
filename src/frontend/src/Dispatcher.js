@@ -1,18 +1,20 @@
-import React, { Component } from "react";
 import fromPairs from "lodash/fromPairs";
 import map from "lodash/map";
 import throttle from "lodash/throttle";
 import * as M from "mobx";
-import { observer, Provider } from "mobx-react";
 import WSClient from "./wsclient";
 import Raven from "raven-js";
 import * as WSPinger from "./WSPinger";
+import { MAX_PING_TIME } from './misc';
 
-const MAX_PING_TIME = 200;
+export function init(clientId, clientKind, onConnected, wsURL) {
+  // onConnected is called when connected, with the login event. Returns the state object.
 
-export function init(state, clientId, clientKind) {
-  var wsURL = `ws://${window.location.host}`;
-  //var ws = new WSClient(`ws://${process.env.REACT_APP_BACKEND_HOST}:${process.env.REACT_APP_BACKEND_PORT}/ws`);
+  let state = null;
+
+  if (wsURL === undefined) {
+    wsURL = `ws://${window.location.host}`;
+  }
   var ws = new WSClient(wsURL + "/ws");
 
   var messageCount = {};
@@ -65,6 +67,27 @@ export function init(state, clientId, clientKind) {
     eventHandlers.push(fn);
   }
 
+  function handleSideEffect(sideEffect) {
+    if (sideEffect.type === "rpc") {
+      console.log(sideEffect);
+      ws.send(sideEffect);
+    } else {
+      setTimeout(() => dispatch(sideEffect), 0);
+    }
+  }
+
+  function handleEventWithSideEffects(event) {
+    let sideEffects = [];
+    eventHandlers.forEach(fn => {
+      let res = fn(event);
+      if (res.length) {
+        sideEffects = sideEffects.concat(res);
+      }
+    });
+    // Run side-effects after all handlers have had at it.
+    sideEffects.forEach(handleSideEffect);
+  }
+
   function _dispatch(event) {
     Raven.captureBreadcrumb({
       category: "dispatch",
@@ -75,22 +98,7 @@ export function init(state, clientId, clientKind) {
     event.jsTimestamp = +new Date();
     event.kind = clientKind;
     log(event);
-    let sideEffects = [];
-    eventHandlers.forEach(fn => {
-      let res = fn(event);
-      if (res.length) {
-        sideEffects = sideEffects.concat(res);
-      }
-    });
-    // Run side-effects after all handlers have had at it.
-    sideEffects.forEach(sideEffect => {
-      if (sideEffect.type === "rpc") {
-        console.log(sideEffect);
-        ws.send(sideEffect);
-      } else {
-        setTimeout(() => dispatch(sideEffect), 0);
-      }
-    });
+    handleEventWithSideEffects(event);
   }
 
   let dispatch;
@@ -116,20 +124,26 @@ export function init(state, clientId, clientKind) {
     addLogEntry(clientKind, event);
   }
 
-  registerHandler(state.handleEvent);
-
-  var didInit = false;
 
   ws.onmessage = function(msg) {
     if (msg.type === "reply") {
       dispatch({ type: "backendReply", msg });
     } else if (msg.type === "backlog") {
-      console.log("Backlog", msg.body.length);
-      let firstTime = !didInit;
+      let backlogEvents = msg.body;
+      console.log("Backlog", backlogEvents.length);
+      if (state === null) {
+        let loginEvent = backlogEvents[0];
+        state = onConnected(loginEvent);
+        window.state = state;
+        registerHandler(state.handleEvent);
+        afterFirstMessage();
+      }
+
       state.replaying = true;
-      msg.body.forEach(msg => {
+      let sideEffects = [];
+      backlogEvents.forEach(msg => {
         try {
-          state.handleEvent(msg);
+          sideEffects = state.handleEvent(msg);
           addLogEntry(msg.kind, msg);
         } catch (e) {
           Raven.captureException(e, {
@@ -140,11 +154,20 @@ export function init(state, clientId, clientKind) {
         }
       });
       state.replaying = false;
+
+      // Run the side-effects of the last event.
+      // For example, if the last event resulted in a server request,
+      // but the network failed before the server response was received,
+      // then this will cause the side-effect to happen again.
+      //
+      // I'm a bit nervous about this since we didn't use it earlier, and
+      // I'm really only adding it to make demo init work again.
+      // But side-effects are pretty innoculous -- RPC requests (which could mess with
+      // suggestion request sync) and rarely other things.
+      sideEffects.forEach(handleSideEffect);
+
       updateBacklog();
-      if (firstTime) {
-        afterFirstMessage();
-        didInit = true;
-      }
+
     } else if (msg.type === "otherEvent") {
       console.log("otherEvent", msg.event);
       // Keep all the clients in lock-step.
@@ -157,6 +180,7 @@ export function init(state, clientId, clientKind) {
   function afterFirstMessage() {
     if (clientKind === "p") {
       setSizeDebounced();
+      window.addEventListener("resize", setSizeDebounced);
     }
     if (state.pingTime === null || state.pingTime > MAX_PING_TIME) {
       setTimeout(
@@ -186,49 +210,9 @@ export function init(state, clientId, clientKind) {
     trailing: true,
   });
 
-  window.addEventListener("resize", setSizeDebounced);
-
   // Globals
   window.M = M;
-  window.state = state;
   window.dispatch = dispatch;
 
-  return { state, dispatch, clientId, clientKind };
+  return dispatch;
 }
-
-export const View = observer(
-  class View extends Component {
-    render() {
-      let { state, dispatch, clientId, clientKind } = this.props.global;
-      if (clientKind === "p") {
-        if (state.pingTime === null) {
-          return (
-            <div>
-              Please wait while we test your phone's communication with our
-              server.
-            </div>
-          );
-        } else if (state.pingTime > MAX_PING_TIME) {
-          return (
-            <div>
-              Sorry, your phone's connection to our server is too slow (your
-              ping is {Math.round(state.pingTime)} ms). Check your WiFi
-              connection and reload the page.
-            </div>
-          );
-        }
-      }
-      return (
-        <Provider
-          state={state}
-          dispatch={dispatch}
-          clientId={clientId}
-          clientKind={clientKind}
-          spying={false}
-        >
-          {this.props.children}
-        </Provider>
-      );
-    }
-  }
-);

@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import forEach from "lodash/forEach";
 import { observer, Provider } from "mobx-react";
-import { MasterView as MasterViewFactory } from "./MasterView";
 
 const fakeClientId = "zzzzzz";
 
@@ -10,9 +9,7 @@ const showController = false;
 let states = [];
 let MasterView = null;
 
-export function init(createTaskState, views, config) {
-  MasterView = MasterViewFactory(views);
-
+export function init(createTaskState, MasterView, config) {
   let eventsSoFar = [];
 
   function doEventToLastState(evt) {

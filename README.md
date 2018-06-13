@@ -22,6 +22,14 @@ Workflows
 2. Run script on downloaded data: `scripts/find_invalid_workers.py`.
 
 
+Approach for counterbalancing
+----
+
+Random assignment to condition ordering does not suffice to ensure adequate counterbalancing. So when a new participant connects, we assign them the condition ordering with the lowest expected number of completed trials given the assignments and completions so far. This expectation is a sum of indicators: 1 for any already-comple trial, and the probability of completion for any assigned-but-incomplete trial. We take the probability of completion of an incomplete trial to be 0.5.
+
+This algorithm requires knowing, for each participant within the batch, what ordering they were assigned and whether or not they completed. We take the simplest possible approach for both of these: we read the ordering out of the login entry (the first line) of each log, and we create a new file ('{participant_id}.completed') for a participant who completed.
+
+
 
 Ignore the below...
 

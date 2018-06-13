@@ -25,13 +25,6 @@ type Config = {
   handleEvent?: (event: Event) => Event[]
 };
 
-export function getDemoConditionName(clientId: string): ?string {
-  if (clientId.slice(0, 4) === "demo") {
-    return clientId.slice(4);
-  }
-  return null;
-}
-
 export class MasterStateStore {
   clientId: string;
   config: Config;
@@ -176,11 +169,6 @@ export class MasterStateStore {
       case "resized":
         if (event.kind === "p") {
           this.phoneSize = { width: event.width, height: event.height };
-        }
-        if (this.screenNum === null) {
-          console.warn("Force init, should only happen for demo.");
-          this.doInit();
-          this.pingTime = 0;
         }
         break;
       case "pingResults":

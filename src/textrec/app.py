@@ -14,6 +14,7 @@ import tornado.web
 import tornado.websocket
 
 from .paths import paths
+from . import counterbalancing
 
 import subprocess
 
@@ -102,10 +103,17 @@ class Participant:
 
 
 class DemoParticipant:
-    participant_id = 'DEMO'
+    def __init__(self, participant_id):
+        self.participant_id = participant_id
+        self.config = participant_id[4:].split('-', 1)[0]
 
     def get_log_entries(self):
-        return []
+        return [dict(
+            type='login',
+            kind='p',
+            participant_id=self.participant_id,
+            config=self.config,
+            assignment=0)]
 
     def log(self, event): return
     def broadcast(self, *a, **kw): return
@@ -159,6 +167,8 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
         # There will also be a 'kind', which gets set only when the client connects.
 
     def log(self, event):
+        if event.get('type') == 'finalData':
+            counterbalancing.mark_completed(self.participant.participant_id)
         self.participant.log(dict(event))
 
     def open(self):
@@ -281,20 +291,28 @@ class LoginHandler(tornado.web.RequestHandler):
     def post(self):
         print("POST", self.request.body)
         data = json.loads(self.request.body.decode('utf-8'))
+        params = dict(data['params'])
+
+        # Allocate a condition.
+        batch = params.pop('b')
+        counterbalancing_flags = counterbalancing.get_conditions_for_new_participant(batch)
 
         # Allocate a participant id.
         while True:
             participant_id = ''.join(random.choices('23456789cfghjmpqrvwx', k=6))
             if not os.path.exists(get_log_file_name(participant_id)):
-                print("Successfully allocated", participant_id)
+                print("Allocated", participant_id, "flags", json.dumps(counterbalancing_flags))
                 break
 
         # Login that participant.
         participant = Participant.get_participant(participant_id)
-        params = dict(data['params'])
-        participant.log(dict(
-            kind='p', type='login', config=params.pop('c'), platform_id=params.pop('p', None),
-            jsTimestamp=data['jsTimestamp'], **params))
+        login_event = dict(kind='p', type='login')
+        login_event['batch'] = batch
+        login_event['platform_id'] = params.pop('p', None)
+        login_event['jsTimestamp'] = data['jsTimestamp']
+        login_event.update(params)
+        login_event.update(counterbalancing_flags)
+        participant.log(login_event)
 
         # Return participant id.
         self.set_header('Content-Type', 'application/json')

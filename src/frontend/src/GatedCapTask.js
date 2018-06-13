@@ -13,9 +13,9 @@ import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import traitData from "./TraitData_NfCEDTO";
 import stimulusPairs from "./stimulusPairs";
-import { gatingSuggestionFilter } from "./misc";
+import { getDemoConditionName, gatingSuggestionFilter } from "./misc";
 
-import { seededShuffle } from "./shuffle";
+import * as shuffle from "./shuffle";
 
 import type { Screen } from "./IOTaskState";
 
@@ -188,7 +188,7 @@ function splitPersonalityBlocks(numBlocks, questionsPerBlock) {
   );
   return blocks.map((block, idx) => [
     SurveyData.personalityHeader,
-    ...seededShuffle(`personality-{idx}`, block).map(item =>
+    ...shuffle.seededShuffle(`personality-{idx}`, block).map(item =>
       SurveyData.traitQuestion(item)
     ),
     { text: "" },
@@ -642,16 +642,18 @@ function trialScreen(props: {
 }
 
 let baseConditions = ["norecs", "lowConfidence", "highConfidence"];
+let conditionOrders = shuffle.permutator(baseConditions);
 
-export function createTaskState(clientId: string) {
-  clientId = clientId || "";
+export function createTaskState(loginEvent) {
+  let clientId = loginEvent.participant_id;
 
   let screens, stimuli;
-  let demoConditionName = IOTaskState.getDemoConditionName(clientId);
+  let demoConditionName = getDemoConditionName(clientId);
   if (demoConditionName != null) {
     screens = getDemoScreens(demoConditionName);
   } else {
-    let conditions = seededShuffle(`${clientId}-conditions`, baseConditions);
+    console.assert(loginEvent.n_conditions === conditionOrders.length);
+    let conditions = conditionOrders[loginEvent.assignment];
     stimuli = baseStimuli.slice();
     const personalityBlocks = splitPersonalityBlocks(5, 8);
     screens = getScreens(conditions, stimuli, personalityBlocks);
