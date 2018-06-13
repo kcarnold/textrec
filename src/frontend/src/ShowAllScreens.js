@@ -1,30 +1,42 @@
 import React, { Component } from "react";
 import forEach from "lodash/forEach";
-import { observer, Provider } from "mobx-react";
-
-const fakeClientId = "zzzzzz";
+import { observer } from "mobx-react";
 
 const showController = false;
 
 let states = [];
 let MasterView = null;
 
-export function init(createTaskState, MasterView, config) {
+function handleEventWithSideEffects(state, event) {
+  let sideEffects = [];
+  let res = state.handleEvent(event);
+  if (res.length) {
+    sideEffects = sideEffects.concat(res);
+  }
+  // Run side-effects after all handlers have had at it.
+  console.log(event, sideEffects)
+  sideEffects.forEach(event => state.handleEvent(event));
+}
+
+
+export function init(createTaskState, MasterView_, loginEvent) {
+  MasterView = MasterView_;
   let eventsSoFar = [];
 
   function doEventToLastState(evt) {
     eventsSoFar.push(evt);
-    states[states.length - 1].handleEvent(evt);
+    handleEventWithSideEffects(states[states.length - 1], evt);
   }
 
   function copyState() {
-    let newState = createTaskState(fakeClientId);
+    let newState = createTaskState(loginEvent);
+    newState.pingTime = 0;
     states.push(newState);
     eventsSoFar.forEach(evt => newState.handleEvent(evt));
     return newState;
   }
   copyState();
-  doEventToLastState({ type: "login", config });
+  doEventToLastState(loginEvent);
   let screens = states[0].screens;
   states[0].replaying = false;
   for (let i = 1; i < screens.length; i++) {
@@ -43,21 +55,18 @@ const ShowAllScreens = observer(
   class ShowAllScreens extends Component {
     render() {
       function innerView(i, state, kind) {
-        return (
-          <Provider
-            state={state}
-            dispatch={event => {
+        let dispatch = event => {
               event.jsTimestamp = +new Date();
               event.kind = kind;
               state.handleEvent(event);
-            }}
-            clientId={fakeClientId}
-            clientKind={kind}
-            spying={true}
-          >
-            <MasterView kind={kind} />
-          </Provider>
-        );
+            };
+        return <MasterView
+          state={state}
+          dispatch={dispatch}
+          clientId={state.clientId}
+          clientKind={kind}
+          spying={true}
+          />;
       }
       return (
         <div style={{ display: "flex", flexFlow: "row wrap" }}>

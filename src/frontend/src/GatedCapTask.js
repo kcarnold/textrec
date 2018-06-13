@@ -652,7 +652,9 @@ export function createTaskState(loginEvent) {
   if (demoConditionName != null) {
     screens = getDemoScreens(demoConditionName);
   } else {
-    console.assert(loginEvent.n_conditions === conditionOrders.length);
+    if ('n_conditions' in loginEvent) {
+      console.assert(loginEvent.n_conditions === conditionOrders.length);
+    }
     let conditions = conditionOrders[loginEvent.assignment];
     stimuli = baseStimuli.slice();
     const personalityBlocks = splitPersonalityBlocks(5, 8);
