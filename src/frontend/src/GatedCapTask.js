@@ -634,7 +634,9 @@ function trialScreen(props: {
   transcribe: ?string,
 }) {
   let { name, condition, flags, instructions, stimulus, transcribe } = props;
-  console.assert(condition in namedConditions);
+  if(!(condition in namedConditions)) {
+    throw new Error(`Invalid condition name: ${condition}`);
+  }
   return {
     preEvent: {
       type: "setupExperiment",
