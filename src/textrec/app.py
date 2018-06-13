@@ -115,7 +115,8 @@ class DemoParticipant:
             config=self.config,
             assignment=0)]
 
-    def log(self, event): return
+    def log(self, event):
+        print("Demo event", event['type'])
     def broadcast(self, *a, **kw): return
     def connected(self, *a, **kw): return
     def disconnected(self, *a, **kw): return
@@ -212,8 +213,8 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
             elif request['type'] == 'init':
                 participant_id = request['participantId']
                 self.kind = request['kind']
-                if participant_id.startswith('demo'):
-                    self.participant = DemoParticipant()
+                if participant_id.startswith('demo') or participant_id.startswith('test'):
+                    self.participant = DemoParticipant(participant_id)
                 elif self.kind == 'panopt' and participant_id == '42':
                     self.participant = Panopticon()
                 else:
