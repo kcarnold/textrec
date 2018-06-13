@@ -90,6 +90,18 @@ const namedConditions = {
     },
     modelSeesStimulus: true,
   },
+
+  gated: {
+    requestFlags: {
+      threshold: -0.989417552947998, // From `scripts/compute_gating_threshold.py`
+    },
+    modelSeesStimulus: false,
+  },
+
+  always: {
+    requestFlags: {},
+    modelSeesStimulus: false,
+  },
 };
 
 const StimulusView = ({ stimulus }) => {
@@ -641,7 +653,7 @@ function trialScreen(props: {
   };
 }
 
-let baseConditions = ["norecs", "lowConfidence", "highConfidence"];
+let baseConditions = ["norecs", "gated", "always"];
 let conditionOrders = shuffle.permutator(baseConditions);
 
 export function createTaskState(loginEvent) {
