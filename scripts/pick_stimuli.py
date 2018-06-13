@@ -18,8 +18,10 @@ def img_analyzer(image):
 
 print("Vectorizing", flush=True)
 vectorizer = TfidfVectorizer(analyzer=img_analyzer, min_df=5)
+# Fit vocab and tf-idf weights on all images
 vectorizer.fit(images)
-valid_img_by_word = vectorizer.transform(images_by_split['val'])
+# Only use validation images to find similar pairs.
+valid_img_by_word = vectorizer.transform(valid_images)
 
 def get_most_similar_unique_pairs(sim_matrix_coo, num_pairs):
     similar_pairs = []
