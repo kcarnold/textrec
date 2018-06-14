@@ -200,9 +200,9 @@ function splitPersonalityBlocks(numBlocks, questionsPerBlock) {
   );
   return blocks.map((block, idx) => [
     SurveyData.personalityHeader,
-    ...shuffle.seededShuffle(`personality-{idx}`, block).map(item =>
-      SurveyData.traitQuestion(item)
-    ),
+    ...shuffle
+      .seededShuffle(`personality-{idx}`, block)
+      .map(item => SurveyData.traitQuestion(item)),
     { text: "" },
   ]);
 }
@@ -643,7 +643,7 @@ function trialScreen(props: {
   transcribe: ?string,
 }) {
   let { name, condition, flags, instructions, stimulus, transcribe } = props;
-  if(!(condition in namedConditions)) {
+  if (!(condition in namedConditions)) {
     throw new Error(`Invalid condition name: ${condition}`);
   }
   return {
@@ -675,7 +675,7 @@ export function createTaskState(loginEvent) {
   if (demoConditionName != null) {
     screens = getDemoScreens(demoConditionName);
   } else {
-    if ('n_conditions' in loginEvent) {
+    if ("n_conditions" in loginEvent) {
       console.assert(loginEvent.n_conditions === conditionOrders.length);
     }
     let conditions = conditionOrders[loginEvent.assignment];
