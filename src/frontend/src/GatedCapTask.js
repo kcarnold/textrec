@@ -405,7 +405,7 @@ const TutorialInstructions = block =>
       <div>
         <h1>Practice with Keyboard Design {block + 1}</h1>
 
-        <b>Type this caption:</b>
+        <b>Type this:</b>
         <br />
         <div style={{ background: "white" }}>
           <span style={{ color: "grey" }}>{commonPrefix}</span>
