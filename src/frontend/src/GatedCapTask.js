@@ -251,7 +251,7 @@ const helpfulRank = (attr, text) => [
   {
     text: (
       <span>
-        For writing {text}, which keyboard design was <b>most</b> helpful?
+        Which keyboard design was <b>most</b> helpful for writing {text}?
       </span>
     ),
     responseType: "options",
@@ -261,7 +261,7 @@ const helpfulRank = (attr, text) => [
   {
     text: (
       <span>
-        For writing {text}, which keyboard design was <b>least</b> helpful?
+        Which keyboard design was <b>least</b> helpful for writing {text}?
       </span>
     ),
     responseType: "options",
