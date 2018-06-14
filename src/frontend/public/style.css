@@ -10,10 +10,13 @@ html {
 }
 
 /*** Overall layout ****/
+/* NOTE: https://www.eventbrite.com/engineering/mobile-safari-why/ */
 html,
 body {
   min-height: 100%;
   height: 100%;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
 }
 
 #root {
