@@ -111,9 +111,8 @@ export const age = {
 
 export const gender = {
   text: "What is your gender?",
-  responseType: "options",
+  responseType: "text",
   name: "gender",
-  options: ["Male", "Female", "Something else, or I'd prefer not to say"],
 };
 
 export const english_proficiency = {
