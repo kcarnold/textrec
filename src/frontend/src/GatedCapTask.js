@@ -218,10 +218,19 @@ const introSurvey = personalityBlock => ({
 
     // TODO: should we break this down into prediction, correction, gesture, etc.?
     {
-      text: "Do you use predictive typing on your phone?",
+      text: (
+        <div>
+          How often do you use the suggestion bar on your phone keyboard?
+          <img
+            src="/suggestionbar-marked.png"
+            alt=""
+            style={{ width: "100%" }}
+          />
+        </div>
+      ),
       responseType: "options",
       name: "use_predictive",
-      options: ["Yes", "No"],
+      options: ["Never", "Very Rarely", "Rarely", "Often", "Almost Always"],
     },
 
     ...personalityBlock,
