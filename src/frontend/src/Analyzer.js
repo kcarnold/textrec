@@ -305,8 +305,13 @@ export async function getOldCode(log) {
 }
 
 export async function getState(log) {
-  let { participantId, createTaskState } = await getOldCode(log);
-  return createTaskState(participantId);
+  let oldCode = await getOldCode(log);
+  let loginEvent = log[0];
+  if ('config' in loginEvent) {
+    return oldCode.createTaskState(loginEvent);
+  } else {
+    return oldCode.createTaskState(oldCode.participantId);
+  }
 }
 
 export async function analyzeLog(log) {
