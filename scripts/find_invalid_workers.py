@@ -21,6 +21,12 @@ titles = {
 }
 
 relevant_hits = [hit for hit in hits if hit['Title'] in titles.keys()]
+irrelevant_hits = {hit['Title'] for hit in hits if hit['Title'] not in titles}
+if irrelevant_hits:
+    print()
+    print("Skipping other HITS:")
+    print("\n".join(irrelevant_hits))
+    print()
 id2hit = {hit['HITId']: hit for hit in hits}
 
 assignments = [
