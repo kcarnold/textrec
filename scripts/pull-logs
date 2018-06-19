@@ -9,4 +9,4 @@ LOGDIR="logs-${SERVER}"
 mkdir -pv "${LOGDIR}"
 rsync -Paxz "${SERVER}:~/code/textrec/logs/" "${LOGDIR}"/
 rsync -a "${LOGDIR}"/ logs/
-(cd logs && git add *.jsonl && git diff --cached --stat && git commit -m "inc logs")
+(cd logs && git add *.jsonl *.completed && git diff --cached --stat && git commit -m "inc logs")
