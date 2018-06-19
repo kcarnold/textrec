@@ -22,6 +22,12 @@ def get_rev(logpath):
     raise ValueError(f"No git revision logged in {logpath}")
 
 
+class AnalysisException(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
+
+
 @mem.cache
 def get_log_analysis_raw(logpath, logfile_size, git_rev, analysis_files=None):
     # Ignore analysis_files; just use them to know when to invalidate the cache.
@@ -33,7 +39,7 @@ def get_log_analysis_raw(logpath, logfile_size, git_rev, analysis_files=None):
             stdin=logfile, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if len(completion.stderr) != 0:
             stderr = completion.stderr.decode('utf-8')
-            raise Exception(f"Analysis exception: {stderr!r}")
+            raise AnalysisException(stderr)
         result = completion.stdout
         assert len(result) > 0
         return result

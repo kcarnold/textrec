@@ -18,5 +18,8 @@ function readStdin(callback) {
 
 readStdin(function(err, res) {
   var log = res.split('\n').filter(line => line.length > 0).map(line => JSON.parse(line));
-  analyzeLog(log).then(result => {process.stdout.write(JSON.stringify(result))});
+  analyzeLog(log).then(
+    result => {process.stdout.write(JSON.stringify(result))},
+    error => {console.error(error);}
+    );
 });
