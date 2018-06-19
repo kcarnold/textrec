@@ -365,7 +365,7 @@ span.word {
   border-left: 2px solid green;
   /*hsl(150, 77%, 95%);*/
   /*opacity: .7;*/
-  animation: complete 0.25s;
+  transition: border-left-color .25s ease-in-out;
 }
 
 .missed-attn-check {
