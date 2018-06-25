@@ -8,7 +8,7 @@ images = util.get_coco_captions()
 images_by_split = toolz.groupby('split', images)
 id2img = {img['cocoid']: img for img in images}
 print("Loading COCO id2url")
-id2url = id2url = util.get_coco_id2url()
+id2url = util.get_coco_id2url()
 print("Done")
 
 def show_images(indices):
