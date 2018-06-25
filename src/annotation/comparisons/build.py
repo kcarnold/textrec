@@ -10,13 +10,15 @@ import pathlib
 
 # Run `yarn build` first.
 
-datafile_name = pathlib.Path('./public/for_pairwise_gc1.js')
-data = open(paths.gruntwork / 'for_pairwise_gc1.json').read()
+batch = 'gc1'
+
+datafile_name = pathlib.Path(f'./public/for_pairwise_{batch}.js')
+data = open(paths.gruntwork / f'for_pairwise_{batch}.json').read()
 with open(datafile_name, 'w') as f:
     f.write('var DATA = ')
     f.write(data)
     f.write(';\n')
-
+print(len(json.loads(data)['items']), "items")
 
 t = Template('''
 {% for css in stylesheets %}
