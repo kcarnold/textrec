@@ -1,5 +1,8 @@
 import joblib
-import json
+try:
+    import ujson as json
+except ImportError:
+    import json
 from .paths import paths
 from sklearn.feature_extraction.text import TfidfVectorizer
 
