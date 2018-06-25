@@ -14,6 +14,15 @@ export default {
   },
   created() {
     this.newPair();
+    document.onkeyup = (event) => {
+      if (event.keyCode === 37) {
+        this.select(0);
+        event.preventDefault();
+      } else if (event.keyCode === 39) {
+        this.select(1);
+        event.preventDefault();
+      }
+    }
   },
   methods: {
     select(idx) {
@@ -55,11 +64,11 @@ export default {
       </tr>
       <tr class="instructions">
         <td>
-          <button type="button" v-on:click="select(0)" v-shortkey="['arrowleft']" @shortkey="select(0)">More specific</button>
+          <button type="button" v-on:click="select(0)">More specific</button>
           or press left-arrow
         </td>
         <td>
-          <button type="button" v-on:click="select(1)" v-shortkey="['arrowright']" @shortkey="select(1)">More specific</button>
+          <button type="button" v-on:click="select(1)">More specific</button>
           or press right-arrow
         </td>
       </tr>
