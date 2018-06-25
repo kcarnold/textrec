@@ -102,7 +102,7 @@ export default {
       Done! You can submit now.
     </div>
 
-    <input type="hidden" :value="JSON.stringify(results)">
+    <input type="hidden" name="results" :value="JSON.stringify(results)">
   </div>
 </template>
 
