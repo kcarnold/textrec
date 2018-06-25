@@ -298,7 +298,7 @@ def get_survey_data(participants):
         pd.DataFrame(experiment_level, columns='participant name value'.split()))
 
 
-def decode_experiment_level(experiment_level):
+def decode_experiment_level(experiment_level, traits):
     # Unfortunately one of the traits appears twice and complicates this.
     dups = experiment_level.duplicated(['participant', 'name'], keep=False)
     experiment_level = experiment_level[~dups].copy().append(
@@ -327,15 +327,19 @@ def decode_experiment_level(experiment_level):
     import json
     with open(paths.data / 'trait_data.json') as f:
         trait_data = json.load(f)
+        trait_items_by_trait = toolz.groupby('trait', trait_data)
 
-    for trait, items in toolz.groupby('trait', trait_data).items():
+    all_trait_items = []
+    for trait in traits:
+        items = trait_items_by_trait[trait]
+        all_trait_items.extend([item['item'] for item in items])
         experiment_level_pivot[trait] = sum(
             (-1 if item['is_negated'] else 1) * pd.to_numeric(experiment_level_pivot[item['item']])
             for item in items
         ) / (NUM_LIKERT_DEGREES_FOR_TRAITS * len(items))
 
 
-    experiment_level_pivot = experiment_level_pivot.drop([datum['item'] for datum in trait_data], axis=1)
+    experiment_level_pivot = experiment_level_pivot.drop(all_trait_items, axis=1)
 
     return dict(
         experiment_level=experiment_level_pivot,
@@ -385,7 +389,7 @@ def analyze_all(participants, traits='NFC Extraversion'):
 
     # Get survey data
     _block_level, _experiment_level = get_survey_data(participants)
-    result = decode_experiment_level(_experiment_level)
+    result = decode_experiment_level(_experiment_level, traits)
     result['experiment_level'] = coerce_columns(
         result['experiment_level'].reset_index(),
         expected_experiment_columns)
