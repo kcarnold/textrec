@@ -417,7 +417,7 @@ def main(batch):
     }
     analyses = analyze_all(participants, traits=traits[batch])
     for kind in 'experiment block trial'.split():
-        analyses[f'{kind}_level'].to_csv(paths.data / 'analyzed' / f'{kind}_{batch}.csv')
+        analyses[f'{kind}_level'].to_csv(paths.data / 'analyzed' / f'{kind}_{batch}.csv', index=False)
 
 if __name__ == '__main__':
     import argparse
