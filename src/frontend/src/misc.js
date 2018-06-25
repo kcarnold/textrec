@@ -1,11 +1,12 @@
 import range from "lodash/range";
 
 const blankRec = { words: [] };
+const blankRecs = range(3).map(() => blankRec);
 
 export const gatingSuggestionFilter = (suggestions, experimentState) => {
   let reply = experimentState.lastSuggestionsFromServer;
   if ("show" in reply && !reply.show) {
-    return { predictions: range(3).map(() => blankRec) };
+    return { predictions: blankRecs };
   }
   return suggestions;
 };

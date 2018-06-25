@@ -1,5 +1,8 @@
 import _ from "lodash";
 
+const blankRec = { words: [] };
+const blankRecs = _.range(3).map(() => blankRec);
+
 function getCurCondition(state) {
   return state.conditionName || state.experimentState.flags.condition;
 }
@@ -39,39 +42,40 @@ export function processLogGivenState(state, log) {
     // without changing curText.
     let lastContextSeqNum = (state.experimentState || {}).contextSequenceNum;
     let lastText = (state.experimentState || {}).curText;
-    let suggestionContext = (state.experimentState || {}).suggestionContext;
-    let visibleSuggestions = (state.experimentState || {}).visibleSuggestions;
-
-    let isValidSugUpdate =
-      entry.type === "receivedSuggestions" &&
-      entry.msg.request_id === (state.experimentState || {}).contextSequenceNum;
+    let lastSuggestionContext = (state.experimentState || {}).suggestionContext;
+    let lastVisibleSuggestions = (state.experimentState || {}).visibleSuggestions;
 
     // Track requests
     if (entry.kind === "meta" && entry.type === "rpc") {
       let msg = _.clone(entry.request.rpc);
+      let timestamp = entry.request.timestamp;
       let requestCurText =
         msg.sofar + msg.cur_word.map(ent => ent.letter).join("");
-      requestsByTimestamp[msg.timestamp] = { request: msg, response: null };
+      requestsByTimestamp[timestamp] = { request: msg, response: null };
       if (tmpSugRequests[msg.request_id]) {
         console.assert(
           tmpSugRequests[msg.request_id] === requestCurText,
-          `Mismatch request curText for ${participant_id}-${msg.timestamp}}, "${
+          `Mismatch request curText for ${participant_id}-${timestamp}}, "${
             tmpSugRequests[msg.request_id]
           }" VS "${requestCurText}"`
         );
-        // console.log("Ignoring duplicate request", msg.timestamp);
-        requestsByTimestamp[msg.timestamp].dupe = true;
+        // console.log("Ignoring duplicate request", timestamp);
+        requestsByTimestamp[timestamp].dupe = true;
         return;
       } else {
         tmpSugRequests[msg.request_id] = requestCurText;
       }
-    } else if (entry.type === "receivedSuggestions") {
+    } else if (entry.type === "backendReply") {
       let msg = { ...entry.msg, responseTimestamp: entry.jsTimestamp };
+      console.assert(requestsByTimestamp[msg.timestamp],
+        `No request for timestamp ${msg.timestamp} (have ${Object.keys(requestsByTimestamp)})`);
       requestsByTimestamp[msg.timestamp].response = msg;
     }
 
+    /** STATE UPDATE **/
+
     if (entry.kind !== "meta") {
-      // if (entry.type !== 'receivedSuggestions' || isValidSugUpdate)
+      // if (entry.type !== 'backendReply' || isValidSugUpdate)
       let sideEffects = state.handleEvent(entry);
       if (sideEffects) {
         sideEffects.forEach(effect => {
@@ -124,11 +128,11 @@ export function processLogGivenState(state, log) {
     }
 
     if (
-      ["connected", "init", "rpc", "receivedSuggestions", "next"].indexOf(
+      ["connected", "init", "rpc", "backendReply", "next"].indexOf(
         entry.type
       ) === -1
     ) {
-      let { curWord } = suggestionContext;
+      let { curWord } = lastSuggestionContext;
       let annoType = entry.type;
       if (entry.type === "tapSuggestion") {
         let trimtext = lastText.trim();
@@ -145,10 +149,10 @@ export function processLogGivenState(state, log) {
         annoType,
         curText: lastText,
         timestamp: entry.jsTimestamp,
-        visibleSuggestions: visibleSuggestions,
+        visibleSuggestions: lastVisibleSuggestions,
       };
       if (entry.type === "tapSuggestion" && lastText !== curText) {
-        annotatedAction.sugInserted = visibleSuggestions[entry.which][
+        annotatedAction.sugInserted = lastVisibleSuggestions[entry.which][
           entry.slot
         ].words[0].slice(curWord.length);
       }
@@ -180,13 +184,20 @@ export function processLogGivenState(state, log) {
       });
     }
 
-    visibleSuggestions = expState.visibleSuggestions;
+    let curVisibleSuggestions = expState.visibleSuggestions;
     if (expState.contextSequenceNum !== lastContextSeqNum) {
       if (pageData.displayedSuggs[lastContextSeqNum]) {
         pageData.displayedSuggs[lastContextSeqNum].action = entry;
       }
       lastContextSeqNum = expState.contextSequenceNum;
-    } else if (entry.type === "receivedSuggestions" && isValidSugUpdate) {
+    } else if (entry.type === "backendReply") {
+      let hasRecs = !_.isEqual(curVisibleSuggestions.predictions, blankRecs);
+      if (expState.lastSuggestionsFromServer.show === false) {
+        console.assert(!hasRecs);
+      }
+      if (expState.flags.hideRecs) {
+        hasRecs = false;
+      }
       let { request, response } = requestsByTimestamp[entry.msg.timestamp];
       pageData.displayedSuggs[expState.contextSequenceNum] = {
         request_id: request.request_id,
@@ -195,7 +206,7 @@ export function processLogGivenState(state, log) {
         flags: request.flags,
         timestamp: request.timestamp,
         context: expState.curText,
-        recs: visibleSuggestions,
+        recs: hasRecs ? curVisibleSuggestions : null,
         latency: response.responseTimestamp - request.timestamp,
         action: null,
       };
@@ -203,12 +214,12 @@ export function processLogGivenState(state, log) {
 
     if (
       pageData.displayedSuggs[expState.contextSequenceNum] &&
-      !_.isEqual(visibleSuggestions, lastDisplayedSuggs)
+      !_.isEqual(curVisibleSuggestions, lastDisplayedSuggs)
     ) {
       pageData.displayedSuggs[
         expState.contextSequenceNum
-      ].recs = visibleSuggestions;
-      lastDisplayedSuggs = visibleSuggestions;
+      ].recs = curVisibleSuggestions;
+      lastDisplayedSuggs = curVisibleSuggestions;
     }
   });
 
