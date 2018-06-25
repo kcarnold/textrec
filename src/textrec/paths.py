@@ -8,6 +8,8 @@ class paths:
     ui = frontend / 'build'
     logdir = top_level / 'logs'
     data = top_level / 'data'
+    analyzed = data / 'analyzed'
+    gruntwork = data / 'gruntwork'
 
     cache = top_level / 'cache'
     models = top_level / 'models'
