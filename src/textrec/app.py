@@ -198,7 +198,7 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
                 start = time.time()
                 result = dict(type='reply', timestamp=request['timestamp'])
                 try:
-                    result['result'] = yield handle_request_async(request['rpc'])
+                    result['result'] = yield handle_request_async(process_pool, request['rpc'])
                 except Exception:
                     traceback.print_exc()
                     print("Failing request:", json.dumps(request))

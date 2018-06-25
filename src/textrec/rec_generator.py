@@ -3,7 +3,7 @@ import traceback
 from . import onmt_model_2
 
 
-def handle_request_async(request):
+def handle_request_async(executor, request):
     request_id = request.get('request_id')
     flags = request.get('flags', {})
     prefix = None
@@ -28,7 +28,8 @@ def handle_request_async(request):
     in_text = onmt_model_2.tokenize_stimulus(stimulus_content)
     tokens = onmt_model_2.tokenize(request['sofar'])
     try:
-        recs = onmt_model_2.get_recs(model_name, in_text, tokens, prefix=prefix)
+        recs = yield executor.submit(
+            onmt_model_2.get_recs, model_name, in_text, tokens, prefix=prefix)
     except Exception:
         traceback.print_exc()
         print("Failing request:", json.dumps(request))

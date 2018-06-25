@@ -133,6 +133,8 @@ class ONMTModelWrapper:
             prev_state.hidden = tuple(v.detach() for v in prev_state.hidden)
             prev_state = copy.deepcopy(prev_state)
 
+            assert memory_bank.size()[1] == 1
+
             dec_out, dec_states, attn = translator.model.decoder(
                 tgt_in, memory_bank, prev_state)
 
