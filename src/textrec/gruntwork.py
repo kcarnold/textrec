@@ -3,6 +3,10 @@ import json
 import itertools
 import pandas as pd
 from textrec.paths import paths
+from textrec import util
+
+id2url = util.get_coco_id2url()
+
 
 from functools import lru_cache
 @lru_cache(maxsize=2**10)
@@ -55,6 +59,7 @@ def dump_data_for_pairwise(batch, trial_level_data):
         group = group.loc[:, ['condition', 'corrected_text']].rename(columns=dict(corrected_text='text'))
         items.append(dict(
             stimulus=stimulus,
+            url=id2url[stimulus],
             texts={condition: gg.to_dict(orient='records') for condition, gg in group.groupby('condition')}
         ))
     with open(paths.gruntwork / f'for_pairwise_{batch}.json', 'w') as f:
