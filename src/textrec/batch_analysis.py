@@ -69,11 +69,13 @@ columns = {
         'num_tapBackspace': Count,
         'num_tapKey': Count,
         'num_tapSugg_any': Count,
-        'num_tapSugg_bos': Count,
         'num_tapSugg_full': Count,
         'num_tapSugg_part': Count,
         'num_taps': Count,
         'used_any_suggs': bool,
+        'num_recs_full_seen': Count,
+        'num_recs_full_gated': Count,
+        'rec_use_full_frac': float,
 
         'characters_per_sec': float,
         'delay_before_start': float,
@@ -166,6 +168,7 @@ def count_actions(actions):
     action_counts['num_tapSugg_any'] = sum(
         v for k, v in action_counts.items()
         if k.startswith('num_tapSugg'))
+    action_counts['num_tapSugg_full'] += action_counts.pop('num_tapSugg_bos')
     return action_counts
 
 
@@ -217,7 +220,20 @@ def get_trial_data(participants):
                 logprob_unconditional=automated_analyses.eval_logprobs_unconditional(text),
             )
 
-            data.update(count_actions(page['actions']))
+            action_counts = count_actions(page['actions'])
+            data.update(action_counts)
+            recs_at_word_starts = [
+                rec
+                for rec in page['displayedSuggs']
+                if rec is not None
+                and len(rec['cur_word']) > 0]
+            visible_recs_at_word_starts = [
+                rec
+                for rec in recs_at_word_starts
+                if rec['recs'] is not None]
+            data['num_recs_full_seen'] = len(visible_recs_at_word_starts)
+            data['num_recs_full_gated'] = len(recs_at_word_starts) - len(visible_recs_at_word_starts)
+            data['rec_use_full_frac'] = action_counts['num_tapSugg_full'] / data['num_recs_full_seen'] if data['num_recs_full_seen'] else None
             data.update(compute_speeds(page))
 
             results.append(data)
