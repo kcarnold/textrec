@@ -409,3 +409,20 @@ def analyze_all(participants, traits='NFC Extraversion'):
         validate='1:m')
 
     return result
+
+
+def main(batch):
+    participants = get_participants_by_batch()[batch]
+    traits = {
+        'gc1': 'NFC Extraversion Openness Trust'
+    }
+    analyses = analyze_all(participants, traits=traits[batch])
+    for kind in 'experiment block trial'.split():
+        analyses[f'{kind}_level'].to_csv(paths.data / 'analyzed' / f'{kind}_{batch}.csv')
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('batch')
+    opts = parser.parse_args()
+    main(opts.batch)
