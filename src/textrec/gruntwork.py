@@ -1,4 +1,6 @@
 import re
+import json
+import itertools
 import pandas as pd
 from textrec.paths import paths
 
@@ -42,6 +44,19 @@ def get_corrected_text(trial_level_data):
 
     return trial_level_data, corrections_todo
 
+def gen_pairwise_stimuli(batch, trial_level_data):
+    all_conditions = list(trial_level_data.condition.unique())
+    condition_pairs = list(itertools.combinations(all_conditions, 2))
+    stimuli = [
+        {condition: gg.to_dict(orient='records') for condition, gg in group.groupby('condition')}
+        #      group.to_dict(orient='records')
+            for idx, group in sorted(trial_level_data.loc[:,['idx', 'condition', 'corrected_text']].groupby('idx'))]
+    with open(paths.gruntwork / f'stimuli_{batch}.json', 'w') as f:
+        json.dump(dict(
+            items=stimuli,
+            condPairs=condition_pairs), f)
+
+
 def main(batch):
     trial_level_data = pd.read_csv(paths.analyzed / f'trial_{batch}.csv')
     trial_level_data, corrections_todo = get_corrected_text(trial_level_data)
@@ -53,6 +68,7 @@ def main(batch):
         print(f"Copy the result back to Excel, save the result as {paths.gruntwork / 'correction_batch_N.csv'}, IN UTF-8")
     trial_level_data.to_csv(paths.analyzed / f'trial_withmanual_{batch}.csv', index=False)
 
+    gen_pairwise_stimuli(batch, trial_level_data)
 
 if __name__ == '__main__':
     import argparse
