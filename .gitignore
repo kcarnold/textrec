@@ -90,3 +90,5 @@ pred.txt
 textrec.sublime-project
 textrec.sublime-workspace
 /unused
+
+src/annotation/comparisons/public/for_pairwise_gc1.js
