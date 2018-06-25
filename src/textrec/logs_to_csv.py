@@ -413,6 +413,7 @@ def analyze_all(participants, traits='NFC Extraversion'):
 def main(batch):
     participants = get_participants_by_batch()[batch]
     traits = {
+        '2018-05-02': 'NFC Extraversion',
         'gc1': 'NFC Extraversion Openness Trust'
     }
     analyses = analyze_all(participants, traits=traits[batch])
