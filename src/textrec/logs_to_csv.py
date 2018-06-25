@@ -262,7 +262,6 @@ def get_survey_data(participants):
              - analyzed['screenTimes'][0]['timestamp']) / 1000 / 60
         experiment_level.append((participant_id, 'total_time', total_time))
 
-        survey_data = dict(analyzed['allControlledInputs'])
         conditions = [analyzed['byExpPage'][page]['condition'] for page in analyzed['pageSeq']]
         assert len(conditions) % 3 == 0
         conditions = conditions[::len(conditions) // 3]
