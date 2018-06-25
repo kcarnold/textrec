@@ -1,20 +1,27 @@
 <script>
+const NUM_PAIRS = window.NUM_PAIRS;
+
 function choice(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
 export default {
   data() {
+    let results = [];
+    for (let i = 0; i < NUM_PAIRS; i++) {
+      results.push({ left: null, right: null, isLeft: null });
+    }
     return {
       condPairs: window.DATA.condPairs,
       items: window.DATA.items[window.stimulusIdx].texts,
-      curPair: null,
-      results: [],
+      curIdx: -1,
+      done: false,
+      results
     };
   },
   created() {
     this.newPair();
-    document.onkeyup = (event) => {
+    document.onkeyup = event => {
       if (event.keyCode === 37) {
         this.select(0);
         event.preventDefault();
@@ -22,31 +29,35 @@ export default {
         this.select(1);
         event.preventDefault();
       }
-    }
+    };
   },
   methods: {
     select(idx) {
-      let [x0, x1] = this.curPair;
-      this.results.push({
-        left: x0,
-        right: x1,
-        isLeft: idx === 1
-      });
+      if (this.done) return;
+      let isLeft = idx === 0;
+      this.results[this.curIdx].isLeft = isLeft;
       this.newPair();
     },
     selectOld(idx, isLeft) {
       this.results[idx].isLeft = isLeft;
+      if (idx === this.curIdx) {
+        this.newPair();
+      }
     },
     newPair() {
-      let [condA, condB] = this.condPairs[this.results.length % this.condPairs.length];
+      this.curIdx++;
+      let [condA, condB] = this.condPairs[this.curIdx % this.condPairs.length];
       if (Math.random() < 0.5) {
-        // TODO: Make sure this works.
         [condB, condA] = [condA, condB];
       }
-      this.curPair = [
-        choice(this.items[condA]),
-        choice(this.items[condB])
-      ];
+      if (this.curIdx === NUM_PAIRS) {
+        this.done = true;
+        return;
+      }
+      let result = this.results[this.curIdx];
+      result.left = choice(this.items[condA]);
+      result.right = choice(this.items[condB]);
+      result.isLeft = null;
     }
   }
 };
@@ -54,30 +65,28 @@ export default {
 
 <template>
   <div id="root">
-    <div v-if="curPair === null">
-      Loading...
-    </div>
-    <table v-else>
-      <tr class="curPair">
-        <td>{{curPair[0].text}}</td>
-        <td>{{curPair[1].text}}</td>
-      </tr>
-      <tr class="instructions">
-        <td>
-          <button type="button" v-on:click="select(0)">More specific</button>
-          or press left-arrow
+    <table>
+      <tr v-for="(r, idx) in results" :key="idx" class="results">
+        <td :class="{selected: r.isLeft === true, cur: idx === curIdx}" @click="selectOld(idx, true)">
+          {{r.left ? r.left.text : '...'}}
+          <div class="instructions" v-if="idx === curIdx">
+            <button type="button" v-on:click="select(0)">More specific</button>
+            or press left-arrow
+          </div>
         </td>
-        <td>
-          <button type="button" v-on:click="select(1)">More specific</button>
-          or press right-arrow
+        <td :class="{selected: r.isLeft === false, cur: idx === curIdx}"  @click="selectOld(idx, false)">
+          {{r.right ? r.right.text : '...'}}
+          <div class="instructions" v-if="idx === curIdx">
+            <button type="button" v-on:click="select(1)">More specific</button>
+            or press right-arrow
+          </div>
         </td>
-      </tr>
-
-      <tr v-for="(r, idx) in results" :key="idx" class="prevResults">
-        <td :class="{selected: !r.isLeft}" @click="selectOld(idx, false)">{{r.left.text}}</td>
-        <td :class="{selected: r.isLeft}"  @click="selectOld(idx, true)">{{r.right.text}}</td>
       </tr>
     </table>
+
+    <div v-if="done">
+      Done! You can submit now.
+    </div>
 
     <input type="hidden" :value="JSON.stringify(results)">
   </div>
@@ -98,9 +107,16 @@ table {
   text-align: center;
 }
 
-.curPair td {
+td {
+  cursor: pointer;
   margin: 20px;
   padding: 10px;
+  width: 50%;
+  vertical-align: bottom;
+}
+
+td.cur {
+  padding: 40px 10px;
   font-size: 150%;
   line-height: 1.3;
 }
@@ -114,9 +130,5 @@ table {
 
 .selected {
   background: #ccc;
-}
-
-.prevResults td {
-  cursor: pointer;
 }
 </style>
