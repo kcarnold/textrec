@@ -1,30 +1,17 @@
+"""
+Generate and process human annotations on outcomes.
+
+Corrections: Computes the Damerau–Levenshtein distance between original and corrected text.
+"""
 import re
 import json
 import itertools
 import pandas as pd
+from pyxdameraulevenshtein import damerau_levenshtein_distance
 from textrec.paths import paths
 from textrec import util
 
 id2url = util.get_coco_id2url()
-
-
-from functools import lru_cache
-@lru_cache(maxsize=2**10)
-def lev_dist(a, b):
-    if not a: return len(b)
-    if not b: return len(a)
-    
-    if a[0] == b[0]:
-        return lev_dist(a[1:], b[1:])
-
-    return (
-        1 # since first characters differ
-        + min(
-            lev_dist(a, b[1:]), # insertion
-            lev_dist(a[1:], b), # deletion
-            lev_dist(a[1:], b[1:]) # substitution
-        )
-    )
 
 
 def get_corrected_text(trial_level_data):
@@ -43,7 +30,7 @@ def get_corrected_text(trial_level_data):
 
 
     trial_level_data['uncorrected_errors'] = [
-        lev_dist(row.final_text_for_correction, row.corrected_text)
+        damerau_levenshtein_distance(row.final_text_for_correction, row.corrected_text)
         if isinstance(row.corrected_text, str) else None
         for row in trial_level_data.itertuples()]
     corrections_todo = trial_level_data[trial_level_data.corrected_text.isnull()].final_text_for_correction.dropna().drop_duplicates().to_frame('text')
