@@ -343,8 +343,8 @@ def decode_experiment_level(experiment_level, traits):
 
     return dict(
         experiment_level=experiment_level_pivot,
-        helpful_ranks_by_condition=helpful_ranks_by_condition,
-        helpful_ranks_by_idx=helpful_ranks_by_idx)
+        helpful_ranks_by_condition=helpful_ranks_by_condition.reset_index(),
+        helpful_ranks_by_idx=helpful_ranks_by_idx.reset_index())
 
 
 def decode_block_level(block_level):
@@ -421,8 +421,11 @@ def main(batch):
         'gc1': 'NFC Extraversion Openness Trust'
     }
     analyses = analyze_all(participants, traits=traits[batch])
-    for kind in 'experiment block trial'.split():
-        analyses[f'{kind}_level'].to_csv(paths.data / 'analyzed' / f'{kind}_{batch}.csv', index=False)
+    for name, data in analyses.items():
+        if name.endswith('_level'):
+            name = name[:-len('_level')]
+        data.to_csv(paths.data / 'analyzed' / f'{name}_{batch}.csv', index=False)
+    
 
 if __name__ == '__main__':
     import argparse
