@@ -1,7 +1,6 @@
 import re
 import json
 import itertools
-import numpy as np
 import pandas as pd
 from textrec.paths import paths
 from textrec import util
@@ -45,7 +44,7 @@ def get_corrected_text(trial_level_data):
 
     trial_level_data['uncorrected_errors'] = [
         lev_dist(row.final_text_for_correction, row.corrected_text)
-        if not np.isnan(row.corrected_text) else None
+        if isinstance(row.corrected_text, str) else None
         for row in trial_level_data.itertuples()]
     corrections_todo = trial_level_data[trial_level_data.corrected_text.isnull()].final_text_for_correction.dropna().drop_duplicates().to_frame('text')
     corrections_todo['corrected_text'] = None
