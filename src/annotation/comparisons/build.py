@@ -10,7 +10,11 @@ import pathlib
 
 # Run `yarn build` first.
 
-batch = 'gc1'
+import argparse
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('batch')
+opts = parser.parse_args()
+batch = opts.batch
 
 datafile_name = pathlib.Path(f'./public/for_pairwise_{batch}.js')
 data = open(paths.gruntwork / f'for_pairwise_{batch}.json').read()
