@@ -13,8 +13,9 @@ import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import traitData from "./TraitData";
 import stimulusPairs from "./stimulusPairs";
+import { getDemoConditionName } from "./misc";
 
-import { seededShuffle } from "./shuffle";
+import * as shuffle from "./shuffle";
 
 import type { Screen } from "./IOTaskState";
 
@@ -623,16 +624,20 @@ function trialScreen(props: {
 }
 
 let baseConditions = ["norecs", "general", "specific"];
+let conditionOrders = shuffle.permutator(baseConditions);
 
-export function createTaskState(clientId: string) {
-  clientId = clientId || "";
+export function createTaskState(loginEvent) {
+  let clientId = loginEvent.participant_id;
 
   let screens, stimuli;
-  let demoConditionName = IOTaskState.getDemoConditionName(clientId);
+  let demoConditionName = getDemoConditionName(clientId);
   if (demoConditionName != null) {
     screens = getDemoScreens(demoConditionName);
   } else {
-    let conditions = seededShuffle(`${clientId}-conditions`, baseConditions);
+    if ("n_conditions" in loginEvent) {
+      console.assert(loginEvent.n_conditions === conditionOrders.length);
+    }
+    let conditions = conditionOrders[loginEvent.assignment];
     stimuli = baseStimuli.slice();
     screens = getScreens(conditions, stimuli);
   }
