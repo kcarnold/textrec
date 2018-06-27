@@ -35,7 +35,7 @@ columns = {
         'other': str,
         'techDiff': str,
         'total_time': float,
-        'use_predictive': bool,
+        'use_predictive': str,
         'verbalized_during': bool,
     },
     'block': {
