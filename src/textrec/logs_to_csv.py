@@ -219,7 +219,7 @@ def get_trial_data(participants):
                 rec
                 for rec in page['displayedSuggs']
                 if rec is not None
-                and len(rec['cur_word']) > 0]
+                and len(rec['cur_word']) == 0]
             visible_recs_at_word_starts = [
                 rec
                 for rec in recs_at_word_starts
