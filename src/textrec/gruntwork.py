@@ -10,6 +10,7 @@ import pandas as pd
 from pyxdameraulevenshtein import damerau_levenshtein_distance
 from textrec.paths import paths
 from textrec import util
+from textrec import automated_analyses
 
 id2url = util.get_coco_id2url()
 
@@ -58,6 +59,11 @@ def dump_data_for_pairwise(batch, trial_level_data):
             items=items,
             condPairs=condition_pairs), f)
 
+def get_automated_analysis(datum):
+    text = datum['corrected_text']
+    datum['num_adj'] = automated_analyses.count_adj(text)
+    datum['logprob_conditional'] = automated_analyses.eval_logprobs_conditional(datum['stimulus'], text)
+    datum['logprob_unconditional'] = automated_analyses.eval_logprobs_unconditional(text)
 
 def main(batch):
     trial_level_data = pd.read_csv(paths.analyzed / f'trial_{batch}.csv')
@@ -68,8 +74,11 @@ def main(batch):
         print("There are corrections to make.")
         print(f"Open {corrections_todo_path} in Excel, Copy to Word -> correct all typos and obvious misspellings.")
         print(f"Copy the result back to Excel, save the result as {paths.gruntwork / 'correction_batch_N.csv'}, IN UTF-8")
-    trial_level_data.to_csv(paths.analyzed / f'trial_withmanual_{batch}.csv', index=False)
+    else:
+        trial_level_data.apply(get_automated_analysis, axis=1)
 
+
+    trial_level_data.to_csv(paths.analyzed / f'trial_withmanual_{batch}.csv', index=False)
     dump_data_for_pairwise(batch, trial_level_data)
 
 if __name__ == '__main__':

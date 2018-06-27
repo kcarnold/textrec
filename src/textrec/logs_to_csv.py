@@ -1,7 +1,6 @@
 import pandas as pd
 from .paths import paths
 from . import analysis_util
-from . import automated_analyses
 from collections import Counter
 import toolz
 
@@ -81,11 +80,6 @@ columns = {
         'delay_before_start': float,
         'seconds_spent_typing': float,
         'taps_per_second': float,
-
-        # Automated outcome analysis
-        'logprob_conditional': float,
-        'logprob_unconditional': float,
-        'num_adj': int,
     }
 }
 
@@ -217,9 +211,6 @@ def get_trial_data(participants):
                 text=text,
                 stimulus=stimulus,
                 text_len=len(text),
-                num_adj=automated_analyses.count_adj(text),
-                logprob_conditional=automated_analyses.eval_logprobs_conditional(stimulus, text),
-                logprob_unconditional=automated_analyses.eval_logprobs_unconditional(text),
             )
 
             action_counts = count_actions(page['actions'])
