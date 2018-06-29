@@ -205,7 +205,7 @@ export function processLogGivenState(state, log) {
         sofar: request.sofar,
         cur_word: request.cur_word,
         flags: request.flags,
-        timestamp: request.timestamp,
+        timestamp: requestTimestamp,
         context: expState.curText,
         recs: hasRecs ? curVisibleSuggestions : null,
         latency: response.responseTimestamp - entry.msg.timestamp,
