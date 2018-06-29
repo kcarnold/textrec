@@ -32,39 +32,28 @@ export function processLogGivenState(state, log) {
   }
 
   let lastScreenNum = null;
-  let tmpSugRequests = null;
+  let seqNumToTimestamp = null;
   let lastDisplayedSuggs = null;
   let finalData = null;
 
   log.forEach((entry, logIdx) => {
-    // We need to track context sequence numbers instead of curText because
-    // autospacing after punctuation seems to increment contextSequenceNum
-    // without changing curText.
     let lastContextSeqNum = (state.experimentState || {}).contextSequenceNum;
     let lastText = (state.experimentState || {}).curText;
     let lastSuggestionContext = (state.experimentState || {}).suggestionContext;
     let lastVisibleSuggestions = (state.experimentState || {}).visibleSuggestions;
 
+    function getCurText(msg) {
+      return msg.sofar + msg.cur_word.map(ent => ent.letter).join("");
+    }
+
     // Track requests
     if (entry.kind === "meta" && entry.type === "rpc") {
       let msg = _.clone(entry.request.rpc);
       let timestamp = entry.request.timestamp;
-      let requestCurText =
-        msg.sofar + msg.cur_word.map(ent => ent.letter).join("");
+      let requestCurText = getCurText(msg);
       requestsByTimestamp[timestamp] = { request: msg, response: null };
-      if (tmpSugRequests[msg.request_id]) {
-        console.assert(
-          tmpSugRequests[msg.request_id] === requestCurText,
-          `Mismatch request curText for ${participant_id}-${timestamp}}, "${
-            tmpSugRequests[msg.request_id]
-          }" VS "${requestCurText}"`
-        );
-        // console.log("Ignoring duplicate request", timestamp);
-        requestsByTimestamp[timestamp].dupe = true;
-        return;
-      } else {
-        tmpSugRequests[msg.request_id] = requestCurText;
-      }
+      console.assert(!(msg.request_id in seqNumToTimestamp), "Duplicate request");
+      seqNumToTimestamp[msg.request_id] = timestamp;
     } else if (entry.type === "backendReply") {
       let msg = { ...entry.msg, responseTimestamp: entry.jsTimestamp };
       console.assert(requestsByTimestamp[msg.timestamp],
@@ -103,7 +92,7 @@ export function processLogGivenState(state, log) {
     }
 
     if (state.screenNum !== lastScreenNum) {
-      tmpSugRequests = {};
+      seqNumToTimestamp = {};
       lastScreenNum = state.screenNum;
     }
 
@@ -186,40 +175,43 @@ export function processLogGivenState(state, log) {
 
     let curVisibleSuggestions = expState.visibleSuggestions;
     if (expState.contextSequenceNum !== lastContextSeqNum) {
+      // Log the action that was taken after the last suggestion.
       if (pageData.displayedSuggs[lastContextSeqNum]) {
         pageData.displayedSuggs[lastContextSeqNum].action = entry;
       }
       lastContextSeqNum = expState.contextSequenceNum;
-    } else if (entry.type === "backendReply") {
-      let hasRecs = !_.isEqual(curVisibleSuggestions.predictions, blankRecs);
+
+      // Initialize the current suggestion.
+      let curSugRequest = expState.getSuggestionRequest().rpc; // this should be side-effect-free!
+      pageData.displayedSuggs[expState.contextSequenceNum] = {
+        sofar: curSugRequest.sofar,
+        cur_word: curSugRequest.cur_word,
+        flags: curSugRequest.flags,
+        context: expState.curText,
+        recs: expState.flags.hideRecs ? null : curVisibleSuggestions,
+        action: null
+      };
+    }
+
+    if (!_.isEqual(curVisibleSuggestions, lastDisplayedSuggs)) {
+      let hasRecs = curVisibleSuggestions.predictions.map(rec => rec.words.join("")).join("") !== "";
       if (expState.lastSuggestionsFromServer.show === false) {
         console.assert(!hasRecs);
       }
       if (expState.flags.hideRecs) {
         hasRecs = false;
       }
-      let requestTimestamp = entry.msg.timestamp;
-      let { request, response } = requestsByTimestamp[requestTimestamp];
-      pageData.displayedSuggs[expState.contextSequenceNum] = {
-        request_id: request.request_id,
-        sofar: request.sofar,
-        cur_word: request.cur_word,
-        flags: request.flags,
-        timestamp: requestTimestamp,
-        context: expState.curText,
-        recs: hasRecs ? curVisibleSuggestions : null,
-        latency: response.responseTimestamp - entry.msg.timestamp,
-        action: null,
-      };
-    }
-
-    if (
-      pageData.displayedSuggs[expState.contextSequenceNum] &&
-      !_.isEqual(curVisibleSuggestions, lastDisplayedSuggs)
-    ) {
-      pageData.displayedSuggs[
-        expState.contextSequenceNum
-      ].recs = curVisibleSuggestions;
+      let dsugg = pageData.displayedSuggs[expState.contextSequenceNum];
+      dsugg.recs = hasRecs ? curVisibleSuggestions : null;
+      if (expState.contextSequenceNum in seqNumToTimestamp) {
+        let requestTimestamp = seqNumToTimestamp[expState.contextSequenceNum];
+        let { request, response } = requestsByTimestamp[requestTimestamp];
+        dsugg.request_id = request.request_id;
+        console.assert(dsugg.sofar === request.sofar, `Mismatched sofar ${JSON.stringify(dsugg.sofar)} ${JSON.stringify(request.sofar)}`);
+        console.assert(_.isEqual(dsugg.cur_word, request.cur_word), "Mismatched cur_word");
+        // console.assert(_.isEqual(dsugg.flags, request.flags), `Mismatched flags ${JSON.stringify(dsugg.flags)} ${JSON.stringify(request.flags)}`);
+        dsugg.latency = response.responseTimestamp - requestTimestamp;
+      }
       lastDisplayedSuggs = curVisibleSuggestions;
     }
   });
