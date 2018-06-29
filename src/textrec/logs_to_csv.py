@@ -35,7 +35,7 @@ columns = {
         'techDiff': str,
         'total_time': float,
         'use_predictive': str,
-        'verbalized_during': bool,
+        'verbalized_during': str,
     },
     'block': {
         'participant': str,
