@@ -2,6 +2,7 @@ import Promise from "bluebird";
 import { readLogFile } from "./testUtil.js";
 import { analyzeLog } from "./Analyzer.js";
 
+
 const participantIds = [
   "26f62q",
 ];
@@ -20,7 +21,6 @@ beforeAll(async () => {
 
 it("includes the overall fields we expect", () => {
   analyzed.forEach(([participantId, analysis]) => {
-    expect(analysis.conditions).toBeDefined();
     expect(analysis.byExpPage).toBeDefined();
     expect(analysis.screenTimes).toEqual(expect.any(Array));
     analysis.screenTimes.forEach(obj => {
@@ -44,7 +44,7 @@ function expectNotToContainAttnCheck(recset) {
 
 it("extracts what suggestions were displayed", () => {
   analyzed.forEach(([participantId, result]) => {
-    let page = result.byExpPage["final-0"];
+    let page = result.byExpPage["final-0-0"];
     expect(page.displayedSuggs.length).toBeGreaterThan(0);
     page.displayedSuggs.forEach(suggEntry => {
       expect(suggEntry).toMatchObject({
@@ -53,7 +53,7 @@ it("extracts what suggestions were displayed", () => {
         sofar: expect.any(String),
         cur_word: expect.any(Array),
         flags: expect.objectContaining({
-          domain: expect.any(String),
+          
         }),
         context: expect.any(String),
         recs: expect.anything(),
@@ -70,7 +70,7 @@ it("extracts what suggestions were displayed", () => {
 
 it("extracts final text", () => {
   analyzed.forEach(([participantId, result]) => {
-    let page = result.byExpPage["final-0"];
+    let page = result.byExpPage["final-0-0"];
     expect(page.finalText).toEqual(expect.any(String));
     expect(page.finalText.length).toBeGreaterThan(0);
   });
@@ -78,7 +78,7 @@ it("extracts final text", () => {
 
 it("includes all actions", () => {
   analyzed.forEach(([participantId, result]) => {
-    let page = result.byExpPage["final-0"];
+    let page = result.byExpPage["final-0-0"];
     expect(page.actions.length).toBeGreaterThan(0);
     page.actions.forEach(action => {
       expect(action).toMatchObject({
