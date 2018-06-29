@@ -4,7 +4,7 @@ const readFile = Promise.promisify(require("fs").readFile);
 export function readLogFile(participantId) {
   let filename = `${participantId}.jsonl`;
   if (!(participantId.slice(0, 5) === "smoke"))
-    filename = "../logs/" + filename;
+    filename = "../../logs/" + filename;
   return readFile(filename, "utf8").then(data => [
     participantId,
     data

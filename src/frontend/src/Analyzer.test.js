@@ -3,14 +3,7 @@ import { readLogFile } from "./testUtil.js";
 import { analyzeLog } from "./Analyzer.js";
 
 const participantIds = [
-  // "99c66d",
-  // "c104c0",
-  // "v4w898",
-  // "r3f4wp",
-  // "v9pg6h",
-  "94jfwg",
-  "w5hfrr",
-  // "gfhfhx",
+  "26f62q",
 ];
 let logData = null;
 let analyzed = null;
