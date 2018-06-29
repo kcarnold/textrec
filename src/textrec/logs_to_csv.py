@@ -36,6 +36,7 @@ columns = {
         'total_time': float,
         'use_predictive': str,
         'verbalized_during': str,
+        'condition_order': str,
     },
     'block': {
         'participant': str,
@@ -373,16 +374,21 @@ def analyze_all(participants, traits='NFC Extraversion'):
         if trial['condition'] == 'norecs':
             assert not trial['used_any_suggs']
 
+    condition_orders = pd.DataFrame(
+        [(k, ','.join(list(toolz.pluck('condition', v))[::4])) for k,v in toolz.groupby('participant', trial_data).items()],
+        columns='participant condition_order'.split())
     print("Randomization counts")
-    print(
-        pd.DataFrame([(k, ','.join(list(toolz.pluck('condition', v))[::4])) for k,v in toolz.groupby('participant', trial_data).items()],
-             columns='participant conditions'.split()).conditions.value_counts())
+    print(condition_orders.condition_order.value_counts())
 
     # Get survey data
     _block_level, _experiment_level = get_survey_data(participants)
     result = decode_experiment_level(_experiment_level, traits)
-    result['experiment_level'] = coerce_columns(
+    result['experiment_level'] = pd.merge(
         result['experiment_level'].reset_index(),
+        condition_orders,
+        on='participant', how='left', validate='1:1')
+    result['experiment_level'] = coerce_columns(
+        result['experiment_level'],
         expected_experiment_columns)
 
     block_level = decode_block_level(_block_level)
