@@ -268,7 +268,7 @@ def get_survey_data(participants):
                 block, rest = rest.split('-', 1)
                 block = int(block)
                 if ' ' in rest:
-                    # Traits, TODO
+                    # Probably a trait.
                     experiment_level.append((participant_id, rest, v))
                 else:
                     condition = conditions[block]
@@ -325,10 +325,13 @@ def decode_experiment_level(experiment_level, traits):
     for trait in traits:
         items = trait_items_by_trait[trait]
         all_trait_items.extend([item['item'] for item in items])
-        experiment_level_pivot[trait] = sum(
-            (-1 if item['is_negated'] else 1) * pd.to_numeric(experiment_level_pivot[item['item']])
-            for item in items
-        ) / (NUM_LIKERT_DEGREES_FOR_TRAITS * len(items))
+        item_data = []
+        for item in items:
+            this_col = pd.to_numeric(experiment_level_pivot[item['item']]) / NUM_LIKERT_DEGREES_FOR_TRAITS
+            if item['is_negated']:
+                this_col = 1 - this_col
+            item_data.append(this_col)
+        experiment_level_pivot[trait] = sum(item_data) / len(item_data)
 
 
     experiment_level_pivot = experiment_level_pivot.drop(all_trait_items, axis=1)
