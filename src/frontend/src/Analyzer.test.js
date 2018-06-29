@@ -56,7 +56,7 @@ it("extracts what suggestions were displayed", () => {
           
         }),
         context: expect.any(String),
-        recs: expect.anything(),
+        // recs: expect.anything(),
         latency: expect.any(Number),
         action: expect.objectContaining({ type: expect.any(String) }),
       });
