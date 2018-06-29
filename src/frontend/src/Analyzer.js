@@ -198,7 +198,8 @@ export function processLogGivenState(state, log) {
       if (expState.flags.hideRecs) {
         hasRecs = false;
       }
-      let { request, response } = requestsByTimestamp[entry.msg.timestamp];
+      let requestTimestamp = entry.msg.timestamp;
+      let { request, response } = requestsByTimestamp[requestTimestamp];
       pageData.displayedSuggs[expState.contextSequenceNum] = {
         request_id: request.request_id,
         sofar: request.sofar,
@@ -207,7 +208,7 @@ export function processLogGivenState(state, log) {
         timestamp: request.timestamp,
         context: expState.curText,
         recs: hasRecs ? curVisibleSuggestions : null,
-        latency: response.responseTimestamp - request.timestamp,
+        latency: response.responseTimestamp - entry.msg.timestamp,
         action: null,
       };
     }
