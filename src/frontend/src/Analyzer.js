@@ -1,8 +1,5 @@
 import _ from "lodash";
 
-const blankRec = { words: [] };
-const blankRecs = _.range(3).map(() => blankRec);
-
 function getCurCondition(state) {
   return state.conditionName || state.experimentState.flags.condition;
 }
@@ -11,7 +8,6 @@ export function processLogGivenState(state, log) {
   let { participant_id } = log[0];
   let byExpPage = {};
   let pageSeq = [];
-  let requestsByTimestamp = {};
 
   function getPageData() {
     let page = state.curExperiment;
@@ -31,9 +27,7 @@ export function processLogGivenState(state, log) {
     return byExpPage[page];
   }
 
-  let lastScreenNum = null;
-  let seqNumToTimestamp = null;
-  let lastDisplayedSuggs = null;
+  let lastReply = null;
   let finalData = null;
 
   log.forEach((entry, logIdx) => {
@@ -42,29 +36,14 @@ export function processLogGivenState(state, log) {
     let lastSuggestionContext = (state.experimentState || {}).suggestionContext;
     let lastVisibleSuggestions = (state.experimentState || {}).visibleSuggestions;
 
-    function getCurText(msg) {
-      return msg.sofar + msg.cur_word.map(ent => ent.letter).join("");
-    }
-
     // Track requests
-    if (entry.kind === "meta" && entry.type === "rpc") {
-      let msg = _.clone(entry.request.rpc);
-      let timestamp = entry.request.timestamp;
-      let requestCurText = getCurText(msg);
-      requestsByTimestamp[timestamp] = { request: msg, response: null };
-      console.assert(!(msg.request_id in seqNumToTimestamp), "Duplicate request");
-      seqNumToTimestamp[msg.request_id] = timestamp;
-    } else if (entry.type === "backendReply") {
-      let msg = { ...entry.msg, responseTimestamp: entry.jsTimestamp };
-      console.assert(requestsByTimestamp[msg.timestamp],
-        `No request for timestamp ${msg.timestamp} (have ${Object.keys(requestsByTimestamp)})`);
-      requestsByTimestamp[msg.timestamp].response = msg;
+    if (entry.type === "backendReply") {
+      lastReply = { msg: _.clone(entry.msg), timestamp: entry.jsTimestamp };
     }
 
     /** STATE UPDATE **/
 
     if (entry.kind !== "meta") {
-      // if (entry.type !== 'backendReply' || isValidSugUpdate)
       let sideEffects = state.handleEvent(entry);
       if (sideEffects) {
         sideEffects.forEach(effect => {
@@ -74,6 +53,7 @@ export function processLogGivenState(state, log) {
         });
       }
 
+      // Validate the log parsing by checking that the final data matches what was logged.
       if (entry.type === 'finalData') {
         let loggedFinalData = JSON.parse(JSON.stringify(entry.finalData));
         if (_.isEqual(loggedFinalData.controlledInputs, {})) {
@@ -89,11 +69,6 @@ export function processLogGivenState(state, log) {
           console.assert(false, "finalData mismatch!");
         }
       }
-    }
-
-    if (state.screenNum !== lastScreenNum) {
-      seqNumToTimestamp = {};
-      lastScreenNum = state.screenNum;
     }
 
     let expState = state.experimentState;
@@ -173,7 +148,23 @@ export function processLogGivenState(state, log) {
       });
     }
 
+    // Figure out what suggestions are currently being displayed.
     let curVisibleSuggestions = expState.visibleSuggestions;
+    let hasRecs = curVisibleSuggestions.predictions.map(rec => rec.words.join("")).join("") !== "";
+    if (expState.lastSuggestionsFromServer.show === false) {
+      console.assert(!hasRecs);
+    }
+    if (expState.flags.hideRecs) {
+      hasRecs = false;
+    }
+    if (!hasRecs) {
+      curVisibleSuggestions = null;
+    }
+
+    // Track all suggestions that got displayed for each state of the text (contextSequenceNum)
+    // For simplicity, only account for the _last_ suggestion state displayed (the recommendations could change without
+    // a change in the text if, for example, the promise mechanism was used.)
+
     if (expState.contextSequenceNum !== lastContextSeqNum) {
       // Log the action that was taken after the last suggestion.
       if (pageData.displayedSuggs[lastContextSeqNum]) {
@@ -181,38 +172,26 @@ export function processLogGivenState(state, log) {
       }
       lastContextSeqNum = expState.contextSequenceNum;
 
-      // Initialize the current suggestion.
+      // Record the current state. This will get overridden by new suggestions as they are displayed.
       let curSugRequest = expState.getSuggestionRequest().rpc; // this should be side-effect-free!
       pageData.displayedSuggs[expState.contextSequenceNum] = {
+        contextTimestamp: entry.jsTimestamp,
         sofar: curSugRequest.sofar,
         cur_word: curSugRequest.cur_word,
         flags: curSugRequest.flags,
         context: expState.curText,
-        recs: expState.flags.hideRecs ? null : curVisibleSuggestions,
+        recs: curVisibleSuggestions,
+        recsTimestamp: entry.jsTimestamp,
+        latency: 0,
         action: null
       };
     }
 
-    if (!_.isEqual(curVisibleSuggestions, lastDisplayedSuggs)) {
-      let hasRecs = curVisibleSuggestions.predictions.map(rec => rec.words.join("")).join("") !== "";
-      if (expState.lastSuggestionsFromServer.show === false) {
-        console.assert(!hasRecs);
-      }
-      if (expState.flags.hideRecs) {
-        hasRecs = false;
-      }
-      let dsugg = pageData.displayedSuggs[expState.contextSequenceNum];
-      dsugg.recs = hasRecs ? curVisibleSuggestions : null;
-      if (expState.contextSequenceNum in seqNumToTimestamp) {
-        let requestTimestamp = seqNumToTimestamp[expState.contextSequenceNum];
-        let { request, response } = requestsByTimestamp[requestTimestamp];
-        dsugg.request_id = request.request_id;
-        console.assert(dsugg.sofar === request.sofar, `Mismatched sofar ${JSON.stringify(dsugg.sofar)} ${JSON.stringify(request.sofar)}`);
-        console.assert(_.isEqual(dsugg.cur_word, request.cur_word), "Mismatched cur_word");
-        // console.assert(_.isEqual(dsugg.flags, request.flags), `Mismatched flags ${JSON.stringify(dsugg.flags)} ${JSON.stringify(request.flags)}`);
-        dsugg.latency = response.responseTimestamp - requestTimestamp;
-      }
-      lastDisplayedSuggs = curVisibleSuggestions;
+    let dsugg = pageData.displayedSuggs[expState.contextSequenceNum];
+    dsugg.recs = curVisibleSuggestions;
+    if (lastReply !== null && lastReply.msg.request_id === expState.contextSequenceNum) {
+      dsugg.recsTimestamp = entry.jsTimestamp;
+      dsugg.latency = lastReply.timestamp - dsugg.contextTimestamp;
     }
   });
 

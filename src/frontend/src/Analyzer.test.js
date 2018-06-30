@@ -48,15 +48,12 @@ it("extracts what suggestions were displayed", () => {
     expect(page.displayedSuggs.length).toBeGreaterThan(0);
     page.displayedSuggs.forEach(suggEntry => {
       expect(suggEntry).toMatchObject({
-        timestamp: expect.any(Number),
-        request_id: expect.any(Number),
+        contextTimestamp: expect.any(Number),
         sofar: expect.any(String),
         cur_word: expect.any(Array),
-        flags: expect.objectContaining({
-          
-        }),
         context: expect.any(String),
         // recs: expect.anything(),
+        recsTimestamp: expect.any(Number),
         latency: expect.any(Number),
         action: expect.objectContaining({ type: expect.any(String) }),
       });
@@ -96,7 +93,7 @@ it("includes all actions", () => {
 
 it("annotates the final text by the actions that entered it", () => {
   analyzed.forEach(([participantId, result]) => {
-    let page = result.byExpPage["final-0"];
+    let page = result.byExpPage["final-0-0"];
     expect(page.chunks).toEqual(expect.any(Array));
     let finalText = "";
     page.chunks.forEach(chunk => {
