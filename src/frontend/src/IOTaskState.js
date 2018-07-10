@@ -63,19 +63,12 @@ export class MasterStateStore {
 
     M.extendObservable(this, {
       participantCode: null,
-      get isHDSL() {
-        return (
-          this.participantCode !== null &&
-          this.participantCode.slice(0, 4) === "sona"
-        );
-      },
+      platform: null,
       get sonaCreditLink() {
-        console.assert(this.isHDSL);
+        console.assert(this.platform === 'sona');
+        // participant codes look like `sonaXXX`, where XXX is the survey code.
         let survey_code = this.participantCode.slice(4);
         return `https://harvarddecisionlab.sona-systems.com/webstudy_credit.aspx?experiment_id=440&credit_token=2093214a21504aae88bd36405e5a4e08&survey_code=${survey_code}`;
-      },
-      get isMTurk() {
-        return !this.isHDSL;
       },
       lastEventTimestamp: null,
       replaying: true,
@@ -155,6 +148,12 @@ export class MasterStateStore {
         this.doInit();
         if (event.platform_id) {
           this.participantCode = event.platform_id;
+        }
+        if (event.src === 'amt') {
+          this.platform = 'turk';
+        }
+        if (event.src === 'sona') {
+          this.platform = 'sona';
         }
         break;
       case "next":

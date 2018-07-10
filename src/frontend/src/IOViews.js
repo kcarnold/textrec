@@ -101,8 +101,7 @@ export const Welcome = inject("state")(
       </p>
       <Consent
         timeEstimate={state.timeEstimate}
-        isMTurk={state.isMTurk}
-        persuade={state.isPersuade}
+        platform={state.platform}
       />
       <p>
         If you consent to participate, and if you're seeing this{" "}
