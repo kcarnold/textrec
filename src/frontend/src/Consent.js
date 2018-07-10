@@ -1,6 +1,6 @@
 import React from "react";
 
-const Consent = ({ timeEstimate, isMTurk }) => (
+const Consent = ({ timeEstimate, platform }) => (
   <section
     className="container"
     style={{
@@ -44,7 +44,7 @@ const Consent = ({ timeEstimate, isMTurk }) => (
           >
             <p>
               <span style={{ fontSize: "14.0pt" }}>
-                Study Title: Predictive typing with long suggestions
+                Study Title: Writing with Predictive Typing
               </span>
             </p>
           </td>
@@ -74,9 +74,11 @@ const Consent = ({ timeEstimate, isMTurk }) => (
     <p>
       It is your choice whether or not to participate in this research.&nbsp; If
       you choose to participate, you may change your mind and leave the study at
-      any time.&nbsp; Refusal to participate or stopping your participation will
-      involve no penalty or loss of benefits to which you are otherwise
-      entitled. Participants must be adults 18+.
+      any time {platform === 'turk' && "by returning the HIT"}. Refusal to participate or
+      stopping your participation will involve no penalty or loss of benefits to
+      which you are otherwise entitled. (Note that for technical reasons we can
+      only provide payment for fully completed tasks.) Participants must be
+      adults 18+.
     </p>
     <p>
       <b>
@@ -86,10 +88,9 @@ const Consent = ({ timeEstimate, isMTurk }) => (
       </b>
     </p>
     <p>
-      We are studying systems that offer shortcuts while someone is typing to
-      find out how the system's design affects the writing process, writing
-      outcome, and the author's subjective experience, and how psychological
-      factors may influence those effects.
+      We are studying how different touchscreen keyboards affect the writing
+      process, writing outcome, and the author’s subjective experience, and how
+      psychological factors may influence those effects.
     </p>
     <p>
       <b>
@@ -100,20 +101,15 @@ const Consent = ({ timeEstimate, isMTurk }) => (
       </b>
     </p>
     <p>
-      You will type a few paragraphs of text, using keyboards that give various
-      kinds of help in the process. You should not include any personally
-      identifiable information in what you write.
+      You will write using a few different keyboards. You should not include any
+      personally identifiable information in what you write.
     </p>
     <p>
-      There will be questionnaires throughout the study, which may include
-      questions about your age, gender, personality, computer use, and other
-      demographic information.
+      Surveys in this study may include questions about your age, gender,
+      personality, computer use, and other demographic information.
     </p>
     <p>
-      Some aspects of this study will occur at your own pace, so the time
-      commitment may vary, but we expect it to be{" "}
-      <strong>{timeEstimate}</strong>. There will be an opportunity to take a
-      break about every 5 minutes.
+      We expect the time commitment to be about <strong>{timeEstimate}</strong>.
     </p>
     <p>
       <b>
@@ -165,7 +161,7 @@ const Consent = ({ timeEstimate, isMTurk }) => (
       data may be shared with other researchers and other participants in this
       study.
     </p>
-    {isMTurk && (
+    {platform === 'turk' && (
       <p>
         The MTurk platform provides access to your worker ID, which in some
         cases can be mapped to your name and work history. We are relying on the
@@ -179,6 +175,19 @@ const Consent = ({ timeEstimate, isMTurk }) => (
         not want it to be found from your Mechanical Turk Worker ID.
       </p>
     )}
+    {platform === 'sona' && (
+      <p>
+        The Sona platform used by HDSL provides access to your Sona ID, which in
+        some cases can be mapped to your name and participation history. We are
+        relying on the security of that platform to maintain your
+        confidentiality. To partially mitigate the risk of re-identification, we
+        will assign you a random identifier specific to this study and delete
+        the mapping between this identifier and your Sona ID 6 months after the
+        experiment concludes. But if the security of the Sona platform or our
+        account is breached, it may be possible to re-identify your work, as
+        with any HDSL study.
+      </p>
+    )}
     <p>
       <b>
         <span style={{ fontSize: "14.0pt" }}>
@@ -188,33 +197,24 @@ const Consent = ({ timeEstimate, isMTurk }) => (
       </b>
     </p>
     <p>
-      The researcher for this study is Kenneth C. Arnold who can be reached at
-      kcarnold@seas.harvard.edu, 617-299-6536, or 33 Oxford St MD 240, Cambridge
-      MA 02138. The faculty sponsor is Krzysztof Z. Gajos who can be reached at
-      kgajos@seas.harvard.edu
+      If you have questions, concerns, or complaints, or think the research has
+      hurt you, talk to the research team at kcarnold@seas.harvard.edu,
+      617-299-6536, or 33 Oxford St MD 240, Cambridge MA 02138. The faculty
+      sponsor is Krzysztof Z. Gajos who can be reached at
+      kgajos@seas.harvard.edu. This research has been reviewed and approved by
+      the Harvard University Area Institutional Review Board (“IRB”). You may
+      talk to them at (617) 496-2847 or cuhs@harvard.edu if:
     </p>
-    <ul style={{ marginTop: "0in" }} type="disc">
-      <li>If you have questions, concerns, or complaints,</li>
-      <li>If you would like to talk to the research team,</li>
-      <li>If you think the research has harmed you, or</li>
-      <li>If you wish to withdraw from the study.</li>
-    </ul>
-    <p>
-      This research has been reviewed by the Committee on the Use of Human
-      Subjects in Research at Harvard University. They can be reached at
-      617-496-2847, 1350 Massachusetts Avenue, Suite 935, Cambridge, MA 02138,
-      or cuhs@harvard.edu for any of the following:
-    </p>
+
     <ul style={{ marginTop: "0in" }} type="disc">
       <li>
-        If your questions, concerns, or complaints are not being answered by the
-        research team,
+        Your questions, concerns, or complaints are not being answered by the
+        research team.
       </li>
-      <li>If you cannot reach the research team,</li>
-      <li>If you want to talk to someone besides the research team, or</li>
-      <li>
-        If you have questions about your rights as a research participant.
-      </li>
+      <li>You cannot reach the research team.</li>
+      <li>You want to talk to someone besides the research team.</li>
+      <li>You have questions about your rights as a research subject.</li>
+      <li>You want to get information or provide input about this research.</li>
     </ul>
   </section>
 );
