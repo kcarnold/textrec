@@ -74,11 +74,11 @@ const Consent = ({ timeEstimate, platform }) => (
     <p>
       It is your choice whether or not to participate in this research.&nbsp; If
       you choose to participate, you may change your mind and leave the study at
-      any time {platform === 'turk' && "by returning the HIT"}. Refusal to participate or
-      stopping your participation will involve no penalty or loss of benefits to
-      which you are otherwise entitled. (Note that for technical reasons we can
-      only provide payment for fully completed tasks.) Participants must be
-      adults 18+.
+      any time {platform === "turk" && "by returning the HIT"}. Refusal to
+      participate or stopping your participation will involve no penalty or loss
+      of benefits to which you are otherwise entitled. (Note that for technical
+      reasons we can only provide payment for fully completed tasks.)
+      Participants must be adults 18+.
     </p>
     <p>
       <b>
@@ -142,11 +142,23 @@ const Consent = ({ timeEstimate, platform }) => (
         </span>
       </b>
     </p>
+    {platform ? (
+      <p>
+        Upon completion of the study, you will be paid the amount shown in the{" "}
+        {platform === "sona" && "HDSL"} {platform === "turk" && "MTurk"} system.
+        We determined this amount based on the estimated time to complete the
+        task at a target rate of $9/hr.
+      </p>
+    ) : (
+      <p>
+        The payment for this study is $12/hr or $10, whichever is greater, paid
+        in cash at the completion of the session.
+      </p>
+    )}
+
     <p>
-      The target payment for this task is $9/hr. Your payment will in no way
-      depend on how you use the unusual features of the app being tested, if
-      any. The reward for a specific study will be determined based on the
-      estimated time to complete the task at $9/hr.
+      Your payment will in no way depend on how you use any unusual features of
+      the keyboards being tested.
     </p>
     <p>
       <b>
@@ -161,7 +173,7 @@ const Consent = ({ timeEstimate, platform }) => (
       data may be shared with other researchers and other participants in this
       study.
     </p>
-    {platform === 'turk' && (
+    {platform === "turk" && (
       <p>
         The MTurk platform provides access to your worker ID, which in some
         cases can be mapped to your name and work history. We are relying on the
@@ -175,7 +187,7 @@ const Consent = ({ timeEstimate, platform }) => (
         not want it to be found from your Mechanical Turk Worker ID.
       </p>
     )}
-    {platform === 'sona' && (
+    {platform === "sona" && (
       <p>
         The Sona platform used by HDSL provides access to your Sona ID, which in
         some cases can be mapped to your name and participation history. We are
