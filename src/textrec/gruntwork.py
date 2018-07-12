@@ -37,6 +37,8 @@ def get_corrected_text(trial_level_data):
     trial_level_data['all_errors'] = trial_level_data['num_tapBackspace'] + trial_level_data['uncorrected_errors']
     corrections_todo = trial_level_data[trial_level_data.corrected_text.isnull()].final_text_for_correction.dropna().drop_duplicates().to_frame('text')
     corrections_todo['corrected_text'] = None
+    if len(corrections_todo) > 0:
+        corrections_todo = corrections_todo.sample(frac=1)
 
     return trial_level_data, corrections_todo
 
