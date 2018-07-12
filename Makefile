@@ -93,6 +93,14 @@ run_backend:
 run_frontend:
 	cd src/frontend && exec yarn start
 
+data/analyzed/trial_spec1.csv:
+	python -m textrec.logs_to_csv spec1
+
+data/analyzed/trial_withmanual_spec1.csv:
+	python -m textrec.gruntwork spec1
+
+
+
 #################################################################################
 # Self Documenting Commands                                                     #
 #################################################################################
