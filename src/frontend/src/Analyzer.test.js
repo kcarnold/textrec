@@ -44,7 +44,7 @@ function expectNotToContainAttnCheck(recset) {
 
 it("extracts what suggestions were displayed", () => {
   analyzed.forEach(([participantId, result]) => {
-    let page = result.byExpPage["final-0-0"];
+    let page = result.byExpPage["final-1-0"];
     expect(page.displayedSuggs.length).toBeGreaterThan(0);
     page.displayedSuggs.forEach(suggEntry => {
       expect(suggEntry).toMatchObject({
@@ -67,7 +67,7 @@ it("extracts what suggestions were displayed", () => {
 
 it("extracts final text", () => {
   analyzed.forEach(([participantId, result]) => {
-    let page = result.byExpPage["final-0-0"];
+    let page = result.byExpPage["final-1-0"];
     expect(page.finalText).toEqual(expect.any(String));
     expect(page.finalText.length).toBeGreaterThan(0);
   });
@@ -75,7 +75,7 @@ it("extracts final text", () => {
 
 it("includes all actions", () => {
   analyzed.forEach(([participantId, result]) => {
-    let page = result.byExpPage["final-0-0"];
+    let page = result.byExpPage["final-1-0"];
     expect(page.actions.length).toBeGreaterThan(0);
     page.actions.forEach(action => {
       expect(action).toMatchObject({
@@ -93,7 +93,7 @@ it("includes all actions", () => {
 
 it("annotates the final text by the actions that entered it", () => {
   analyzed.forEach(([participantId, result]) => {
-    let page = result.byExpPage["final-0-0"];
+    let page = result.byExpPage["final-1-0"];
     expect(page.chunks).toEqual(expect.any(Array));
     let finalText = "";
     page.chunks.forEach(chunk => {
