@@ -11,6 +11,8 @@ class paths:
     analyzed = data / 'analyzed'
     gruntwork = data / 'gruntwork'
 
+    figures = top_level / 'reports' / 'figures'
+
     cache = top_level / 'cache'
     models = top_level / 'models'
     scripts = top_level / 'scripts'
