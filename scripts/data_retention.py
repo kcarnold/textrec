@@ -5,7 +5,9 @@ import pandas as pd
 import tqdm
 import glob
 import json
+import datetime
 
+oldest_time = datetime.datetime.now() - datetime.timedelta(days=30 * 6)
 
 all_csvs = subprocess.check_output(['mdfind', '-0', '-name', '.csv']).decode('utf8').split('\0')
 all_csvs.sort()
