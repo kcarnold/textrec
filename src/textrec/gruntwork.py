@@ -66,6 +66,15 @@ def get_automated_analysis(datum):
     datum['num_adj'] = automated_analyses.count_adj(text)
     datum['logprob_conditional'] = automated_analyses.eval_logprobs_conditional(datum['stimulus'], text)
     datum['logprob_unconditional'] = automated_analyses.eval_logprobs_unconditional(text)
+    if datum['condition'] == 'norecs':
+        taps_to_type = len(text)
+    elif datum['condition'] == 'general':
+        taps_to_type = len(automated_analyses.taps_to_type(None, text))
+    elif datum['condition'] == 'specific':
+        taps_to_type = len(automated_analyses.taps_to_type(datum['stimulus'], text))
+    else:
+        assert False, f'unknown condition {datum["condition"]}'
+    datum['ideal_num_taps_corrected'] = taps_to_type
 
 def main(batch):
     trial_level_data = pd.read_csv(paths.analyzed / f'trial_{batch}.csv')

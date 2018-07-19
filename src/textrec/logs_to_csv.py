@@ -1,6 +1,6 @@
 import pandas as pd
 from .paths import paths
-from . import analysis_util
+from . import analysis_util, automated_analyses
 from collections import Counter
 import toolz
 
@@ -81,6 +81,9 @@ columns = {
         'delay_before_start': float,
         'seconds_spent_typing': float,
         'taps_per_second': float,
+
+        'ideal_num_taps_orig': int,
+        'efficiency_orig': float,
     }
 }
 
@@ -190,6 +193,17 @@ def get_trial_data(participants):
             data['num_recs_full_gated'] = len(recs_at_word_starts) - len(visible_recs_at_word_starts)
             data['rec_use_full_frac'] = action_counts['num_tapSugg_full'] / data['num_recs_full_seen'] if data['num_recs_full_seen'] else None
             data.update(compute_speeds(page))
+
+            if data['condition'] == 'norecs':
+                taps_to_type = len(text)
+            elif data['condition'] == 'general':
+                taps_to_type = len(automated_analyses.taps_to_type(None, text))
+            elif data['condition'] == 'specific':
+                taps_to_type = len(automated_analyses.taps_to_type(data['stimulus'], text))
+            else:
+                assert False, f'unknown condition {data["condition"]}'
+            data['ideal_num_taps_orig'] = taps_to_type
+            data['efficiency_orig'] = taps_to_type / data['num_taps']
 
             results.append(data)
 
