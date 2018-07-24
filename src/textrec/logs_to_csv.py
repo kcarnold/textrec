@@ -200,6 +200,10 @@ def get_trial_data(participants):
                 taps_to_type = len(automated_analyses.taps_to_type(None, text))
             elif data['condition'] == 'specific':
                 taps_to_type = len(automated_analyses.taps_to_type(data['stimulus'], text))
+            elif data['condition'] == 'gated':
+                taps_to_type = len(automated_analyses.taps_to_type(None, text, threshold=-0.989417552947998))
+            elif data['condition'] == 'always':
+                taps_to_type = len(automated_analyses.taps_to_type(None, text))
             else:
                 assert False, f'unknown condition {data["condition"]}'
             data['ideal_num_taps_orig'] = taps_to_type

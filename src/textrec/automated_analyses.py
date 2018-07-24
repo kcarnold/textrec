@@ -27,7 +27,7 @@ def eval_logprobs_unconditional(text):
     return np.mean(logprobs)
 
 @mem.cache
-def taps_to_type(stimulus, txt):
+def taps_to_type(stimulus, txt, threshold=None):
     if stimulus is None:
         def rec_gen(context, prefix=None):
             return onmt_model_2.get_recs('coco_lm', '.', context, prefix=prefix)
@@ -52,6 +52,10 @@ def taps_to_type(stimulus, txt):
 #         print(repr(prefix), repr(cur_word), repr(cur_desired_word))
         recs = rec_gen(onmt_model_2.tokenize(prefix), prefix=cur_word)
         words = [word for word, rec in recs]
+        if threshold is not None:
+            show_recs = max(prob for word, prob in recs if prob is not None) > threshold
+            if not show_recs:
+                words = []
         # print(prefix, words)
         if cur_desired_word in words:
             actions.append(dict(type='rec', which=words.index(cur_desired_word), word=cur_desired_word))
