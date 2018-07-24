@@ -99,6 +99,12 @@ data/analyzed/trial_spec1.csv: src/textrec/logs_to_csv.py
 data/analyzed/trial_withmanual_spec1.csv: src/textrec/gruntwork.py data/analyzed/trial_spec1.csv
 	python -m textrec.gruntwork spec1
 
+data/analyzed/trial_gc1.csv: src/textrec/logs_to_csv.py
+	python -m textrec.logs_to_csv gc1
+
+data/analyzed/trial_withmanual_gc1.csv: src/textrec/gruntwork.py data/analyzed/trial_gc1.csv
+	python -m textrec.gruntwork gc1
+
 
 
 #################################################################################
