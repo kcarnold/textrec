@@ -75,6 +75,7 @@ def get_automated_analysis(datum):
     else:
         assert False, f'unknown condition {datum["condition"]}'
     datum['ideal_num_taps_corrected'] = taps_to_type
+    return datum
 
 def main(batch):
     trial_level_data = pd.read_csv(paths.analyzed / f'trial_{batch}.csv')
@@ -86,7 +87,7 @@ def main(batch):
         print(f"Open {corrections_todo_path} in Excel, Copy to Word -> correct all typos and obvious misspellings.")
         print(f"Copy the result back to Excel, save the result as {paths.gruntwork / 'correction_batch_N.csv'}, IN UTF-8")
     else:
-        trial_level_data.apply(get_automated_analysis, axis=1)
+        trial_level_data = trial_level_data.apply(get_automated_analysis, axis=1)
 
 
     trial_level_data.to_csv(paths.analyzed / f'trial_withmanual_{batch}.csv', index=False)
