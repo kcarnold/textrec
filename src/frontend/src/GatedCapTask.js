@@ -77,20 +77,6 @@ const namedConditions = {
     hideRecs: true,
   },
 
-  lowConfidence: {
-    requestFlags: {
-      threshold: -0.45656539, // From Gating notebook
-    },
-    modelSeesStimulus: true,
-  },
-
-  highConfidence: {
-    requestFlags: {
-      threshold: -2.12771965,
-    },
-    modelSeesStimulus: true,
-  },
-
   gated: {
     requestFlags: {
       threshold: -0.989417552947998, // From `scripts/compute_gating_threshold.py`
