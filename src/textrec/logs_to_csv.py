@@ -63,7 +63,8 @@ columns = {
         'idx_in_block': int,
         'stimulus': str,
         'text': str,
-        'text_len': int,
+        'num_chars': int,
+        'num_words': int,
 
         # Process
         'num_tapBackspace': Count,
@@ -178,7 +179,8 @@ def get_trial_data(participants):
                 condition=page['condition'],
                 text=text,
                 stimulus=stimulus,
-                text_len=len(text),
+                num_chars=len(text),
+                num_words=len(text.split())
             )
 
             action_counts = count_actions(page['actions'])
