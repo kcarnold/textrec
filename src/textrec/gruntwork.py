@@ -66,15 +66,9 @@ def get_automated_analysis(datum):
     datum['num_adj'] = automated_analyses.count_adj(text)
     datum['logprob_conditional'] = automated_analyses.eval_logprobs_conditional(datum['stimulus'], text)
     datum['logprob_unconditional'] = automated_analyses.eval_logprobs_unconditional(text)
-    if datum['condition'] == 'norecs':
-        taps_to_type = len(text)
-    elif datum['condition'] == 'general':
-        taps_to_type = len(automated_analyses.taps_to_type(None, text))
-    elif datum['condition'] == 'specific':
-        taps_to_type = len(automated_analyses.taps_to_type(datum['stimulus'], text))
-    else:
-        assert False, f'unknown condition {datum["condition"]}'
-    datum['ideal_num_taps_corrected'] = taps_to_type
+    datum.update(automated_analyses.all_taps_to_type(datum['stimulus'], text, prefix="corrected_"))
+    datum['corrected_tapstotype_cond'] = datum[f'corrected_tapstotype_{datum["condition"]}']
+    datum['corrected_efficiency'] = datum['corrected_tapstotype_cond'] / datum['num_taps']
     return datum
 
 def main(batch):

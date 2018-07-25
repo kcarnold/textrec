@@ -82,10 +82,13 @@ columns = {
         'seconds_spent_typing': float,
         'taps_per_second': float,
 
-        'ideal_num_taps_orig': int,
-        'efficiency_orig': float,
+        'orig_efficiency': float,
     }
 }
+
+for _condition in 'general specific norecs always gated cond'.split():
+    columns['trial'][f'orig_tapstotype_{_condition}'] = int
+del _condition
 
 def coerce_columns(df, column_types):
     result = df[list(column_types.keys())]
@@ -194,20 +197,9 @@ def get_trial_data(participants):
             data['rec_use_full_frac'] = action_counts['num_tapSugg_full'] / data['num_recs_full_seen'] if data['num_recs_full_seen'] else None
             data.update(compute_speeds(page))
 
-            if data['condition'] == 'norecs':
-                taps_to_type = len(text)
-            elif data['condition'] == 'general':
-                taps_to_type = len(automated_analyses.taps_to_type(None, text))
-            elif data['condition'] == 'specific':
-                taps_to_type = len(automated_analyses.taps_to_type(data['stimulus'], text))
-            elif data['condition'] == 'gated':
-                taps_to_type = len(automated_analyses.taps_to_type(None, text, threshold=-0.989417552947998))
-            elif data['condition'] == 'always':
-                taps_to_type = len(automated_analyses.taps_to_type(None, text))
-            else:
-                assert False, f'unknown condition {data["condition"]}'
-            data['ideal_num_taps_orig'] = taps_to_type
-            data['efficiency_orig'] = taps_to_type / data['num_taps']
+            data.update(automated_analyses.all_taps_to_type(data['stimulus'], text, prefix="orig_"))
+            data['orig_tapstotype_cond'] = data[f'orig_tapstotype_{data["condition"]}']
+            data['orig_efficiency'] = data['orig_tapstotype_cond'] / data['num_taps']
 
             results.append(data)
 

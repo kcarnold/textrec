@@ -65,3 +65,14 @@ def taps_to_type(stimulus, txt, threshold=None):
             idx += 1
         # print(actions[-1])
     return actions
+
+
+def all_taps_to_type(stimulus, text, prefix):
+    res = dict(
+        norecs=len(text),
+        general=len(taps_to_type(None, text)),
+        specific=len(taps_to_type(stimulus, text)),
+        gated=len(taps_to_type(None, text, threshold=-0.989417552947998)),
+        always=len(taps_to_type(None, text)),
+    )
+    return {f'{prefix}tapstotype_{k}': v for k, v in res.items()}
