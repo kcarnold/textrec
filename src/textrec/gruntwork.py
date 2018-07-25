@@ -23,9 +23,11 @@ def get_corrected_text(trial_level_data):
         assert correction_results.columns.tolist() == ['text', 'corrected_text']
         correction_results['final_text_for_correction'] = correction_results['text'].str.replace(re.compile(r'\s+'), ' ')
         correction_results['corrected_text'] = correction_results.corrected_text.apply(lambda s: s.replace('\u2019', "'").lower())
+        # The following merge may not be one-to-one because different people may have typed the same description.
+        # However, we merge "left" to ensure that each trial retains its unique row.
         trial_level_data = pd.merge(
             trial_level_data, correction_results.drop(['text'], axis=1),
-            on='final_text_for_correction', how='left', validate='1:1')
+            on='final_text_for_correction', how='left')
     else:
         trial_level_data['corrected_text'] = None
 
@@ -66,7 +68,8 @@ def get_automated_analysis(datum):
     datum['num_adj'] = automated_analyses.count_adj(text)
     datum['logprob_conditional'] = automated_analyses.eval_logprobs_conditional(datum['stimulus'], text)
     datum['logprob_unconditional'] = automated_analyses.eval_logprobs_unconditional(text)
-    datum.update(automated_analyses.all_taps_to_type(datum['stimulus'], text, prefix="corrected_"))
+    for k, v in automated_analyses.all_taps_to_type(datum['stimulus'], text, prefix="corrected_").items():
+        datum[k] = v
     datum['corrected_tapstotype_cond'] = datum[f'corrected_tapstotype_{datum["condition"]}']
     datum['corrected_efficiency'] = datum['corrected_tapstotype_cond'] / datum['num_taps']
     return datum
