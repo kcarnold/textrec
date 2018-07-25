@@ -18,7 +18,7 @@ columns = {
         'participant': str,
         'age': float,
         'english_proficiency': str,
-        'gender': str,
+        'gender': ColType(str, lower=True),
         'helpfulRank-accurate-least-condition': str,
         'helpfulRank-accurate-least-idx': int,
         'helpfulRank-accurate-most-condition': str,
@@ -101,6 +101,9 @@ def coerce_columns(df, column_types):
         if 'fill' in typ.flags:
             result[column_name] = result[column_name].fillna(typ.flags['fill'])
         result[column_name] = result[column_name].astype(typ.type)
+        if 'lower' in typ.flags:
+            assert typ.type is str
+            result[column_name] = result[column_name].str.lower()
     return result
 
 
