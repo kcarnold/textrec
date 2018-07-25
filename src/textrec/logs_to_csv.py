@@ -37,6 +37,7 @@ columns = {
         'use_predictive': str,
         'verbalized_during': str,
         'condition_order': str,
+        'num_trials_where_recs_used': int,
     },
     'block': {
         'participant': str,
@@ -362,10 +363,23 @@ def analyze_all(participants, traits='NFC Extraversion'):
     # Get survey data
     _block_level, _experiment_level = get_survey_data(participants)
     result = decode_experiment_level(_experiment_level, traits)
+
+    # Pull in all data
     result['experiment_level'] = pd.merge(
         result['experiment_level'].reset_index(),
         condition_orders,
         on='participant', how='left', validate='1:1')
+
+    result['trial_level'] = coerce_columns(pd.DataFrame(trial_data), columns['trial'])
+
+    result['experiment_level'] = pd.merge(
+        result['experiment_level'],
+        (
+            result['trial_level'].groupby('participant').used_any_suggs.sum()
+            .to_frame('num_trials_where_recs_used').reset_index()),
+        on='participant',
+        validate='1:1')
+
     result['experiment_level'] = coerce_columns(
         result['experiment_level'],
         expected_experiment_columns)
@@ -382,7 +396,7 @@ def analyze_all(participants, traits='NFC Extraversion'):
 
     result['trial_level'] = pd.merge(
         result['block_level'],
-        coerce_columns(pd.DataFrame(trial_data), columns['trial']),
+        result['trial_level'],
         on=('participant', 'block', 'condition'),
         suffixes=('_block', '_trial'),
         validate='1:m')
