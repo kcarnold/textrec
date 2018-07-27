@@ -68,11 +68,15 @@ def taps_to_type(stimulus, txt, threshold=None):
 
 
 def all_taps_to_type(stimulus, text, prefix):
-    res = dict(
-        norecs=len(text),
-        general=len(taps_to_type(None, text)),
-        specific=len(taps_to_type(stimulus, text)),
-        gated=len(taps_to_type(None, text, threshold=-0.989417552947998)),
-        always=len(taps_to_type(None, text)),
+    taps_by_cond = dict(
+        norecs=[dict(type='key', key=c) for c in text],
+        general=taps_to_type(None, text),
+        specific=taps_to_type(stimulus, text),
+        gated=taps_to_type(None, text, threshold=-0.989417552947998),
+        always=taps_to_type(None, text),
     )
-    return {f'{prefix}tapstotype_{k}': v for k, v in res.items()}
+    res = {}
+    for condition, taps in taps_by_cond.items():
+        res[f'{prefix}tapstotype_{condition}'] = len(taps)
+        res[f'{prefix}idealrecuse_{condition}'] = len([action for action in taps if action['type'] == 'rec'])
+    return res

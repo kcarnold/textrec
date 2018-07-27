@@ -90,6 +90,7 @@ columns = {
 
 for _condition in 'general specific norecs always gated cond'.split():
     columns['trial'][f'orig_tapstotype_{_condition}'] = int
+    columns['trial'][f'orig_idealrecuse_{_condition}'] = int
 del _condition
 
 def coerce_columns(df, column_types):
@@ -205,6 +206,7 @@ def get_trial_data(participants):
 
             data.update(automated_analyses.all_taps_to_type(data['stimulus'], text, prefix="orig_"))
             data['orig_tapstotype_cond'] = data[f'orig_tapstotype_{data["condition"]}']
+            data['orig_idealrecuse_cond'] = data[f'orig_idealrecuse_{data["condition"]}']
             data['orig_efficiency'] = data['orig_tapstotype_cond'] / data['num_taps']
 
             results.append(data)
