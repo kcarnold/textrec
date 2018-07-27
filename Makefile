@@ -102,7 +102,7 @@ data/analyzed/trial_withmanual_spec1.csv: src/textrec/gruntwork.py data/analyzed
 data/analyzed/trial_gc1.csv: src/textrec/logs_to_csv.py
 	python -m textrec.logs_to_csv gc1
 
-data/analyzed/trial_withmanual_gc1.csv: src/textrec/gruntwork.py data/analyzed/trial_gc1.csv
+data/analyzed/trial_withmanual_gc1.csv: src/textrec/gruntwork.py data/analyzed/trial_gc1.csv data/gruntwork/corrections_batch*.csv
 	python -m textrec.gruntwork gc1
 
 
