@@ -38,6 +38,7 @@ columns = {
         'verbalized_during': str,
         'condition_order': str,
         'num_trials_where_recs_used': int,
+        'rec_use_group': str,
     },
     'block': {
         'participant': str,
@@ -381,6 +382,10 @@ def analyze_all(participants, traits='NFC Extraversion'):
             .to_frame('num_trials_where_recs_used').reset_index()),
         on='participant',
         validate='1:1')
+
+    result['experiment_level']['rec_use_group'] = (
+        result['experiment_level']['num_trials_where_recs_used'] >= 7
+    ).map({True: 'habitual', False: 'occasional'})
 
     result['experiment_level'] = coerce_columns(
         result['experiment_level'],
