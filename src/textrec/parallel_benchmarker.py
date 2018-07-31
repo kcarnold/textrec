@@ -5,6 +5,7 @@ import datetime
 import glob
 import zlib
 import json
+import random
 
 from tornado import websocket, ioloop, queues
 
@@ -14,18 +15,19 @@ requests = [
     line['request'] for line in lines
     if line['type'] == 'rpc' and line.get('pyTimestamp', 0) > oldest_timestamp]
 requests.sort(key=lambda x: x['timestamp'])
+random.Random(0).shuffle(requests)
     # (
     # x['rpc']['request_id'],
     # x['rpc']['sofar'],
     # ''.join([ent['letter'] for ent in x['rpc']['cur_word']])))
 print(len(requests), 'requests')
-requests = requests[:1000][-10:]
+requests = requests[:1000]#[-10:]
 
 with open(f'requests', 'w') as f:
     f.write('\n'.join(json.dumps(request) for request in requests))
 
 ws_url = "ws://localhost:5000/ws"
-concurrency = 4
+concurrency = 10
 
 class ZWSConnection:
     def __init__(self):
