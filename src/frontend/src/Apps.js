@@ -5,9 +5,9 @@ function getAppInt(config) {
   // if (config === "sum") {
   //   return require("./SumTask");
   // }
-  // if (config === "cap") {
-  //   return require("./CapTask");
-  // }
+  if (config === "cap") {
+    return require("./CapTask");
+  }
   if (config === "gcap") {
     return require("./GatedCapTask");
   }

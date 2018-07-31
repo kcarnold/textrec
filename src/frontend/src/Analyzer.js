@@ -1,8 +1,5 @@
 import _ from "lodash";
 
-const blankRec = { words: [] };
-const blankRecs = _.range(3).map(() => blankRec);
-
 function getCurCondition(state) {
   return state.conditionName || state.experimentState.flags.condition;
 }
@@ -11,7 +8,6 @@ export function processLogGivenState(state, log) {
   let { participant_id } = log[0];
   let byExpPage = {};
   let pageSeq = [];
-  let requestsByTimestamp = {};
 
   function getPageData() {
     let page = state.curExperiment;
@@ -31,51 +27,23 @@ export function processLogGivenState(state, log) {
     return byExpPage[page];
   }
 
-  let lastScreenNum = null;
-  let tmpSugRequests = null;
-  let lastDisplayedSuggs = null;
+  let lastReply = null;
   let finalData = null;
 
   log.forEach((entry, logIdx) => {
-    // We need to track context sequence numbers instead of curText because
-    // autospacing after punctuation seems to increment contextSequenceNum
-    // without changing curText.
     let lastContextSeqNum = (state.experimentState || {}).contextSequenceNum;
     let lastText = (state.experimentState || {}).curText;
     let lastSuggestionContext = (state.experimentState || {}).suggestionContext;
     let lastVisibleSuggestions = (state.experimentState || {}).visibleSuggestions;
 
     // Track requests
-    if (entry.kind === "meta" && entry.type === "rpc") {
-      let msg = _.clone(entry.request.rpc);
-      let timestamp = entry.request.timestamp;
-      let requestCurText =
-        msg.sofar + msg.cur_word.map(ent => ent.letter).join("");
-      requestsByTimestamp[timestamp] = { request: msg, response: null };
-      if (tmpSugRequests[msg.request_id]) {
-        console.assert(
-          tmpSugRequests[msg.request_id] === requestCurText,
-          `Mismatch request curText for ${participant_id}-${timestamp}}, "${
-            tmpSugRequests[msg.request_id]
-          }" VS "${requestCurText}"`
-        );
-        // console.log("Ignoring duplicate request", timestamp);
-        requestsByTimestamp[timestamp].dupe = true;
-        return;
-      } else {
-        tmpSugRequests[msg.request_id] = requestCurText;
-      }
-    } else if (entry.type === "backendReply") {
-      let msg = { ...entry.msg, responseTimestamp: entry.jsTimestamp };
-      console.assert(requestsByTimestamp[msg.timestamp],
-        `No request for timestamp ${msg.timestamp} (have ${Object.keys(requestsByTimestamp)})`);
-      requestsByTimestamp[msg.timestamp].response = msg;
+    if (entry.type === "backendReply") {
+      lastReply = { msg: _.clone(entry.msg), timestamp: entry.jsTimestamp };
     }
 
     /** STATE UPDATE **/
 
     if (entry.kind !== "meta") {
-      // if (entry.type !== 'backendReply' || isValidSugUpdate)
       let sideEffects = state.handleEvent(entry);
       if (sideEffects) {
         sideEffects.forEach(effect => {
@@ -85,6 +53,7 @@ export function processLogGivenState(state, log) {
         });
       }
 
+      // Validate the log parsing by checking that the final data matches what was logged.
       if (entry.type === 'finalData') {
         let loggedFinalData = JSON.parse(JSON.stringify(entry.finalData));
         if (_.isEqual(loggedFinalData.controlledInputs, {})) {
@@ -100,11 +69,6 @@ export function processLogGivenState(state, log) {
           console.assert(false, "finalData mismatch!");
         }
       }
-    }
-
-    if (state.screenNum !== lastScreenNum) {
-      tmpSugRequests = {};
-      lastScreenNum = state.screenNum;
     }
 
     let expState = state.experimentState;
@@ -184,42 +148,50 @@ export function processLogGivenState(state, log) {
       });
     }
 
+    // Figure out what suggestions are currently being displayed.
     let curVisibleSuggestions = expState.visibleSuggestions;
+    let hasRecs = curVisibleSuggestions.predictions.map(rec => rec.words.join("")).join("") !== "";
+    if (expState.lastSuggestionsFromServer.show === false) {
+      console.assert(!hasRecs);
+    }
+    if (expState.flags.hideRecs) {
+      hasRecs = false;
+    }
+    if (!hasRecs) {
+      curVisibleSuggestions = null;
+    }
+
+    // Track all suggestions that got displayed for each state of the text (contextSequenceNum)
+    // For simplicity, only account for the _last_ suggestion state displayed (the recommendations could change without
+    // a change in the text if, for example, the promise mechanism was used.)
+
     if (expState.contextSequenceNum !== lastContextSeqNum) {
+      // Log the action that was taken after the last suggestion.
       if (pageData.displayedSuggs[lastContextSeqNum]) {
         pageData.displayedSuggs[lastContextSeqNum].action = entry;
       }
       lastContextSeqNum = expState.contextSequenceNum;
-    } else if (entry.type === "backendReply") {
-      let hasRecs = !_.isEqual(curVisibleSuggestions.predictions, blankRecs);
-      if (expState.lastSuggestionsFromServer.show === false) {
-        console.assert(!hasRecs);
-      }
-      if (expState.flags.hideRecs) {
-        hasRecs = false;
-      }
-      let { request, response } = requestsByTimestamp[entry.msg.timestamp];
+
+      // Record the current state. This will get overridden by new suggestions as they are displayed.
+      let curSugRequest = expState.getSuggestionRequest().rpc; // this should be side-effect-free!
       pageData.displayedSuggs[expState.contextSequenceNum] = {
-        request_id: request.request_id,
-        sofar: request.sofar,
-        cur_word: request.cur_word,
-        flags: request.flags,
-        timestamp: request.timestamp,
+        contextTimestamp: entry.jsTimestamp,
+        sofar: curSugRequest.sofar,
+        cur_word: curSugRequest.cur_word,
+        flags: curSugRequest.flags,
         context: expState.curText,
-        recs: hasRecs ? curVisibleSuggestions : null,
-        latency: response.responseTimestamp - request.timestamp,
-        action: null,
+        recs: curVisibleSuggestions,
+        recsTimestamp: entry.jsTimestamp,
+        latency: 0,
+        action: null
       };
     }
 
-    if (
-      pageData.displayedSuggs[expState.contextSequenceNum] &&
-      !_.isEqual(curVisibleSuggestions, lastDisplayedSuggs)
-    ) {
-      pageData.displayedSuggs[
-        expState.contextSequenceNum
-      ].recs = curVisibleSuggestions;
-      lastDisplayedSuggs = curVisibleSuggestions;
+    let dsugg = pageData.displayedSuggs[expState.contextSequenceNum];
+    dsugg.recs = curVisibleSuggestions;
+    if (lastReply !== null && lastReply.msg.request_id === expState.contextSequenceNum) {
+      dsugg.recsTimestamp = entry.jsTimestamp;
+      dsugg.latency = lastReply.timestamp - dsugg.contextTimestamp;
     }
   });
 
@@ -318,7 +290,7 @@ export async function getOldCode(log) {
 export async function getState(log) {
   let oldCode = await getOldCode(log);
   let loginEvent = log[0];
-  if ('config' in loginEvent) {
+  if ('assignment' in loginEvent) {
     return oldCode.createTaskState(loginEvent);
   } else {
     return oldCode.createTaskState(oldCode.participantId);

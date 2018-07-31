@@ -48,7 +48,6 @@ def mark_completed(participant_id, logdir=paths.logdir):
 
 def get_expected_completions(num_conditions, completion_data, max_age_secs=12 * SECS_PER_HOUR):
     now = time.time()
-    oldest_timestamp = now - max_age_secs
     expected_completions = np.zeros(num_conditions)
     for completion in completion_data:
         assignment = completion['assignment']

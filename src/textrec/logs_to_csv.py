@@ -1,7 +1,7 @@
+import numpy as np
 import pandas as pd
 from .paths import paths
-from . import analysis_util
-from . import automated_analyses
+from . import analysis_util, automated_analyses
 from collections import Counter
 import toolz
 
@@ -19,7 +19,7 @@ columns = {
         'participant': str,
         'age': float,
         'english_proficiency': str,
-        'gender': str,
+        'gender': ColType(str, lower=True),
         'helpfulRank-accurate-least-condition': str,
         'helpfulRank-accurate-least-idx': int,
         'helpfulRank-accurate-most-condition': str,
@@ -35,20 +35,23 @@ columns = {
         'other': str,
         'techDiff': str,
         'total_time': float,
-        'use_predictive': bool,
-        'verbalized_during': bool,
+        'use_predictive': str,
+        'verbalized_during': str,
+        'condition_order': str,
+        'num_trials_where_recs_used': int,
+        'rec_use_group': str,
     },
     'block': {
         'participant': str,
         'block': int,
         'condition': str,
-        'mental': int,
-        'physical': int,
-        'temporal': int,
-        'performance': int,
-        'effort': int,
-        'frustration': int,
-        'TLX_sum': int,
+        'mental': float,
+        'physical': float,
+        'temporal': float,
+        'performance': float,
+        'effort': float,
+        'frustration': float,
+        'TLX_sum': float,
         'sys-accurate': int,
         'sys-fast': int,
         'sys-specific': int,
@@ -63,7 +66,8 @@ columns = {
         'idx_in_block': int,
         'stimulus': str,
         'text': str,
-        'text_len': int,
+        'num_chars': int,
+        'num_words': int,
 
         # Process
         'num_tapBackspace': Count,
@@ -82,12 +86,17 @@ columns = {
         'seconds_spent_typing': float,
         'taps_per_second': float,
 
-        # Automated outcome analysis
-        'logprob_conditional': float,
-        'logprob_unconditional': float,
-        'num_adj': int,
+        'extraneous_inputs': float,
+        'extraneous_inputs_per_input': float,
+        'extraneous_inputs_per_char': float,
+        'rec_appropriation_rate': float,
     }
 }
+
+for _condition in 'general specific norecs always gated cond'.split():
+    columns['trial'][f'orig_tapstotype_{_condition}'] = int
+    columns['trial'][f'orig_idealrecuse_{_condition}'] = int
+del _condition
 
 def coerce_columns(df, column_types):
     result = df[list(column_types.keys())]
@@ -99,6 +108,9 @@ def coerce_columns(df, column_types):
         if 'fill' in typ.flags:
             result[column_name] = result[column_name].fillna(typ.flags['fill'])
         result[column_name] = result[column_name].astype(typ.type)
+        if 'lower' in typ.flags:
+            assert typ.type is str
+            result[column_name] = result[column_name].str.lower()
     return result
 
 
@@ -114,45 +126,6 @@ def get_participants_by_batch():
             assert len(participants) == len(set(participants))
             participants_by_batch[batch_name] = participants
     return participants_by_batch
-
-
-def summarize(participants, incomplete_ok=False):
-    for participant_id in participants:
-        print()
-        print(participant_id)
-        analyzed = analysis_util.get_log_analysis(participant_id)
-
-        if not incomplete_ok:
-            assert analyzed['isComplete'], f'INCOMPLETE! {participant_id}'
-
-        controlledInputsDict = dict(analyzed['allControlledInputs'])
-        if controlledInputsDict.get('shouldExclude', "No") == "Yes":
-            print("****** EXCLUDE! **********")
-            assert False
-
-        for name, page in analyzed['byExpPage'].items():
-            print(':'.join((name, page['condition'], page['finalText'])))
-
-        print()
-
-        for k, v in analyzed['allControlledInputs']:
-            if not isinstance(v, str):
-                continue
-            print(f'{k}: {v}')
-
-        screen_times = [
-            (s1['name'], (s2['timestamp'] - s1['timestamp']) / 1000)
-            for s1, s2 in toolz.sliding_window(2, analyzed['screenTimes'])
-            ]
-        c = Counter()
-        for name, secs in screen_times:
-            c[name] += secs
-
-        total_time = (
-            analyzed['screenTimes'][-1]['timestamp']
-             - analyzed['screenTimes'][0]['timestamp']) / 1000 / 60
-        print(f"\nTotal time: {total_time:.1f}m")
-        print('\n'.join('{}: {:.1f}'.format(name, secs) for name, secs in c.most_common()))
 
 
 def count_actions(actions):
@@ -216,10 +189,8 @@ def get_trial_data(participants):
                 condition=page['condition'],
                 text=text,
                 stimulus=stimulus,
-                text_len=len(text),
-                num_adj=automated_analyses.count_adj(text),
-                logprob_conditional=automated_analyses.eval_logprobs_conditional(stimulus, text),
-                logprob_unconditional=automated_analyses.eval_logprobs_unconditional(text),
+                num_chars=len(text),
+                num_words=len(text.split())
             )
 
             action_counts = count_actions(page['actions'])
@@ -228,7 +199,7 @@ def get_trial_data(participants):
                 rec
                 for rec in page['displayedSuggs']
                 if rec is not None
-                and len(rec['cur_word']) > 0]
+                and len(rec['cur_word']) == 0]
             visible_recs_at_word_starts = [
                 rec
                 for rec in recs_at_word_starts
@@ -237,6 +208,14 @@ def get_trial_data(participants):
             data['num_recs_full_gated'] = len(recs_at_word_starts) - len(visible_recs_at_word_starts)
             data['rec_use_full_frac'] = action_counts['num_tapSugg_full'] / data['num_recs_full_seen'] if data['num_recs_full_seen'] else None
             data.update(compute_speeds(page))
+
+            data.update(automated_analyses.all_taps_to_type(data['stimulus'], text, prefix="orig_"))
+            data['orig_tapstotype_cond'] = data[f'orig_tapstotype_{data["condition"]}']
+            data['orig_idealrecuse_cond'] = data[f'orig_idealrecuse_{data["condition"]}']
+            data['extraneous_inputs'] = data['num_taps'] - data['orig_tapstotype_cond']
+            data['extraneous_inputs_per_input'] = (data['num_taps'] - data['orig_tapstotype_cond']) / data['num_taps']
+            data['extraneous_inputs_per_char'] = (data['num_taps'] - data['orig_tapstotype_cond']) / data['num_chars']
+            data['rec_appropriation_rate'] = (data['num_tapSugg_any'] / data['orig_idealrecuse_cond']) if data['orig_idealrecuse_cond'] else np.nan
 
             results.append(data)
 
@@ -262,7 +241,6 @@ def get_survey_data(participants):
              - analyzed['screenTimes'][0]['timestamp']) / 1000 / 60
         experiment_level.append((participant_id, 'total_time', total_time))
 
-        survey_data = dict(analyzed['allControlledInputs'])
         conditions = [analyzed['byExpPage'][page]['condition'] for page in analyzed['pageSeq']]
         assert len(conditions) % 3 == 0
         conditions = conditions[::len(conditions) // 3]
@@ -277,7 +255,7 @@ def get_survey_data(participants):
                 block, rest = rest.split('-', 1)
                 block = int(block)
                 if ' ' in rest:
-                    # Traits, TODO
+                    # Probably a trait.
                     experiment_level.append((participant_id, rest, v))
                 else:
                     condition = conditions[block]
@@ -299,7 +277,7 @@ def get_survey_data(participants):
         pd.DataFrame(experiment_level, columns='participant name value'.split()))
 
 
-def decode_experiment_level(experiment_level):
+def decode_experiment_level(experiment_level, traits):
     # Unfortunately one of the traits appears twice and complicates this.
     dups = experiment_level.duplicated(['participant', 'name'], keep=False)
     experiment_level = experiment_level[~dups].copy().append(
@@ -328,20 +306,27 @@ def decode_experiment_level(experiment_level):
     import json
     with open(paths.data / 'trait_data.json') as f:
         trait_data = json.load(f)
+        trait_items_by_trait = toolz.groupby('trait', trait_data)
 
-    for trait, items in toolz.groupby('trait', trait_data).items():
-        experiment_level_pivot[trait] = sum(
-            (-1 if item['is_negated'] else 1) * pd.to_numeric(experiment_level_pivot[item['item']])
-            for item in items
-        ) / (NUM_LIKERT_DEGREES_FOR_TRAITS * len(items))
+    all_trait_items = []
+    for trait in traits:
+        items = trait_items_by_trait[trait]
+        all_trait_items.extend([item['item'] for item in items])
+        item_data = []
+        for item in items:
+            this_col = pd.to_numeric(experiment_level_pivot[item['item']]) / NUM_LIKERT_DEGREES_FOR_TRAITS
+            if item['is_negated']:
+                this_col = 1 - this_col
+            item_data.append(this_col)
+        experiment_level_pivot[trait] = sum(item_data) / len(item_data)
 
 
-    experiment_level_pivot = experiment_level_pivot.drop([datum['item'] for datum in trait_data], axis=1)
+    experiment_level_pivot = experiment_level_pivot.drop(all_trait_items, axis=1)
 
     return dict(
         experiment_level=experiment_level_pivot,
-        helpful_ranks_by_condition=helpful_ranks_by_condition,
-        helpful_ranks_by_idx=helpful_ranks_by_idx)
+        helpful_ranks_by_condition=helpful_ranks_by_condition.reset_index(),
+        helpful_ranks_by_idx=helpful_ranks_by_idx.reset_index())
 
 
 def decode_block_level(block_level):
@@ -379,16 +364,38 @@ def analyze_all(participants, traits='NFC Extraversion'):
         if trial['condition'] == 'norecs':
             assert not trial['used_any_suggs']
 
+    condition_orders = pd.DataFrame(
+        [(k, ','.join(list(toolz.pluck('condition', v))[::4])) for k,v in toolz.groupby('participant', trial_data).items()],
+        columns='participant condition_order'.split())
     print("Randomization counts")
-    print(
-        pd.DataFrame([(k, ','.join(list(toolz.pluck('condition', v))[::4])) for k,v in toolz.groupby('participant', trial_data).items()],
-             columns='participant conditions'.split()).conditions.value_counts())
+    print(condition_orders.condition_order.value_counts())
 
     # Get survey data
     _block_level, _experiment_level = get_survey_data(participants)
-    result = decode_experiment_level(_experiment_level)
-    result['experiment_level'] = coerce_columns(
+    result = decode_experiment_level(_experiment_level, traits)
+
+    # Pull in all data
+    result['experiment_level'] = pd.merge(
         result['experiment_level'].reset_index(),
+        condition_orders,
+        on='participant', how='left', validate='1:1')
+
+    result['trial_level'] = coerce_columns(pd.DataFrame(trial_data), columns['trial'])
+
+    result['experiment_level'] = pd.merge(
+        result['experiment_level'],
+        (
+            result['trial_level'].groupby('participant').used_any_suggs.sum()
+            .to_frame('num_trials_where_recs_used').reset_index()),
+        on='participant',
+        validate='1:1')
+
+    result['experiment_level']['rec_use_group'] = (
+        result['experiment_level']['num_trials_where_recs_used'] >= 7
+    ).map({True: 'habitual', False: 'occasional'})
+
+    result['experiment_level'] = coerce_columns(
+        result['experiment_level'],
         expected_experiment_columns)
 
     block_level = decode_block_level(_block_level)
@@ -403,9 +410,30 @@ def analyze_all(participants, traits='NFC Extraversion'):
 
     result['trial_level'] = pd.merge(
         result['block_level'],
-        coerce_columns(pd.DataFrame(trial_data), columns['trial']),
+        result['trial_level'],
         on=('participant', 'block', 'condition'),
         suffixes=('_block', '_trial'),
         validate='1:m')
 
     return result
+
+
+def main(batch):
+    participants = get_participants_by_batch()[batch]
+    traits = {
+        'spec1': 'NFC Extraversion',
+        'gc1': 'NFC Extraversion Openness Trust'
+    }
+    analyses = analyze_all(participants, traits=traits[batch])
+    for name, data in analyses.items():
+        if name.endswith('_level'):
+            name = name[:-len('_level')]
+        data.to_csv(paths.data / 'analyzed' / f'{name}_{batch}.csv', index=False)
+    
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('batch')
+    opts = parser.parse_args()
+    main(opts.batch)

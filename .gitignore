@@ -76,7 +76,8 @@ target/
 .ipynb_checkpoints/
 
 # exclude data from source control by default
-/data/
+/data/**
+!/data/participants.txt
 
 /logs
 /logs-gcp1
@@ -90,3 +91,6 @@ pred.txt
 textrec.sublime-project
 textrec.sublime-workspace
 /unused
+
+src/annotation/comparisons/public/for_pairwise_*.js
+textrec.code-workspace
