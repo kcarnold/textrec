@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from .paths import paths
 from . import analysis_util, automated_analyses
@@ -85,7 +86,10 @@ columns = {
         'seconds_spent_typing': float,
         'taps_per_second': float,
 
-        'orig_efficiency': float,
+        'extraneous_inputs': float,
+        'extraneous_inputs_per_input': float,
+        'extraneous_inputs_per_char': float,
+        'rec_appropriation_rate': float,
     }
 }
 
@@ -208,7 +212,10 @@ def get_trial_data(participants):
             data.update(automated_analyses.all_taps_to_type(data['stimulus'], text, prefix="orig_"))
             data['orig_tapstotype_cond'] = data[f'orig_tapstotype_{data["condition"]}']
             data['orig_idealrecuse_cond'] = data[f'orig_idealrecuse_{data["condition"]}']
-            data['orig_efficiency'] = data['orig_tapstotype_cond'] / data['num_taps']
+            data['extraneous_inputs'] = data['num_taps'] - data['orig_tapstotype_cond']
+            data['extraneous_inputs_per_input'] = (data['num_taps'] - data['orig_tapstotype_cond']) / data['num_taps']
+            data['extraneous_inputs_per_char'] = (data['num_taps'] - data['orig_tapstotype_cond']) / data['num_chars']
+            data['rec_appropriation_rate'] = (data['num_tapSugg_any'] / data['orig_idealrecuse_cond']) if data['orig_idealrecuse_cond'] else np.nan
 
             results.append(data)
 
