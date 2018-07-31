@@ -73,40 +73,33 @@ class ONMTModelWrapper:
         fields = translator.fields
         tgt_vocab = fields["tgt"].vocab
 
-
-        @lru_cache(maxsize=32)
-        def encode(in_text):
-            with codecs.open("tmp.txt", "w", "utf-8") as f:
-                f.write(in_text + "\n")
-
-
-            input_dataset = onmt.io.build_dataset(
-                fields, opt.data_type,
-                "tmp.txt", opt.tgt,
-                src_dir=opt.src_dir,
-                sample_rate=opt.sample_rate,
-                window_size=opt.window_size,
-                window_stride=opt.window_stride,
-                window=opt.window,
-                use_filter_pred=False)
-
-            # Iterating over the single batch... torchtext requirement
-            test_data = onmt.io.OrderedIterator(
-                dataset=input_dataset, device=opt.gpu,
-                batch_size=opt.batch_size, train=False, sort=False,
-                sort_within_batch=True,
-                shuffle=False)
-
-            batch = next(iter(test_data))
-
-            src = onmt.io.make_features(batch, 'src', opt.data_type)
-
+        def encode_from_src(src):
             enc_states, memory_bank = model.encoder(src)
             return dict(
                 enc_states=enc_states,
                 memory_bank=memory_bank,
                 src=src)
 
+        @lru_cache(maxsize=32)
+        def encode_text(in_text):
+            text_preproc = fields['src'].preprocess(in_text)
+            src, src_len = fields['src'].process([text_preproc], device=-1, train=False)
+            src = src.unsqueeze(2) # not sure why
+            return encode_from_src(src)
+
+
+        @lru_cache(maxsize=32)
+        def encode_img(image_idx):
+            if isinstance(image_idx, str):
+                image_idx = int(image_idx)
+            src = Variable(torch.IntTensor([image_idx]), volatile=True)
+            return encode_from_src(src)
+
+        def encode(inp):
+            if model.encoder.__class__.__name__ == 'VecsEncoder':
+                return encode_img(inp)
+            else:
+                return encode_text(inp)
 
         @lru_cache(maxsize=128)
         def get_decoder_state(in_text, tokens_so_far):
