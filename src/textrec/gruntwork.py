@@ -67,8 +67,11 @@ def dump_data_for_pairwise(batch, trial_level_data):
 def get_automated_analysis(datum):
     text = datum['corrected_text']
     datum['num_adj'] = automated_analyses.count_adj(text)
-    datum['logprob_conditional'] = automated_analyses.eval_logprobs_conditional(datum['stimulus'], text)
-    datum['logprob_unconditional'] = automated_analyses.eval_logprobs_unconditional(text)
+    # Note that eval_logprobs_* actually returns the _negative_ logprob.
+    datum['logprob_conditional'] = -automated_analyses.eval_logprobs_conditional(datum['stimulus'], text)
+    datum['perplexity_per_word_knowing_image'] = 2 ** -datum['logprob_conditional']
+    datum['logprob_unconditional'] = -automated_analyses.eval_logprobs_unconditional(text)
+    datum['perplexity_per_word_blind_to_image'] = 2 ** -datum['logprob_unconditional']
     for k, v in automated_analyses.all_taps_to_type(datum['stimulus'], text, prefix="corrected_").items():
         datum[k] = v
     datum['corrected_tapstotype_cond'] = datum[f'corrected_tapstotype_{datum["condition"]}']
