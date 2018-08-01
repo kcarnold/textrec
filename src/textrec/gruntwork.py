@@ -36,6 +36,7 @@ def get_corrected_text(trial_level_data):
         damerau_levenshtein_distance(row.final_text_for_correction, row.corrected_text)
         if isinstance(row.corrected_text, str) else None
         for row in trial_level_data.itertuples()]
+    trial_level_data['uncorrected_errors_per_char'] = trial_level_data['uncorrected_errors'] / trial_level_data['num_chars']
     trial_level_data['all_errors'] = trial_level_data['num_tapBackspace'] + trial_level_data['uncorrected_errors']
     corrections_todo = trial_level_data[trial_level_data.corrected_text.isnull()].final_text_for_correction.dropna().drop_duplicates().to_frame('text')
     corrections_todo['corrected_text'] = None
