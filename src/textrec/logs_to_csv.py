@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import scipy.stats
 from .paths import paths
 from . import analysis_util, automated_analyses
 from collections import Counter
@@ -10,9 +11,12 @@ NUM_LIKERT_DEGREES_FOR_TRAITS = 5
 class ColType:
     def __init__(self, type, **flags):
         self.type = type
+        self.__dict__.update(flags)
         self.flags = flags
 
 Count = ColType(int, fill=0)
+
+BoxCox = ColType(float, boxcox=True)
 
 columns = {
     'experiment': {
@@ -79,17 +83,20 @@ columns = {
         'used_any_suggs': bool,
         'num_recs_full_seen': Count,
         'num_recs_full_gated': Count,
-        'rec_use_full_frac': float,
+        'rec_use_full_frac': ColType(float, boxcox=True, bc_shift=1),
 
-        'characters_per_sec': float,
-        'delay_before_start': float,
-        'seconds_spent_typing': float,
-        'taps_per_second': float,
+        'delay_before_start': BoxCox,
+        'seconds_spent_typing': BoxCox,
+        'characters_per_sec': ColType(float, f=lambda datum: datum['num_chars'] / datum['seconds_spent_typing'], boxcox=True),
+        'taps_per_second': ColType(float, f=lambda datum: datum['num_taps'] / datum['seconds_spent_typing'], boxcox=True),
 
-        'extraneous_inputs': float,
-        'extraneous_inputs_per_input': float,
-        'extraneous_inputs_per_char': float,
-        'rec_appropriation_rate': float,
+        'backspaces_per_tap': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: datum['num_tapBackspace'] / datum['num_taps']),
+        'backspaces_per_char': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: datum['num_tapBackspace'] / datum['num_chars']),
+
+        'extraneous_inputs': ColType(float, boxcox=True, bc_shift=10, f=lambda datum: datum['num_taps'] - datum['orig_tapstotype_cond']),
+        'extraneous_inputs_per_input': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: (datum['num_taps'] - datum['orig_tapstotype_cond']) / datum['num_taps']),
+        'extraneous_inputs_per_char': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: (datum['num_taps'] - datum['orig_tapstotype_cond']) / datum['num_chars']),
+        'rec_appropriation_rate': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: (datum['num_tapSugg_any'] / datum['orig_idealrecuse_cond']) if datum['orig_idealrecuse_cond'] else np.nan),
     }
 }
 
@@ -99,19 +106,34 @@ for _condition in 'general specific norecs always gated cond'.split():
 del _condition
 
 def coerce_columns(df, column_types):
-    result = df[list(column_types.keys())]
-    extra_columns = set(df.columns) - set(column_types.keys())
-    assert len(extra_columns) == 0, sorted(extra_columns)
+    result = df.copy()
+    column_order = []
     for column_name, typ in column_types.items():
+        column_order.append(column_name)
         if not isinstance(typ, ColType):
             typ = ColType(typ)
+        if 'f' in typ.flags:
+            result[column_name] = result.apply(typ.flags['f'], axis=1)
         if 'fill' in typ.flags:
             result[column_name] = result[column_name].fillna(typ.flags['fill'])
         result[column_name] = result[column_name].astype(typ.type)
         if 'lower' in typ.flags:
             assert typ.type is str
             result[column_name] = result[column_name].str.lower()
-    return result
+        if 'boxcox' in typ.flags:
+            boxcox_name = f'{column_name}_boxcox'
+            column_order.append(boxcox_name)
+            col_data = result[column_name]
+            if 'bc_shift' in typ.flags:
+                col_data = col_data + typ.flags['bc_shift']
+            try:
+                result[boxcox_name], _ = scipy.stats.boxcox(col_data)
+            except ValueError:
+                print(boxcox_name, np.min(col_data))
+                raise
+    extra_columns = set(result.columns) - set(column_order)
+    assert len(extra_columns) == 0, sorted(extra_columns)
+    return result[column_order]
 
 
 def get_participants_by_batch():
@@ -157,8 +179,6 @@ def compute_speeds(page_data):
         delay_before_start=typing_timestamps[0] - (page_data['firstEventTimestamp'] / 1000),
         num_taps=len(typing_timestamps),
         seconds_spent_typing=seconds_spent_typing,
-        taps_per_second=len(typing_timestamps) / seconds_spent_typing,
-        characters_per_sec=len(page_data['finalText']) / seconds_spent_typing,
     )
 
 
@@ -212,10 +232,6 @@ def get_trial_data(participants):
             data.update(automated_analyses.all_taps_to_type(data['stimulus'], text, prefix="orig_"))
             data['orig_tapstotype_cond'] = data[f'orig_tapstotype_{data["condition"]}']
             data['orig_idealrecuse_cond'] = data[f'orig_idealrecuse_{data["condition"]}']
-            data['extraneous_inputs'] = data['num_taps'] - data['orig_tapstotype_cond']
-            data['extraneous_inputs_per_input'] = (data['num_taps'] - data['orig_tapstotype_cond']) / data['num_taps']
-            data['extraneous_inputs_per_char'] = (data['num_taps'] - data['orig_tapstotype_cond']) / data['num_chars']
-            data['rec_appropriation_rate'] = (data['num_tapSugg_any'] / data['orig_idealrecuse_cond']) if data['orig_idealrecuse_cond'] else np.nan
 
             results.append(data)
 
