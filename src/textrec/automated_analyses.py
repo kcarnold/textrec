@@ -68,15 +68,18 @@ def taps_to_type(stimulus, txt, threshold=None):
 
 
 def all_taps_to_type(stimulus, text, prefix):
+    # taps_to_type is broken wrt word-ending punctuation. Hack around that.
+    text_without_punct = text.replace('.', '').replace(',', '')
+    num_punct = len(text) - len(text_without_punct)
     taps_by_cond = dict(
-        norecs=[dict(type='key', key=c) for c in text],
-        general=taps_to_type(None, text),
-        specific=taps_to_type(stimulus, text),
-        gated=taps_to_type(None, text, threshold=-0.989417552947998),
-        always=taps_to_type(None, text),
+        norecs=[dict(type='key', key=c) for c in text_without_punct],
+        general=taps_to_type(None, text_without_punct),
+        specific=taps_to_type(stimulus, text_without_punct),
+        gated=taps_to_type(None, text_without_punct, threshold=-0.989417552947998),
+        always=taps_to_type(None, text_without_punct),
     )
     res = {}
     for condition, taps in taps_by_cond.items():
-        res[f'{prefix}tapstotype_{condition}'] = len(taps)
+        res[f'{prefix}tapstotype_{condition}'] = len(taps) + num_punct
         res[f'{prefix}idealrecuse_{condition}'] = len([action for action in taps if action['type'] == 'rec'])
     return res
