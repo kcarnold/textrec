@@ -58,11 +58,12 @@ def taps_to_type(stimulus, txt, threshold=None):
                 words = []
         # print(prefix, words)
         if cur_desired_word in words:
-            actions.append(dict(type='rec', which=words.index(cur_desired_word), word=cur_desired_word))
+            actions.append(dict(type='rec', which=words.index(cur_desired_word), word=cur_desired_word, cur_word=cur_word))
             idx = last_space_idx + 1 + len(cur_desired_word) + 1
         else:
-            actions.append(dict(type='key', key=txt[idx]))
+            actions.append(dict(type='key', key=txt[idx], cur_word=cur_word))
             idx += 1
+        actions[-1]['recs_shown'] = len(words) > 0
         # print(actions[-1])
     return actions
 
@@ -82,4 +83,8 @@ def all_taps_to_type(stimulus, text, prefix):
     for condition, taps in taps_by_cond.items():
         res[f'{prefix}tapstotype_{condition}'] = len(taps) + num_punct
         res[f'{prefix}idealrecuse_{condition}'] = len([action for action in taps if action['type'] == 'rec'])
+        if condition != 'norecs':
+            beginning_of_word_actions = [action for action in taps if action['cur_word'] == '']
+            res[f'{prefix}bow_recs_offered_{condition}'] = len([action for action in beginning_of_word_actions if action['recs_shown']])
+            res[f'{prefix}bow_recs_idealuse_{condition}'] = len([action for action in beginning_of_word_actions if action['type'] == 'rec'])
     return res
