@@ -82,9 +82,11 @@ columns = {
         'num_tapSugg_part': Count,
         'num_taps': Count,
         'used_any_suggs': bool,
+        'num_recs_seen': Count,
         'num_recs_full_seen': Count,
         'num_recs_full_gated': Count,
-        'rec_use_full_frac': ColType(float, boxcox=True, bc_shift=1),
+        'rec_use_full_frac': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: divide_zerosafe(datum['num_tapSugg_full'], datum['num_recs_full_seen'])),
+        'rec_use_frac': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: divide_zerosafe(datum['num_tapSugg_any'], datum['num_recs_seen'])),
 
         'delay_before_start': BoxCox,
         'seconds_spent_typing': BoxCox,
@@ -110,6 +112,12 @@ for _condition in 'general specific norecs always gated cond'.split():
         columns['trial'][f'orig_bow_recs_idealuse_{_condition}'] = float
 del _condition
 
+def divide_zerosafe(a, b):
+    if b:
+        return a / b
+    else:
+        return None
+
 def coerce_columns(df, column_types):
     result = df.copy()
     column_order = []
@@ -122,7 +130,7 @@ def coerce_columns(df, column_types):
         if 'fill' in typ.flags:
             result[column_name] = result[column_name].fillna(typ.flags['fill'])
         try:
-        result[column_name] = result[column_name].astype(typ.type)
+            result[column_name] = result[column_name].astype(typ.type)
         except ValueError:
             print(column_name, "Failed to coerce.")
             raise
@@ -138,7 +146,7 @@ def coerce_columns(df, column_types):
             if np.min(col_data) <= 0:
                 print(f"Failed to BoxCox because {boxcox_name} has non-positive minimum {np.min(col_data)}")
             # ... and fail here:
-                result[boxcox_name], _ = scipy.stats.boxcox(col_data)
+            result[boxcox_name], _ = scipy.stats.boxcox(col_data)
     extra_columns = set(result.columns) - set(column_order)
     assert len(extra_columns) == 0, sorted(extra_columns)
     return result[column_order]
@@ -223,18 +231,16 @@ def get_trial_data(participants):
 
             action_counts = count_actions(page['actions'])
             data.update(action_counts)
+            recs = [rec for rec in page['displayedSuggs'] if rec is not None]
+            visible_recs = [rec for rec in recs if rec['recs'] is not None]
+            data['num_recs_seen'] = len(visible_recs)
+
             recs_at_word_starts = [
-                rec
-                for rec in page['displayedSuggs']
-                if rec is not None
-                and len(rec['cur_word']) == 0]
+                rec for rec in recs if len(rec['cur_word']) == 0]
             visible_recs_at_word_starts = [
-                rec
-                for rec in recs_at_word_starts
-                if rec['recs'] is not None]
+                rec for rec in recs_at_word_starts if rec['recs'] is not None]
             data['num_recs_full_seen'] = len(visible_recs_at_word_starts)
             data['num_recs_full_gated'] = len(recs_at_word_starts) - len(visible_recs_at_word_starts)
-            data['rec_use_full_frac'] = action_counts['num_tapSugg_full'] / data['num_recs_full_seen'] if data['num_recs_full_seen'] else None
             data.update(compute_speeds(page))
 
             data.update(automated_analyses.all_taps_to_type(data['stimulus'], text, prefix="orig_"))
