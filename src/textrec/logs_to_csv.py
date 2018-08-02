@@ -104,6 +104,10 @@ columns = {
 for _condition in 'general specific norecs always gated cond'.split():
     columns['trial'][f'orig_tapstotype_{_condition}'] = int
     columns['trial'][f'orig_idealrecuse_{_condition}'] = int
+    if _condition != 'norecs':
+        # These need to be float so that they can be nan for 'cond' when condition is norecs.
+        columns['trial'][f'orig_bow_recs_offered_{_condition}'] = float
+        columns['trial'][f'orig_bow_recs_idealuse_{_condition}'] = float
 del _condition
 
 def coerce_columns(df, column_types):
@@ -234,8 +238,8 @@ def get_trial_data(participants):
             data.update(compute_speeds(page))
 
             data.update(automated_analyses.all_taps_to_type(data['stimulus'], text, prefix="orig_"))
-            data['orig_tapstotype_cond'] = data[f'orig_tapstotype_{data["condition"]}']
-            data['orig_idealrecuse_cond'] = data[f'orig_idealrecuse_{data["condition"]}']
+            for thing in 'tapstotype idealrecuse bow_recs_offered bow_recs_idealuse'.split():
+                data[f'orig_{thing}_cond'] = data.get(f'orig_{thing}_{data["condition"]}')
 
             results.append(data)
 
