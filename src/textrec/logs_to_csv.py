@@ -117,7 +117,11 @@ def coerce_columns(df, column_types):
             result[column_name] = result.apply(typ.flags['f'], axis=1)
         if 'fill' in typ.flags:
             result[column_name] = result[column_name].fillna(typ.flags['fill'])
+        try:
         result[column_name] = result[column_name].astype(typ.type)
+        except ValueError:
+            print(column_name, "Failed to coerce.")
+            raise
         if 'lower' in typ.flags:
             assert typ.type is str
             result[column_name] = result[column_name].str.lower()
@@ -127,11 +131,10 @@ def coerce_columns(df, column_types):
             col_data = result[column_name]
             if 'bc_shift' in typ.flags:
                 col_data = col_data + typ.flags['bc_shift']
-            try:
+            if np.min(col_data) <= 0:
+                print(f"Failed to BoxCox because {boxcox_name} has non-positive minimum {np.min(col_data)}")
+            # ... and fail here:
                 result[boxcox_name], _ = scipy.stats.boxcox(col_data)
-            except ValueError:
-                print(boxcox_name, np.min(col_data))
-                raise
     extra_columns = set(result.columns) - set(column_order)
     assert len(extra_columns) == 0, sorted(extra_columns)
     return result[column_order]
