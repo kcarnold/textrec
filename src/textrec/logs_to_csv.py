@@ -17,6 +17,7 @@ class ColType:
 Count = ColType(int, fill=0)
 
 BoxCox = ColType(float, boxcox=True)
+TraitColumn = ColType(float, boxcox=True)
 
 columns = {
     'experiment': {
@@ -366,7 +367,7 @@ def analyze_all(participants, traits='NFC Extraversion'):
     traits = traits.split()
     expected_experiment_columns = columns['experiment'].copy()
     for trait in traits:
-        expected_experiment_columns[trait] = float
+        expected_experiment_columns[trait] = TraitColumn
 
     trial_data = get_trial_data(participants)
 
