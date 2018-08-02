@@ -99,7 +99,6 @@ columns = {
         'extraneous_inputs': ColType(float, boxcox=True, bc_shift=10, f=lambda datum: datum['num_taps'] - datum['orig_tapstotype_cond']),
         'extraneous_inputs_per_input': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: (datum['num_taps'] - datum['orig_tapstotype_cond']) / datum['num_taps']),
         'extraneous_inputs_per_char': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: (datum['num_taps'] - datum['orig_tapstotype_cond']) / datum['num_chars']),
-        'rec_appropriation_rate': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: (datum['num_tapSugg_any'] / datum['orig_idealrecuse_cond']) if datum['orig_idealrecuse_cond'] else np.nan),
     }
 }
 
