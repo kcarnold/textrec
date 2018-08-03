@@ -33,7 +33,7 @@ export const CurText = inject("spying", "state", "dispatch")(
       }
 
       render() {
-        let { text, replacementRange, state, dispatch } = this.props;
+        let { text, replacementRange, state } = this.props;
         let { experimentState } = state;
         let { electricDeleteLiveChars } = experimentState;
         let afterCursor = "";
@@ -50,9 +50,6 @@ export const CurText = inject("spying", "state", "dispatch")(
         return (
           <div
             className="CurText"
-            onTouchEnd={evt => {
-              dispatch({ type: "tapText" });
-            }}
           >
             <span>
               <span>{text.slice(0, hiStart)}</span>
