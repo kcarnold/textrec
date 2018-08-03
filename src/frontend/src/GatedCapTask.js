@@ -7,6 +7,7 @@ import { observer, inject } from "mobx-react";
 import flatMap from "lodash/flatMap";
 import range from "lodash/range";
 import * as IOTaskState from "./IOTaskState";
+import { ExperimentStateStore } from "./IOExperimentState";
 import * as Views from "./IOViews";
 import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
@@ -674,6 +675,7 @@ export function createTaskState(loginEvent) {
     clientId,
     screens,
     handleEvent,
+    createExperimentState: (flags) => new ExperimentStateStore(flags),
     timeEstimate: "20-25 minutes",
   });
 

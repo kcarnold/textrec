@@ -2,7 +2,6 @@
 
 import * as M from "mobx";
 import type { ObservableMap } from "mobx";
-import { ExperimentStateStore } from "./IOExperimentState";
 import TutorialTasks from "./TutorialTasks";
 
 import type { Event } from "./Events";
@@ -22,7 +21,8 @@ type Config = {
   clientId: string,
   screens: Screen[],
   timeEstimate: string,
-  handleEvent?: (event: Event) => Event[]
+  createExperimentState: (flags: Object) => ExperimentState,
+  handleEvent?: (event: Event) => Event[],
 };
 
 export class MasterStateStore {
@@ -107,7 +107,7 @@ export class MasterStateStore {
         case "setupExperiment":
           this.curExperiment = preEvent.name;
 
-          let experimentObj = new ExperimentStateStore(preEvent.flags);
+          let experimentObj = this.config.createExperimentState(preEvent.flags);
           this.experiments.set(preEvent.name, experimentObj);
           let initReq = experimentObj.init();
           if (initReq) sideEffects.push(initReq);
