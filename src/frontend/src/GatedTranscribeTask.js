@@ -2,9 +2,7 @@
 import "core-js/fn/array/from";
 
 import * as React from "react";
-import {
-  extendObservable,
-} from "mobx";
+import { extendObservable } from "mobx";
 import { observer, inject } from "mobx-react";
 
 import flatMap from "lodash/flatMap";
@@ -63,7 +61,6 @@ let tutorialStimuli = [
 
 let baseStimuli = tutorialStimuli; // FIXME.
 
-
 const namedConditions = {
   norecs: {
     requestFlags: {},
@@ -84,12 +81,26 @@ const namedConditions = {
   },
 };
 
-const CapInstructions = iobs(({ state, dispatch }) => (
-  <div onClick={evt => {
-    dispatch({type: 'textVisibility', visible: true}); }}>
-    Tap here to show the text.
-  </div>
-));
+const CapInstructions = iobs(({ state, dispatch }) => {
+  let { incorrect, todo } = state.experimentState.getTranscriptionStatus();
+  let done = incorrect.length === 0 && todo.trim().length === 0;
+  return (
+    <div>
+      {!done && (
+        <button
+          onClick={evt => {
+            dispatch({ type: "textVisibility", visible: true });
+          }}
+          className="NextBtn"
+        >
+          Show the text to type
+        </button>
+      )}
+      {incorrect.length ? <p>Some incorrect letters</p> : null}
+      {done ? <NextBtn /> : null}
+    </div>
+  );
+});
 
 const PostPractice = block =>
   iobs(({ state, dispatch }) => {
@@ -112,9 +123,7 @@ const PostPractice = block =>
         <div>
           Great, it looks like you know how to use Keyboard Design {block + 1}!
           <p>
-            <b>
-              Ready to start typing using Keyboard Design {block + 1}?
-            </b>
+            <b>Ready to start typing using Keyboard Design {block + 1}?</b>
           </p>
           <NextBtn />
         </div>
@@ -178,7 +187,6 @@ const introSurvey = personalityBlock => ({
     ...personalityBlock,
   ],
 });
-
 
 const helpfulRank = (attr, text) => [
   {
@@ -256,10 +264,7 @@ function experimentBlock(
       "sys-accurate",
       "This keyboard design helped me type accuratly"
     ),
-    agreeLikert(
-      "sys-fast",
-      "This keyboard design helped me type quickly"
-    ),
+    agreeLikert("sys-fast", "This keyboard design helped me type quickly"),
   ];
   let tutorialStimulus = tutorialStimuli[block];
 
@@ -341,20 +346,16 @@ function getDemoScreens(condition: string) {
       condition,
       stimulus: stimulus.stimulus,
       transcribe: stimulus.transcribe.toLowerCase(),
-    instructions: CapInstructions,
+      instructions: CapInstructions,
     })
   );
 }
 
 const TaskDescription = () => (
   <div>
-    <p>
-      In this study we're going to be typing captions for images.
-    </p>
+    <p>In this study we're going to be typing captions for images.</p>
 
-    <p>
-      A bonus of $0.50 will be available to the fastest accurate typists!
-    </p>
+    <p>A bonus of $0.50 will be available to the fastest accurate typists!</p>
 
     <NextBtn />
   </div>
@@ -441,10 +442,22 @@ function getScreens(
 }
 
 function experimentView(props) {
-  return iobs(({state, dispatch}) => {
+  return iobs(({ state, dispatch }) => {
     if (state.experimentState.textShown) {
-      return <div onClick={evt => {
-        dispatch({type: 'textVisibility', visible: false}); }}>{state.experimentState.transcribe}</div>;
+      return (
+        <div>
+          <h1>Type this text</h1>
+          <p>{state.experimentState.transcribe}</p>
+          <button
+            className="NextBtn"
+            onClick={evt => {
+              dispatch({ type: "textVisibility", visible: false });
+            }}
+          >
+            Go to keyboard
+          </button>
+        </div>
+      );
     } else {
       let instructions = React.createElement(props.instructions);
       return <Views.ExperimentScreen instructions={instructions} />;
@@ -507,15 +520,14 @@ export function createTaskState(loginEvent) {
     screens,
     handleEvent,
     timeEstimate: "20-25 minutes",
-    createExperimentState: (flags) => {
+    createExperimentState: flags => {
       let expState = new ExperimentStateStore(flags);
       extendObservable(expState, {
-        textShown: true
+        textShown: true,
       });
       return expState;
-    }
+    },
   });
-
 
   function handleEvent(event: Event): Event[] {
     if (event.type === "next") {
@@ -543,7 +555,7 @@ export function createTaskState(loginEvent) {
         ];
       }
     }
-    if (event.type === 'textVisibility') {
+    if (event.type === "textVisibility") {
       state.experimentState.textShown = event.visible;
     }
     return [];
