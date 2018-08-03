@@ -1,19 +1,15 @@
 import { MasterView as MasterViewFactory } from "./MasterView";
 
 function getAppInt(config) {
-
-  // if (config === "sum") {
-  //   return require("./SumTask");
-  // }
   if (config === "cap") {
     return require("./CapTask");
   }
   if (config === "gcap") {
     return require("./GatedCapTask");
   }
-  // if (config === "xs") {
-  //   return require("./TranscribeTask");
-  // }
+  if (config === "gx") {
+    return require("./GatedTranscribeTask");
+  }
 }
 
 function getApp(config) {
