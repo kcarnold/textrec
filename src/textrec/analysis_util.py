@@ -60,7 +60,10 @@ def get_log_analysis(participant, git_rev=None):
         git_rev = get_rev(logpath)
     logfile_size = os.path.getsize(logpath)
 
-    result = get_log_analysis_raw(str(logpath), logfile_size, git_rev=git_rev, analysis_files=analysis_files)
+    try:
+        result = get_log_analysis_raw(str(logpath), logfile_size, git_rev=git_rev, analysis_files=analysis_files)
+    except AnalysisException as e:
+        raise AnalysisException(f"Error while analyzing log for {participant}\n\n{e.message}\n\nThis was for participant={participant!r} git_rev={git_rev}")
     analyzed = json.loads(result)
     analyzed['git_rev'] = git_rev
     return analyzed
