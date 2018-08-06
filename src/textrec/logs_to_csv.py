@@ -130,7 +130,7 @@ def coerce_columns(df, column_types):
             result[column_name] = result[column_name].fillna(typ.flags['fill'])
         try:
             result[column_name] = result[column_name].astype(typ.type)
-        except ValueError:
+        except Exception:
             print(column_name, "Failed to coerce.")
             raise
         if 'lower' in typ.flags:
