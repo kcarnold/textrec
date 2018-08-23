@@ -41,6 +41,9 @@ let baseStimuli: Stimulus[] = stimulusPairs.map(([stim, foil]) => ({
   url: stim.url,
 }));
 
+// In second batch of experiments, we reverse the stimulus order, to decorrelate stimulus from trial number.
+baseStimuli.reverse();
+
 let tutorialStimuli = [
   {
     stimulus: {
