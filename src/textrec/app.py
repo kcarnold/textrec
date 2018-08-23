@@ -6,6 +6,9 @@ import os
 import traceback
 import io
 import zlib
+import logging
+
+logger = logging.getLogger(__name__)
 
 import tornado.ioloop
 import tornado.gen
@@ -94,12 +97,12 @@ class Participant:
 
     def connected(self, client):
         self.connections.append(client)
-        print(client.kind, 'open', self.participant_id)
+        logger.info(f"Connection opened: {self.participant_id}-{client.kind}")
         self.log(dict(kind='meta', type='connected', rev=get_git_commit()))
 
     def disconnected(self, client):
         self.connections.remove(client)
-        print(client.kind, 'close', self.participant_id)
+        logger.info(f"Connection closed: {self.participant_id}-{client.kind}")
 
 
 class DemoParticipant:
@@ -116,7 +119,7 @@ class DemoParticipant:
             assignment=0)]
 
     def log(self, event):
-        print("Demo event", event['type'])
+        logger.info(f"Demo event: {event['type']}")
     def broadcast(self, *a, **kw): return
     def connected(self, *a, **kw): return
     def disconnected(self, *a, **kw): return
@@ -173,7 +176,8 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
         self.participant.log(dict(event))
 
     def open(self):
-        print('ws open, compressed={}'.format(self.ws_connection._compressor is not None), flush=True)
+        is_compressed = self.ws_connection._compressor is not None
+        logger.info(f"Websocket opened (compressed={is_compressed}")
         self.inflater = zlib.decompressobj()
         self.deflater = zlib.compressobj()
 
@@ -201,13 +205,17 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
                     result['result'] = yield handle_request_async(process_pool, request['rpc'])
                 except Exception:
                     traceback.print_exc()
-                    print("Failing request:", json.dumps(request))
+                    request_as_string = json.dumps(request)
+                    logger.error(f"Request failed: {request_as_string}", exc_info=1)
+                    print("Failing request:", request_as_string)
                     result['result'] = None
                 dur = time.time() - start
                 result['dur'] = dur
                 self.send_json(**result)
                 self.log(dict(type="rpc", kind="meta", request=request))
-                print('{participant_id} {type} in {dur:.2f}'.format(participant_id=getattr(self.participant, 'participant_id'), type=request['type'], dur=dur))
+                logger.info("Request complete: {participant_id} {type} in {dur:.2f}".format(
+                    participant_id=getattr(self.participant, 'participant_id'),
+                    type=request['type'], dur=dur))
             elif request['type'] == 'keyRects':
                 self.keyRects[request['layer']] = request['keyRects']
             elif request['type'] == 'init':
@@ -223,7 +231,7 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
                 self.participant.connected(self)
                 self.log(dict(kind='meta', type='init', request=request))
                 messageCount = request.get('messageCount', {})
-                print("Client", participant_id, self.kind, "connecting with messages", messageCount)
+                logger.info(f"Client {participant_id}-{self.kind} connecting with messages {messageCount}")
                 backlog = []
                 cur_msg_idx = {}
                 for entry in self.participant.get_log_entries():
@@ -271,7 +279,8 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
 
 class WSPingHandler(tornado.websocket.WebSocketHandler):
     def open(self):
-        print('pinger open, compressed={}'.format(self.ws_connection._compressor is not None), flush=True)
+        is_compressed = self.ws_connection._compressor is not None
+        logger.debug("pinger open, compressed={is_compressed}")
 
     def on_message(self, message):
         self.write_message(message)
@@ -290,7 +299,6 @@ class MainHandler(tornado.web.RequestHandler):
 
 class LoginHandler(tornado.web.RequestHandler):
     def post(self):
-        print("POST", self.request.body)
         data = json.loads(self.request.body.decode('utf-8'))
         params = dict(data['params'])
 
@@ -302,7 +310,7 @@ class LoginHandler(tornado.web.RequestHandler):
         while True:
             participant_id = ''.join(random.choices('23456789cfghjmpqrvwx', k=6))
             if not os.path.exists(get_log_file_name(participant_id)):
-                print("Allocated", participant_id, "flags", json.dumps(counterbalancing_flags))
+                logger.info(f"Allocated {participant_id}, flags: {json.dumps(counterbalancing_flags)}")
                 break
 
         # Login that participant.
@@ -336,6 +344,7 @@ def main():
     tornado.options.parse_command_line()
     app = Application()
     print('serving on', options.port)
+    logger.info(f"Serving on port {options.port}")
     app.listen(options.port, **server_settings)
     tornado.ioloop.IOLoop.instance().start()
 

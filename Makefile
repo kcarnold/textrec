@@ -87,7 +87,7 @@ test_environment:
 
 ## Run backend Python server.
 run_backend:
-	exec python -m tornado.autoreload -m textrec.runserver
+	python -m tornado.autoreload -m textrec.runserver & tail -f logs/server.log
 
 ## Run frontend server (devel)
 run_frontend:

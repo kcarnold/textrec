@@ -2,6 +2,8 @@ import json
 import time
 import numpy as np
 from textrec.paths import paths
+import logging
+logger = logging.getLogger(__name__)
 
 BATCH_DATA = {
     'gc1': dict(n_conditions=6, config='gcap')
@@ -24,13 +26,13 @@ def get_completion_data(batch, logdir=paths.logdir):
         try:
             login_event = get_login_event(log_file)
         except Exception:
-            print("Warning: bad logfile", log_file)
+            logger.warning(f"bad logfile {log_file}")
             continue
         if 'pyTimestamp' not in login_event:
             # Old logfiles lacked that.
             continue
         if login_event.get('type') != 'login':
-            print("Warning: bad logfile", log_file)
+            logger.warning(f"bad logfile {log_file}")
             continue
         if login_event.get('batch') != batch:
             continue
@@ -59,7 +61,8 @@ def get_expected_completions(num_conditions, completion_data, max_age_secs=12 * 
                 # They might complete.
                 expected_completions[assignment] += 0.5
             else:
-                print(f"Participant {completion['participant_id']} started too long ago ({age_secs/SECS_PER_HOUR:.1f}hr)")
+                logger.debug(
+                    f"Participant {completion['participant_id']} started too long ago ({age_secs/SECS_PER_HOUR:.1f}hr)")
     return expected_completions
 
 
@@ -69,6 +72,6 @@ def get_conditions_for_new_participant(batch):
     expected_completions = get_expected_completions(
         batch_data['n_conditions'],
         completion_data)
-    print(expected_completions)
+    # print(expected_completions)
     assignment = int(np.argmin(expected_completions))
     return dict(batch_data, assignment=assignment)
