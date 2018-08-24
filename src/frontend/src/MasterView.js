@@ -1,7 +1,9 @@
+/** @format */
+
 import React, { Component } from "react";
 import { observer, Provider } from "mobx-react";
 
-import { MAX_PING_TIME } from './misc';
+import { MAX_PING_TIME } from "./misc";
 
 export const MasterView = screenToView =>
   observer(
@@ -47,6 +49,6 @@ export const MasterView = screenToView =>
         );
       }
     }
-);
+  );
 
 export default MasterView;

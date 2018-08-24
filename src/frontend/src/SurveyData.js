@@ -1,3 +1,5 @@
+/** @format */
+
 import React from "react";
 
 import { likert } from "./SurveyViews";
@@ -87,7 +89,7 @@ export const personalityHeader = {
   ),
 };
 
-export const traitQuestion = ({item}) => ({
+export const traitQuestion = ({ item }) => ({
   text: item,
   name: item,
   responseType: "likert",

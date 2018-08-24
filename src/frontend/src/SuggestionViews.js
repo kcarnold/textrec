@@ -1,3 +1,5 @@
+/** @format */
+
 import React, { Component } from "react";
 import { observer, inject } from "mobx-react";
 import classNames from "classnames";
@@ -57,14 +59,15 @@ export const SuggestionsBar = inject("state", "dispatch")(
           showPhrase,
         } = this.props;
         let sugViews = (suggestions || []).map((sugg, slot) => ({
-          sugg, slot
+          sugg,
+          slot,
         }));
         if (sugViews.length > 2) {
           sugViews = [sugViews[1], sugViews[0], ...sugViews.slice(2)];
         }
         return (
           <div className={"SuggestionsBar " + which}>
-            {sugViews.map(({sugg, slot}) => (
+            {sugViews.map(({ sugg, slot }) => (
               <Suggestion
                 key={slot}
                 onTap={evt => {
@@ -97,7 +100,7 @@ export const AlternativesBar = inject("state", "dispatch")(
         let heldCluster = 2;
         let selectedIdx = 9;
         let clusters = recs.clusters || [];
-        let suggOffset = idx => Math.floor(idx * state.phoneSize.width / 3);
+        let suggOffset = idx => Math.floor((idx * state.phoneSize.width) / 3);
         let suggWidth = Math.floor(state.phoneSize.width / 3);
         return (
           <div className="SuggestionsContainer">

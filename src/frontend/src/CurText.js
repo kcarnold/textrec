@@ -1,3 +1,5 @@
+/** @format */
+
 import React, { Component } from "react";
 import { observer, inject } from "mobx-react";
 import classNames from "classnames";
@@ -48,9 +50,7 @@ export const CurText = inject("spying", "state", "dispatch")(
         }
         let [hiStart, hiEnd] = replacementRange;
         return (
-          <div
-            className="CurText"
-          >
+          <div className="CurText">
             <span>
               <span>{text.slice(0, hiStart)}</span>
               <span className="replaceHighlight">

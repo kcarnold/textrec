@@ -1,3 +1,5 @@
+/** @format */
+
 import React from "react";
 import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
 import { observer, inject } from "mobx-react";
@@ -91,7 +93,10 @@ export const LikertResponse = inject("dispatch", "state", "spying")(
                 onChange={() => change(idx)}
               />
               <br />
-              <span>{label}&nbsp;</span>
+              <span>
+                {label}
+                &nbsp;
+              </span>
             </label>
           </div>
         ))}

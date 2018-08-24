@@ -1,3 +1,5 @@
+/** @format */
+
 import React, { Component } from "react";
 import every from "lodash/every";
 import { observer, inject } from "mobx-react";
@@ -97,12 +99,10 @@ export const Welcome = inject("state")(
       <h1>Welcome</h1>
       <p>
         You should be seeing this page on a touchscreen device. If not, get one
-        and go to this page's URL (<tt>{window.location.href}</tt>).
+        and go to this page's URL (<tt>{window.location.href}</tt>
+        ).
       </p>
-      <Consent
-        timeEstimate={state.timeEstimate}
-        platform={state.platform}
-      />
+      <Consent timeEstimate={state.timeEstimate} platform={state.platform} />
       <p>
         If you consent to participate, and if you're seeing this{" "}
         <b>on a touchscreen device</b>, tap here: <NextBtn />
