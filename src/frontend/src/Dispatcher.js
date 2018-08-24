@@ -97,6 +97,7 @@ export function init(clientId, clientKind, onConnected, wsURL) {
     console.log(event);
     event.jsTimestamp = +new Date();
     event.kind = clientKind;
+    event.seq = (messageCount[clientKind] || 0);
     log(event);
     handleEventWithSideEffects(event);
   }
