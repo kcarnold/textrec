@@ -1,16 +1,19 @@
+/** @format */
+
 // @flow
 
-import {
-  decorate,
-  observable,
-  computed,
-  action,
-  toJS,
-} from "mobx";
+import { decorate, observable, computed, action, toJS } from "mobx";
 import range from "lodash/range";
 import map from "lodash/map";
 import countWords from "./CountWords";
-import type { Event, TapSuggestion, TapKey, TapBackspace, UpdateSuggestions, Deleting } from "./Events";
+import type {
+  Event,
+  TapSuggestion,
+  TapKey,
+  TapBackspace,
+  UpdateSuggestions,
+  Deleting,
+} from "./Events";
 
 /**** Main experiment-screen state store!
 
@@ -54,12 +57,12 @@ type IOExperimentFlags = {
   modelSeesStimulus: boolean,
   requestFlags: Object,
   showRelevanceHints: boolean,
-  transcribe?: string
+  transcribe?: string,
 };
 
 type Tap = {
   x?: ?number,
-  y?: ?number
+  y?: ?number,
 };
 
 export class ExperimentStateStore {
@@ -175,7 +178,12 @@ export class ExperimentStateStore {
 
   // Actions
 
-  spliceText(startIdx: number, deleteCount: number, toInsert: string, taps?: (?Tap)[]) {
+  spliceText(
+    startIdx: number,
+    deleteCount: number,
+    toInsert: string,
+    taps?: (?Tap)[]
+  ) {
     let toInsert_range = range(toInsert.length);
     if (!taps) {
       taps = map(toInsert_range, () => null);
@@ -202,7 +210,7 @@ export class ExperimentStateStore {
     let deleteSpace = this.lastSpaceWasAuto && isNonWord;
     let toInsert = event.key;
     let taps = [{ x: event.x, y: event.y }];
-    let autoSpace = isNonWord && !(event.key.match(/[-\s']/));
+    let autoSpace = isNonWord && !event.key.match(/[-\s']/);
     if (autoSpace) {
       toInsert += " ";
       taps.push({});
@@ -417,13 +425,13 @@ export class ExperimentStateStore {
         case "undo":
           return this.handleUndo(event);
         case "tapKey":
-          this.countEvent('tapKey');
+          this.countEvent("tapKey");
           return this.tapKey(event);
         case "tapBackspace":
-          this.countEvent('tapBackspace');
+          this.countEvent("tapBackspace");
           return this.tapBackspace(event);
         case "tapSuggestion":
-          let typ = this.hasPartialWord ? 'partial' : 'full';
+          let typ = this.hasPartialWord ? "partial" : "full";
           this.countEvent(`tapSugg_${typ}`);
           return this.handleTapSuggestion(event);
         case "backendReply":
