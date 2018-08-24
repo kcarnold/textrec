@@ -1,3 +1,5 @@
+/** @format */
+
 // @flow
 import "core-js/fn/array/from";
 
@@ -13,7 +15,7 @@ import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import traitData from "./TraitData";
 import stimulusPairs from "./stimulusPairs";
-import { gatingSuggestionFilter } from './misc';
+import { gatingSuggestionFilter } from "./misc";
 
 import { seededShuffle } from "./shuffle";
 
@@ -76,17 +78,17 @@ const namedConditions = {
 
   lowConfidence: {
     requestFlags: {
-      threshold: -0.45656539 // From Gating notebook
+      threshold: -0.45656539, // From Gating notebook
     },
     modelSeesStimulus: true,
   },
 
   highConfidence: {
     requestFlags: {
-      threshold: -2.12771965
+      threshold: -2.12771965,
     },
     modelSeesStimulus: true,
-  }
+  },
 };
 
 const StimulusView = ({ stimulus }) => {
@@ -190,7 +192,7 @@ function trialScreen(props: {
         transcriptionStatus.todo.trim().split(/\s/, 1)[0];
       let anyIsCorrect = false;
       suggestions.predictions.forEach(({ words }) => {
-        if (correctNextWord === words.join(' ')) anyIsCorrect = true;
+        if (correctNextWord === words.join(" ")) anyIsCorrect = true;
       });
       if (anyIsCorrect) {
         return suggestions;

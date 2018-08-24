@@ -1,10 +1,7 @@
+/** @format */
+
 import React, { Component } from "react";
-import {
-  decorate,
-  observable,
-  action,
-  toJS,
-} from "mobx";
+import { decorate, observable, action, toJS } from "mobx";
 import moment from "moment";
 import { observer, Provider } from "mobx-react";
 import WSClient from "./wsclient";
@@ -12,7 +9,6 @@ import map from "lodash/map";
 import filter from "lodash/filter";
 import { getOldCode } from "./Analyzer";
 import { MasterView as MasterViewFactory } from "./MasterView";
-
 
 let match = window.location.search.slice(1).match(/^(\w+)\/(\w+)$/);
 let panopt = match[1],
@@ -54,9 +50,8 @@ class PanoptStore {
 decorate(PanoptStore, {
   showingIds: observable,
   addViewer: action,
-  addViewers: action
+  addViewers: action,
 });
-
 
 var store = new PanoptStore();
 
@@ -97,7 +92,7 @@ function replay(log, state) {
 
 ws.onmessage = async function(msg) {
   if (msg.type === "logs") {
-    let { participant_id, logs } = msg
+    let { participant_id, logs } = msg;
     // logs[participant_id] = msg.logs;
     oldCodes[participant_id] = await getOldCode(logs);
     let { createTaskState, screenToView } = oldCodes[participant_id];
@@ -202,7 +197,9 @@ const Chunk = ({ chunk }) => <span style={getStyle(chunk)}>{chunk.chars}</span>;
 
 const AnnotatedFinalText = ({ chunks }) => (
   <div className="AnnotatedFinalText">
-    {chunks.map((chunk, i) => <Chunk key={i} chunk={chunk} />)}
+    {chunks.map((chunk, i) => (
+      <Chunk key={i} chunk={chunk} />
+    ))}
   </div>
 );
 
@@ -349,4 +346,4 @@ window.store = store;
 store.addViewers(
   //"h52x67"
   "jvccx2"
-  );
+);

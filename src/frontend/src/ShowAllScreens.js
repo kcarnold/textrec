@@ -1,3 +1,5 @@
+/** @format */
+
 import React, { Component } from "react";
 import forEach from "lodash/forEach";
 import { observer } from "mobx-react";
@@ -14,10 +16,9 @@ function handleEventWithSideEffects(state, event) {
     sideEffects = sideEffects.concat(res);
   }
   // Run side-effects after all handlers have had at it.
-  console.log(event, sideEffects)
+  console.log(event, sideEffects);
   sideEffects.forEach(event => state.handleEvent(event));
 }
-
 
 export function init(createTaskState, MasterView_, loginEvent) {
   MasterView = MasterView_;
@@ -56,17 +57,19 @@ const ShowAllScreens = observer(
     render() {
       function innerView(i, state, kind) {
         let dispatch = event => {
-              event.jsTimestamp = +new Date();
-              event.kind = kind;
-              state.handleEvent(event);
-            };
-        return <MasterView
-          state={state}
-          dispatch={dispatch}
-          clientId={state.clientId}
-          clientKind={kind}
-          spying={true}
-          />;
+          event.jsTimestamp = +new Date();
+          event.kind = kind;
+          state.handleEvent(event);
+        };
+        return (
+          <MasterView
+            state={state}
+            dispatch={dispatch}
+            clientId={state.clientId}
+            clientKind={kind}
+            spying={true}
+          />
+        );
       }
       return (
         <div style={{ display: "flex", flexFlow: "row wrap" }}>

@@ -1,3 +1,5 @@
+/** @format */
+
 import _ from "lodash";
 
 function getCurCondition(state) {
@@ -34,7 +36,8 @@ export function processLogGivenState(state, log) {
     let lastContextSeqNum = (state.experimentState || {}).contextSequenceNum;
     let lastText = (state.experimentState || {}).curText;
     let lastSuggestionContext = (state.experimentState || {}).suggestionContext;
-    let lastVisibleSuggestions = (state.experimentState || {}).visibleSuggestions;
+    let lastVisibleSuggestions = (state.experimentState || {})
+      .visibleSuggestions;
 
     // Track requests
     if (entry.type === "backendReply") {
@@ -47,14 +50,14 @@ export function processLogGivenState(state, log) {
       let sideEffects = state.handleEvent(entry);
       if (sideEffects) {
         sideEffects.forEach(effect => {
-          if (effect.type === 'finalData') {
+          if (effect.type === "finalData") {
             finalData = JSON.parse(JSON.stringify(effect.finalData));
           }
         });
       }
 
       // Validate the log parsing by checking that the final data matches what was logged.
-      if (entry.type === 'finalData') {
+      if (entry.type === "finalData") {
         let loggedFinalData = JSON.parse(JSON.stringify(entry.finalData));
         if (_.isEqual(loggedFinalData.controlledInputs, {})) {
           // Unfortunately some early logs missed this because it was a Mobx map.
@@ -62,7 +65,8 @@ export function processLogGivenState(state, log) {
           delete finalData.controlledInputs;
         }
         // Timestamps on the login event are ok to be inconsistent.
-        finalData.screenTimes[0].timestamp = loggedFinalData.screenTimes[0].timestamp;
+        finalData.screenTimes[0].timestamp =
+          loggedFinalData.screenTimes[0].timestamp;
         if (!_.isEqual(loggedFinalData, finalData)) {
           console.log("loggedFinalData", loggedFinalData);
           console.log("finalData", finalData);
@@ -150,7 +154,10 @@ export function processLogGivenState(state, log) {
 
     // Figure out what suggestions are currently being displayed.
     let curVisibleSuggestions = expState.visibleSuggestions;
-    let hasRecs = curVisibleSuggestions.predictions.map(rec => rec.words.join("")).join("") !== "";
+    let hasRecs =
+      curVisibleSuggestions.predictions
+        .map(rec => rec.words.join(""))
+        .join("") !== "";
     if (expState.lastSuggestionsFromServer.show === false) {
       console.assert(!hasRecs);
     }
@@ -183,13 +190,16 @@ export function processLogGivenState(state, log) {
         recs: curVisibleSuggestions,
         recsTimestamp: entry.jsTimestamp,
         latency: 0,
-        action: null
+        action: null,
       };
     }
 
     let dsugg = pageData.displayedSuggs[expState.contextSequenceNum];
     dsugg.recs = curVisibleSuggestions;
-    if (lastReply !== null && lastReply.msg.request_id === expState.contextSequenceNum) {
+    if (
+      lastReply !== null &&
+      lastReply.msg.request_id === expState.contextSequenceNum
+    ) {
       dsugg.recsTimestamp = entry.jsTimestamp;
       dsugg.latency = lastReply.timestamp - dsugg.contextTimestamp;
     }
@@ -290,7 +300,7 @@ export async function getOldCode(log) {
 export async function getState(log) {
   let oldCode = await getOldCode(log);
   let loginEvent = log[0];
-  if ('assignment' in loginEvent) {
+  if ("assignment" in loginEvent) {
     return oldCode.createTaskState(loginEvent);
   } else {
     return oldCode.createTaskState(oldCode.participantId);

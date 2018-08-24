@@ -1,11 +1,10 @@
+/** @format */
+
 import Promise from "bluebird";
 import { readLogFile } from "./testUtil.js";
 import { analyzeLog } from "./Analyzer.js";
 
-
-const participantIds = [
-  "26f62q",
-];
+const participantIds = ["26f62q"];
 let logData = null;
 let analyzed = null;
 

@@ -61,6 +61,7 @@
     "extends": "stylelint-config-recommended"
   },
   "prettier": {
-    "trailingComma": "es5"
+    "trailingComma": "es5",
+    "requirePragma": true
   }
 }

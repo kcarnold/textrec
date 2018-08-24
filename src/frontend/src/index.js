@@ -1,3 +1,5 @@
+/** @format */
+
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
@@ -31,7 +33,9 @@ if (initialPart === "panopt") {
   let { createTaskState, MasterView } = getApp(config);
   let loginEvent = {
     type: "login",
-    participant_id: "zzzzzz", config, assignment
+    participant_id: "zzzzzz",
+    config,
+    assignment,
   };
   mod.init(createTaskState, MasterView, loginEvent);
   let ShowAllScreens = mod.default;
@@ -39,9 +43,9 @@ if (initialPart === "panopt") {
 } else if (initialPart === "bench") {
   let Bench = require("./Bench").default;
   topLevel = <Bench />;
-// } else if (initialPart === "demos") {
-//   let DemoList = require("./DemoList").default;
-//   topLevel = <DemoList />;
+  // } else if (initialPart === "demos") {
+  //   let DemoList = require("./DemoList").default;
+  //   topLevel = <DemoList />;
 } else if (query.slice(0, 3) === "new") {
   // e.g., http://localhost:3000/?new&b=gc1
   let params = query
@@ -70,12 +74,18 @@ if (initialPart === "panopt") {
   if (match) {
     let clientId = match[1];
     let clientKind = match[2];
-    let dispatch = Dispatcher.init(clientId, clientKind, (loginEvent) => {
+    let dispatch = Dispatcher.init(clientId, clientKind, loginEvent => {
       let app = getApp(loginEvent.config);
       let state = app.createTaskState(loginEvent);
       ReactDOM.render(
-        <app.MasterView state={state} dispatch={dispatch} clientId={clientId} clientKind={'p'} />,
-        elt);
+        <app.MasterView
+          state={state}
+          dispatch={dispatch}
+          clientId={clientId}
+          clientKind={"p"}
+        />,
+        elt
+      );
       return state;
     });
     topLevel = <h3>Loading...</h3>;

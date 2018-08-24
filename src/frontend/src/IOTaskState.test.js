@@ -1,7 +1,9 @@
+/** @format */
+
 import * as IOTaskState from "./IOTaskState";
 
 it("boots", () => {
-  let clientId = 'abc123';
+  let clientId = "abc123";
   let screens = [];
   let handleEvent = () => {};
 
@@ -12,7 +14,11 @@ it("boots", () => {
     timeEstimate: "20-25 minutes",
   });
 
-  state.handleEvent({type: 'controlledInputChanged', name: 'test', value: 123});
+  state.handleEvent({
+    type: "controlledInputChanged",
+    name: "test",
+    value: 123,
+  });
 
-  expect([...state.controlledInputs]).toEqual([['test', 123]]);
+  expect([...state.controlledInputs]).toEqual([["test", 123]]);
 });

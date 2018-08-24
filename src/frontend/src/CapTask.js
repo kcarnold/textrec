@@ -1,7 +1,9 @@
+/** @format */
+
 // @flow
 import "core-js/fn/array/from";
 
-import * as React from 'react';
+import * as React from "react";
 import { observer, inject } from "mobx-react";
 
 import flatMap from "lodash/flatMap";
@@ -105,7 +107,10 @@ const StimulusView = ({ stimulus }) => {
   /* eslint-enable jsx-a11y/img-redundant-alt */
 };
 
-const allStimuli: Stimulus[] = [...baseStimuli, ...tutorialStimuli.map(x => x.stimulus)];
+const allStimuli: Stimulus[] = [
+  ...baseStimuli,
+  ...tutorialStimuli.map(x => x.stimulus),
+];
 export const allStimuliContent = allStimuli.map(x => x.content);
 // console.log("All stimuli: ", allStimuliContent.join(","));
 const PreloadView = () => (
@@ -193,7 +198,8 @@ const personalityBlocks = splitPersonalityBlocks(5, 4);
 
 const WritingsView = iobs(({ state }) => (
   <div>
-    For reference, here's what you wrote with each keyboard design:<br />
+    For reference, here's what you wrote with each keyboard design:
+    <br />
     <br />
     {range(baseConditions.length).map(block => (
       <div key={block}>
@@ -382,7 +388,7 @@ function getDemoScreens(condition: string) {
       condition,
       stimulus,
       instructions: CapInstructions,
-    }),
+    })
   );
 }
 
@@ -647,7 +653,7 @@ export function createTaskState(loginEvent) {
     clientId,
     screens,
     handleEvent,
-    createExperimentState: (flags) => new ExperimentStateStore(flags),
+    createExperimentState: flags => new ExperimentStateStore(flags),
     timeEstimate: "20-25 minutes",
   });
 
