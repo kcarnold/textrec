@@ -1,3 +1,5 @@
+/** @format */
+
 // @flow
 import "core-js/fn/array/from";
 
@@ -10,6 +12,8 @@ import range from "lodash/range";
 import * as IOTaskState from "./IOTaskState";
 import { ExperimentStateStore } from "./IOExperimentState";
 import * as Views from "./IOViews";
+import { Keyboard } from "./Keyboard";
+import { SuggestionsBar } from "./SuggestionViews";
 import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
@@ -59,7 +63,89 @@ let tutorialStimuli = [
   },
 ];
 
-let baseStimuli = tutorialStimuli; // FIXME.
+let baseStimuli = [
+  {
+    stimulus: {
+      type: "img",
+      content: 379048,
+      url: "http://images.cocodataset.org/train2017/000000379048.jpg",
+    },
+    transcribe: "the baseball memorabilia is being displayed in the showcase",
+  },
+  {
+    stimulus: {
+      type: "img",
+      content: 182450,
+      url: "http://images.cocodataset.org/train2017/000000182450.jpg",
+    },
+    transcribe: "picture of a sink with a mirror and a toilet",
+  },
+  {
+    stimulus: {
+      type: "img",
+      content: 296303,
+      url: "http://images.cocodataset.org/train2017/000000296303.jpg",
+    },
+    transcribe: "a giant cricket in a cage eating an orange slice",
+  },
+  {
+    stimulus: {
+      type: "img",
+      content: 125850,
+      url: "http://images.cocodataset.org/val2017/000000125850.jpg",
+    },
+    transcribe: "this gray cat has curled up into a ball",
+  },
+  {
+    stimulus: {
+      type: "img",
+      content: 212853,
+      url: "http://images.cocodataset.org/train2017/000000212853.jpg",
+    },
+    transcribe:
+      "the older woman smiles as she holds a plate with a slice of pizza",
+  },
+  {
+    stimulus: {
+      type: "img",
+      content: 358624,
+      url: "http://images.cocodataset.org/train2017/000000358624.jpg",
+    },
+    transcribe: "an orange being held up to a christmas tree bulb",
+  },
+  {
+    stimulus: {
+      type: "img",
+      content: 3761,
+      url: "http://images.cocodataset.org/train2017/000000003761.jpg",
+    },
+    transcribe: "a woman looks as if she is rejecting a kiss from a horse",
+  },
+  {
+    stimulus: {
+      type: "img",
+      content: 365928,
+      url: "http://images.cocodataset.org/train2017/000000365928.jpg",
+    },
+    transcribe: "many umbrellas on a beach near a body of water",
+  },
+  {
+    stimulus: {
+      type: "img",
+      content: 534421,
+      url: "http://images.cocodataset.org/train2017/000000534421.jpg",
+    },
+    transcribe: "a little kid on skis in the snow with a helmet on",
+  },
+  {
+    stimulus: {
+      type: "img",
+      content: 27517,
+      url: "http://images.cocodataset.org/train2017/000000027517.jpg",
+    },
+    transcribe: "a person holding their flip phone up in front of a computer",
+  },
+];
 
 const namedConditions = {
   norecs: {
@@ -82,8 +168,7 @@ const namedConditions = {
 };
 
 const CapInstructions = iobs(({ state, dispatch }) => {
-  let { incorrect, todo } = state.experimentState.getTranscriptionStatus();
-  let done = incorrect.length === 0 && todo.trim().length === 0;
+  let { done } = state.experimentState.getTranscriptionStatus();
   return (
     <div>
       {!done && (
@@ -96,7 +181,6 @@ const CapInstructions = iobs(({ state, dispatch }) => {
           Show the text to type
         </button>
       )}
-      {incorrect.length ? <p>Some incorrect letters</p> : null}
       {done ? <NextBtn /> : null}
     </div>
   );
@@ -460,7 +544,40 @@ function experimentView(props) {
       );
     } else {
       let instructions = React.createElement(props.instructions);
-      return <Views.ExperimentScreen instructions={instructions} />;
+      if (state.phoneSize.width > state.phoneSize.height) {
+        return (
+          <h1>Please rotate your phone to be in the portrait orientation.</h1>
+        );
+      }
+
+      let { experimentState } = state;
+      let { curText } = experimentState;
+      let { incorrect } = experimentState.getTranscriptionStatus();
+
+      let textStyle = incorrect.length > 0 ? { color: "red" } : {};
+
+      return (
+        <div className="ExperimentScreen">
+          <div className="header">{instructions}</div>
+          <div className="CurText">
+            <span>
+              <span style={textStyle}>{curText}</span>
+              <span className="Cursor" />
+            </span>
+          </div>
+
+          <div>
+            {!experimentState.flags.hideRecs && (
+              <SuggestionsBar
+                which="predictions"
+                suggestions={experimentState.visibleSuggestions["predictions"]}
+                showPhrase={experimentState.flags.showPhrase}
+              />
+            )}
+          </div>
+          <Keyboard dispatch={dispatch} />
+        </div>
+      );
     }
   });
 }
