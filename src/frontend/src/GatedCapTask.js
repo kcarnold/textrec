@@ -1,4 +1,7 @@
-// @flow
+/**
+ * @format
+ * @flow
+ */
 import "core-js/fn/array/from";
 
 import * as React from "react";
@@ -229,7 +232,8 @@ const introSurvey = personalityBlock => ({
 
 const WritingsView = iobs(({ state }) => (
   <div>
-    For reference, here's what you wrote with each keyboard design:<br />
+    For reference, here's what you wrote with each keyboard design:
+    <br />
     <br />
     {range(baseConditions.length).map(block => (
       <div key={block}>
@@ -678,7 +682,7 @@ export function createTaskState(loginEvent) {
     clientId,
     screens,
     handleEvent,
-    createExperimentState: (flags) => new ExperimentStateStore(flags),
+    createExperimentState: flags => new ExperimentStateStore(flags),
     timeEstimate: "20-25 minutes",
   });
 
