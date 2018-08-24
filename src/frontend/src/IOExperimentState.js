@@ -387,14 +387,17 @@ export class ExperimentStateStore {
     let isCorrectSoFar = curText.length === prefixLength;
     let result = {
       commonPrefix: transcribe.slice(0, prefixLength),
-      incorrect: '',
-      todo: ''
+      incorrect: "",
+      todo: "",
+      done: false,
     };
     if (isCorrectSoFar) {
       result.todo = transcribe.slice(curText.length);
     } else {
       result.incorrect = transcribe.slice(prefixLength);
     }
+    result.done =
+      result.incorrect.length === 0 && result.todo.trim().length === 0;
     return result;
   }
 
