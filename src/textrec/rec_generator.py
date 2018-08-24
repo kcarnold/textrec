@@ -41,6 +41,5 @@ def handle_request_async(executor, request):
     recs_wrapped = [dict(words=[word], meta=None) for word, prob in recs]
     result = dict(predictions=recs_wrapped, request_id=request_id)
     if 'threshold' in flags:
-        print(recs)
         result['show'] = max(prob for word, prob in recs if prob is not None) > flags['threshold']
     return result
