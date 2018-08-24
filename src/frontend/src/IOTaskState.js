@@ -1,4 +1,7 @@
-// @flow
+/**
+ * @format
+ * @flow
+ */
 
 import * as M from "mobx";
 import type { ObservableMap } from "mobx";
@@ -65,7 +68,7 @@ export class MasterStateStore {
       participantCode: null,
       platform: null,
       get sonaCreditLink() {
-        console.assert(this.platform === 'sona');
+        console.assert(this.platform === "sona");
         // participant codes look like `sonaXXX`, where XXX is the survey code.
         let survey_code = this.participantCode.slice(4);
         return `https://harvarddecisionlab.sona-systems.com/webstudy_credit.aspx?experiment_id=440&credit_token=2093214a21504aae88bd36405e5a4e08&survey_code=${survey_code}`;
@@ -149,15 +152,15 @@ export class MasterStateStore {
         if (event.platform_id) {
           this.participantCode = event.platform_id;
         }
-        if (event.src === 'amt') {
-          this.platform = 'turk';
+        if (event.src === "amt") {
+          this.platform = "turk";
         }
-        if (event.src === 'sona') {
-          this.platform = 'sona';
+        if (event.src === "sona") {
+          this.platform = "sona";
         }
         break;
       case "next":
-        this.screenNum += (event.delta == null ? 1 : event.delta);
+        this.screenNum += event.delta == null ? 1 : event.delta;
         break;
       case "setScreen":
         this.screenNum = event.screen;

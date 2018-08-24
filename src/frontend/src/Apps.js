@@ -1,3 +1,6 @@
+/**
+ * @format
+ */
 import { MasterView as MasterViewFactory } from "./MasterView";
 
 function getAppInt(config) {

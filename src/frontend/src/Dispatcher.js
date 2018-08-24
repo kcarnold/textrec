@@ -1,3 +1,7 @@
+/**
+ * @format
+ */
+
 import fromPairs from "lodash/fromPairs";
 import map from "lodash/map";
 import throttle from "lodash/throttle";
@@ -5,7 +9,7 @@ import * as M from "mobx";
 import WSClient from "./wsclient";
 import Raven from "raven-js";
 import * as WSPinger from "./WSPinger";
-import { MAX_PING_TIME } from './misc';
+import { MAX_PING_TIME } from "./misc";
 
 export function init(clientId, clientKind, onConnected, wsURL) {
   // onConnected is called when connected, with the login event. Returns the state object.
@@ -97,7 +101,7 @@ export function init(clientId, clientKind, onConnected, wsURL) {
     console.log(event);
     event.jsTimestamp = +new Date();
     event.kind = clientKind;
-    event.seq = (messageCount[clientKind] || 0);
+    event.seq = messageCount[clientKind] || 0;
     log(event);
     handleEventWithSideEffects(event);
   }
@@ -124,7 +128,6 @@ export function init(clientId, clientKind, onConnected, wsURL) {
     ws.send({ type: "log", event });
     addLogEntry(clientKind, event);
   }
-
 
   ws.onmessage = function(msg) {
     if (msg.type === "reply") {
@@ -168,7 +171,6 @@ export function init(clientId, clientKind, onConnected, wsURL) {
       sideEffects.forEach(handleSideEffect);
 
       updateBacklog();
-
     } else if (msg.type === "otherEvent") {
       console.log("otherEvent", msg.event);
       // Keep all the clients in lock-step.
