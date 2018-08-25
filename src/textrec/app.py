@@ -176,8 +176,8 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
         self.participant.log(dict(event))
 
     def open(self):
-        is_compressed = self.ws_connection._compressor is not None
-        logger.info(f"Websocket opened (compressed={is_compressed}")
+        extensions = self.request.headers.get("Sec-WebSocket-Extensions", '')
+        logger.info(f"Websocket opened (extensions={extensions!r})")
         self.inflater = zlib.decompressobj()
         self.deflater = zlib.compressobj()
 
@@ -279,8 +279,8 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
 
 class WSPingHandler(tornado.websocket.WebSocketHandler):
     def open(self):
-        is_compressed = self.ws_connection._compressor is not None
-        logger.debug("pinger open, compressed={is_compressed}")
+        extensions = self.request.headers.get("Sec-WebSocket-Extensions", '')
+        logger.debug(f"pinger opened (extensions={extensions!r})")
 
     def on_message(self, message):
         self.write_message(message)
