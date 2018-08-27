@@ -92,7 +92,7 @@ def main(batch):
 
 
     trial_level_data.to_csv(paths.analyzed / f'trial_withmanual_{batch}.csv', index=False)
-    dump_data_for_pairwise(batch, trial_level_data)
+    # dump_data_for_pairwise(batch, trial_level_data)
 
 if __name__ == '__main__':
     import argparse
