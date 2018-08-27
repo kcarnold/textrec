@@ -298,6 +298,13 @@ const closingSurvey = personalityBlock => ({
         captions very <b>quickly</b>
       </span>
     ),
+    {
+      text:
+        "Please briefly describe two ways that the three keyboard designs were different from each other.",
+      responseType: "text",
+      name: "differences",
+      flags: { multiline: true },
+    },
     ...personalityBlock,
     SurveyData.verbalized_during,
     SurveyData.age,
