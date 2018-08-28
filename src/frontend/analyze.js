@@ -1,4 +1,4 @@
-import {analyzeLog} from './Analyzer';
+import {analyzeLog} from './src/Analyzer.js';
 var fs = require('fs');
 
 console.log = console.warn;
