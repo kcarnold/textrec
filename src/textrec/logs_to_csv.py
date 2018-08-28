@@ -37,6 +37,7 @@ columns = {
         'helpfulRank-specific-least-idx': int,
         'helpfulRank-specific-most-condition': str,
         'helpfulRank-specific-most-idx': int,
+        'differences': str, # Free-text response: Please briefly describe two ways that the three keyboard designs were different from each other.
         'other': str,
         'techDiff': str,
         'total_time': float,
