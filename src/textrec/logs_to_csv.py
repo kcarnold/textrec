@@ -37,7 +37,7 @@ columns = {
         'helpfulRank-specific-least-idx': int,
         'helpfulRank-specific-most-condition': str,
         'helpfulRank-specific-most-idx': int,
-        'differences': str, # Free-text response: Please briefly describe two ways that the three keyboard designs were different from each other.
+        'differences': ColType(str, optional=True), # Free-text response: Please briefly describe two ways that the three keyboard designs were different from each other.
         'other': str,
         'techDiff': str,
         'total_time': float,
@@ -125,11 +125,15 @@ def coerce_columns(df, column_types):
     result = df.copy()
     column_order = []
     for column_name, typ in column_types.items():
-        column_order.append(column_name)
         if not isinstance(typ, ColType):
             typ = ColType(typ)
+        # Compute the column, if a function is provided.
         if 'f' in typ.flags:
             result[column_name] = result.apply(typ.flags['f'], axis=1)
+        elif column_name not in result.columns:
+            assert typ.flags.get('optional', False), column_name
+            continue
+        column_order.append(column_name)
         if 'fill' in typ.flags:
             result[column_name] = result[column_name].fillna(typ.flags['fill'])
         try:
