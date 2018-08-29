@@ -427,7 +427,7 @@ function experimentBlock(
   let designQuestions = [
     agreeLikert(
       "sys-accurate",
-      "This keyboard design helped me type accuratly"
+      "This keyboard design helped me type accurately"
     ),
     agreeLikert("sys-fast", "This keyboard design helped me type quickly"),
   ];
