@@ -1,0 +1,111 @@
+﻿dt = Open(
+    	"/Users/kcarnold/code/textrec/data/analyzed/combined_traits.csv",
+	Charset( "utf-8" ),
+	Import Settings(
+    		End Of Line( CRLF, CR, LF ),
+		End Of Field( Comma, CSV( 1 ) ),
+		Strip Quotes( 1 ),
+		Use Apostrophe as Quotation Mark( 0 ),
+		Use Regional Settings( 0 ),
+		Scan Whole File( 0 ),
+		Treat empty columns as numeric( 0 ),
+		CompressNumericColumns( 0 ),
+		CompressCharacterColumns( 0 ),
+		CompressAllowListCheck( 0 ),
+		Labels( 1 ),
+		Column Names Start( 1 ),
+		Data Starts( 2 ),
+		Lines To Read( "All" ),
+		Year Rule( "20xx" )
+	)
+);
+
+// Set data types
+Column( dt, "stimulus" ) << Data Type( "Character" ) << Modeling Type( "Nominal" );
+
+/**
+ * Outcome Effects
+ */
+ 
+// Ideal Taps per Typo-Corrected Word
+dt << Fit Model(
+    	Y(
+    		Transform Column(
+    			"Ideal Taps per Typo-Corrected Word",
+			Formula( :corrected_tapstotype_general / :num_words )
+		)
+	),
+	Effects( :condition_mapped, :idx ),
+	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
+	NoBounds( 1 ),
+	Personality( "Standard Least Squares" ),
+	Method( "REML" ),
+	Emphasis( "Minimal Report" ),
+	Run(
+    		Profiler(
+    			1,
+			Confidence Intervals( 1 ),
+			Term Value( condition_mapped( "norecs", Lock( 0 ), Show( 1 ) ), idx( 5.203, Lock( 0 ), Show( 1 ) ) )
+		),
+		:Name( "Ideal Taps per Typo-Corrected Word" ) << {Summary of Fit( 1 ), Analysis of Variance( 0 ),
+		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ),
+		Plot Regression( 0 ), Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ),
+		Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
+	)/*,
+	SendToReport(
+    		Dispatch(
+    			{"Response corrected_tapstotype_general/num_words",
+			"Prediction Profiler"},
+			"10000",
+			ScaleBox,
+			{Min( 1.48737672583826 ), Max( 2.10769230769231 ), Inc( 0.2 ),
+			Minor Ticks( 1 )}
+		)
+	)*/
+);
+
+/**
+ * Behavior Effects
+ */
+
+// Full-Word Rec Use Rate
+dt << Fit Model(
+    	Y( :rec_use_full_frac ),
+	Effects( :chars_per_sec_norecs_mean, :block, :idx_in_block, :condition_mapped, :condition_mapped * :block ),
+	Random Effects( :participant ),
+	NoBounds( 1 ),
+	Personality( "Standard Least Squares" ),
+	Method( "REML" ),
+	Emphasis( "Minimal Report" ),
+	Run(
+    		:rec_use_full_frac << {Title( "Full-Word Rec Use Rate" ), Summary of Fit( 1 ), Analysis of Variance( 0 ),
+		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ),
+		Plot Regression( 0 ), Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ),
+		Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
+	)
+);
+  
+  
+// ... including NFC
+dt << Fit Model(
+    	Y( :rec_use_full_frac ),
+	Effects(
+    		:NFC,
+		:condition_mapped,
+		:chars_per_sec_norecs_mean,
+		:condition_mapped * :NFC,
+		:block,
+		:idx_in_block
+	),
+	Random Effects( :participant, :participant * :condition_mapped ),
+	NoBounds( 1 ),
+	Personality( "Standard Least Squares" ),
+	Method( "REML" ),
+	Emphasis( "Minimal Report" ),
+	Run(
+    		:rec_use_full_frac << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ),
+		Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ),
+		Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ),
+		Show All Confidence Intervals( 1 )}
+	)
+);
