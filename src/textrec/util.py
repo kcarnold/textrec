@@ -1,8 +1,10 @@
 import joblib
+import json
 try:
-    import ujson as json
+    import ujson
 except ImportError:
-    import json
+    # Slower but still works fine.
+    ujson = json
 from .paths import paths
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -31,7 +33,7 @@ def get_coco_captions():
         download_zipfile_members(
             'http://cs.stanford.edu/people/karpathy/deepimagesent/caption_datasets.zip',
             [('dataset_coco.json', str(dataset_coco_json))])
-    return json.load(open(dataset_coco_json))['images']
+    return ujson.load(open(dataset_coco_json))['images']
 
 
 def get_coco_id2url():
@@ -45,8 +47,8 @@ def get_coco_id2url():
                 ('annotations/captions_train2017.json', train_captions_json),
                 ('annotations/captions_val2017.json', val_captions_json)
             ])
-    train_captions = json.load(open(train_captions_json))['images']
-    val_captions = json.load(open(val_captions_json))['images']
+    train_captions = ujson.load(open(train_captions_json))['images']
+    val_captions = ujson.load(open(val_captions_json))['images']
     return {img['id']: img['coco_url'] for img in train_captions + val_captions}
 
 
