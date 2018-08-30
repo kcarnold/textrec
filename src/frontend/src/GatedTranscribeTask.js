@@ -35,197 +35,199 @@ function surveyView(props) {
 
 let baseStimuli = [
   {
-    "stimulus": {
-      "type": "img",
-      "content": 365928,
-      "url": "http://images.cocodataset.org/train2017/000000365928.jpg"
+    stimulus: {
+      type: "img",
+      content: 365928,
+      url: "http://images.cocodataset.org/train2017/000000365928.jpg",
     },
-    "transcribe": "many umbrellas on a beach near a body of water"
+    transcribe: "many umbrellas on a beach near a body of water",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 27517,
-      "url": "http://images.cocodataset.org/train2017/000000027517.jpg"
+    stimulus: {
+      type: "img",
+      content: 27517,
+      url: "http://images.cocodataset.org/train2017/000000027517.jpg",
     },
-    "transcribe": "a person holding their flip phone up in front of a computer"
+    transcribe: "a person holding their flip phone up in front of a computer",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 3761,
-      "url": "http://images.cocodataset.org/train2017/000000003761.jpg"
+    stimulus: {
+      type: "img",
+      content: 3761,
+      url: "http://images.cocodataset.org/train2017/000000003761.jpg",
     },
-    "transcribe": "a woman looks as if she is rejecting a kiss from a horse"
+    transcribe: "a woman looks as if she is rejecting a kiss from a horse",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 296303,
-      "url": "http://images.cocodataset.org/train2017/000000296303.jpg"
+    stimulus: {
+      type: "img",
+      content: 296303,
+      url: "http://images.cocodataset.org/train2017/000000296303.jpg",
     },
-    "transcribe": "a giant cricket in a cage eating an orange slice"
+    transcribe: "a giant cricket in a cage eating an orange slice",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 358624,
-      "url": "http://images.cocodataset.org/train2017/000000358624.jpg"
+    stimulus: {
+      type: "img",
+      content: 358624,
+      url: "http://images.cocodataset.org/train2017/000000358624.jpg",
     },
-    "transcribe": "an orange being held up to a christmas tree bulb"
+    transcribe: "an orange being held up to a christmas tree bulb",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 358624,
-      "url": "http://images.cocodataset.org/train2017/000000358624.jpg"
+    stimulus: {
+      type: "img",
+      content: 358624,
+      url: "http://images.cocodataset.org/train2017/000000358624.jpg",
     },
-    "transcribe": "an orange being held up to a christmas tree bulb"
+    transcribe: "an orange being held up to a christmas tree bulb",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 125850,
-      "url": "http://images.cocodataset.org/val2017/000000125850.jpg"
+    stimulus: {
+      type: "img",
+      content: 125850,
+      url: "http://images.cocodataset.org/val2017/000000125850.jpg",
     },
-    "transcribe": "this gray cat has curled up into a ball"
+    transcribe: "this gray cat has curled up into a ball",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 379048,
-      "url": "http://images.cocodataset.org/train2017/000000379048.jpg"
+    stimulus: {
+      type: "img",
+      content: 379048,
+      url: "http://images.cocodataset.org/train2017/000000379048.jpg",
     },
-    "transcribe": "the baseball memorabilia is being displayed in the showcase"
+    transcribe: "the baseball memorabilia is being displayed in the showcase",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 534421,
-      "url": "http://images.cocodataset.org/train2017/000000534421.jpg"
+    stimulus: {
+      type: "img",
+      content: 534421,
+      url: "http://images.cocodataset.org/train2017/000000534421.jpg",
     },
-    "transcribe": "a little kid on skis in the snow with a helmet on"
+    transcribe: "a little kid on skis in the snow with a helmet on",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 358624,
-      "url": "http://images.cocodataset.org/train2017/000000358624.jpg"
+    stimulus: {
+      type: "img",
+      content: 358624,
+      url: "http://images.cocodataset.org/train2017/000000358624.jpg",
     },
-    "transcribe": "an orange being held up to a christmas tree bulb"
+    transcribe: "an orange being held up to a christmas tree bulb",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 296303,
-      "url": "http://images.cocodataset.org/train2017/000000296303.jpg"
+    stimulus: {
+      type: "img",
+      content: 296303,
+      url: "http://images.cocodataset.org/train2017/000000296303.jpg",
     },
-    "transcribe": "a giant cricket in a cage eating an orange slice"
+    transcribe: "a giant cricket in a cage eating an orange slice",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 3761,
-      "url": "http://images.cocodataset.org/train2017/000000003761.jpg"
+    stimulus: {
+      type: "img",
+      content: 3761,
+      url: "http://images.cocodataset.org/train2017/000000003761.jpg",
     },
-    "transcribe": "a woman looks as if she is rejecting a kiss from a horse"
+    transcribe: "a woman looks as if she is rejecting a kiss from a horse",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 534421,
-      "url": "http://images.cocodataset.org/train2017/000000534421.jpg"
+    stimulus: {
+      type: "img",
+      content: 534421,
+      url: "http://images.cocodataset.org/train2017/000000534421.jpg",
     },
-    "transcribe": "a little kid on skis in the snow with a helmet on"
+    transcribe: "a little kid on skis in the snow with a helmet on",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 212853,
-      "url": "http://images.cocodataset.org/train2017/000000212853.jpg"
+    stimulus: {
+      type: "img",
+      content: 212853,
+      url: "http://images.cocodataset.org/train2017/000000212853.jpg",
     },
-    "transcribe": "the older woman smiles as she holds a plate with a slice of pizza"
+    transcribe:
+      "the older woman smiles as she holds a plate with a slice of pizza",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 27517,
-      "url": "http://images.cocodataset.org/train2017/000000027517.jpg"
+    stimulus: {
+      type: "img",
+      content: 27517,
+      url: "http://images.cocodataset.org/train2017/000000027517.jpg",
     },
-    "transcribe": "a person holding their flip phone up in front of a computer"
+    transcribe: "a person holding their flip phone up in front of a computer",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 125850,
-      "url": "http://images.cocodataset.org/val2017/000000125850.jpg"
+    stimulus: {
+      type: "img",
+      content: 125850,
+      url: "http://images.cocodataset.org/val2017/000000125850.jpg",
     },
-    "transcribe": "this gray cat has curled up into a ball"
+    transcribe: "this gray cat has curled up into a ball",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 379048,
-      "url": "http://images.cocodataset.org/train2017/000000379048.jpg"
+    stimulus: {
+      type: "img",
+      content: 379048,
+      url: "http://images.cocodataset.org/train2017/000000379048.jpg",
     },
-    "transcribe": "the baseball memorabilia is being displayed in the showcase"
+    transcribe: "the baseball memorabilia is being displayed in the showcase",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 3761,
-      "url": "http://images.cocodataset.org/train2017/000000003761.jpg"
+    stimulus: {
+      type: "img",
+      content: 3761,
+      url: "http://images.cocodataset.org/train2017/000000003761.jpg",
     },
-    "transcribe": "a woman looks as if she is rejecting a kiss from a horse"
+    transcribe: "a woman looks as if she is rejecting a kiss from a horse",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 125850,
-      "url": "http://images.cocodataset.org/val2017/000000125850.jpg"
+    stimulus: {
+      type: "img",
+      content: 125850,
+      url: "http://images.cocodataset.org/val2017/000000125850.jpg",
     },
-    "transcribe": "this gray cat has curled up into a ball"
+    transcribe: "this gray cat has curled up into a ball",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 212853,
-      "url": "http://images.cocodataset.org/train2017/000000212853.jpg"
+    stimulus: {
+      type: "img",
+      content: 212853,
+      url: "http://images.cocodataset.org/train2017/000000212853.jpg",
     },
-    "transcribe": "the older woman smiles as she holds a plate with a slice of pizza"
+    transcribe:
+      "the older woman smiles as she holds a plate with a slice of pizza",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 379048,
-      "url": "http://images.cocodataset.org/train2017/000000379048.jpg"
+    stimulus: {
+      type: "img",
+      content: 379048,
+      url: "http://images.cocodataset.org/train2017/000000379048.jpg",
     },
-    "transcribe": "the baseball memorabilia is being displayed in the showcase"
+    transcribe: "the baseball memorabilia is being displayed in the showcase",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 365928,
-      "url": "http://images.cocodataset.org/train2017/000000365928.jpg"
+    stimulus: {
+      type: "img",
+      content: 365928,
+      url: "http://images.cocodataset.org/train2017/000000365928.jpg",
     },
-    "transcribe": "many umbrellas on a beach near a body of water"
+    transcribe: "many umbrellas on a beach near a body of water",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 182450,
-      "url": "http://images.cocodataset.org/train2017/000000182450.jpg"
+    stimulus: {
+      type: "img",
+      content: 182450,
+      url: "http://images.cocodataset.org/train2017/000000182450.jpg",
     },
-    "transcribe": "picture of a sink with a mirror and a toilet"
+    transcribe: "picture of a sink with a mirror and a toilet",
   },
   {
-    "stimulus": {
-      "type": "img",
-      "content": 182450,
-      "url": "http://images.cocodataset.org/train2017/000000182450.jpg"
+    stimulus: {
+      type: "img",
+      content: 182450,
+      url: "http://images.cocodataset.org/train2017/000000182450.jpg",
     },
-    "transcribe": "picture of a sink with a mirror and a toilet"
-  }
+    transcribe: "picture of a sink with a mirror and a toilet",
+    },
 ];
 
 const namedConditions = {
