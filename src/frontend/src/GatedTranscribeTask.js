@@ -691,7 +691,7 @@ let conditionOrders = shuffle.permutator(baseConditions);
 export function createTaskState(loginEvent) {
   let clientId = loginEvent.participant_id;
 
-  let screens, stimuli;
+  let screens;
   let demoConditionName = getDemoConditionName(clientId);
   if (demoConditionName != null) {
     screens = getDemoScreens(demoConditionName);
@@ -700,7 +700,7 @@ export function createTaskState(loginEvent) {
       console.assert(loginEvent.n_conditions === conditionOrders.length);
     }
     let conditions = conditionOrders[loginEvent.assignment];
-    stimuli = baseStimuli.slice();
+    let stimuli = baseStimuli.slice();
     const personalityBlocks = splitPersonalityBlocks(5, 8);
     screens = getScreens(conditions, stimuli, personalityBlocks);
   }
