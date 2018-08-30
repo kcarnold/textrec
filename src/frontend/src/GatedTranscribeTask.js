@@ -437,7 +437,21 @@ function experimentBlock(
     ),
     agreeLikert("sys-fast", "This keyboard design helped me type quickly"),
   ];
-  let tutorialStimulus = stimuli[0];
+
+  let body = stimuli.map((stimulus, idx) =>
+    trialScreen({
+      name: `final-${block}-${idx}`,
+      condition: conditionName,
+      stimulus: stimulus.stimulus,
+      transcribe: stimulus.transcribe.toLowerCase(),
+    })
+  );
+
+  // Add the post-practice feedback screen after the "practice round".
+  body.splice(1, 0, {
+    screen: "PostPractice",
+    view: PostPractice(block),
+  });
 
   return [
     {
@@ -450,26 +464,7 @@ function experimentBlock(
         </div>
       ),
     },
-    trialScreen({
-      name: `practice-${block}`,
-      condition: conditionName,
-      transcribe: tutorialStimulus.transcribe.toLowerCase(),
-      stimulus: tutorialStimulus.stimulus,
-      instructions: TutorialInstructions(block),
-    }),
-    {
-      screen: "PostPractice",
-      view: PostPractice(block),
-    },
-    ...stimuli.slice(1).map((stimulus, idx) =>
-      trialScreen({
-        name: `final-${block}-${idx}`,
-        condition: conditionName,
-        stimulus: stimulus.stimulus,
-        transcribe: stimulus.transcribe.toLowerCase(),
-        instructions: CapInstructions,
-      })
-    ),
+    ...body,
     {
       screen: "PostTaskSurvey",
       view: surveyView({
