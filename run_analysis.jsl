@@ -1,4 +1,18 @@
-﻿dt = Open(
+﻿/**
+ * TODO:
+ * - decide on a consistent set of predictors
+ *  -- include participant * condition?
+ *  -- include stimulus?
+ * - Which traits?
+ * - Additional analyses:
+ *  -- rate of usage of *relevant* recs
+ *  -- error rate
+ *  -- Try analyzing effect of condition by quantile of NFC (quartiles) 
+ *  -- Typing speed: interaction of condition and base typing speed 
+ *  -- Outcome stats by trait
+ */
+
+dt = Open(
 	"/Users/kcarnold/code/textrec/data/analyzed/combined_traits.csv",
 	Charset( "utf-8" ),
 	Import Settings(
@@ -22,6 +36,14 @@
 
 // Set data types
 Column( dt, "stimulus" ) << Data Type( "Character" ) << Modeling Type( "Nominal" );
+
+// Create formula columns
+traits = {"NFC", "Extraversion"};
+For(i=1, i<=2, i++, 
+	dt << New Column( traits[i] || " Quartile",
+	Numeric,
+	Formula( Floor( (4 * Col Rank( Column(traits[i]), <<tie( "average" ) )) / N Row() ) ))
+);
 
 /**
  * Outcome Effects
@@ -119,7 +141,14 @@ dt << Fit Model(
 // ... including NFC
 dt << Fit Model(
 	Y( :rec_use_full_frac ),
-	Effects( :NFC, :condition_mapped, :chars_per_sec_norecs_mean, :condition_mapped * :NFC, :block, :idx_in_block ),
+	Effects(
+		:NFC,
+		:condition_mapped,
+		:chars_per_sec_norecs_mean,
+		:condition_mapped * :NFC,
+		:block,
+		:idx_in_block
+	),
 	Where( :condition != "norecs" ),
 	Random Effects( :participant, :participant * :condition_mapped ),
 	NoBounds( 1 ),
@@ -132,6 +161,13 @@ dt << Fit Model(
 		Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ),
 		Show All Confidence Intervals( 1 )}
 	)
+);
+
+// Graph
+dt << Graph Builder(
+	Size( 585, 532 ),
+	Variables( X( :NFC ), Y( :rec_use_full_frac ), Overlay( :condition_mapped ) ),
+	Elements( Points( X, Y, Legend( 11 ) ), Line Of Fit( X, Y, Legend( 13 ) ) )
 );
 
 
@@ -159,6 +195,37 @@ dt << Fit Model(
 	Emphasis( "Minimal Report" ),
 	Run(
 		:extraneous_inputs_per_word_boxcox << {Summary of Fit( 1 ), Analysis of Variance( 0 ),
+		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ),
+		Plot Regression( 0 ), Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ),
+		Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
+	)
+);
+
+
+// Speed
+dt << Fit Model(
+	Y( :chars_per_sec_ratio_to_norecs_boxcox ),
+	Where( :condition != "norecs" ),
+	Effects(
+		:condition_mapped,
+		:block,
+		:idx_in_block,
+		:NFC,
+		:Extraversion,
+		:Openness,
+		:Trust,
+		:NFC * :condition_mapped,
+		:Extraversion * :condition_mapped,
+		:Openness * :condition_mapped,
+		:Trust * :condition_mapped
+	),
+	Random Effects( :participant, :participant * :condition_mapped ),
+	NoBounds( 1 ),
+	Personality( "Standard Least Squares" ),
+	Method( "REML" ),
+	Emphasis( "Minimal Report" ),
+	Run(
+		:chars_per_sec_ratio_to_norecs_boxcox << {Summary of Fit( 1 ), Analysis of Variance( 0 ),
 		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ),
 		Plot Regression( 0 ), Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ),
 		Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
