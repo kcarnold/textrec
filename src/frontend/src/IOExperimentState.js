@@ -65,6 +65,13 @@ type Tap = {
   y?: ?number,
 };
 
+type TranscriptionStatus = {
+  commonPrefix: string, // correctly typed characters so far
+  incorrect: "",        // the part of the transcription task that corresponds to incorrect text.
+  todo: "",             // part left to transcribe
+  done: false,          // if typed matches task, except for whitespace
+};
+
 export class ExperimentStateStore {
   outstandingRequests: number[] = [];
 
@@ -376,7 +383,10 @@ export class ExperimentStateStore {
     return this.suggestionContext;
   }
 
-  getTranscriptionStatus() {
+  getTranscriptionStatus(): TranscriptionStatus {
+    /**
+     * Get status of a transcription task.
+     */
     let curText = this.curText.trim();
     let transcribe = this.flags.transcribe;
     if (!transcribe) return null;
@@ -393,7 +403,7 @@ export class ExperimentStateStore {
     }
 
     let isCorrectSoFar = curText.length === prefixLength;
-    let result = {
+    let result: TranscriptionStatus = {
       commonPrefix: transcribe.slice(0, prefixLength),
       incorrect: "",
       todo: "",
