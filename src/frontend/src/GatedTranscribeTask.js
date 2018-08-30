@@ -386,14 +386,15 @@ function experimentView(props) {
 
       let { experimentState } = state;
       let { curText } = experimentState;
-      let { incorrect, done } = experimentState.getTranscriptionStatus();
+      let transcriptionStatus = experimentState.getTranscriptionStatus();
 
-      let textStyle = incorrect.length > 0 ? { color: "red" } : {};
+      let isIncorrect = transcriptionStatus === 'incorrect'
+      let textStyle = isIncorrect ? { color: "red" } : {};
 
       return (
         <div className="ExperimentScreen">
           <div className="header">
-            {done ? (
+            {transcriptionStatus === 'done' ? (
               <NextBtn />
             ) : (
               <div>
@@ -405,7 +406,7 @@ function experimentView(props) {
                 >
                   Show the text to type
                 </button>
-                {incorrect && (
+                {isIncorrect && (
                   <h2 color="red">Some incorrect letters or symbols</h2>
                 )}
               </div>

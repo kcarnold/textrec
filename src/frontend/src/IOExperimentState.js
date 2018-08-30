@@ -65,12 +65,7 @@ type Tap = {
   y?: ?number,
 };
 
-type TranscriptionStatus = {
-  commonPrefix: string, // correctly typed characters so far
-  incorrect: "",        // the part of the transcription task that corresponds to incorrect text.
-  todo: "",             // part left to transcribe
-  done: false,          // if typed matches task, except for whitespace
-};
+type TranscriptionStatus = 'done' | 'incomplete' | 'incorrect';
 
 export class ExperimentStateStore {
   outstandingRequests: number[] = [];
@@ -81,7 +76,7 @@ export class ExperimentStateStore {
 
   flags: IOExperimentFlags;
   stimulus: Stimulus;
-  transcribe: string;
+  transcribe: ?string;
 
   curText: string = "";
   contextSequenceNum: number = 0;
@@ -388,9 +383,12 @@ export class ExperimentStateStore {
      * Get status of a transcription task.
      */
     let curText = this.curText.trim();
-    let transcribe = this.flags.transcribe;
-    if (!transcribe) return null;
+    let transcribe = this.flags.transcribe || '';
     transcribe = transcribe.trim();
+
+    if (curText === transcribe) {
+      return 'done';
+    }
 
     // Get longest common prefix between curText and transcribe
     let prefixLength = 0;
@@ -403,20 +401,11 @@ export class ExperimentStateStore {
     }
 
     let isCorrectSoFar = curText.length === prefixLength;
-    let result: TranscriptionStatus = {
-      commonPrefix: transcribe.slice(0, prefixLength),
-      incorrect: "",
-      todo: "",
-      done: false,
-    };
     if (isCorrectSoFar) {
-      result.todo = transcribe.slice(curText.length);
+      return 'incomplete';
     } else {
-      result.incorrect = transcribe.slice(prefixLength);
+      return 'incorrect';
     }
-    result.done =
-      result.incorrect.length === 0 && result.todo.trim().length === 0;
-    return result;
   }
 
   countEvent(eventType: string) {
