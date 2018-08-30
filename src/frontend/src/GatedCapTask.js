@@ -462,7 +462,7 @@ const TaskDescription = () => (
         <b>Not specific.</b>
       </li>
       <li>
-        An alert tricolor dalmation is looking to its left. &mdash;{" "}
+        An alert tricolor dalmatian is looking to its left. &mdash;{" "}
         <b>Not accurate.</b>
       </li>
       <li>
