@@ -6,7 +6,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 BATCH_DATA = {
-    'gc1': dict(n_conditions=6, config='gcap')
+    'gc1': dict(n_conditions=6, config='gcap'),
+    'xs1': dict(n_conditions=6, config="gx")
 }
 
 SECS_PER_HOUR = 60 * 60
