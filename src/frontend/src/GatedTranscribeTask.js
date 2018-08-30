@@ -26,7 +26,7 @@ import type { Screen } from "./IOTaskState";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
-const TRIALS_PER_CONDITION = 8;
+const TRIALS_PER_CONDITION = 9;
 const MIN_REC_THRESHOLD = 1;
 
 function surveyView(props) {
@@ -536,12 +536,12 @@ const StudyDesc = () => (
     </p>
     <p>
       For each keyboard design, there will be a practice round to get used to
-      it, then you'll type {TRIALS_PER_CONDITION} captions using it, and finally
+      it, then you'll type {TRIALS_PER_CONDITION - 1} captions using it, and finally
       a short survey.
     </p>
     <p>
-      You will type a total of {baseConditions.length * (TRIALS_PER_CONDITION + 1)}{" "}
-      captions.
+      You will type a total of{" "}
+      {baseConditions.length * (TRIALS_PER_CONDITION)} captions.
     </p>
     <p>Note:</p>
     <ul className="spaced">
