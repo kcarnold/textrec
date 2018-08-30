@@ -70,3 +70,12 @@ def get_vectorized_captions(*, vectorizer_kwargs={}, split=None):
     joined_captions = [join_captions(image) for image in images]
     vectorizer = get_caption_vectorizer(**vectorizer_kwargs)
     return vectorizer, vectorizer.transform(joined_captions)
+
+
+def write_json(*, data, filename, export_name=None):
+    with open(filename, 'w') as out:
+        if export_name:
+            out.write(f"// AUTO-GENERATED\nexport const {export_name} = ")
+        json.dump(data, out, indent=2)
+        if export_name:
+            out.write(f";\nexport default {export_name};\n")
