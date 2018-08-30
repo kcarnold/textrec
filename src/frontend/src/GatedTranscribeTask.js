@@ -298,7 +298,11 @@ const PostPractice = block =>
     } else {
       return (
         <div>
-          Predictions were available, but it looks like you didn't use them.
+          <p>
+            Predictions were available, but it looks like you didn't use them.{" "}
+            <b>You don't have to use predictions</b> during the real trials, but
+            for practice we want to make sure you know how to use them.
+          </p>
           <button
             className="NextBtn"
             onClick={() => dispatch({ type: "next", delta: -1 })}
