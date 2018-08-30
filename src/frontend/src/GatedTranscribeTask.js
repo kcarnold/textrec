@@ -28,7 +28,7 @@ import type { Screen } from "./IOTaskState";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
-const TRIALS_PER_CONDITION = 9;
+const TRIALS_PER_CONDITION = 8;
 const MIN_REC_THRESHOLD = 1;
 
 function surveyView(props) {
@@ -360,8 +360,24 @@ function getScreens(
   return result;
 }
 
-function experimentView(props) {
-  return iobs(({ state, dispatch }) => {
+function withBodyLock(Component) {
+  return class extends React.Component {
+    componentDidMount() {
+      this.oldPosition = document.body.style.position;
+      document.body.style.position = 'fixed';
+    }
+
+    componentWillUnmount() {
+      document.body.style.position = this.oldPosition;
+    }
+
+    render() {
+      return <Component {...this.props} />;
+    }
+  };
+}
+
+const ExperimentView = withBodyLock(iobs(({ state, dispatch }) => {
     if (state.experimentState.textShown) {
       return (
         <div>
@@ -432,8 +448,7 @@ function experimentView(props) {
         </div>
       );
     }
-  });
-}
+}));
 
 function trialScreen(props: {
   name: string,
@@ -460,7 +475,7 @@ function trialScreen(props: {
       },
     },
     screen: "ExperimentScreen",
-    view: experimentView({}),
+    view: ExperimentView,
   };
 }
 
