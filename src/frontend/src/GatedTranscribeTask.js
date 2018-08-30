@@ -19,6 +19,8 @@ import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import traitData from "./TraitData_NfCEDTO";
 import { getDemoConditionName, gatingSuggestionFilter } from "./misc";
+import {stimuliToTranscribe as baseStimuli} from "./stimuliToTranscribe";
+
 
 import * as shuffle from "./shuffle";
 
@@ -32,203 +34,6 @@ const MIN_REC_THRESHOLD = 1;
 function surveyView(props) {
   return () => React.createElement(Survey, props);
 }
-
-let baseStimuli = [
-  {
-    stimulus: {
-      type: "img",
-      content: 365928,
-      url: "http://images.cocodataset.org/train2017/000000365928.jpg",
-    },
-    transcribe: "many umbrellas on a beach near a body of water",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 27517,
-      url: "http://images.cocodataset.org/train2017/000000027517.jpg",
-    },
-    transcribe: "a person holding their flip phone up in front of a computer",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 3761,
-      url: "http://images.cocodataset.org/train2017/000000003761.jpg",
-    },
-    transcribe: "a woman looks as if she is rejecting a kiss from a horse",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 296303,
-      url: "http://images.cocodataset.org/train2017/000000296303.jpg",
-    },
-    transcribe: "a giant cricket in a cage eating an orange slice",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 358624,
-      url: "http://images.cocodataset.org/train2017/000000358624.jpg",
-    },
-    transcribe: "an orange being held up to a christmas tree bulb",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 358624,
-      url: "http://images.cocodataset.org/train2017/000000358624.jpg",
-    },
-    transcribe: "an orange being held up to a christmas tree bulb",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 125850,
-      url: "http://images.cocodataset.org/val2017/000000125850.jpg",
-    },
-    transcribe: "this gray cat has curled up into a ball",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 379048,
-      url: "http://images.cocodataset.org/train2017/000000379048.jpg",
-    },
-    transcribe: "the baseball memorabilia is being displayed in the showcase",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 534421,
-      url: "http://images.cocodataset.org/train2017/000000534421.jpg",
-    },
-    transcribe: "a little kid on skis in the snow with a helmet on",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 358624,
-      url: "http://images.cocodataset.org/train2017/000000358624.jpg",
-    },
-    transcribe: "an orange being held up to a christmas tree bulb",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 296303,
-      url: "http://images.cocodataset.org/train2017/000000296303.jpg",
-    },
-    transcribe: "a giant cricket in a cage eating an orange slice",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 3761,
-      url: "http://images.cocodataset.org/train2017/000000003761.jpg",
-    },
-    transcribe: "a woman looks as if she is rejecting a kiss from a horse",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 534421,
-      url: "http://images.cocodataset.org/train2017/000000534421.jpg",
-    },
-    transcribe: "a little kid on skis in the snow with a helmet on",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 212853,
-      url: "http://images.cocodataset.org/train2017/000000212853.jpg",
-    },
-    transcribe:
-      "the older woman smiles as she holds a plate with a slice of pizza",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 27517,
-      url: "http://images.cocodataset.org/train2017/000000027517.jpg",
-    },
-    transcribe: "a person holding their flip phone up in front of a computer",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 125850,
-      url: "http://images.cocodataset.org/val2017/000000125850.jpg",
-    },
-    transcribe: "this gray cat has curled up into a ball",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 379048,
-      url: "http://images.cocodataset.org/train2017/000000379048.jpg",
-    },
-    transcribe: "the baseball memorabilia is being displayed in the showcase",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 3761,
-      url: "http://images.cocodataset.org/train2017/000000003761.jpg",
-    },
-    transcribe: "a woman looks as if she is rejecting a kiss from a horse",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 125850,
-      url: "http://images.cocodataset.org/val2017/000000125850.jpg",
-    },
-    transcribe: "this gray cat has curled up into a ball",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 212853,
-      url: "http://images.cocodataset.org/train2017/000000212853.jpg",
-    },
-    transcribe:
-      "the older woman smiles as she holds a plate with a slice of pizza",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 379048,
-      url: "http://images.cocodataset.org/train2017/000000379048.jpg",
-    },
-    transcribe: "the baseball memorabilia is being displayed in the showcase",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 365928,
-      url: "http://images.cocodataset.org/train2017/000000365928.jpg",
-    },
-    transcribe: "many umbrellas on a beach near a body of water",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 182450,
-      url: "http://images.cocodataset.org/train2017/000000182450.jpg",
-    },
-    transcribe: "picture of a sink with a mirror and a toilet",
-  },
-  {
-    stimulus: {
-      type: "img",
-      content: 182450,
-      url: "http://images.cocodataset.org/train2017/000000182450.jpg",
-    },
-    transcribe: "picture of a sink with a mirror and a toilet",
-    },
-];
 
 const namedConditions = {
   norecs: {
@@ -249,25 +54,6 @@ const namedConditions = {
     modelSeesStimulus: false,
   },
 };
-
-const CapInstructions = iobs(({ state, dispatch }) => {
-  let { done } = state.experimentState.getTranscriptionStatus();
-  return (
-    <div>
-      {!done && (
-        <button
-          onClick={evt => {
-            dispatch({ type: "textVisibility", visible: true });
-          }}
-          className="NextBtn"
-        >
-          Show the text to type
-        </button>
-      )}
-      {done ? <NextBtn /> : null}
-    </div>
-  );
-});
 
 const PostPractice = block =>
   iobs(({ state, dispatch }) => {
@@ -473,29 +259,6 @@ function experimentBlock(
   ];
 }
 
-const TutorialInstructions = block =>
-  iobs(({ state }) => {
-    let {
-      commonPrefix,
-      incorrect,
-      todo,
-    } = state.experimentState.getTranscriptionStatus();
-    return (
-      <div>
-        <h1>Practice with Keyboard Design {block + 1}</h1>
-
-        <b>Type this:</b>
-        <br />
-        <div style={{ background: "white" }}>
-          <span style={{ color: "grey" }}>{commonPrefix}</span>
-          <span style={{ color: "red" }}>{incorrect}</span>
-          <span>{todo}</span>
-        </div>
-        <NextBtn disabled={incorrect.length !== 0 || todo.length !== 0} />
-      </div>
-    );
-  });
-
 function getDemoScreens(condition: string) {
   return baseStimuli.map(stimulus =>
     trialScreen({
@@ -503,7 +266,6 @@ function getDemoScreens(condition: string) {
       condition,
       stimulus: stimulus.stimulus,
       transcribe: stimulus.transcribe.toLowerCase(),
-      instructions: CapInstructions,
     })
   );
 }
@@ -559,14 +321,14 @@ const StudyDesc = () => (
 
 function getScreens(
   conditions: string[],
-  texts: string[],
+  stimuli,
   personalityBlocks
 ): Screen[] {
   // Group stimuli by block.
-  console.assert(texts.length >= conditions.length * TRIALS_PER_CONDITION);
+  console.assert(stimuli.length >= conditions.length * TRIALS_PER_CONDITION);
   let blocks = conditions.map((condition, idx) => ({
     condition,
-    texts: texts
+    stimuli: stimuli
       .slice(idx * TRIALS_PER_CONDITION)
       .slice(0, TRIALS_PER_CONDITION),
   }));
@@ -584,7 +346,7 @@ function getScreens(
       experimentBlock(
         idx,
         block.condition,
-        block.texts,
+        block.stimuli,
         personalityBlocks[idx + 1]
       )
     ),
@@ -616,7 +378,6 @@ function experimentView(props) {
         </div>
       );
     } else {
-      let instructions = React.createElement(props.instructions);
       if (state.phoneSize.width > state.phoneSize.height) {
         return (
           <h1>Please rotate your phone to be in the portrait orientation.</h1>
@@ -625,13 +386,31 @@ function experimentView(props) {
 
       let { experimentState } = state;
       let { curText } = experimentState;
-      let { incorrect } = experimentState.getTranscriptionStatus();
+      let { incorrect, done } = experimentState.getTranscriptionStatus();
 
       let textStyle = incorrect.length > 0 ? { color: "red" } : {};
 
       return (
         <div className="ExperimentScreen">
-          <div className="header">{instructions}</div>
+          <div className="header">
+            {done ? (
+              <NextBtn />
+            ) : (
+              <div>
+                <button
+                  onClick={evt => {
+                    dispatch({ type: "textVisibility", visible: true });
+                  }}
+                  className="NextBtn"
+                >
+                  Show the text to type
+                </button>
+                {incorrect && (
+                  <h2 color="red">Some incorrect letters or symbols</h2>
+                )}
+              </div>
+            )}
+          </div>
           <div className="CurText">
             <span>
               <span style={textStyle}>{curText}</span>
@@ -659,11 +438,10 @@ function trialScreen(props: {
   name: string,
   condition: string,
   flags: ?Object,
-  instructions: React.ComponentType<any>,
   stimulus: Stimulus,
   transcribe: ?string,
 }) {
-  let { name, condition, flags, instructions, stimulus, transcribe } = props;
+  let { name, condition, flags, stimulus, transcribe } = props;
   if (!(condition in namedConditions)) {
     throw new Error(`Invalid condition name: ${condition}`);
   }
@@ -681,7 +459,7 @@ function trialScreen(props: {
       },
     },
     screen: "ExperimentScreen",
-    view: experimentView({ instructions }),
+    view: experimentView({}),
   };
 }
 
