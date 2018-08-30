@@ -275,22 +275,13 @@ const PostPractice = block =>
     let totalRecs =
       (eventCounts["tapSugg_partial"] || 0) +
       (eventCounts["tapSugg_full"] || 0);
-    if (flags.hideRecs) {
+    if (flags.hideRecs || totalRecs > MIN_REC_THRESHOLD) {
       return (
         <div>
-          About to start typing using
-          <h1>Keyboard design {block + 1}</h1>
-          Tap Next when ready: <NextBtn />
-        </div>
-      );
-    }
-
-    if (totalRecs > MIN_REC_THRESHOLD) {
-      return (
-        <div>
-          Great, it looks like you know how to use Keyboard Design {block + 1}!
+          <h1>Practice for Keyboard Design {block + 1} Completed</h1>
           <p>
-            <b>Ready to start typing using Keyboard Design {block + 1}?</b>
+            Great, it looks like you know how to use Keyboard Design {block + 1}
+            !
           </p>
           <NextBtn />
         </div>
