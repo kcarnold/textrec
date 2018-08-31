@@ -37,28 +37,29 @@ dt = Open(
 // Set data types
 Column( dt, "stimulus" ) << Data Type( "Character" ) << Modeling Type( "Nominal" );
 
-Column( dt, "condition_mapped") << Set Property("Value Ordering", {"norecs", "gated", "general", "specific"});
+Column( dt, "condition_mapped" ) << Set Property( "Value Ordering", {"norecs", "gated", "general", "specific"} );
 
 
 // Create formula columns
 quartilify = {"NFC", "Extraversion", "Openness", "Trust", "chars_per_sec_norecs_mean"};
-For(i=1, i<=N Items(quartilify), i++, 
+For( i = 1, i <= N Items( quartilify ), i++,
 	dt << New Column( quartilify[i] || " Quartile",
-	Numeric,
-	Formula( 1 + Floor( (4 * Col Rank( Column(quartilify[i]), <<tie( "average" ) )) / N Row() ) ))
+		Numeric,
+		Formula( 1 + Floor( (4 * Col Rank( Column( quartilify[i] ), <<tie( "average" ) )) / N Row() ) )
+	)
 );
 
-dt << New Column("Ideal Taps per Typo-Corrected Word", Numeric,
-			Formula( :corrected_tapstotype_general / :num_words) );
+dt << New Column( "Ideal Taps per Typo-Corrected Word",
+	Numeric,
+	Formula( :corrected_tapstotype_general / :num_words )
+);
 
-dt << New Column("relevant_recs_offered", Numeric,
-	Formula(Maximum(
-	:orig_idealrecuse_cond + (:extraneous_inputs -
-	:num_tapBackspace * 2),
-	0
-))); // FIXME: This is a kludge: it mis-counts if you backspaced over text inserted by recommendations.
+dt << New Column( "relevant_recs_offered",
+	Numeric,
+	Formula( Maximum( :orig_idealrecuse_cond + (:extraneous_inputs - :num_tapBackspace * 2), 0 ) )
+); // FIXME: This is a kludge: it mis-counts if you backspaced over text inserted by recommendations.
 
-dt << New Column("relevant_use_frac", Numeric, Formula(Minimum(:num_tapSugg_any / :relevant_recs_offered, 1)));
+dt << New Column( "relevant_use_frac", Numeric, Formula( Minimum( :num_tapSugg_any / :relevant_recs_offered, 1 ) ) );
 
 
 /**
@@ -96,9 +97,7 @@ dt << Fit Model(
 
 // Ideal Taps per Typo-Corrected Word
 dt << Fit Model(
-	Y(
-		"Ideal Taps per Typo-Corrected Word",
-	),
+	Y( "Ideal Taps per Typo-Corrected Word", ),
 	Effects( :condition_mapped, :idx ),
 	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
 	NoBounds( 1 ),
@@ -136,29 +135,14 @@ dt << Graph Builder(
 		Overlay( :condition_mapped )
 	),
 	Where( :experiment == "gc1" ),
-	Elements( Position( 1, 1 ), Bar( Y, Legend( 6 ), 			Error Bars( "Standard Error" ),
- Label( "Label by Value" ) ) ),
-	Elements(
-		Position( 1, 2 ),
-		Bar(
-			Y,
-			Legend( 7 ),
-			Error Bars( "Standard Error" ),
-			Label( "Label by Value" )
-		)
-	),
+	Elements( Position( 1, 1 ), Bar( Y, Legend( 6 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) ),
+	Elements( Position( 1, 2 ), Bar( Y, Legend( 7 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) ),
 	SendToReport(
 		Dispatch(
 			{},
 			"400",
 			ScaleBox,
-			{Legend Model(
-				7,
-				Base( 0, 0, 0 ),
-				Base( 1, 0, 0 ),
-				Base( 2, 0, 0 ),
-				Base( 3, 0, 0 )
-			)}
+			{Legend Model( 7, Base( 0, 0, 0 ), Base( 1, 0, 0 ), Base( 2, 0, 0 ), Base( 3, 0, 0 ) )}
 		)
 	)
 );
@@ -189,14 +173,7 @@ dt << Fit Model(
 // ... including NFC
 dt << Fit Model(
 	Y( :rec_use_full_frac ),
-	Effects(
-		:NFC,
-		:condition_mapped,
-		:chars_per_sec_norecs_mean,
-		:condition_mapped * :NFC,
-		:block,
-		:idx_in_block
-	),
+	Effects( :NFC, :condition_mapped, :chars_per_sec_norecs_mean, :condition_mapped * :NFC, :block, :idx_in_block ),
 	Where( :condition != "norecs" ),
 	Random Effects( :participant, :participant * :condition_mapped ),
 	NoBounds( 1 ),
@@ -221,10 +198,7 @@ dt << Graph Builder(
 // Relevant use rate
 dt << Graph Builder(
 	Size( 539, 628 ),
-	Variables(
-		X( :chars_per_sec_norecs_mean ),
-		Y( :relevant_use_frac )
-	),
+	Variables( X( :chars_per_sec_norecs_mean ), Y( :relevant_use_frac ) ),
 	Where( :experiment == "gc1" & :condition_mapped != "norecs" ),
 	Elements( Points( X, Y, Legend( 10 ) ), Line Of Fit( X, Y, Legend( 12 ) ) )
 );
@@ -292,11 +266,7 @@ dt << Fit Model(
 );
 
 dt << Graph Builder(
-	Variables(
-		X( :chars_per_sec_norecs_mean ),
-		Y( :chars_per_sec_ratio_to_norecs ),
-		Overlay( :condition_mapped )
-	),
+	Variables( X( :chars_per_sec_norecs_mean ), Y( :chars_per_sec_ratio_to_norecs ), Overlay( :condition_mapped ) ),
 	Elements( Points( X, Y, Legend( 7 ) ), Line Of Fit( X, Y, Legend( 9 ) ) )
 );
 
