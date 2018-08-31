@@ -19,8 +19,7 @@ import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import traitData from "./TraitData_NfCEDTO";
 import { getDemoConditionName, gatingSuggestionFilter } from "./misc";
-import {stimuliToTranscribe as baseStimuli} from "./stimuliToTranscribe";
-
+import { stimuliToTranscribe as baseStimuli } from "./stimuliToTranscribe";
 
 import * as shuffle from "./shuffle";
 
@@ -289,12 +288,12 @@ const StudyDesc = () => (
     </p>
     <p>
       For each keyboard design, there will be a practice round to get used to
-      it, then you'll type {TRIALS_PER_CONDITION - 1} captions using it, and finally
-      a short survey.
+      it, then you'll type {TRIALS_PER_CONDITION - 1} captions using it, and
+      finally a short survey.
     </p>
     <p>
-      You will type a total of{" "}
-      {baseConditions.length * (TRIALS_PER_CONDITION)} captions.
+      You will type a total of {baseConditions.length * TRIALS_PER_CONDITION}{" "}
+      captions.
     </p>
     <p>Note:</p>
     <ul className="spaced">
@@ -363,25 +362,26 @@ function getScreens(
 function withBodyLock(Component) {
   return inject("spying")(
     class extends React.Component<{ spying: boolean }> {
-    componentDidMount() {
+      componentDidMount() {
         if (this.props.spying) return;
-      this.oldPosition = document.body.style.position;
+        this.oldPosition = document.body.style.position;
         document.body.style.position = "fixed";
-    }
+      }
 
-    componentWillUnmount() {
+      componentWillUnmount() {
         if (this.props.spying) return;
-      document.body.style.position = this.oldPosition;
-    }
+        document.body.style.position = this.oldPosition;
+      }
 
-    render() {
-      return <Component {...this.props} />;
-    }
+      render() {
+        return <Component {...this.props} />;
+      }
     }
   );
 }
 
-const ExperimentView = withBodyLock(iobs(({ state, dispatch }) => {
+const ExperimentView = withBodyLock(
+  iobs(({ state, dispatch }) => {
     if (state.experimentState.textShown) {
       return (
         <div>
@@ -408,13 +408,13 @@ const ExperimentView = withBodyLock(iobs(({ state, dispatch }) => {
       let { curText } = experimentState;
       let transcriptionStatus = experimentState.getTranscriptionStatus();
 
-      let isIncorrect = transcriptionStatus === 'incorrect'
+      let isIncorrect = transcriptionStatus === "incorrect";
       let textStyle = isIncorrect ? { color: "red" } : {};
 
       return (
         <div className="ExperimentScreen">
           <div className="header">
-            {transcriptionStatus === 'done' ? (
+            {transcriptionStatus === "done" ? (
               <NextBtn />
             ) : (
               <div>
@@ -452,7 +452,8 @@ const ExperimentView = withBodyLock(iobs(({ state, dispatch }) => {
         </div>
       );
     }
-}));
+  })
+);
 
 function trialScreen(props: {
   name: string,
