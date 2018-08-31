@@ -1,5 +1,5 @@
 #!/bin/sh
 set -e
 jupyter nbconvert --to python "$1" --output tmpnotebook.py --output-dir .
-python tmpnotebook.py
+ipython tmpnotebook.py
 rm tmpnotebook.py
