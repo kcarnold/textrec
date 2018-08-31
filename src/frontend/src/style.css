@@ -93,7 +93,6 @@ body {
   position: relative;
   border-top: 1px solid black;
   user-select: none;
-  -webkit-user-select: none;
 }
 
 .CurText > span {
