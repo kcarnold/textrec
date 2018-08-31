@@ -361,20 +361,24 @@ function getScreens(
 }
 
 function withBodyLock(Component) {
-  return class extends React.Component {
+  return inject("spying")(
+    class extends React.Component<{ spying: boolean }> {
     componentDidMount() {
+        if (this.props.spying) return;
       this.oldPosition = document.body.style.position;
-      document.body.style.position = 'fixed';
+        document.body.style.position = "fixed";
     }
 
     componentWillUnmount() {
+        if (this.props.spying) return;
       document.body.style.position = this.oldPosition;
     }
 
     render() {
       return <Component {...this.props} />;
     }
-  };
+    }
+  );
 }
 
 const ExperimentView = withBodyLock(iobs(({ state, dispatch }) => {
