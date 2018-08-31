@@ -37,13 +37,29 @@ dt = Open(
 // Set data types
 Column( dt, "stimulus" ) << Data Type( "Character" ) << Modeling Type( "Nominal" );
 
+Column( dt, "condition_mapped") << Set Property("Value Ordering", {"norecs", "gated", "general", "specific"});
+
+
 // Create formula columns
-traits = {"NFC", "Extraversion"};
-For(i=1, i<=2, i++, 
-	dt << New Column( traits[i] || " Quartile",
+quartilify = {"NFC", "Extraversion", "Openness", "Trust", "chars_per_sec_norecs_mean"};
+For(i=1, i<=N Items(quartilify), i++, 
+	dt << New Column( quartilify[i] || " Quartile",
 	Numeric,
-	Formula( Floor( (4 * Col Rank( Column(traits[i]), <<tie( "average" ) )) / N Row() ) ))
+	Formula( 1 + Floor( (4 * Col Rank( Column(quartilify[i]), <<tie( "average" ) )) / N Row() ) ))
 );
+
+dt << New Column("Ideal Taps per Typo-Corrected Word", Numeric,
+			Formula( :corrected_tapstotype_general / :num_words) );
+
+dt << New Column("relevant_recs_offered", Numeric,
+	Formula(Maximum(
+	:orig_idealrecuse_cond + (:extraneous_inputs -
+	:num_tapBackspace * 2),
+	0
+))); // FIXME: This is a kludge: it mis-counts if you backspaced over text inserted by recommendations.
+
+dt << New Column("relevant_use_frac", Numeric, Formula(Minimum(:num_tapSugg_any / :relevant_recs_offered, 1)));
+
 
 /**
  * Outcome Effects
@@ -81,10 +97,7 @@ dt << Fit Model(
 // Ideal Taps per Typo-Corrected Word
 dt << Fit Model(
 	Y(
-		Transform Column(
-			"Ideal Taps per Typo-Corrected Word",
-			Formula( :corrected_tapstotype_general / :num_words )
-		)
+		"Ideal Taps per Typo-Corrected Word",
 	),
 	Effects( :condition_mapped, :idx ),
 	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
@@ -113,6 +126,41 @@ dt << Fit Model(
 			Minor Ticks( 1 )}
 		)
 	)*/
+);
+
+// Graph the above
+dt << Graph Builder(
+	Variables(
+		Y( :ideal_taps_per_word ),
+		Y( :Name( "Ideal Taps per Typo-Corrected Word" ) ),
+		Overlay( :condition_mapped )
+	),
+	Where( :experiment == "gc1" ),
+	Elements( Position( 1, 1 ), Bar( Y, Legend( 6 ), 			Error Bars( "Standard Error" ),
+ Label( "Label by Value" ) ) ),
+	Elements(
+		Position( 1, 2 ),
+		Bar(
+			Y,
+			Legend( 7 ),
+			Error Bars( "Standard Error" ),
+			Label( "Label by Value" )
+		)
+	),
+	SendToReport(
+		Dispatch(
+			{},
+			"400",
+			ScaleBox,
+			{Legend Model(
+				7,
+				Base( 0, 0, 0 ),
+				Base( 1, 0, 0 ),
+				Base( 2, 0, 0 ),
+				Base( 3, 0, 0 )
+			)}
+		)
+	)
 );
 
 /**
@@ -168,6 +216,17 @@ dt << Graph Builder(
 	Size( 585, 532 ),
 	Variables( X( :NFC ), Y( :rec_use_full_frac ), Overlay( :condition_mapped ) ),
 	Elements( Points( X, Y, Legend( 11 ) ), Line Of Fit( X, Y, Legend( 13 ) ) )
+);
+
+// Relevant use rate
+dt << Graph Builder(
+	Size( 539, 628 ),
+	Variables(
+		X( :chars_per_sec_norecs_mean ),
+		Y( :relevant_use_frac )
+	),
+	Where( :experiment == "gc1" & :condition_mapped != "norecs" ),
+	Elements( Points( X, Y, Legend( 10 ) ), Line Of Fit( X, Y, Legend( 12 ) ) )
 );
 
 
@@ -230,4 +289,23 @@ dt << Fit Model(
 		Plot Regression( 0 ), Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ),
 		Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
 	)
+);
+
+dt << Graph Builder(
+	Variables(
+		X( :chars_per_sec_norecs_mean ),
+		Y( :chars_per_sec_ratio_to_norecs ),
+		Overlay( :condition_mapped )
+	),
+	Elements( Points( X, Y, Legend( 7 ) ), Line Of Fit( X, Y, Legend( 9 ) ) )
+);
+
+dt << Graph Builder(
+	Variables(
+		X( :condition_mapped ),
+		Y( :chars_per_sec_ratio_to_norecs ),
+		Overlay( :chars_per_sec_norecs_mean Quartile )
+	),
+	Where( :experiment == "gc1" & :condition_mapped != "norecs" ),
+	Elements( Bar( X, Y, Legend( 10 ), Error Bars( "Standard Error" ) ) )
 );
