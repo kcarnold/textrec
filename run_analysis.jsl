@@ -1,4 +1,4 @@
-﻿/**
+/**
  * TODO:
  * - decide on a consistent set of predictors
  *  -- include participant * condition?
@@ -297,6 +297,8 @@ New Window( "Behavior Effects",
 			:condition_mapped,
 			:block,
 			:idx_in_block,
+			:chars_per_sec_norecs_mean,
+			:chars_per_sec_norecs_mean * :condition_mapped,
 			:NFC,
 			:Extraversion,
 			:Openness,
