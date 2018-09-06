@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TODO:
  * - decide on a consistent set of predictors
  *  -- include participant * condition?
@@ -37,7 +37,10 @@ dt = Open(
 // Set data types
 Column( dt, "stimulus" ) << Data Type( "Character" ) << Modeling Type( "Nominal" );
 
-Column( dt, "condition_mapped" ) << Set Property( "Value Ordering", {"norecs", "gated", "general", "specific"} );
+Column( dt, "condition_mapped" ) << Set Property(
+	"Value Ordering",
+	{"norecs", "gated", "general", "specific"}
+);
 
 
 // Create formula columns
@@ -59,62 +62,69 @@ dt << New Column( "relevant_recs_offered",
 	Formula( Maximum( :orig_idealrecuse_cond + (:extraneous_inputs - :num_tapBackspace * 2), 0 ) )
 ); // FIXME: This is a kludge: it mis-counts if you backspaced over text inserted by recommendations.
 
-dt << New Column( "relevant_use_frac", Numeric, Formula( Minimum( :num_tapSugg_any / :relevant_recs_offered, 1 ) ) );
+dt << New Column( "relevant_use_frac",
+	Numeric,
+	Formula( Minimum( :num_tapSugg_any / :relevant_recs_offered, 1 ) )
+);
 
 
 /**
  * Outcome Effects
  */
 
+New Window( "Outcome Effects", 
 // Ideal taps per entered word (with typos)
-dt << Fit Model(
-	Y( :ideal_taps_per_word ),
-	Effects(
-		:condition_mapped,
-		:NFC,
-		:Extraversion,
-		:Openness,
-		:Trust,
-		:NFC * :condition_mapped,
-		:Extraversion * :condition_mapped,
-		:Openness * :condition_mapped,
-		:Trust * :condition_mapped,
-		:idx,
-		:chars_per_sec_norecs_mean
-	),
-	Random Effects( :participant ),
-	NoBounds( 1 ),
-	Personality( "Standard Least Squares" ),
-	Method( "REML" ),
-	Emphasis( "Minimal Report" ),
-	Run(
-		:ideal_taps_per_word << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ),
-		Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ),
-		Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ),
-		Show All Confidence Intervals( 1 )}
-	)
-);
+	dt << Fit Model(
+		Y( :ideal_taps_per_word ),
+		Effects(
+			:condition_mapped,
+			:NFC,
+			:Extraversion,
+			:Openness,
+			:Trust,
+			:NFC * :condition_mapped,
+			:Extraversion * :condition_mapped,
+			:Openness * :condition_mapped,
+			:Trust * :condition_mapped,
+			:idx,
+			:chars_per_sec_norecs_mean
+		),
+		Random Effects( :participant ),
+		NoBounds( 1 ),
+		Personality( "Standard Least Squares" ),
+		Method( "REML" ),
+		Emphasis( "Minimal Report" ),
+		Run(
+			:ideal_taps_per_word << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ),
+			Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ),
+			Plot Regression( 0 ), Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ),
+			Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
+		)
+	), 
 
 // Ideal Taps per Typo-Corrected Word
-dt << Fit Model(
-	Y( "Ideal Taps per Typo-Corrected Word", ),
+	dt << Fit Model(
+		Y( "Ideal Taps per Typo-Corrected Word", ),
 		Effects( :condition_mapped, :idx, :chars_per_sec_norecs_mean ),
-	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
-	NoBounds( 1 ),
-	Personality( "Standard Least Squares" ),
-	Method( "REML" ),
-	Emphasis( "Minimal Report" ),
-	Run(
-		Profiler(
-			1,
-			Confidence Intervals( 1 ),
-			Term Value( condition_mapped( "norecs", Lock( 0 ), Show( 1 ) ), idx( 5.203, Lock( 0 ), Show( 1 ) ) )
-		),
-		:Name( "Ideal Taps per Typo-Corrected Word" ) << {Summary of Fit( 1 ), Analysis of Variance( 0 ),
-		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ),
-		Plot Regression( 0 ), Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ),
-		Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
-	)/*,
+		Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
+		NoBounds( 1 ),
+		Personality( "Standard Least Squares" ),
+		Method( "REML" ),
+		Emphasis( "Minimal Report" ),
+		Run(
+			Profiler(
+				1,
+				Confidence Intervals( 1 ),
+				Term Value(
+					condition_mapped( "norecs", Lock( 0 ), Show( 1 ) ),
+					idx( 5.203, Lock( 0 ), Show( 1 ) )
+				)
+			),
+			:Name( "Ideal Taps per Typo-Corrected Word" ) << {Summary of Fit( 1 ), Analysis of Variance( 0 ),
+			Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ),
+			Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
+			Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
+		)/*,
 	SendToReport(
     		Dispatch(
     			{"Response corrected_tapstotype_general/num_words",
@@ -125,25 +135,67 @@ dt << Fit Model(
 			Minor Ticks( 1 )}
 		)
 	)*/
-);
+	), 
 
 // Graph the above
-dt << Graph Builder(
-	Variables(
-		Y( :ideal_taps_per_word ),
-		Y( :Name( "Ideal Taps per Typo-Corrected Word" ) ),
-		Overlay( :condition_mapped )
-	),
-	Where( :experiment == "gc1" ),
-	Elements( Position( 1, 1 ), Bar( Y, Legend( 6 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) ),
-	Elements( Position( 1, 2 ), Bar( Y, Legend( 7 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) ),
-	SendToReport(
-		Dispatch(
-			{},
-			"400",
-			ScaleBox,
-			{Legend Model( 7, Base( 0, 0, 0 ), Base( 1, 0, 0 ), Base( 2, 0, 0 ), Base( 3, 0, 0 ) )}
+	dt << Graph Builder(
+		Variables(
+			Y( :ideal_taps_per_word ),
+			Y( :Name( "Ideal Taps per Typo-Corrected Word" ) ),
+			Overlay( :condition_mapped )
+		),
+		Where( :experiment == "gc1" ),
+		Elements(
+			Position( 1, 1 ),
+			Bar( Y, Legend( 6 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) )
+		),
+		Elements(
+			Position( 1, 2 ),
+			Bar( Y, Legend( 7 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) )
+		),
+		SendToReport(
+			Dispatch(
+				{},
+				"400",
+				ScaleBox,
+				{Legend Model( 7, Base( 0, 0, 0 ), Base( 1, 0, 0 ), Base( 2, 0, 0 ), Base( 3, 0, 0 ) )}
+			),
+			Dispatch(
+				{},
+				"Graph Builder",
+				OutlineBox,
+				{Close(1), Set Title("Ideal Taps per Word")}
+			)
 		)
+	), 
+
+// Uncorrected errors
+	dt << Graph Builder(
+		Variables( Y( :uncorrected_errors ), Y( :uncorrected_errors_per_char ), Overlay( :condition_mapped ) ),
+		Where( :experiment == "gc1" ),
+		Elements(
+			Position( 1, 1 ),
+			Bar( Y, Legend( 6 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) )
+		),
+		Elements(
+			Position( 1, 2 ),
+			Bar( Y, Legend( 7 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) )
+		),
+		SendToReport(
+			Dispatch(
+				{},
+				"400",
+				ScaleBox,
+				{Legend Model( 7, Base( 0, 0, 0 ), Base( 1, 0, 0 ), Base( 2, 0, 0 ), Base( 3, 0, 0 ) )}
+			),
+			Dispatch(
+				{},
+				"Graph Builder",
+				OutlineBox,
+				{Close(1), Set Title("Uncorrected Errors")}
+			)
+
+		),
 	)
 );
 
@@ -162,10 +214,10 @@ dt << Fit Model(
 	Method( "REML" ),
 	Emphasis( "Minimal Report" ),
 	Run(
-		:rec_use_full_frac << {Title( "Full-Word Rec Use Rate" ), Summary of Fit( 1 ), Analysis of Variance( 0 ),
-		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ),
-		Plot Regression( 0 ), Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ),
-		Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
+		:rec_use_full_frac << {Title( "Full-Word Rec Use Rate" ), Summary of Fit( 1 ),
+		Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ),
+		Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
+		Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
 	)
 );
   
@@ -173,7 +225,14 @@ dt << Fit Model(
 // ... including NFC
 dt << Fit Model(
 	Y( :rec_use_full_frac ),
-	Effects( :NFC, :condition_mapped, :chars_per_sec_norecs_mean, :condition_mapped * :NFC, :block, :idx_in_block ),
+	Effects(
+		:NFC,
+		:condition_mapped,
+		:chars_per_sec_norecs_mean,
+		:condition_mapped * :NFC,
+		:block,
+		:idx_in_block
+	),
 	Where( :condition != "norecs" ),
 	Random Effects( :participant, :participant * :condition_mapped ),
 	NoBounds( 1 ),
@@ -228,9 +287,9 @@ dt << Fit Model(
 	Emphasis( "Minimal Report" ),
 	Run(
 		:extraneous_inputs_per_word_boxcox << {Summary of Fit( 1 ), Analysis of Variance( 0 ),
-		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ),
-		Plot Regression( 0 ), Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ),
-		Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
+		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ),
+		Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
+		Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
 	)
 );
 
@@ -259,14 +318,18 @@ dt << Fit Model(
 	Emphasis( "Minimal Report" ),
 	Run(
 		:chars_per_sec_ratio_to_norecs_boxcox << {Summary of Fit( 1 ), Analysis of Variance( 0 ),
-		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ),
-		Plot Regression( 0 ), Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ),
-		Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
+		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ),
+		Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
+		Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
 	)
 );
 
 dt << Graph Builder(
-	Variables( X( :chars_per_sec_norecs_mean ), Y( :chars_per_sec_ratio_to_norecs ), Overlay( :condition_mapped ) ),
+	Variables(
+		X( :chars_per_sec_norecs_mean ),
+		Y( :chars_per_sec_ratio_to_norecs ),
+		Overlay( :condition_mapped )
+	),
 	Elements( Points( X, Y, Legend( 7 ) ), Line Of Fit( X, Y, Legend( 9 ) ) )
 );
 
