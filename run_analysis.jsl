@@ -1,4 +1,4 @@
-﻿/**
+/**
  * TODO:
  * - decide on a consistent set of predictors
  *  -- include participant * condition?
@@ -98,7 +98,7 @@ dt << Fit Model(
 // Ideal Taps per Typo-Corrected Word
 dt << Fit Model(
 	Y( "Ideal Taps per Typo-Corrected Word", ),
-	Effects( :condition_mapped, :idx ),
+		Effects( :condition_mapped, :idx, :chars_per_sec_norecs_mean ),
 	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
 	NoBounds( 1 ),
 	Personality( "Standard Least Squares" ),
