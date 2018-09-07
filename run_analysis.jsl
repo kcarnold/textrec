@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TODO:
  * - decide on a consistent set of predictors
  *  -- include participant * condition?
@@ -8,7 +8,6 @@
  *  -- rate of usage of *relevant* recs
  *  -- error rate
  *  -- Try analyzing effect of condition by quantile of NFC (quartiles) 
- *  -- Typing speed: interaction of condition and base typing speed 
  *  -- Outcome stats by trait
  */
 
@@ -41,11 +40,23 @@ Column( dt, "condition_mapped" ) << Set Property( "Value Ordering", {"norecs", "
 
 
 // Create formula columns
-quartilify = {"NFC", "Extraversion", "Openness", "Trust", "chars_per_sec_norecs_mean"};
+
+
+dt << New Column( "backspaces_per_char_in_norecs",
+	Numeric,
+	Formula( Col Mean( If( :condition_mapped == "norecs", :backspaces_per_char, . ), :experiment, :participant ) )
+);
+
+
+quartilify = {"NFC", "Extraversion", "Openness", "Trust", "chars_per_sec_norecs_mean",
+"backspaces_per_char_in_norecs"};
 For( i = 1, i <= N Items( quartilify ), i++,
 	dt << New Column( quartilify[i] || " Quartile",
-		Numeric,
+		Ordinal,
 		Formula( 1 + Floor( (4 * Col Rank( Column( quartilify[i] ), <<tie( "average" ) )) / N Row() ) )
+	) << New Column( quartilify[i] || " Tertile",
+		Ordinal,
+		Formula( 1 + Floor( (3 * Col Rank( Column( quartilify[i] ), <<tie( "average" ) )) / N Row() ) )
 	)
 );
 
@@ -62,6 +73,19 @@ dt << New Column( "relevant_recs_offered",
 dt << New Column( "relevant_use_frac",
 	Numeric,
 	Formula( Minimum( :num_tapSugg_any / :relevant_recs_offered, 1 ) )
+);
+
+experimentLevel = dt << Summary(
+	Group( :experiment, :participant ),
+	Mean( :NFC ),
+	Mean( :Extraversion ),
+	Mean( :Openness ),
+	Mean( :Trust ),
+	Mean( :chars_per_sec_norecs_mean ),
+	Mean( :backspaces_per_char_in_norecs ),
+	Freq( "None" ),
+	Weight( "None" ),
+	statistics column name format( "column" )
 );
 
 
@@ -86,6 +110,23 @@ New Window( "Outcome Effects",
 			:idx,
 			:chars_per_sec_norecs_mean
 		),
+		Random Effects( :participant ),
+		NoBounds( 1 ),
+		Personality( "Standard Least Squares" ),
+		Method( "REML" ),
+		Emphasis( "Minimal Report" ),
+		Run(
+			:ideal_taps_per_word << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ),
+			Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ),
+			Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ),
+			Show All Confidence Intervals( 1 )}
+		)
+	), 
+
+// ... just NFC
+	dt << Fit Model(
+		Y( :ideal_taps_per_word ),
+		Effects( :condition_mapped, :NFC, :NFC * :condition_mapped, :idx, :chars_per_sec_norecs_mean ),
 		Random Effects( :participant ),
 		NoBounds( 1 ),
 		Personality( "Standard Least Squares" ),
@@ -182,7 +223,7 @@ New Window( "Outcome Effects",
 			),
 			Dispatch( {}, "Graph Builder", OutlineBox, {Close( 1 ), Set Title( "Uncorrected Errors" )} )
 
-		),
+		), 
 
 	)
 );
@@ -337,6 +378,59 @@ New Window( "Behavior Effects",
 			Overlay( :chars_per_sec_norecs_mean Quartile )
 		),
 		Where( :experiment == "gc1" & :condition_mapped != "norecs" ),
-		Elements( Bar( X, Y, Legend( 10 ), Error Bars( "Standard Error" ) ) )
+		Elements( Bar( X, Y, Legend( 10 ), Error Bars( "Standard Error" ) ) ),
+		SendToReport(
+			Dispatch(
+				{},
+				"chars_per_sec_ratio_to_norecs",
+				ScaleBox,
+				{Add Ref Line( 1, "Solid", "Black", "", 1 )}
+			)
+		)
+
+	), 
+	
+	experimentLevel << Fit Model(
+		Y( :chars_per_sec_norecs_mean ),
+		Effects( :NFC, :Extraversion, :Openness, :Trust ),
+		Personality( "Standard Least Squares" ),
+		Emphasis( "Effect Leverage" ),
+		Run(
+			:chars_per_sec_norecs_mean << {Summary of Fit( 1 ), Analysis of Variance( 1 ),
+			Parameter Estimates( 1 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 1 ),
+			Plot Regression( 0 ), Plot Residual by Predicted( 1 ), Plot Studentized Residuals( 0 ),
+			Plot Effect Leverage( 1 ), Box Cox Y Transformation( 1 ), Show All Confidence Intervals( 1 )}
+		),
+		Where( :experiment == "gc1" )
+	), 
+
+	experimentLevel << Fit Model(
+		Y( :chars_per_sec_norecs_mean ),
+		Effects( :NFC, :Extraversion ),
+		Personality( "Standard Least Squares" ),
+		Emphasis( "Effect Leverage" ),
+		Run(
+			:chars_per_sec_norecs_mean << {Summary of Fit( 1 ), Analysis of Variance( 1 ),
+			Parameter Estimates( 1 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 1 ),
+			Plot Regression( 0 ), Plot Residual by Predicted( 1 ), Plot Studentized Residuals( 0 ),
+			Plot Effect Leverage( 1 ), Box Cox Y Transformation( 1 ), Show All Confidence Intervals( 1 )}
+		), 
+
+	)
+	
+);
+
+
+
+Graph Builder(
+	Variables(
+		X( :condition_mapped ),
+		Y( :chars_per_sec_ratio_to_norecs ),
+		Overlay( :chars_per_sec_norecs_mean Quartile )
+	),
+	Elements( Bar( X, Y, Legend( 10 ), Error Bars( "Standard Error" ) ) ),
+	Where( :experiment == "gc1" & :condition_mapped != "norecs" ),
+	SendToReport(
+		Dispatch( {}, "chars_per_sec_ratio_to_norecs", ScaleBox, {Add Ref Line( 1, "Solid", "Black", "", 1 )} )
 	)
 );
