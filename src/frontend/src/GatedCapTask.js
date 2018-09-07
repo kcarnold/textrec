@@ -406,23 +406,24 @@ function experimentBlock(
 
 const TutorialInstructions = block =>
   iobs(({ state }) => {
-    let {
-      commonPrefix,
-      incorrect,
-      todo,
-    } = state.experimentState.getTranscriptionStatus();
+    let expState = state.experimentState;
+    let status = expState.getTranscriptionStatus();
     return (
       <div>
         <h1>Practice with Keyboard Design {block + 1}</h1>
 
         <b>Type this:</b>
         <br />
-        <div style={{ background: "white" }}>
-          <span style={{ color: "grey" }}>{commonPrefix}</span>
-          <span style={{ color: "red" }}>{incorrect}</span>
-          <span>{todo}</span>
+        <div
+          style={{
+            background: "white",
+            color: status === "incorrect" ? "red" : "black",
+          }}
+        >
+          {expState.flags.transcribe}
         </div>
-        <NextBtn disabled={incorrect.length !== 0 || todo.length !== 0} />
+        {status === "incorrect" && <b>Something is incorrect.</b>}
+        <NextBtn disabled={status !== "done"} />
       </div>
     );
   });
