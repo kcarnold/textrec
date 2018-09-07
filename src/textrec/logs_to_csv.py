@@ -44,6 +44,7 @@ columns = {
         'use_predictive': str,
         'verbalized_during': str,
         'condition_order': str,
+        'stimulus_order': str,
         'num_trials_where_recs_used': int,
     },
     'block': {
@@ -400,11 +401,15 @@ def analyze_all(participants, traits='NFC Extraversion'):
         if trial['condition'] == 'norecs':
             assert not trial['used_any_suggs']
 
-    condition_orders = pd.DataFrame(
-        [(k, ','.join(list(toolz.pluck('condition', v))[::4])) for k,v in toolz.groupby('participant', trial_data).items()],
-        columns='participant condition_order'.split())
+    orderings = pd.DataFrame(
+        [(
+            k,
+            ','.join(list(toolz.pluck('condition', v))[::4]),
+            ','.join([str(trial['stimulus']) for trial in v]),
+        ) for k, v in toolz.groupby('participant', trial_data).items()],
+        columns='participant condition_order stimulus_order'.split())
     print("Randomization counts")
-    print(condition_orders.condition_order.value_counts())
+    print(orderings.groupby('stimulus_order').condition_order.value_counts())
 
     # Get survey data
     _block_level, _experiment_level = get_survey_data(participants)
@@ -413,7 +418,7 @@ def analyze_all(participants, traits='NFC Extraversion'):
     # Pull in all data
     result['experiment_level'] = pd.merge(
         result['experiment_level'].reset_index(),
-        condition_orders,
+        orderings,
         on='participant', how='left', validate='1:1')
 
     result['trial_level'] = coerce_columns(pd.DataFrame(trial_data), columns['trial'])
