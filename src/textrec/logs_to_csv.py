@@ -6,6 +6,8 @@ from . import analysis_util, automated_analyses
 from collections import Counter
 import toolz
 
+from typing import List, Any
+
 NUM_LIKERT_DEGREES_FOR_TRAITS = 5
 
 class ColType:
@@ -205,7 +207,7 @@ def compute_speeds(page_data):
     )
 
 
-def get_trial_data(participants):
+def get_trial_data(participants) -> List[Any]:
     results = []
     for participant_id in participants:
         analyzed = analysis_util.get_log_analysis(participant_id)
@@ -390,10 +392,6 @@ def analyze_all(participants, traits='NFC Extraversion'):
         expected_experiment_columns[trait] = TraitColumn
 
     trial_data = get_trial_data(participants)
-
-    # I had the wrong URL for one image when one person ran it.
-    # trial_data = [trial for trial in trial_data if not (trial['stimulus'] == 431140 and trial['participant'] == 'h52x67')]
-    trial_data = [trial for trial in trial_data if not trial['participant'] == 'h52x67']
 
     # Apply exclusions
     for trial in trial_data:
