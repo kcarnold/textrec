@@ -7,7 +7,7 @@ import * as M from "mobx";
 import type { ObservableMap } from "mobx";
 import TutorialTasks from "./TutorialTasks";
 
-import type { Event } from "./Events";
+import type { Event, SideEffects } from "./Events";
 
 export type Screen = {
   screen: string,
@@ -17,7 +17,10 @@ export type Screen = {
 };
 
 type ExperimentState = {
-  +handleEvent: (event: Event) => Event[],
+  +handleEvent: (event: Event) => SideEffects,
+  curText: string,
+  flags: Object,
+  transcribe: ?string,
 };
 
 type Config = {
@@ -25,13 +28,14 @@ type Config = {
   screens: Screen[],
   timeEstimate: string,
   createExperimentState: (flags: Object) => ExperimentState,
-  handleEvent?: (event: Event) => Event[],
+  handleEvent?: (event: Event) => SideEffects,
 };
 
 export class MasterStateStore {
   clientId: string;
   config: Config;
   participantCode: ?string;
+  platform: string;
   lastEventTimestamp: number;
   replaying: boolean;
 

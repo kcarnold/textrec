@@ -24,6 +24,7 @@ import { stimuliToTranscribe as baseStimuli } from "./stimuliToTranscribe";
 import * as shuffle from "./shuffle";
 
 import type { Screen } from "./IOTaskState";
+import type { Event, LoginEvent, SideEffects } from "./Events";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
@@ -362,15 +363,21 @@ function getScreens(
 function withBodyLock(Component) {
   return inject("spying")(
     class extends React.Component<{ spying: boolean }> {
+      oldPosition: string;
+
       componentDidMount() {
         if (this.props.spying) return;
-        this.oldPosition = document.body.style.position;
-        document.body.style.position = "fixed";
+        if (document.body) {
+          this.oldPosition = document.body.style.position;
+          document.body.style.position = "fixed";
+        }
       }
 
       componentWillUnmount() {
         if (this.props.spying) return;
-        document.body.style.position = this.oldPosition;
+        if (document.body) {
+          document.body.style.position = this.oldPosition;
+        }
       }
 
       render() {
@@ -458,9 +465,9 @@ const ExperimentView = withBodyLock(
 function trialScreen(props: {
   name: string,
   condition: string,
-  flags: ?Object,
+  flags?: Object,
   stimulus: Stimulus,
-  transcribe: ?string,
+  transcribe?: string,
 }) {
   let { name, condition, flags, stimulus, transcribe } = props;
   if (!(condition in namedConditions)) {
@@ -487,7 +494,7 @@ function trialScreen(props: {
 let baseConditions = ["norecs", "gated", "always"];
 let conditionOrders = shuffle.permutator(baseConditions);
 
-export function createTaskState(loginEvent) {
+export function createTaskState(loginEvent: LoginEvent) {
   let clientId = loginEvent.participant_id;
 
   let screens;
@@ -518,7 +525,7 @@ export function createTaskState(loginEvent) {
     },
   });
 
-  function handleEvent(event: Event): Event[] {
+  function handleEvent(event: Event): SideEffects {
     if (event.type === "next") {
       if (state.screenNum === screens.length - 2) {
         let finalData = {

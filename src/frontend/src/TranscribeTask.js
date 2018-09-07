@@ -1,6 +1,5 @@
 /** @format */
 
-// @flow
 import "core-js/fn/array/from";
 
 import * as React from "react";
@@ -20,6 +19,7 @@ import { gatingSuggestionFilter } from "./misc";
 import { seededShuffle } from "./shuffle";
 
 import type { Screen } from "./IOTaskState";
+import type { Event, SideEffects } from "./Events";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
@@ -244,7 +244,7 @@ export function createTaskState(clientId: string) {
     timeEstimate: "20-25 minutes",
   });
 
-  function handleEvent(event: Event): Event[] {
+  function handleEvent(event: Event): SideEffects {
     if (event.type === "next") {
       if (state.screenNum === screens.length - 2) {
         let finalData = {

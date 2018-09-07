@@ -22,6 +22,7 @@ import { getDemoConditionName, gatingSuggestionFilter } from "./misc";
 import * as shuffle from "./shuffle";
 
 import type { Screen } from "./IOTaskState";
+import type { Event, LoginEvent, FinalDataEvent, SideEffects } from "./Events";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
@@ -115,7 +116,7 @@ const allStimuli: Stimulus[] = [
   ...baseStimuli,
   ...tutorialStimuli.map(x => x.stimulus),
 ];
-export const allStimuliContent = allStimuli.map(x => x.content);
+export const allStimuliContent: [number] = allStimuli.map(x => x.content);
 // console.log("All stimuli: ", allStimuliContent.join(","));
 const PreloadView = () => (
   <div style={{ position: "absolute" }}>
@@ -639,10 +640,10 @@ function experimentView(props) {
 function trialScreen(props: {
   name: string,
   condition: string,
-  flags: ?Object,
+  flags?: Object,
   instructions: React.ComponentType<any>,
   stimulus: Stimulus,
-  transcribe: ?string,
+  transcribe?: string,
 }) {
   let { name, condition, flags, instructions, stimulus, transcribe } = props;
   if (!(condition in namedConditions)) {
@@ -669,7 +670,7 @@ function trialScreen(props: {
 let baseConditions = ["norecs", "gated", "always"];
 let conditionOrders = shuffle.permutator(baseConditions);
 
-export function createTaskState(loginEvent) {
+export function createTaskState(loginEvent: LoginEvent) {
   let clientId = loginEvent.participant_id;
 
   let screens, stimuli;
@@ -694,7 +695,7 @@ export function createTaskState(loginEvent) {
     timeEstimate: "20-25 minutes",
   });
 
-  function handleEvent(event: Event): Event[] {
+  function handleEvent(event: Event): SideEffects {
     if (event.type === "next") {
       if (state.screenNum === screens.length - 2) {
         let finalData = {

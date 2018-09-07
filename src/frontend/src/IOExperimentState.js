@@ -65,7 +65,7 @@ type Tap = {
   y?: ?number,
 };
 
-type TranscriptionStatus = 'done' | 'incomplete' | 'incorrect';
+type TranscriptionStatus = "done" | "incomplete" | "incorrect";
 
 export class ExperimentStateStore {
   outstandingRequests: number[] = [];
@@ -383,11 +383,11 @@ export class ExperimentStateStore {
      * Get status of a transcription task.
      */
     let curText = this.curText.trim();
-    let transcribe = this.flags.transcribe || '';
+    let transcribe = this.flags.transcribe || "";
     transcribe = transcribe.trim();
 
     if (curText === transcribe) {
-      return 'done';
+      return "done";
     }
 
     // Get longest common prefix between curText and transcribe
@@ -402,9 +402,9 @@ export class ExperimentStateStore {
 
     let isCorrectSoFar = curText.length === prefixLength;
     if (isCorrectSoFar) {
-      return 'incomplete';
+      return "incomplete";
     } else {
-      return 'incorrect';
+      return "incorrect";
     }
   }
 

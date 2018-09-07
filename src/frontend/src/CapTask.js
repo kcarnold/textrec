@@ -21,6 +21,7 @@ import { getDemoConditionName } from "./misc";
 import * as shuffle from "./shuffle";
 
 import type { Screen } from "./IOTaskState";
+import type { LoginEvent, SideEffects } from "./Events";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
@@ -607,10 +608,10 @@ function experimentView(props) {
 function trialScreen(props: {
   name: string,
   condition: string,
-  flags: ?Object,
+  flags?: Object,
   instructions: React.ComponentType<any>,
   stimulus: Stimulus,
-  transcribe: ?string,
+  transcribe?: string,
 }) {
   let { name, condition, flags, instructions, stimulus, transcribe } = props;
   return {
@@ -633,7 +634,7 @@ function trialScreen(props: {
 let baseConditions = ["norecs", "general", "specific"];
 let conditionOrders = shuffle.permutator(baseConditions);
 
-export function createTaskState(loginEvent) {
+export function createTaskState(loginEvent: LoginEvent) {
   let clientId = loginEvent.participant_id;
 
   let screens, stimuli;
@@ -657,7 +658,7 @@ export function createTaskState(loginEvent) {
     timeEstimate: "20-25 minutes",
   });
 
-  function handleEvent(event: Event): Event[] {
+  function handleEvent(event: Event): SideEffects {
     if (event.type === "next") {
       if (state.screenNum === screens.length - 2) {
         let finalData = {
