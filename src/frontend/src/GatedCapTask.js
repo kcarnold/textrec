@@ -74,7 +74,7 @@ let tutorialStimuli = [
       url: "http://images.cocodataset.org/train2017/000000314515.jpg",
     },
     transcribe:
-      "a black and red vehicle with bikes on top and people standing nearby with umbrellas.",
+      "a black and red vehicle with bikes on top and people standing nearby with umbrellas",
   },
 ];
 
