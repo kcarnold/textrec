@@ -81,6 +81,8 @@ experimentLevel = dt << Summary(
 	Mean( :Extraversion ),
 	Mean( :Openness ),
 	Mean( :Trust ),
+	Mean( :num_chars ),
+	Mean( :num_words ),
 	Mean( :chars_per_sec_norecs_mean ),
 	Mean( :backspaces_per_char_in_norecs ),
 	Freq( "None" ),
@@ -88,6 +90,52 @@ experimentLevel = dt << Summary(
 	statistics column name format( "column" )
 );
 
+
+experimentLevel2 = experimentLevel << Join(
+	With( dt ),
+	Select(
+		:experiment, :participant,
+		:N Rows,
+		:NFC,
+		:Extraversion,
+		:Openness,
+		:Trust,
+		:num_chars,
+		:num_words,
+		:chars_per_sec_norecs_mean,
+		:backspaces_per_char_in_norecs
+	),
+	SelectWith(
+		:Name( "helpfulRank-accurate-least-condition" ),
+		:Name( "helpfulRank-accurate-least-idx" ),
+		:Name( "helpfulRank-accurate-most-condition" ),
+		:Name( "helpfulRank-accurate-most-idx" ),
+		:Name( "helpfulRank-quick-least-condition" ),
+		:Name( "helpfulRank-quick-least-idx" ),
+		:Name( "helpfulRank-quick-most-condition" ),
+		:Name( "helpfulRank-quick-most-idx" ),
+		:Name( "helpfulRank-specific-least-condition" ),
+		:Name( "helpfulRank-specific-least-idx" ),
+		:Name( "helpfulRank-specific-most-condition" ),
+		:Name( "helpfulRank-specific-most-idx" )
+	),
+	By Matching Columns( :experiment = :experiment, :participant = :participant ),
+	Drop multiples( 0, 1 ),
+	Include Nonmatches( 0, 0 ),
+	Preserve main table order( 1 )
+);
+
+quartilify = {"NFC", "Extraversion", "Openness", "Trust", "chars_per_sec_norecs_mean",
+"backspaces_per_char_in_norecs"};
+For( i = 1, i <= N Items( quartilify ), i++,
+	experimentLevel2 << New Column( quartilify[i] || " Quartile",
+		Ordinal,
+		Formula( 1 + Floor( (4 * Col Rank( Column( quartilify[i] ), <<tie( "average" ) )) / N Row() ) )
+	) << New Column( quartilify[i] || " Tertile",
+		Ordinal,
+		Formula( 1 + Floor( (3 * Col Rank( Column( quartilify[i] ), <<tie( "average" ) )) / N Row() ) )
+	)
+);
 
 /**
  * Outcome Effects
