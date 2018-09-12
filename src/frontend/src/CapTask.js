@@ -1,6 +1,7 @@
-/** @format */
-
-// @flow
+/**
+ * @format
+ * @flow
+ */
 import "core-js/fn/array/from";
 
 import * as React from "react";
@@ -14,18 +15,18 @@ import * as Views from "./IOViews";
 import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
-import traitData from "./TraitData";
+import traitData from "./TraitData_NfCEDTO";
 import stimulusPairs from "./stimulusPairs";
 import { getDemoConditionName } from "./misc";
 
 import * as shuffle from "./shuffle";
 
 import type { Screen } from "./IOTaskState";
-import type { LoginEvent, SideEffects } from "./Events";
+import type { Event, LoginEvent, FinalDataEvent, SideEffects } from "./Events";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
-const TRIALS_PER_CONDITION = 3;
+const TRIALS_PER_CONDITION = 4;
 const MIN_REC_THRESHOLD = 1;
 
 function surveyView(props) {
@@ -70,7 +71,7 @@ let tutorialStimuli = [
       url: "http://images.cocodataset.org/train2017/000000314515.jpg",
     },
     transcribe:
-      "a black and red vehicle with bikes on top and people standing nearby with umbrellas.",
+      "a black and red vehicle with bikes on top and people standing nearby with umbrellas",
   },
 ];
 
@@ -79,10 +80,6 @@ const namedConditions = {
     requestFlags: {},
     modelSeesStimulus: false,
     hideRecs: true,
-  },
-  tutorial: {
-    requestFlags: {},
-    modelSeesStimulus: true,
   },
   general: {
     requestFlags: {},
@@ -112,7 +109,7 @@ const allStimuli: Stimulus[] = [
   ...baseStimuli,
   ...tutorialStimuli.map(x => x.stimulus),
 ];
-export const allStimuliContent = allStimuli.map(x => x.content);
+export const allStimuliContent: [number] = allStimuli.map(x => x.content);
 // console.log("All stimuli: ", allStimuliContent.join(","));
 const PreloadView = () => (
   <div style={{ position: "absolute" }}>
@@ -188,14 +185,44 @@ function splitPersonalityBlocks(numBlocks, questionsPerBlock) {
   let blocks = range(numBlocks).map(blockIdx =>
     traitData.slice(questionsPerBlock * blockIdx).slice(0, questionsPerBlock)
   );
-  return blocks.map(block => [
+  return blocks.map((block, idx) => [
     SurveyData.personalityHeader,
-    ...block.map(item => SurveyData.traitQuestion(item)),
+    ...shuffle
+      .seededShuffle(`personality-{idx}`, block)
+      .map(item => SurveyData.traitQuestion(item)),
     { text: "" },
   ]);
 }
 
-const personalityBlocks = splitPersonalityBlocks(5, 4);
+const introSurvey = personalityBlock => ({
+  title: "Opening Survey",
+  basename: "intro",
+  questions: [
+    {
+      text:
+        "There will be several short surveys like this as breaks from the writing task.",
+    },
+
+    // TODO: should we break this down into prediction, correction, gesture, etc.?
+    {
+      text: (
+        <div>
+          How often do you use the suggestion bar on your phone keyboard?
+          <img
+            src="/suggestionbar-marked.png"
+            alt=""
+            style={{ width: "100%" }}
+          />
+        </div>
+      ),
+      responseType: "options",
+      name: "use_predictive",
+      options: ["Never", "Very Rarely", "Rarely", "Often", "Almost Always"],
+    },
+
+    ...personalityBlock,
+  ],
+});
 
 const WritingsView = iobs(({ state }) => (
   <div>
@@ -221,7 +248,7 @@ const helpfulRank = (attr, text) => [
   {
     text: (
       <span>
-        For writing {text}, which keyboard design was <b>most</b> helpful?
+        Which keyboard design was <b>most</b> helpful for writing {text}?
       </span>
     ),
     responseType: "options",
@@ -231,7 +258,7 @@ const helpfulRank = (attr, text) => [
   {
     text: (
       <span>
-        For writing {text}, which keyboard design was <b>least</b> helpful?
+        Which keyboard design was <b>least</b> helpful for writing {text}?
       </span>
     ),
     responseType: "options",
@@ -240,55 +267,67 @@ const helpfulRank = (attr, text) => [
   },
 ];
 
-const closingSurveyQuestions = [
-  {
-    text: <WritingsView />,
-  },
-  ...helpfulRank(
-    "specific",
-    <span>
-      captions that were very <b>specific</b>
-    </span>
-  ),
-  ...helpfulRank(
-    "accurate",
-    <span>
-      captions that were very <b>accurate</b>
-    </span>
-  ),
-  ...helpfulRank(
-    "quick",
-    <span>
-      captions very <b>quickly</b>
-    </span>
-  ),
-  ...personalityBlocks[4],
-  SurveyData.verbalized_during,
-  SurveyData.age,
-  SurveyData.gender,
-  SurveyData.english_proficiency,
-  SurveyData.techDiff,
-  {
-    type: "options",
-    text: (
+const closingSurvey = personalityBlock => ({
+  title: "Closing Survey",
+  basename: "postExp",
+  questions: [
+    {
+      text: <WritingsView />,
+    },
+    ...helpfulRank(
+      "specific",
       <span>
-        Is there any reason that we shouldn't use your data?{" "}
-        <b>There's no penalty for answering Yes here.</b> If yes, please explain
-        in the next question.
+        captions that were very <b>specific</b>
       </span>
     ),
-    options: ["Yes", "No"],
-    name: "shouldExclude",
-  },
-  SurveyData.otherFinal,
-];
+    ...helpfulRank(
+      "accurate",
+      <span>
+        captions that were very <b>accurate</b>
+      </span>
+    ),
+    ...helpfulRank(
+      "quick",
+      <span>
+        captions very <b>quickly</b>
+      </span>
+    ),
+    {
+      text:
+        "Please briefly describe two ways that the three keyboard designs were different from each other.",
+      responseType: "text",
+      name: "differences",
+      flags: { multiline: true },
+    },
+    ...personalityBlock,
+    SurveyData.verbalized_during,
+    SurveyData.age,
+    SurveyData.gender,
+    SurveyData.english_proficiency,
+    SurveyData.techDiff,
+    {
+      type: "options",
+      text: (
+        <span>
+          Is there any reason that we shouldn't use your data?{" "}
+          <b>There's no penalty for answering Yes here.</b> If yes, please
+          explain in the next question.
+        </span>
+      ),
+      options: ["Yes", "No"],
+      name: "shouldExclude",
+    },
+    SurveyData.otherFinal,
+  ],
+});
 
 /** Experiment Blocks **/
 
 function experimentBlock(
   block: number,
   conditionName: string,
-  stimuli: Stimulus[]
+  stimuli: Stimulus[],
+  personalityBlock
 ): Array<Screen> {
   let agreeLikert = (name, prompt) =>
     likert(name, prompt, 7, ["Strongly disagree", "Strongly agree"]);
@@ -350,7 +389,7 @@ function experimentBlock(
           // ]),
           ...designQuestions,
           ...SurveyData.tlxQuestions,
-          ...personalityBlocks[block + 1],
+          ...personalityBlock,
           SurveyData.techDiff,
           SurveyData.otherMid,
         ],
@@ -361,23 +400,24 @@ function experimentBlock(
 
 const TutorialInstructions = block =>
   iobs(({ state }) => {
-    let {
-      commonPrefix,
-      incorrect,
-      todo,
-    } = state.experimentState.getTranscriptionStatus();
+    let expState = state.experimentState;
+    let status = expState.getTranscriptionStatus();
     return (
       <div>
         <h1>Practice with Keyboard Design {block + 1}</h1>
 
-        <b>Type this caption:</b>
+        <b>Type this:</b>
         <br />
-        <div style={{ background: "white" }}>
-          <span style={{ color: "grey" }}>{commonPrefix}</span>
-          <span style={{ color: "red" }}>{incorrect}</span>
-          <span>{todo}</span>
+        <div
+          style={{
+            background: "white",
+            color: status === "incorrect" ? "red" : "black",
+          }}
+        >
+          {expState.flags.transcribe}
         </div>
-        <NextBtn disabled={incorrect.length !== 0 || todo.length !== 0} />
+        {status === "incorrect" && <b>Something is incorrect.</b>}
+        <NextBtn disabled={status !== "done"} />
       </div>
     );
   });
@@ -417,7 +457,7 @@ const TaskDescription = () => (
         <b>Not specific.</b>
       </li>
       <li>
-        An alert tricolor dalmation is looking to its left. &mdash;{" "}
+        An alert tricolor dalmatian is looking to its left. &mdash;{" "}
         <b>Not accurate.</b>
       </li>
       <li>
@@ -542,30 +582,11 @@ const StudyDesc = () => (
   </div>
 );
 
-// Surveys
-
-const introSurvey = {
-  title: "Opening Survey",
-  basename: "intro",
-  questions: [
-    {
-      text:
-        "There will be several short surveys like this as breaks from the writing task.",
-    },
-
-    // TODO: should we break this down into prediction, correction, gesture, etc.?
-    {
-      text: "Do you use predictive typing on your phone?",
-      responseType: "options",
-      name: "use_predictive",
-      options: ["Yes", "No"],
-    },
-
-    ...personalityBlocks[0],
-  ],
-};
-
-function getScreens(conditions: string[], stimuli: Stimulus[]): Screen[] {
+function getScreens(
+  conditions: string[],
+  stimuli: Stimulus[],
+  personalityBlocks
+): Screen[] {
   // Group stimuli by block.
   console.assert(stimuli.length >= conditions.length * TRIALS_PER_CONDITION);
   let blocks = conditions.map((condition, idx) => ({
@@ -577,21 +598,25 @@ function getScreens(conditions: string[], stimuli: Stimulus[]): Screen[] {
 
   let result = [
     { screen: "Welcome" },
-    { screen: "IntroSurvey", view: surveyView(introSurvey) },
+    {
+      screen: "IntroSurvey",
+      view: surveyView(introSurvey(personalityBlocks[0])),
+    },
     { screen: "TaskDescription", view: TaskDescription },
     { screen: "StudyDesc", view: StudyDesc },
 
     ...flatMap(blocks, (block, idx) =>
-      experimentBlock(idx, block.condition, block.stimuli)
+      experimentBlock(
+        idx,
+        block.condition,
+        block.stimuli,
+        personalityBlocks[idx + 1]
+      )
     ),
 
     {
       screen: "PostExpSurvey",
-      view: surveyView({
-        title: "Closing Survey",
-        basename: "postExp",
-        questions: [...closingSurveyQuestions],
-      }),
+      view: surveyView(closingSurvey(personalityBlocks[4])),
     },
     { screen: "Done" },
   ];
@@ -614,6 +639,9 @@ function trialScreen(props: {
   transcribe?: string,
 }) {
   let { name, condition, flags, instructions, stimulus, transcribe } = props;
+  if (!(condition in namedConditions)) {
+    throw new Error(`Invalid condition name: ${condition}`);
+  }
   return {
     preEvent: {
       type: "setupExperiment",
@@ -647,7 +675,8 @@ export function createTaskState(loginEvent: LoginEvent) {
     }
     let conditions = conditionOrders[loginEvent.assignment];
     stimuli = baseStimuli.slice();
-    screens = getScreens(conditions, stimuli);
+    const personalityBlocks = splitPersonalityBlocks(5, 8);
+    screens = getScreens(conditions, stimuli, personalityBlocks);
   }
 
   let state = new IOTaskState.MasterStateStore({
