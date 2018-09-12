@@ -104,23 +104,23 @@ export class MasterStateStore {
     });
   }
 
+  setupExperiment(preEvent) {
+    this.curExperiment = preEvent.name;
+    let experimentObj = this.config.createExperimentState(preEvent.flags);
+    this.experiments.set(preEvent.name, experimentObj);
+    this.tutorialTasks = new TutorialTasks();
+    return experimentObj.init();
+  }
+
   initScreen() {
     // Execute start-of-screen actions.
     let sideEffects = [];
     let screen = this.screens[this.screenNum];
     if (screen.preEvent) {
       let { preEvent } = screen;
-      switch (preEvent.type) {
-        case "setupExperiment":
-          this.curExperiment = preEvent.name;
-
-          let experimentObj = this.config.createExperimentState(preEvent.flags);
-          this.experiments.set(preEvent.name, experimentObj);
-          let initReq = experimentObj.init();
-          if (initReq) sideEffects.push(initReq);
-          this.tutorialTasks = new TutorialTasks();
-          break;
-        default:
+      if (preEvent.type === "setupExperiment") {
+        let initReq = this.setupExperiment(preEvent);
+        if (initReq) sideEffects.push(initReq);
       }
     }
     this.screenTimes.push({

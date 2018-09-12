@@ -392,8 +392,19 @@ const ExperimentView = withBodyLock(
     if (state.experimentState.textShown) {
       return (
         <div>
-          <h1>Type this text</h1>
-          <p>{state.experimentState.transcribe}</p>
+          <h1>Type this text from memory:</h1>
+          <p
+            style={{
+              background: "#ccc",
+              padding: "10px",
+            }}
+          >
+            {state.experimentState.transcribe}
+          </p>
+          <p>
+            You can come back to this screen if you forget, but you'll lose what
+            you've typed so far.
+          </p>
           <button
             className="NextBtn"
             onClick={evt => {
@@ -431,8 +442,12 @@ const ExperimentView = withBodyLock(
                   }}
                   className="NextBtn"
                 >
-                  Show the text to type
+                  Show text to type
                 </button>
+                <p>
+                  Warning: if you show text to type, you'll have to start this
+                  caption from scratch when you come back.
+                </p>
                 {isIncorrect && (
                   <h2 color="red">Some incorrect letters or symbols</h2>
                 )}
@@ -553,6 +568,9 @@ export function createTaskState(loginEvent: LoginEvent) {
     }
     if (event.type === "textVisibility") {
       state.experimentState.textShown = event.visible;
+      if (event.visible) {
+        return state.setupExperiment(state.curScreen.preEvent);
+      }
     }
     return [];
   }
