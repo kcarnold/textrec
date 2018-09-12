@@ -3,10 +3,11 @@ from collections import Counter
 import toolz
 
 def summarize(participants, incomplete_ok=False):
+    analyses = analysis_util.get_log_analysis_many(participants)
     for participant_id in participants:
         print()
         print(participant_id)
-        analyzed = analysis_util.get_log_analysis(participant_id)
+        analyzed = analyses[participant_id]
 
         if not incomplete_ok:
             assert analyzed['isComplete'], f'INCOMPLETE! {participant_id}'

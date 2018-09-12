@@ -209,8 +209,10 @@ def compute_speeds(page_data):
 
 def get_trial_data(participants) -> List[Any]:
     results = []
+    analyses = analysis_util.get_log_analysis_many(participants)
+
     for participant_id in participants:
-        analyzed = analysis_util.get_log_analysis(participant_id)
+        analyzed = analyses[participant_id]
 
         controlledInputsDict = dict(analyzed['allControlledInputs'])
         if controlledInputsDict.get('shouldExclude', "No") == "Yes":
@@ -267,8 +269,10 @@ def get_survey_data(participants):
     block_level = []
     experiment_level = []
 
+    analyses = analysis_util.get_log_analysis_many(participants)
+
     for participant_id in participants:
-        analyzed = analysis_util.get_log_analysis(participant_id)
+        analyzed = analyses[participant_id]
 
         controlledInputsDict = dict(analyzed['allControlledInputs'])
         if controlledInputsDict.get('shouldExclude', "No") == "Yes":
