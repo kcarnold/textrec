@@ -461,7 +461,8 @@ def main(batch):
     participants = get_participants_by_batch()[batch]
     traits = {
         'spec1': 'NFC Extraversion',
-        'gc1': 'NFC Extraversion Openness Trust'
+        'gc1': 'NFC Extraversion Openness Trust',
+        'xs1': 'NFC Extraversion Openness Trust',
     }
     analyses = analyze_all(participants, traits=traits[batch])
     for name, data in analyses.items():
