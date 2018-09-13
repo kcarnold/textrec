@@ -12,6 +12,10 @@ import toolz
 
 import re
 
+override_batch = {}
+for p in 'gmq64w xq9hcm qj5rm6 fg392m'.split():
+    override_batch[p] = 'xs0'
+
 
 def get_invalid():
     invalid = set()
@@ -48,12 +52,15 @@ def get_log_data(log_file, earliest):
                 if timestamp < earliest:
                     return
                 platform_id = line['platform_id']
+                participant_id = line['participant_id']
+                batch = line.get('batch')
+                batch = override_batch.get(participant_id, batch)
                 meta = dict(
                     timestamp=timestamp,
-                    batch=line.get('batch'),
+                    batch=batch,
                     config=line['config'],
                     platform_id=platform_id,
-                    participant_id=line['participant_id'],
+                    participant_id=participant_id,
                     size=size,
                     complete=False) # will override
             elif line.get('type') == 'finalData':
