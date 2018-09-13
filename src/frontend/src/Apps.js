@@ -13,6 +13,9 @@ function getAppInt(config) {
   if (config === "gx") {
     return require("./GatedTranscribeTask");
   }
+  if (config === "dc") {
+    return require("./DesktopCapTask");
+  }
 }
 
 function getApp(config) {
