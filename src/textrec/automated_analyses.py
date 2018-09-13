@@ -3,6 +3,9 @@ from .util import mem
 from . import onmt_model_2
 import spacy
 
+from textrec.paths import paths
+paths.imgdata_h5 = paths.imgdata_h5_all
+
 print("Loading SpaCy...", end='', flush=True)
 nlp = spacy.load('en_core_web_sm')
 print("done")
