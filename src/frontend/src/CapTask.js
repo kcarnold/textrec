@@ -22,7 +22,7 @@ import { getDemoConditionName } from "./misc";
 import * as shuffle from "./shuffle";
 
 import type { Screen } from "./IOTaskState";
-import type { Event, LoginEvent, FinalDataEvent, SideEffects } from "./Events";
+import type { Event, LoginEvent, SideEffects } from "./Events";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
