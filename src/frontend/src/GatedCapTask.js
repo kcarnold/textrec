@@ -581,8 +581,8 @@ const StudyDesc = () => (
         correct it.
       </li>
       <li>
-        At the end, you will be comparing your experiencecs between the
-        different keyboards. So <b>please try to remember which is which</b>!
+        At the end, you will be comparing your experiences between the different
+        keyboards. So <b>please try to remember which is which</b>!
       </li>
     </ul>
     Ready to get started? <NextBtn />
