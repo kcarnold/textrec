@@ -412,6 +412,8 @@ def analyze_all(participants, traits='NFC Extraversion'):
         columns='participant condition_order stimulus_order'.split())
     print("Randomization counts")
     print(orderings.groupby('stimulus_order').condition_order.value_counts())
+    print()
+    print(orderings.stimulus_order.value_counts())
 
     # Get survey data
     _block_level, _experiment_level = get_survey_data(participants)
