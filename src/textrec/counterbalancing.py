@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 BATCH_DATA = {
     'gc1': dict(n_conditions=6, config='gcap'),
+    'spec2': dict(n_conditions=6, config='cap'),
     'xs1': dict(n_conditions=6, config="gx")
 }
 
