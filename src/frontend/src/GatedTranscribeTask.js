@@ -28,7 +28,7 @@ import type { Event, LoginEvent, SideEffects } from "./Events";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
-const TRIALS_PER_CONDITION = 4;
+const TRIALS_PER_CONDITION = 6;
 const MIN_REC_THRESHOLD = 1;
 
 function surveyView(props) {
