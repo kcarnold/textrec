@@ -121,7 +121,7 @@ const introSurvey = personalityBlock => ({
         <div>
           How often do you use the suggestion bar on your phone keyboard?
           <img
-            src="/suggestionbar-marked.png"
+            src="/static/suggestionbar-marked.png"
             alt=""
             style={{ width: "100%" }}
           />
