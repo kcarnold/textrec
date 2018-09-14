@@ -156,9 +156,10 @@ def coerce_columns(df, column_types):
                 print(f"Failed to BoxCox because {boxcox_name} has non-positive minimum {np.min(col_data)}")
             # ... and fail here:
             result[boxcox_name], _ = scipy.stats.boxcox(col_data)
-    extra_columns = set(result.columns) - set(column_order)
-    assert len(extra_columns) == 0, sorted(extra_columns)
-    return result[column_order]
+    extra_columns = sorted(set(result.columns) - set(column_order))
+    if len(extra_columns) != 0:
+        print(f'\n\nExtra columns: {extra_columns}')
+    return result[column_order + extra_columns]
 
 
 def get_participants_by_batch():
