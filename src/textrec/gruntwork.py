@@ -19,7 +19,9 @@ def get_corrected_text(trial_level_data):
     trial_level_data['final_text_for_correction'] = trial_level_data['text'].str.replace(re.compile(r'\s+'), ' ')
     result_files = list(paths.gruntwork.glob("corrections_batch*.csv"))
     if result_files:
-        correction_results = pd.concat([pd.read_csv(str(f)) for f in result_files], axis=0, ignore_index=True)
+        correction_results = pd.concat([pd.read_csv(str(f)) for f in result_files], axis=0, ignore_index=True, sort=False)
+        if 'stimulus' in correction_results.columns:
+            correction_results = correction_results.drop('stimulus', axis=1)
         assert correction_results.columns.tolist() == ['text', 'corrected_text']
         correction_results['final_text_for_correction'] = correction_results['text'].str.replace(re.compile(r'\s+'), ' ')
         correction_results['corrected_text'] = correction_results.corrected_text.apply(lambda s: s.replace('\u2019', "'").lower())
@@ -38,10 +40,13 @@ def get_corrected_text(trial_level_data):
         for row in trial_level_data.itertuples()]
     trial_level_data['uncorrected_errors_per_char'] = trial_level_data['uncorrected_errors'] / trial_level_data['num_chars']
     trial_level_data['all_errors'] = trial_level_data['num_tapBackspace'] + trial_level_data['uncorrected_errors']
-    corrections_todo = trial_level_data[trial_level_data.corrected_text.isnull()].final_text_for_correction.dropna().drop_duplicates().to_frame('text')
+    corrections_todo = (
+        trial_level_data[trial_level_data.corrected_text.isnull()]
+        .loc[:,['stimulus', 'final_text_for_correction']].rename(columns=dict(final_text_for_correction='text'))
+        .dropna().drop_duplicates())
     corrections_todo['corrected_text'] = None
     if len(corrections_todo) > 0:
-        corrections_todo = corrections_todo.sample(frac=1)
+        corrections_todo = corrections_todo.groupby('stimulus').apply(lambda group: group.sample(frac=1))
 
     return trial_level_data, corrections_todo
 
