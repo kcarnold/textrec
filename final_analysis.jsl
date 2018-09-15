@@ -1,8 +1,8 @@
 ﻿dt = Open(
-    	"/Users/kcarnold/code/textrec/data/analyzed/combined_data.csv",
+	"/Users/kcarnold/code/textrec/data/analyzed/combined_data.csv",
 	Charset( "utf-8" ),
 	Import Settings(
-    		End Of Line( CRLF, CR, LF ),
+		End Of Line( CRLF, CR, LF ),
 		End Of Field( Comma, CSV( 1 ) ),
 		Strip Quotes( 1 ),
 		Use Apostrophe as Quotation Mark( 0 ),
@@ -22,10 +22,12 @@
 
 // Set data types
 Column( dt, "stimulus" ) << Data Type( "Character" ) << Modeling Type( "Nominal" );
+Column( dt, "condition_mapped" ) << Set Property(
+	"Value Ordering",
+	{"norecs", "gated", "general", "specific"}
+);
 
-Column( dt, "condition_mapped" ) << Set Property( "Value Ordering", {"norecs", "gated", "general", "specific"} );
-
-
+// Transform columns
 quartilify = {"NFC", "Extraversion", "Openness", "Trust", "chars_per_sec_norecs_mean"};
 For( i = 1, i <= N Items( quartilify ), i++,
 	dt << New Column( quartilify[i] || " Quartile",
@@ -36,6 +38,9 @@ For( i = 1, i <= N Items( quartilify ), i++,
 		Formula( 1 + Floor( (3 * (Col Rank( Column( quartilify[i] ), <<tie( "average" ) ) - 1)) / N Row() ) )
 	)
 );
+
+dt << New Column( "chars_per_sec_log", Numeric, Formula( Log( :characters_per_sec ) ) );
+dt << New Column( "chars_per_sec_norecs_log", Numeric, Formula( Log( :chars_per_sec_norecs_mean ) ) );
 
 
 /*
@@ -66,7 +71,7 @@ gb = dt << Graph Builder(
 */
 
 (dt << Fit Model(
-    	Y( :ideal_taps_per_word_corrected ),
+	Y( :ideal_taps_per_word_corrected ),
 	Where( :experiment == "gc1" ),
 	Effects( :condition_mapped, :idx ),
 	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
@@ -75,8 +80,8 @@ gb = dt << Graph Builder(
 	Method( "REML" ),
 	Emphasis( "Minimal Report" ),
 	Run(
-    		Profiler(
-    			1,
+		Profiler(
+			1,
 			Confidence Intervals( 1 ),
 			Term Value( condition_mapped( "norecs", Lock( 0 ), Show( 1 ) ), idx( 5.5, Lock( 0 ), Show( 1 ) ) )
 		),
@@ -87,7 +92,7 @@ gb = dt << Graph Builder(
 		{:condition_mapped << {LSMeans Tukey HSD( 0.05 )}}}
 	),
 	SendToReport(
-    		Dispatch( {"Response ideal_taps_per_word_corrected"}, "Effect Details", OutlineBox, {Close( 0 )} )
+		Dispatch( {"Response ideal_taps_per_word_corrected"}, "Effect Details", OutlineBox, {Close( 0 )} )
 	)
 )) << Set Window Title( "Ideal Taps per Corrected Word" );
 
@@ -95,7 +100,7 @@ gb = dt << Graph Builder(
 
 
 (dt << Fit Model(
-    	Y( :characters_per_sec ),
+	Y( :chars_per_sec_log ),
 	Effects( :condition_mapped, :idx, ),
 	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
 	Where( :experiment == "gc1" ),
@@ -104,7 +109,7 @@ gb = dt << Graph Builder(
 	Method( "REML" ),
 	Emphasis( "Minimal Report" ),
 	Run(
-    		:characters_per_sec << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ),
+		:chars_per_sec_log << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ),
 		Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ),
 		Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ),
 		Show All Confidence Intervals( 1 )}
@@ -114,7 +119,7 @@ gb = dt << Graph Builder(
 
 
 (dt << Fit Model(
-    	Y( :backspaces_per_char ),
+	Y( :backspaces_per_char ),
 	Effects( :condition_mapped, :idx ),
 	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
 	Where( :experiment == "gc1" ),
@@ -123,7 +128,7 @@ gb = dt << Graph Builder(
 	Method( "REML" ),
 	Emphasis( "Minimal Report" ),
 	Run(
-    		:backspaces_per_char << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ),
+		:backspaces_per_char << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ),
 		Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ),
 		Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ),
 		Show All Confidence Intervals( 1 ), {:condition_mapped << {LSMeans Tukey HSD( 0.05 )}}}
@@ -132,11 +137,41 @@ gb = dt << Graph Builder(
 )) << set window title( "backspaces per char" );
 
 
+(dt << Graph Builder(
+	Variables(
+		X( :condition_mapped ),
+		Y( :chars_per_sec_ratio_to_norecs ),
+		Overlay( :chars_per_sec_norecs_mean Quartile )
+	),
+	Where( :experiment == "gc1" & :condition_mapped != "norecs" ),
+	Elements( Bar( X, Y, Legend( 10 ), Error Bars( "Standard Error" ) ) ),
+	SendToReport(
+		Dispatch( {}, "chars_per_sec_ratio_to_norecs", ScaleBox, {Add Ref Line( 1, "Solid", "Black", "", 1 )} )
+	)
+)) << set window title( "speed ratio to norecs" );
+
+(dt << Graph Builder(
+	Variables(
+		X( :condition_mapped ),
+		Y(
+			Transform Column(
+				"chars_per_sec_log-chars_per_sec_norecs_log",
+				Formula( :chars_per_sec_log - :chars_per_sec_norecs_log )
+			)
+		),
+		Overlay( :chars_per_sec_norecs_mean Tertile )
+	),
+	Elements( Bar( X, Y, Legend( 17 ), Error Bars( "Standard Error" ) ) ),
+	Where( :experiment == "gc1" & :condition_mapped != "norecs" )
+)) << set window tytle( "speed ratio to norecs log" );
+
+
+
 (dt << Fit Model(
-    	Y( :chars_per_sec_ratio_to_norecs ),
+	Y( :chars_per_sec_ratio_to_norecs ),
 	Where( :experiment == "gc1" & :condition != "norecs" ),
 	Effects(
-    		:condition_mapped,
+		:condition_mapped,
 		:idx,
 		:chars_per_sec_norecs_mean,
 		:chars_per_sec_norecs_mean * :condition_mapped, 
@@ -148,7 +183,7 @@ gb = dt << Graph Builder(
 	Method( "REML" ),
 	Emphasis( "Minimal Report" ),
 	Run(
-    		:chars_per_sec_ratio_to_norecs << {Summary of Fit( 1 ), Analysis of Variance( 0 ),
+		:chars_per_sec_ratio_to_norecs << {Summary of Fit( 1 ), Analysis of Variance( 0 ),
 		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ),
 		Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
 		Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
@@ -156,13 +191,13 @@ gb = dt << Graph Builder(
 )) << Set window title( "speed interaction" );
 
 (dt << Fit Model(
-    	Y( :characters_per_sec ),
+	Y( :chars_per_sec_log ),
 	Where( :experiment == "gc1" & :condition != "norecs" ),
 	Effects(
-    		:condition_mapped,
+		:condition_mapped,
 		:idx,
-		:chars_per_sec_norecs_mean,
-		:chars_per_sec_norecs_mean * :condition_mapped,
+		:chars_per_sec_norecs_log//,
+		//		:chars_per_sec_norecs_log * :condition_mapped, 
 
 	),
 	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
@@ -171,7 +206,7 @@ gb = dt << Graph Builder(
 	Method( "REML" ),
 	Emphasis( "Minimal Report" ),
 	Run(
-    		:characters_per_sec << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ),
+		:characters_per_sec << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ),
 		Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ),
 		Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ),
 		Show All Confidence Intervals( 1 )}
@@ -179,12 +214,45 @@ gb = dt << Graph Builder(
 )) << Set window title( "simple speed interaction" );
 
 
+/** Unclear how to interpret this one:
 (dt << Fit Model(
-    	By( :chars_per_sec_norecs_mean Tertile ),
-	Y( :chars_per_sec_ratio_to_norecs ),
-	Effects( :condition_mapped, :idx, :chars_per_sec_norecs_mean ),
+	By( :chars_per_sec_norecs_mean Tertile ),
+	Y( :chars_per_sec_log),
+	Where( :experiment == "gc1" & :condition != "norecs" ),
+	Effects( :condition_mapped, :idx, :chars_per_sec_norecs_log ),
 	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
 	Personality( "Standard Least Squares" ),
 	Emphasis( "Minimal Report" ),
-	Method( "REML" )
+	Method( "REML" ),
+	Run()
 ));
+*/
+
+dt << Fit Model(
+	Y(
+		Transform Column(
+			"chars_per_sec_log-chars_per_sec_norecs_log",
+			Formula( :chars_per_sec_log - :chars_per_sec_norecs_log )
+		)
+	),
+	Where( :experiment == "gc1"),
+	Effects(
+		:chars_per_sec_norecs_log,
+		:condition_mapped,
+		:idx,
+		:chars_per_sec_norecs_log * :condition_mapped
+	),
+	Random Effects( :participant, :stimulus ),
+	NoBounds( 1 ),
+	Personality( "Standard Least Squares" ),
+	Method( "REML" ),
+	Emphasis( "Minimal Report" ),
+	Run(
+		:Name( "chars_per_sec_log-chars_per_sec_norecs_log" ) <<
+		{Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ),
+		Lack of Fit( 0 ), Show Prediction Expression( 1 ),
+		Plot Actual by Predicted( 0 ), Plot Regression( 0 ),
+		Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ),
+		Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
+	)
+);
