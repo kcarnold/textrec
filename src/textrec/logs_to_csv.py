@@ -16,6 +16,9 @@ class ColType:
         self.__dict__.update(flags)
         self.flags = flags
 
+# Unfortunately, an `int` column can't contain missing data in Pandas 0.23.
+# Looking forward to 0.24: http://pandas-docs.github.io/pandas-docs-travis/whatsnew.html#optional-integer-na-support
+PossiblyMissingInt = ColType(float)
 Count = ColType(int, fill=0)
 
 BoxCox = ColType(float, boxcox=True)
@@ -28,17 +31,17 @@ columns = {
         'english_proficiency': str,
         'gender': ColType(str, lower=True),
         'helpfulRank-accurate-least-condition': str,
-        'helpfulRank-accurate-least-idx': int,
+        'helpfulRank-accurate-least-idx': PossiblyMissingInt,
         'helpfulRank-accurate-most-condition': str,
-        'helpfulRank-accurate-most-idx': int,
+        'helpfulRank-accurate-most-idx': PossiblyMissingInt,
         'helpfulRank-quick-least-condition': str,
-        'helpfulRank-quick-least-idx': int,
+        'helpfulRank-quick-least-idx': PossiblyMissingInt,
         'helpfulRank-quick-most-condition': str,
-        'helpfulRank-quick-most-idx': int,
+        'helpfulRank-quick-most-idx': PossiblyMissingInt,
         'helpfulRank-specific-least-condition': str,
-        'helpfulRank-specific-least-idx': int,
+        'helpfulRank-specific-least-idx': PossiblyMissingInt,
         'helpfulRank-specific-most-condition': str,
-        'helpfulRank-specific-most-idx': int,
+        'helpfulRank-specific-most-idx': PossiblyMissingInt,
         'differences': ColType(str, optional=True), # Free-text response: Please briefly describe two ways that the three keyboard designs were different from each other.
         'other': str,
         'techDiff': str,
@@ -465,6 +468,7 @@ def main(batch):
     traits = {
         'spec1': 'NFC Extraversion',
         'gc1': 'NFC Extraversion Openness Trust',
+        'spec2': 'NFC Extraversion Openness Trust',
         'xs1': 'NFC Extraversion Openness Trust',
     }
     analyses = analyze_all(participants, traits=traits[batch])
