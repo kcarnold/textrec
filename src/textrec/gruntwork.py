@@ -14,6 +14,8 @@ from textrec import automated_analyses
 
 id2url = util.get_coco_id2url()
 
+include_logprobs = False
+
 
 def get_corrected_text(trial_level_data):
     trial_level_data['final_text_for_correction'] = trial_level_data['text'].str.replace(re.compile(r'\s+'), ' ')
@@ -70,18 +72,22 @@ def dump_data_for_pairwise(batch, trial_level_data):
             condPairs=condition_pairs), f)
 
 def get_automated_analysis(datum):
+    datum = datum.to_dict()
     text = datum['corrected_text']
     datum['num_adj'] = automated_analyses.count_adj(text)
-    # Note that eval_logprobs_* actually returns the _negative_ logprob.
-    datum['logprob_conditional'] = -automated_analyses.eval_logprobs_conditional(datum['stimulus'], text)
-    datum['perplexity_per_word_knowing_image'] = 2 ** -datum['logprob_conditional']
-    datum['logprob_unconditional'] = -automated_analyses.eval_logprobs_unconditional(text)
-    datum['perplexity_per_word_blind_to_image'] = 2 ** -datum['logprob_unconditional']
+    if include_logprobs:
+        # Note that eval_logprobs_* actually returns the _negative_ logprob.
+        datum['logprob_conditional'] = -automated_analyses.eval_logprobs_conditional(datum['stimulus'], text)
+        datum['perplexity_per_word_knowing_image'] = 2 ** -datum['logprob_conditional']
+        datum['logprob_unconditional'] = -automated_analyses.eval_logprobs_unconditional(text)
+        datum['perplexity_per_word_blind_to_image'] = 2 ** -datum['logprob_unconditional']
     for k, v in automated_analyses.all_taps_to_type(datum['stimulus'], text, prefix="corrected_").items():
         datum[k] = v
     datum['corrected_tapstotype_cond'] = datum[f'corrected_tapstotype_{datum["condition"]}']
     datum['corrected_efficiency'] = datum['corrected_tapstotype_cond'] / datum['num_taps']
-    return datum
+
+    datum['ideal_taps_per_word_corrected'] = datum['corrected_tapstotype_general'] / datum['num_words']
+    return pd.Series(datum)
 
 def main(batch):
     trial_level_data = pd.read_csv(paths.analyzed / f'trial_{batch}.csv')
