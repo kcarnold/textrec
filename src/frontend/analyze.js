@@ -26,7 +26,8 @@ Promise.all(files.map(filename => {
     .map(line => JSON.parse(line)));
   return analyzeLog(log).then(
     result => ({filename, result}),
-    error => ({filename, error}),
+    // Magic: https://stackoverflow.com/a/26199752/69707
+    error => ({filename, error: JSON.stringify(error, Object.getOwnPropertyNames(error))}),
   );
 })).then(results => {
   results.forEach(result => {process.stdout.write(JSON.stringify(result) + '\n')});
