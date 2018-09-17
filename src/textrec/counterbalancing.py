@@ -11,6 +11,8 @@ BATCH_DATA = {
     'xs1': dict(n_conditions=6, config="gx")
 }
 
+invalid = set('h52x67 3vf5fg 73qq5q ffhgxm mhh838 j39263 pqf6q5 49cm8f'.split())
+
 SECS_PER_HOUR = 60 * 60
 
 def get_login_event(log_file):
@@ -39,6 +41,8 @@ def get_completion_data(batch, logdir=paths.logdir):
         if login_event.get('batch') != batch:
             continue
         participant_id = login_event['participant_id']
+        if participant_id in invalid:
+            continue
         results.append(dict(
             participant_id=participant_id,
             login_timestamp=login_event['pyTimestamp'],
