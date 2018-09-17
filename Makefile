@@ -93,17 +93,16 @@ run_backend:
 run_frontend:
 	cd src/frontend && exec yarn start
 
-data/analyzed/trial_spec1.csv: data/participants.txt src/textrec/logs_to_csv.py
-	python -m textrec.logs_to_csv spec1
+# Analyses
+# This rule needs to go first or else the logs_to_csv rule will match a 'withmanual' :(
+data/analyzed/trial_withmanual_%.csv: src/textrec/gruntwork.py data/analyzed/trial_%.csv data/gruntwork
+	python -m textrec.gruntwork $*
 
-data/analyzed/trial_withmanual_spec1.csv: src/textrec/gruntwork.py data/analyzed/trial_spec1.csv
-	python -m textrec.gruntwork spec1
+data/analyzed/trial_%.csv: data/participants.txt src/textrec/logs_to_csv.py
+	python -m textrec.logs_to_csv $*
 
-data/analyzed/trial_gc1.csv: data/participants.txt src/textrec/logs_to_csv.py
-	python -m textrec.logs_to_csv gc1
-
-data/analyzed/trial_withmanual_gc1.csv: src/textrec/gruntwork.py data/analyzed/trial_gc1.csv data/gruntwork/corrections_batch*.csv
-	python -m textrec.gruntwork gc1
+data/analyzed/combined_data.csv: data/analyzed/trial_withmanual_gc1.csv data/analyzed/trial_withmanual_spec2.csv
+	python scripts/merge_data_from_all_experiments.py
 
 
 
