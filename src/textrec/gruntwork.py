@@ -82,6 +82,9 @@ def get_automated_analysis(datum):
     datum = datum.to_dict()
     text = datum['corrected_text']
     datum['num_adj'] = automated_analyses.count_adj(text)
+    pos_counts = automated_analyses.pos_counts(text)
+    for pos in 'ADJ ADP NUM NOUN VERB'.split():
+        datum[f'pos_count_{pos}'] = pos_counts.get(pos, 0)
     if include_logprobs:
         # Note that eval_logprobs_* actually returns the _negative_ logprob.
         datum['logprob_conditional'] = -automated_analyses.eval_logprobs_conditional(datum['stimulus'], text)

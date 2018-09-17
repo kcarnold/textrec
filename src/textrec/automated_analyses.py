@@ -2,6 +2,7 @@ import numpy as np
 from .util import mem
 from . import onmt_model_2
 import spacy
+from collections import Counter
 
 from textrec.paths import paths
 paths.imgdata_h5 = paths.imgdata_h5_all
@@ -13,6 +14,10 @@ print("done")
 @mem.cache(verbose=0)
 def count_adj(text):
     return sum(1 for token in nlp(text) if token.pos_ == 'ADJ')
+
+@mem.cache(verbose=0)
+def pos_counts(text):
+    return Counter(token.pos_ for token in nlp(text))
 
 
 @mem.cache
