@@ -12,7 +12,7 @@
  */
 
 dt = Open(
-	"/Users/kcarnold/code/textrec/data/analyzed/combined_traits.csv",
+	"/Users/kcarnold/code/textrec/data/analyzed/combined_data.csv",
 	Charset( "utf-8" ),
 	Import Settings(
 		End Of Line( CRLF, CR, LF ),
@@ -94,7 +94,8 @@ experimentLevel = dt << Summary(
 experimentLevel2 = experimentLevel << Join(
 	With( dt ),
 	Select(
-		:experiment, :participant,
+		:experiment,
+		:participant,
 		:N Rows,
 		:NFC,
 		:Extraversion,
@@ -156,7 +157,8 @@ New Window( "Outcome Effects",
 			:Openness * :condition_mapped,
 			:Trust * :condition_mapped,
 			:idx,
-			:chars_per_sec_norecs_mean
+			:chars_per_sec_norecs_mean,
+			:chars_per_sec_norecs_mean * :condition_mapped
 		),
 		Random Effects( :participant ),
 		NoBounds( 1 ),
@@ -191,7 +193,12 @@ New Window( "Outcome Effects",
 // Ideal Taps per Typo-Corrected Word
 	dt << Fit Model(
 		Y( "Ideal Taps per Typo-Corrected Word", ),
-		Effects( :condition_mapped, :idx, :chars_per_sec_norecs_mean ),
+		Effects(
+			:condition_mapped,
+			:idx,
+			:chars_per_sec_norecs_mean,
+			:chars_per_sec_norecs_mean * :condition_mapped
+		),
 		Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
 		NoBounds( 1 ),
 		Personality( "Standard Least Squares" ),
@@ -435,7 +442,6 @@ New Window( "Behavior Effects",
 				{Add Ref Line( 1, "Solid", "Black", "", 1 )}
 			)
 		)
-
 	), 
 	
 	experimentLevel << Fit Model(

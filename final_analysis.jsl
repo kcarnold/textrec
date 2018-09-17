@@ -1,4 +1,4 @@
-﻿dt = Open(
+﻿dt_all = Open(
 	"/Users/kcarnold/code/textrec/data/analyzed/combined_data.csv",
 	Charset( "utf-8" ),
 	Import Settings(
@@ -20,9 +20,15 @@
 	)
 );
 
+// Master data filter
+dt = Subset( dt_all, Rows( dt_all << get rows where( :experiment != "spec1" ) ) );
+
+dt << Set Name( "Combined gc1+spec2" );
+
 // Set data types
 Column( dt, "stimulus" ) << Data Type( "Character" ) << Modeling Type( "Nominal" );
-Column( dt, "condition_mapped" ) << Set Property( "Value Ordering", {"norecs", "gated", "general", "specific"} );
+// "The last level is the level with the highest value order coding; it is the level whose indicator function is not included in the model." (https://www.jmp.com/support/help/14/indicator-parameterization-estimates.shtml)
+Column( dt, "condition_mapped" ) << Set Property( "Value Ordering", {"gated", "specific", "general", "norecs"} );
 
 // Transform columns
 quartilify = {"NFC", "Extraversion", "Openness", "Trust", "chars_per_sec_norecs_mean"};
@@ -83,8 +89,7 @@ gb = dt << Graph Builder(
 
 (dt << Fit Model(
 	Y( :ideal_taps_per_word_corrected ),
-	Where( :experiment == "gc1" ),
-	Effects( :condition_mapped, :idx ),
+	Effects( :experiment, :condition_mapped, :idx ),
 	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
 	NoBounds( 1 ),
 	Personality( "Standard Least Squares" ),
@@ -114,7 +119,6 @@ gb = dt << Graph Builder(
 	Y( :chars_per_sec_log ),
 	Effects( :condition_mapped, :idx, ),
 	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
-	Where( :experiment == "gc1" ),
 	NoBounds( 1 ),
 	Personality( "Standard Least Squares" ),
 	Method( "REML" ),
@@ -133,7 +137,6 @@ gb = dt << Graph Builder(
 	Y( :backspaces_per_char ),
 	Effects( :condition_mapped, :idx ),
 	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
-	Where( :experiment == "gc1" ),
 	NoBounds( 1 ),
 	Personality( "Standard Least Squares" ),
 	Method( "REML" ),
@@ -154,7 +157,7 @@ gb = dt << Graph Builder(
 		Y( :chars_per_sec_ratio_to_norecs ),
 		Overlay( :chars_per_sec_norecs_mean Quartile )
 	),
-	Where( :experiment == "gc1" & :condition_mapped != "norecs" ),
+	Where( :condition_mapped != "norecs" ),
 	Elements( Bar( X, Y, Legend( 10 ), Error Bars( "Standard Error" ) ) ),
 	SendToReport(
 		Dispatch( {}, "chars_per_sec_ratio_to_norecs", ScaleBox, {Add Ref Line( 1, "Solid", "Black", "", 1 )} )
@@ -173,14 +176,14 @@ gb = dt << Graph Builder(
 		Overlay( :chars_per_sec_norecs_mean Tertile )
 	),
 	Elements( Bar( X, Y, Legend( 17 ), Error Bars( "Standard Error" ) ) ),
-	Where( :experiment == "gc1" & :condition_mapped != "norecs" )
+	Where( :condition_mapped != "norecs" )
 )) << set window tytle( "speed ratio to norecs log" );
 
 
 
 (dt << Fit Model(
 	Y( :chars_per_sec_ratio_to_norecs ),
-	Where( :experiment == "gc1" & :condition != "norecs" ),
+	Where( :condition != "norecs" ),
 	Effects(
 		:condition_mapped,
 		:idx,
@@ -203,7 +206,7 @@ gb = dt << Graph Builder(
 
 (dt << Fit Model(
 	Y( :chars_per_sec_log ),
-	Where( :experiment == "gc1" & :condition != "norecs" ),
+	Where( :condition != "norecs" ),
 	Effects(
 		:condition_mapped,
 		:idx,
@@ -246,7 +249,6 @@ dt << Fit Model(
 			Formula( :chars_per_sec_log - :chars_per_sec_norecs_log )
 		)
 	),
-	Where( :experiment == "gc1" ),
 	Effects( :chars_per_sec_norecs_log, :condition_mapped, :idx, :chars_per_sec_norecs_log * :condition_mapped ),
 	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
 	NoBounds( 1 ),
