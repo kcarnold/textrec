@@ -24,12 +24,18 @@ Count = ColType(int, fill=0)
 BoxCox = ColType(float, boxcox=True)
 TraitColumn = ColType(float, boxcox=True)
 
+gender_map = {
+    'fenale': 'female',
+    'f': 'female',
+    'make': 'male'
+}
+
 columns = {
     'experiment': {
         'participant': str,
         'age': float,
         'english_proficiency': str,
-        'gender': ColType(str, lower=True),
+        'gender': ColType(str, lower=True, recode=gender_map),
         'helpfulRank-accurate-least-condition': str,
         'helpfulRank-accurate-least-idx': PossiblyMissingInt,
         'helpfulRank-accurate-most-condition': str,
@@ -159,6 +165,8 @@ def coerce_columns(df, column_types):
                 print(f"Failed to BoxCox because {boxcox_name} has non-positive minimum {np.min(col_data)}")
             # ... and fail here:
             result[boxcox_name], _ = scipy.stats.boxcox(col_data)
+        if 'recode' in typ.flags:
+            result[column_name] = result[column_name].apply(lambda x: typ.flags['recode'].get(x, x))
     extra_columns = sorted(set(result.columns) - set(column_order))
     if len(extra_columns) != 0:
         print(f'\n\nExtra columns: {extra_columns}')
