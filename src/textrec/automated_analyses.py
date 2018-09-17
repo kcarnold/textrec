@@ -77,10 +77,9 @@ def all_taps_to_type(stimulus, text, prefix):
     num_punct = len(text) - len(text_without_punct)
     taps_by_cond = dict(
         norecs=[dict(type='key', key=c) for c in text_without_punct],
-        general=taps_to_type(None, text_without_punct),
-        specific=taps_to_type(stimulus, text_without_punct),
+        standard=taps_to_type(None, text_without_punct),
+        contextual=taps_to_type(stimulus, text_without_punct),
         gated=taps_to_type(None, text_without_punct, threshold=-0.989417552947998),
-        always=taps_to_type(None, text_without_punct),
     )
     res = {}
     for condition, taps in taps_by_cond.items():

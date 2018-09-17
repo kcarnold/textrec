@@ -86,7 +86,7 @@ def get_automated_analysis(datum):
     datum['corrected_tapstotype_cond'] = datum[f'corrected_tapstotype_{datum["condition"]}']
     datum['corrected_efficiency'] = datum['corrected_tapstotype_cond'] / datum['num_taps']
 
-    datum['ideal_taps_per_word_corrected'] = datum['corrected_tapstotype_general'] / datum['num_words']
+    datum['ideal_taps_per_word_corrected'] = datum['corrected_tapstotype_standard'] / datum['num_words']
     return pd.Series(datum)
 
 def main(batch):

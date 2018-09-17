@@ -8,6 +8,14 @@ import toolz
 
 from typing import List, Any
 
+condition_name_map = dict(
+    norecs='norecs',
+    general='standard',
+    always='standard',
+    gated='gated',
+    specific='contextual'
+)
+
 NUM_LIKERT_DEGREES_FOR_TRAITS = 5
 
 class ColType:
@@ -113,11 +121,11 @@ columns = {
         'extraneous_inputs_per_char': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: (datum['num_taps'] - datum['orig_tapstotype_cond']) / datum['num_chars']),
         'extraneous_inputs_per_word': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: (datum['num_taps'] - datum['orig_tapstotype_cond']) / datum['num_words']),
 
-        'ideal_taps_per_word': ColType(float, f=lambda datum: datum['orig_tapstotype_general'] / datum['num_words']),
+        'ideal_taps_per_word': ColType(float, f=lambda datum: datum['orig_tapstotype_standard'] / datum['num_words']),
     }
 }
 
-for _condition in 'general specific norecs always gated cond'.split():
+for _condition in 'norecs standard gated contextual cond'.split():
     columns['trial'][f'orig_tapstotype_{_condition}'] = int
     columns['trial'][f'orig_idealrecuse_{_condition}'] = int
     if _condition != 'norecs':
@@ -240,12 +248,13 @@ def get_trial_data(participants) -> List[Any]:
             block, idx = name.split('-')[1:]
             text = page['finalText'].strip()
             stimulus = page.get('stimulus', {}).get('content')
+            condition = condition_name_map[page['condition']]
             data = dict(
                 participant=participant_id,
                 block=int(block),
                 idx_in_block=int(idx),
                 idx=trial_idx,
-                condition=page['condition'],
+                condition=condition,
                 text=text,
                 stimulus=stimulus,
                 num_chars=len(text),

@@ -22,12 +22,6 @@ all_data = (
 )
 
 
-all_data["condition_mapped"] = all_data.condition.map(
-    lambda x: {"always": "general"}.get(x, x)
-)
-all_data["condition_order_mapped"] = all_data.condition_order.map(
-    lambda x: x.replace("always", "general")
-)
 all_data["first_block_condition"] = all_data.condition_order.map(
     lambda x: x.split(",", 1)[0]
 )
