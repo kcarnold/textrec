@@ -16,6 +16,13 @@ id2url = util.get_coco_id2url()
 
 include_logprobs = False
 
+NON_ALPHA_RE = re.compile(r'[^a-z]')
+
+def edit_distance(x, y):
+    x = NON_ALPHA_RE.sub(x, '')
+    y = NON_ALPHA_RE.sub(y, '')
+    return damerau_levenshtein_distance(x, y)
+
 
 def get_corrected_text(trial_level_data):
     trial_level_data['final_text_for_correction'] = trial_level_data['text'].str.replace(re.compile(r'\s+'), ' ')
@@ -37,7 +44,7 @@ def get_corrected_text(trial_level_data):
 
 
     trial_level_data['uncorrected_errors'] = [
-        damerau_levenshtein_distance(row.final_text_for_correction, row.corrected_text)
+        edit_distance(row.final_text_for_correction, row.corrected_text)
         if isinstance(row.corrected_text, str) else None
         for row in trial_level_data.itertuples()]
     trial_level_data['uncorrected_errors_per_char'] = trial_level_data['uncorrected_errors'] / trial_level_data['num_chars']
