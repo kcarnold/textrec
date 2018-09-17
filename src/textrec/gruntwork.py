@@ -81,7 +81,6 @@ def dump_data_for_pairwise(batch, trial_level_data):
 def get_automated_analysis(datum):
     datum = datum.to_dict()
     text = datum['corrected_text']
-    datum['num_adj'] = automated_analyses.count_adj(text)
     pos_counts = automated_analyses.pos_counts(text)
     for pos in 'ADJ ADP NUM NOUN VERB'.split():
         datum[f'pos_count_{pos}'] = pos_counts.get(pos, 0)
@@ -105,7 +104,7 @@ def main(batch):
     corrections_todo_path = paths.gruntwork / 'corrections_todo.csv'
     corrections_todo.to_csv(corrections_todo_path, index=False)
     if len(corrections_todo):
-        print("There are corrections to make.")
+        print(f"There are {len(corrections_todo)} corrections to make.")
         print(f"Open {corrections_todo_path} in Excel, Copy to Word -> correct all typos and obvious misspellings.")
         print(f"Copy the result back to Excel, save the result as {paths.gruntwork / 'correction_batch_N.csv'}, IN UTF-8")
     else:
