@@ -305,7 +305,7 @@ def get_survey_data(participants):
              - analyzed['screenTimes'][0]['timestamp']) / 1000 / 60
         experiment_level.append((participant_id, 'total_time', total_time))
 
-        conditions = [analyzed['byExpPage'][page]['condition'] for page in analyzed['pageSeq']]
+        conditions = [condition_name_map[analyzed['byExpPage'][page]['condition']] for page in analyzed['pageSeq']]
         assert len(conditions) % 3 == 0
         conditions = conditions[::len(conditions) // 3]
         assert len(set(conditions)) == 3
@@ -360,7 +360,6 @@ def decode_experiment_level(experiment_level, traits):
     helpful_ranks_by_condition = (
         helpful_ranks[[col for col in helpful_ranks.columns if col.endswith('condition')]]
         .apply(pd.value_counts)
-        #.loc[['norecs', 'general', 'specific']]
         .fillna(0).astype(int))
     helpful_ranks_by_idx = (
         helpful_ranks[[col for col in helpful_ranks.columns if col.endswith('idx')]]
