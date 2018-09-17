@@ -10,3 +10,5 @@ gc1: x9m97g 48mr5g h6c27m pfqcmf fcc4fp 3qjwxv 5p7cf7 xxxp65 94wwrq vg926m fjr9x
 gc1_fails: j39263 pqf6q5 49cm8f 8h9qf7 # last one is probably fine, just complains about a few outstanding requests.
 
 xs1: gmq64w xq9hcm qj5rm6 fg392m
+
+spec2: p4hxrf phv4hj p45469 p3x3wj 24ccf8 w768j6 hp9cm7 5x5gpc 46qwpm wcphqr jq53x3 7hxmrr 5r26hq fwc672 wf82v8 mh78w9 ghqgff 2pgv64 xx2v6q 2pm98q 37f9rc 283hmx 7h666q xhhjj9 w6pchh 9j5q4c mqcg85 4cxwr5 6pmv8x
