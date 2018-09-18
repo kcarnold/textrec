@@ -21,22 +21,28 @@
 );
 
 // Master data filter
-dt = Subset( dt_all, Rows( dt_all << get rows where( :experiment != "spec1" ) ) );
-
+dt = Subset(
+	dt_all,
+	Rows(
+		dt_all << get rows where( :experiment != "spec1" & :participant != "pr5hff" & :participant != "7q253f" )
+	)
+);
+Close( dt_all );
 dt << Set Name( "Combined gc1+spec2" );
+
 
 // Set data types
 Column( dt, "stimulus" ) << Data Type( "Character" ) << Modeling Type( "Nominal" );
 // "The last level is the level with the highest value order coding; it is the level whose indicator function is not included in the model." (https://www.jmp.com/support/help/14/indicator-parameterization-estimates.shtml)
-Column( dt, "condition_mapped" ) << Set Property( "Value Ordering", {"gated", "specific", "general", "norecs"} );
+Column( dt, "condition" ) << Set Property( "Value Ordering", {"gated", "contextual", "standard", "norecs"} );
 
 // Transform columns
-quartilify = {"NFC", "Extraversion", "Openness", "Trust", "chars_per_sec_norecs_mean"};
+quartilify = {/*"NFC", "Extraversion", "Openness", "Trust",*/ "chars_per_sec_norecs_mean"};
 For( i = 1, i <= N Items( quartilify ), i++,
-	dt << New Column( quartilify[i] || " Quartile",
+	dt << /*New Column( quartilify[i] || " Quartile",
 		Ordinal,
 		Formula( 1 + Floor( (4 * (Col Rank( Column( quartilify[i] ), <<tie( "average" ) ) - 1)) / N Row() ) )
-	) << New Column( quartilify[i] || " Tertile",
+	)*/	<<New Column( quartilify[i] || " Tertile",
 		Ordinal,
 		Formula( 1 + Floor( (3 * (Col Rank( Column( quartilify[i] ), <<tie( "average" ) ) - 1)) / N Row() ) )
 	)
@@ -46,14 +52,18 @@ dt << New Column( "chars_per_sec_log", Numeric, Formula( Log( :characters_per_se
 dt << New Column( "chars_per_sec_norecs_log", Numeric, Formula( Log( :chars_per_sec_norecs_mean ) ) );
 
 
-dt << New Column( "iptw_general", Numeric, Formula( :orig_tapstotype_general / :num_words ) );
-dt << New Column( "iptw_specific", Numeric, Formula( :orig_tapstotype_specific / :num_words ) );
+dt << New Column( "iptw_standard", Numeric, Formula( :orig_tapstotype_standard / :num_words ) );
+dt << New Column( "iptw_contextual", Numeric, Formula( :orig_tapstotype_contextual / :num_words ) );
 
+dt << New Column( "num_details_auto",
+	Numeric,
+	Formula( :pos_count_ADJ + :pos_count_NUM + :pos_count_NOUN + :pos_count_VERB )
+);
 
 New Window( "Manipulation Checks",
 	dt << Matched Pairs(
 		X( :condition ),
-		Y( :iptw_general, :iptw_specific ),
+		Y( :iptw_standard, :iptw_contextual ),
 		Plot Dif By Row( 1 ),
 		Reference Frame( 0 ),
 		Wilcoxon Signed Rank( 1 )
@@ -62,7 +72,7 @@ New Window( "Manipulation Checks",
 
 /*
 gb = dt << Graph Builder(
-    	Variables( X( :condition_mapped ), Y( :ideal_taps_per_word_corrected ) ),
+    	Variables( X( :condition ), Y( :ideal_taps_per_word_corrected ) ),
 	Elements(
     		Bar(
     			X,
@@ -89,8 +99,8 @@ gb = dt << Graph Builder(
 
 (dt << Fit Model(
 	Y( :ideal_taps_per_word_corrected ),
-	Effects( :experiment, :condition_mapped, :idx ),
-	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
+	Effects( :experiment, :condition, :idx ),
+	Random Effects( :participant, :participant * :condition, :stimulus ),
 	NoBounds( 1 ),
 	Personality( "Standard Least Squares" ),
 	Method( "REML" ),
@@ -99,13 +109,12 @@ gb = dt << Graph Builder(
 		Profiler(
 			1,
 			Confidence Intervals( 1 ),
-			Term Value( condition_mapped( "norecs", Lock( 0 ), Show( 1 ) ), idx( 5.5, Lock( 0 ), Show( 1 ) ) )
+			Term Value( condition( "norecs", Lock( 0 ), Show( 1 ) ), idx( 5.5, Lock( 0 ), Show( 1 ) ) )
 		),
-		:ideal_taps_per_word_corrected << {Summary of Fit( 1 ), Analysis of Variance( 0 ),
-		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ),
-		Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
-		Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 ),
-		{:condition_mapped << {LSMeans Tukey HSD( 0.05 )}}}
+		:ideal_taps_per_word_corrected << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ),
+		Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ),
+		Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ),
+		Show All Confidence Intervals( 1 ), {:condition << {LSMeans Tukey HSD( 0.05 )}}}
 	),
 	SendToReport(
 		Dispatch( {"Response ideal_taps_per_word_corrected"}, "Effect Details", OutlineBox, {Close( 0 )} )
@@ -117,8 +126,8 @@ gb = dt << Graph Builder(
 
 (dt << Fit Model(
 	Y( :chars_per_sec_log ),
-	Effects( :condition_mapped, :idx, ),
-	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
+	Effects( :condition, :idx, ),
+	Random Effects( :participant, :participant * :condition, :stimulus ),
 	NoBounds( 1 ),
 	Personality( "Standard Least Squares" ),
 	Method( "REML" ),
@@ -135,8 +144,8 @@ gb = dt << Graph Builder(
 
 (dt << Fit Model(
 	Y( :backspaces_per_char ),
-	Effects( :condition_mapped, :idx ),
-	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
+	Effects( :condition, :idx ),
+	Random Effects( :participant, :participant * :condition, :stimulus ),
 	NoBounds( 1 ),
 	Personality( "Standard Least Squares" ),
 	Method( "REML" ),
@@ -145,7 +154,7 @@ gb = dt << Graph Builder(
 		:backspaces_per_char << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ),
 		Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ),
 		Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ),
-		Show All Confidence Intervals( 1 ), {:condition_mapped << {LSMeans Tukey HSD( 0.05 )}}}
+		Show All Confidence Intervals( 1 ), {:condition << {LSMeans Tukey HSD( 0.05 )}}}
 	),
 	SendToReport( Dispatch( {"Response backspaces_per_char"}, "Effect Details", OutlineBox, {Close( 0 )} ) )
 )) << set window title( "backspaces per char" );
@@ -153,11 +162,11 @@ gb = dt << Graph Builder(
 
 (dt << Graph Builder(
 	Variables(
-		X( :condition_mapped ),
+		X( :condition ),
 		Y( :chars_per_sec_ratio_to_norecs ),
-		Overlay( :chars_per_sec_norecs_mean Quartile )
+		Overlay( :chars_per_sec_norecs_mean Tertile )
 	),
-	Where( :condition_mapped != "norecs" ),
+	Where( :condition != "norecs" ),
 	Elements( Bar( X, Y, Legend( 10 ), Error Bars( "Standard Error" ) ) ),
 	SendToReport(
 		Dispatch( {}, "chars_per_sec_ratio_to_norecs", ScaleBox, {Add Ref Line( 1, "Solid", "Black", "", 1 )} )
@@ -166,7 +175,7 @@ gb = dt << Graph Builder(
 
 (dt << Graph Builder(
 	Variables(
-		X( :condition_mapped ),
+		X( :condition ),
 		Y(
 			Transform Column(
 				"chars_per_sec_log-chars_per_sec_norecs_log",
@@ -176,7 +185,7 @@ gb = dt << Graph Builder(
 		Overlay( :chars_per_sec_norecs_mean Tertile )
 	),
 	Elements( Bar( X, Y, Legend( 17 ), Error Bars( "Standard Error" ) ) ),
-	Where( :condition_mapped != "norecs" )
+	Where( :condition != "norecs" )
 )) << set window tytle( "speed ratio to norecs log" );
 
 
@@ -185,22 +194,22 @@ gb = dt << Graph Builder(
 	Y( :chars_per_sec_ratio_to_norecs ),
 	Where( :condition != "norecs" ),
 	Effects(
-		:condition_mapped,
+		:condition,
 		:idx,
 		:chars_per_sec_norecs_mean,
-		:chars_per_sec_norecs_mean * :condition_mapped, 
+		:chars_per_sec_norecs_mean * :condition, 
 
 	),
-	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
+	Random Effects( :participant, :participant * :condition, :stimulus ),
 	NoBounds( 1 ),
 	Personality( "Standard Least Squares" ),
 	Method( "REML" ),
 	Emphasis( "Minimal Report" ),
 	Run(
-		:chars_per_sec_ratio_to_norecs << {Summary of Fit( 1 ), Analysis of Variance( 0 ),
-		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ),
-		Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
-		Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
+		:chars_per_sec_ratio_to_norecs << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ),
+		Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ),
+		Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ),
+		Show All Confidence Intervals( 1 )}
 	)
 )) << Set window title( "speed interaction" );
 
@@ -208,13 +217,13 @@ gb = dt << Graph Builder(
 	Y( :chars_per_sec_log ),
 	Where( :condition != "norecs" ),
 	Effects(
-		:condition_mapped,
+		:condition,
 		:idx,
 		:chars_per_sec_norecs_log//,
-		//		:chars_per_sec_norecs_log * :condition_mapped, 
+		//		:chars_per_sec_norecs_log * :condition, 
 
 	),
-	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
+	Random Effects( :participant, :participant * :condition, :stimulus ),
 	NoBounds( 1 ),
 	Personality( "Standard Least Squares" ),
 	Method( "REML" ),
@@ -233,8 +242,8 @@ gb = dt << Graph Builder(
 	By( :chars_per_sec_norecs_mean Tertile ),
 	Y( :chars_per_sec_log),
 	Where( :experiment == "gc1" & :condition != "norecs" ),
-	Effects( :condition_mapped, :idx, :chars_per_sec_norecs_log ),
-	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
+	Effects( :condition, :idx, :chars_per_sec_norecs_log ),
+	Random Effects( :participant, :participant * :condition, :stimulus ),
 	Personality( "Standard Least Squares" ),
 	Emphasis( "Minimal Report" ),
 	Method( "REML" ),
@@ -249,16 +258,16 @@ dt << Fit Model(
 			Formula( :chars_per_sec_log - :chars_per_sec_norecs_log )
 		)
 	),
-	Effects( :chars_per_sec_norecs_log, :condition_mapped, :idx, :chars_per_sec_norecs_log * :condition_mapped ),
-	Random Effects( :participant, :participant * :condition_mapped, :stimulus ),
+	Effects( :chars_per_sec_norecs_log, :condition, :idx, :chars_per_sec_norecs_log * :condition ),
+	Random Effects( :participant, :participant * :condition, :stimulus ),
 	NoBounds( 1 ),
 	Personality( "Standard Least Squares" ),
 	Method( "REML" ),
 	Emphasis( "Minimal Report" ),
 	Run(
 		:Name( "chars_per_sec_log-chars_per_sec_norecs_log" ) << {Summary of Fit( 1 ), Analysis of Variance( 0 ),
-		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ),
-		Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
-		Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
+		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ),
+		Plot Regression( 0 ), Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ),
+		Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
 	)
 );
