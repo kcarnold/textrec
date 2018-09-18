@@ -19,8 +19,8 @@ include_logprobs = False
 NON_ALPHA_RE = re.compile(r'[^a-z]')
 
 def edit_distance(x, y):
-    x = NON_ALPHA_RE.sub(x, '')
-    y = NON_ALPHA_RE.sub(y, '')
+    x = NON_ALPHA_RE.sub('', x)
+    y = NON_ALPHA_RE.sub('', y)
     return damerau_levenshtein_distance(x, y)
 
 
