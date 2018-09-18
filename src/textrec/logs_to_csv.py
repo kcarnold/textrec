@@ -105,12 +105,13 @@ columns = {
         'num_recs_seen': Count,
         'num_recs_full_seen': Count,
         'num_recs_full_gated': Count,
-        'rec_use_full_frac': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: divide_zerosafe(datum['num_tapSugg_full'], datum['num_recs_full_seen'])),
-        'rec_use_frac': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: divide_zerosafe(datum['num_tapSugg_any'], datum['num_recs_seen'])),
+        'rec_use_full_per_seen': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: divide_zerosafe(datum['num_tapSugg_full'], datum['num_recs_full_seen'])),
+        'rec_use_per_seen': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: divide_zerosafe(datum['num_tapSugg_any'], datum['num_recs_seen'])),
 
         'num_recs_used_on_mainline': Count,
         'num_recs_useful': Count,
         'relevant_use_frac': ColType(float, f=lambda datum: divide_zerosafe(datum['num_recs_used_on_mainline'], datum['num_recs_useful'])),
+        'rec_use_per_word': ColType(float, f=lambda datum: divide_zerosafe(datum['num_recs_used_on_mainline'], datum['num_words'])),
 
         'delay_before_start': BoxCox,
         'seconds_spent_typing': BoxCox,
