@@ -256,9 +256,8 @@ def rec_is_useful(sofar: str, txt: str, words: list):
     return cur_desired_word in words
 
 
-def get_trial_data(participants) -> List[Any]:
+def get_trial_data(participants, analyses) -> List[Any]:
     results = []
-    analyses = analysis_util.get_log_analysis_many(participants)
 
     for participant_id in participants:
         analyzed = analyses[participant_id]
@@ -330,11 +329,9 @@ def get_trial_data(participants) -> List[Any]:
     return results
 
 
-def get_survey_data(participants):
+def get_survey_data(participants, analyses):
     block_level = []
     experiment_level = []
-
-    analyses = analysis_util.get_log_analysis_many(participants)
 
     for participant_id in participants:
         analyzed = analyses[participant_id]
@@ -459,7 +456,9 @@ def analyze_all(participants, traits='NFC Extraversion'):
     for trait in traits:
         expected_experiment_columns[trait] = TraitColumn
 
-    trial_data = get_trial_data(participants)
+    analyses = analysis_util.get_log_analysis_many(participants)
+
+    trial_data = get_trial_data(participants, analyses)
 
     # Apply exclusions
     for trial in trial_data:
@@ -480,7 +479,7 @@ def analyze_all(participants, traits='NFC Extraversion'):
     print(orderings.stimulus_order.value_counts())
 
     # Get survey data
-    _block_level, _experiment_level = get_survey_data(participants)
+    _block_level, _experiment_level = get_survey_data(participants, analyses)
     result = decode_experiment_level(_experiment_level, traits)
 
     # Pull in all data
