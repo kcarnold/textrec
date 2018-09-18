@@ -1,5 +1,6 @@
 import os
 import json
+import ujson
 import re
 import numpy as np
 import subprocess
@@ -104,7 +105,7 @@ def get_log_analysis_many(participants):
             revisions_needed.add((git_rev, real_git_rev))
         else:
             # Result was cached.
-            analyzed = json.loads(analysis_raw)
+            analyzed = ujson.loads(analysis_raw)
             analyzed['git_rev'] = git_rev
             analyses[participant] = analyzed
 
