@@ -108,6 +108,10 @@ columns = {
         'rec_use_full_frac': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: divide_zerosafe(datum['num_tapSugg_full'], datum['num_recs_full_seen'])),
         'rec_use_frac': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: divide_zerosafe(datum['num_tapSugg_any'], datum['num_recs_seen'])),
 
+        'num_recs_used_on_mainline': Count,
+        'num_recs_useful': Count,
+        'relevant_use_frac': ColType(float, f=lambda datum: divide_zerosafe(datum['num_recs_used_on_mainline'], datum['num_recs_useful'])),
+
         'delay_before_start': BoxCox,
         'seconds_spent_typing': BoxCox,
         'characters_per_sec': ColType(float, f=lambda datum: datum['num_chars'] / datum['seconds_spent_typing'], boxcox=True),
@@ -226,6 +230,31 @@ def compute_speeds(page_data):
         seconds_spent_typing=seconds_spent_typing,
     )
 
+def rec_is_useful(sofar: str, txt: str, words: list):
+    """
+    Compute whether a recommendation is useful.
+
+    :param str sofar: the text entered so far
+    :param str txt: the text finally entered
+    :param list words: the recommended words offered.
+
+    :return True if one of the recommendations would have been useful, False if not, and None if the prefix didn't match.
+    """
+    if txt[:len(sofar)] != sofar:
+        # This rec was off the main path.
+        return None
+    if ' ' in sofar:
+        last_space_idx = sofar.rindex(' ')
+    else:
+        last_space_idx = -1
+    cur_desired_word = txt[last_space_idx + 1:].split(' ', 1)[0]
+    if len(cur_desired_word) == 0:
+        # Could happen if double-space.
+        return False
+    if cur_desired_word[-1] in ',.;-':
+        cur_desired_word = cur_desired_word[:-1]
+    return cur_desired_word in words
+
 
 def get_trial_data(participants) -> List[Any]:
     results = []
@@ -265,8 +294,23 @@ def get_trial_data(participants) -> List[Any]:
             data.update(action_counts)
             recs = [rec for rec in page['displayedSuggs'] if rec is not None]
             visible_recs = [rec for rec in recs if rec['recs'] is not None]
+            visible_recs_with_useful = [
+                dict(recset, useful=rec_is_useful(
+                    sofar=recset['sofar'],
+                    txt=text,
+                    words=[rec['words'][0] for rec in recset['recs']['predictions']]
+                )) for recset in visible_recs
+            ]
             data['num_recs_seen'] = len(visible_recs)
+            # Note: it's possible to have a rec that's on mainline but not useful because, e.g., person backspaced part of the rec.
+            data['num_recs_used_on_mainline'] = sum(
+                1 for rec in visible_recs_with_useful
+                if rec['useful']# is not None
+                and rec.get('action', {}).get('type', '').startswith('tapSugg'))
+            data['num_recs_useful'] = sum(1 for rec in visible_recs_with_useful if rec['useful'])
+            assert data['num_recs_used_on_mainline'] <= data['num_recs_useful']
 
+            # subdivide by full words
             recs_at_word_starts = [
                 rec for rec in recs if len(rec['cur_word']) == 0]
             visible_recs_at_word_starts = [
