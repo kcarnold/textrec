@@ -82,7 +82,7 @@ def get_automated_analysis(datum):
     datum = datum.to_dict()
     text = datum['corrected_text']
     pos_counts = automated_analyses.pos_counts(text)
-    for pos in 'ADJ ADP NUM NOUN VERB'.split():
+    for pos in 'ADJ ADV NUM NOUN VERB PROPN'.split():
         datum[f'pos_count_{pos}'] = pos_counts.get(pos, 0)
     if include_logprobs:
         # Note that eval_logprobs_* actually returns the _negative_ logprob.
