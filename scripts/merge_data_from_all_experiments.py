@@ -3,7 +3,7 @@ import numpy as np
 from textrec.paths import paths
 
 
-experiments = ["gc1", "spec2"]
+experiments = ["gc1", "spec2", "spec1"]
 frames = [
     pd.read_csv(paths.analyzed / f"trial_withmanual_{exp}.csv") for exp in experiments
 ]
