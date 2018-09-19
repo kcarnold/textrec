@@ -117,6 +117,7 @@ columns = {
         'seconds_spent_typing': BoxCox,
         'characters_per_sec': ColType(float, f=lambda datum: datum['num_chars'] / datum['seconds_spent_typing'], boxcox=True),
         'taps_per_second': ColType(float, f=lambda datum: datum['num_taps'] / datum['seconds_spent_typing'], boxcox=True),
+        'taps_per_word': ColType(float, f=lambda datum: datum['num_taps'] / datum['num_words']),
 
         'backspaces_per_tap': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: datum['num_tapBackspace'] / datum['num_taps']),
         'backspaces_per_char': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: datum['num_tapBackspace'] / datum['num_chars']),
