@@ -21,7 +21,7 @@
 );
 
 // Master data filter
-dt = Subset( dt_all, Rows( dt_all << get rows where( :experiment != "spec1" & :participant != "pr5hff" & :participant != "7q253f" ) ) );
+dt = Subset( dt_all, Rows( dt_all << get rows where( :participant != "pr5hff" & :participant != "7q253f" ) ) );
 Close( dt_all );
 dt << Set Name( "Combined gc1+spec2" );
 
@@ -44,7 +44,7 @@ For( i = 1, i <= N Items( quartilify ), i++,
 	)
 );
 
-dt << New Column( "taps_per_char", Numeric, Formula( :num_taps / :num_chars ) );
+dt << New Column( "taps_per_word", Numeric, Formula( :num_taps / :num_words ) );
 
 dt << New Column( "chars_per_sec_log", Numeric, Formula( Log( :characters_per_sec ) ) );
 dt << New Column( "chars_per_sec_norecs_log", Numeric, Formula( Log( :chars_per_sec_norecs_mean ) ) );
@@ -94,9 +94,11 @@ analyze = Function( {response_name, window_title},
 		dt << Graph Builder(
 			Variables( X( :condition ), Y( :" || response_name ||
 			")),
-			Elements( Bar( X, Y, Legend( 4 ), Error Bars( \!"Standard Error\!" ) ) ),
-			SendToReport( Dispatch( {}, \!"Y title\!", TextEditBox, {Set Text( \!""
-			 || window_title || "\!")} ) )
+			Elements( Bar( X, Y, Legend( 4 ), Error Bars( \!"Standard Error\!" ), Label( \!"Label by Value\!" ) ) ),
+			SendToReport( 
+				Dispatch( {}, \!"Y title\!", TextEditBox, {Set Text( \!"" || window_title || "\!")} ) ,
+				Dispatch( {}, \!"graph title\!", TextEditBox, {Set Text( \!"\!" )} ),
+			)
 		),
 		dt << Fit Model(
 			Y( :" || response_name ||
@@ -239,11 +241,13 @@ gb = dt << Graph Builder(
 
 analyze( "mintaps_standard", "Ideal Taps per Corrected Word" );
 analyze( "mintaps_std_minus_contextual", "Outcome difference between systems" );
-analyze( "num_details_auto", "Num Details (auto)" );
 analyze( "uncorrected_errors_per_char", "Uncorrected Errors per Word" );
+analyze( "num_details_auto", "Num Details (auto)" );
+analyze( "num_words", "Num Words" );
 
 /** Process Effects */
 
+analyze( "taps_per_word", "Taps per Word" );
 analyze( "chars_per_sec_log", "Characters per Second" );
 analyze( "backspaces_per_char", "backspaces per char" );
 
@@ -258,11 +262,24 @@ analyze( "relevant_use_frac", "Relevant Rec Use" );
 Wait( 0 );
 
 
+
 (dt << Graph Builder(
+	Window Title( "Speed Ratio to Norecs" ),
+	Legend Position( "Inside Left" ),
 	Variables( X( :condition ), Y( :chars_per_sec_ratio_to_norecs ), Overlay( :chars_per_sec_norecs_mean Tertile ) ),
-	Where( :condition != "norecs" ),
 	Elements( Bar( X, Y, Legend( 10 ), Error Bars( "Standard Error" ) ) ),
-	SendToReport( Dispatch( {}, "chars_per_sec_ratio_to_norecs", ScaleBox, {Add Ref Line( 1, "Solid", "Black", "", 1 )} ) )
+	Where( :condition != "norecs" ),
+	SendToReport(
+		Dispatch( {}, "chars_per_sec_ratio_to_norecs", ScaleBox, {Add Ref Line( 1, "Solid", "Black", "", 1 )} ),
+		Dispatch(
+			{},
+			"400",
+			ScaleBox,
+			{Legend Model( 10, Level Name( 0, "Slowest Tertile" ), Level Name( 1, "Middle Tertile" ), Level Name( 2, "Fastest Tertile" ) )}
+		),
+		Dispatch( {}, "400", LegendBox, {Set Title( "Baseline Speed" )} ), 
+
+	)
 )) << set window title( "speed ratio to norecs" );
 
 (dt << Graph Builder(
@@ -272,7 +289,18 @@ Wait( 0 );
 		Overlay( :chars_per_sec_norecs_mean Tertile )
 	),
 	Elements( Bar( X, Y, Legend( 17 ), Error Bars( "Standard Error" ) ) ),
-	Where( :condition != "norecs" )
+	Where( :condition != "norecs" ),
+	SendToReport(
+		Dispatch(
+			{},
+			"400",
+			ScaleBox,
+			{Legend Model( 10, Level Name( 0, "Slowest Tertile" ), Level Name( 1, "Middle Tertile" ), Level Name( 2, "Fastest Tertile" ) )}
+		),
+		Dispatch( {}, "400", LegendBox, {Set Title( "Baseline Speed" )} ),
+
+	)
+	
 )) << set window tytle( "speed ratio to norecs log" );
 
 Wait( 0 );
