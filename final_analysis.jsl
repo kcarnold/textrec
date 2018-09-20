@@ -45,6 +45,7 @@ For( i = 1, i <= N Items( quartilify ), i++,
 );
 
 dt << New Column( "taps_per_word", Numeric, Formula( :num_taps / :num_words ) );
+dt << New Column( "taps_per_char", Numeric, Formula( :num_taps / :num_chars ) );
 dt << New Column( "chars_per_word", Numeric, Formula( :num_chars / :num_words ) );
 
 dt << New Column( "num_words_log", Numeric, Formula( Log( :num_words ) ) );
@@ -107,6 +108,55 @@ analyze = Function( {response_name, window_title, extra = ""},
 			)
 		),
 		resp = dt << Fit Model(
+			Y( :"
+	 || response_name ||
+	" ),
+			Effects( :experiment, :condition, :idx ),
+			Random Effects( :participant, :participant * :condition, :stimulus),
+			NoBounds( 1 ),
+			Personality( \!"Standard Least Squares\!" ),
+			Method( \!"REML\!" ),
+			Emphasis( \!"Minimal Report\!" ),
+			Run(
+				Name( \!""
+	 || response_name ||
+	"\!" ) << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
+				Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
+				Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 ), {:condition <<
+				{LSMeans Tukey HSD( 0.05 )}}}
+			),
+			SendToReport( Dispatch( \!"Response "
+	 || response_name || "\!", \!"Effect Details\!", OutlineBox, {Close( 0 )} ) ),
+			" || extra || "
+		)
+	)";
+	Show( s );
+	Eval( Parse( s ) );
+	resp;
+);
+
+analyzeByBlock = Function( {response_name, window_title, extra = ""},
+	{s, resp},
+	s = "New Window( \!"" || window_title || "\!",
+		dt << Graph Builder(
+			Variables( X( :condition ), Y( :" || response_name ||
+	")),
+			Elements( Bar( X, Y, Legend( 4 ), Error Bars( \!"Standard Error\!" ), Label( \!"Label by Value\!" ) ) ),
+			SendToReport( 
+				Dispatch( {}, \!"Y title\!", TextEditBox, {Set Text( \!""
+	 || window_title ||
+	"\!")} ) ,
+				Dispatch( {}, \!"graph title\!", TextEditBox, {Set Text( \!"\!" )} ),
+			)
+		),
+		resp = (dt << Summary(
+	Group( :experiment, :participant, :block, :condition ),
+	Mean( :"
+	 || response_name || " ),
+	Freq( \!"None\!" ),
+	Weight( \!"None\!" ),
+	statistics column name format( \!"column\!" )
+)) << Fit Model(
 			Y( :"
 	 || response_name ||
 	" ),
@@ -250,7 +300,7 @@ gb = dt << Graph Builder(
 
 analyze( "mintaps_standard", "Ideal Taps per Corrected Word" );
 analyze( "mintaps_mean", "Min-Taps average of both rec systems" );
-analyze( "mintaps_std_minus_contextual", "mintaps(Contextual, text) - mintaps(Standard, text)" );
+analyze( "mintaps_std_minus_contextual", "mintaps(Standard, text) - mintaps(Contextual, text)" );
 analyze( "uncorrected_errors_per_char", "Uncorrected Errors per Word" );
 analyze( "num_details_auto_log", "Log(Num Details (auto))" );
 resp = analyze( "num_words_log", "Log(num_words)" );
@@ -261,6 +311,7 @@ analyze( "autodetails_per_word", "Num Details per Word" );
 /** Process Effects */
 
 analyze( "taps_per_word", "Taps per Word" );
+analyze( "taps_per_char", "Taps per Char" );
 analyze( "chars_per_sec_log", "Characters per Second" );
 analyze( "backspaces_per_char", "backspaces per char" );
 analyze( "num_recs_used_on_mainline", "Recommendation Use Count", "Where( :condition != \!"norecs\!")" );
@@ -444,7 +495,7 @@ Fit Model(
 )) << set window title( "conformity - with gating" );
 
 (dt << Graph Builder(
-	Where( :experiment != "gc1"),
+	Where( :experiment != "gc1" ),
 	Variables( X( :condition ), Y( :mintaps_standard ), Y( :mintaps_contextual, Position( 1 ) ) ),
 	Elements( Bar( X, Y( 1 ), Y( 2 ), Legend( 15 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) ),
 	SendToReport(
@@ -455,6 +506,16 @@ Fit Model(
 		Dispatch( {}, "400", LegendBox, {Set Title( "System" )} )
 	)
 )) << set window title( "conformity - no gating" );
+
+
+dt << Graph Builder(
+	Variables(
+		X( :condition ),
+		Y( Transform Column( "Ideal taps saved", Formula( 1 - :corrected_tapstotype_cond / :num_chars ) ) ),
+		Y( Transform Column( "Actual taps saved", Formula( 1 - :num_taps / :num_chars ) ), Position( 1 ) )
+	),
+	Elements( Bar( X, Y( 1 ), Y( 2 ), Legend( 7 ), Error Bars( "Standard Error" ) ) )
+);
 
 
 blockLevel = dt << Summary(
