@@ -108,6 +108,7 @@ columns = {
         'rec_use_full_per_seen': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: divide_zerosafe(datum['num_tapSugg_full'], datum['num_recs_full_seen'])),
         'rec_use_per_seen': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: divide_zerosafe(datum['num_tapSugg_any'], datum['num_recs_seen'])),
 
+        'num_recs_seen_on_mainline': Count,
         'num_recs_used_on_mainline': Count,
         'num_recs_useful': Count,
         'relevant_use_frac': ColType(float, f=lambda datum: divide_zerosafe(datum['num_recs_used_on_mainline'], datum['num_recs_useful'])),
@@ -304,6 +305,9 @@ def get_trial_data(participants, analyses) -> List[Any]:
             ]
             data['num_recs_seen'] = len(visible_recs)
             # Note: it's possible to have a rec that's on mainline but not useful because, e.g., person backspaced part of the rec.
+            data['num_recs_seen_on_mainline'] = sum(
+                1 for rec in visible_recs_with_useful if rec['useful'] is not None
+            )
             data['num_recs_used_on_mainline'] = sum(
                 1 for rec in visible_recs_with_useful
                 if rec['useful']# is not None
