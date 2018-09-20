@@ -191,6 +191,7 @@ trial_outcomes = [
     "characters_per_sec",
     "ideal_taps_per_word_corrected",
     "mean_log_freq",
+    "relevant_use_frac",
 ]
 for outcome in trial_outcomes:
     analyze_outcome(trial_level_data, "condition", outcome)
