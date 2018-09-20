@@ -45,6 +45,9 @@ For( i = 1, i <= N Items( quartilify ), i++,
 );
 
 dt << New Column( "taps_per_word", Numeric, Formula( :num_taps / :num_words ) );
+dt << New Column( "chars_per_word", Numeric, Formula( :num_chars / :num_words ) );
+
+dt << New Column( "num_words_log", Numeric, Formula( Log( :num_words ) ) );
 
 dt << New Column( "chars_per_sec_log", Numeric, Formula( Log( :characters_per_sec ) ) );
 dt << New Column( "chars_per_sec_norecs_log", Numeric, Formula( Log( :chars_per_sec_norecs_mean ) ) );
@@ -53,8 +56,11 @@ dt << New Column( "chars_per_sec_norecs_log", Numeric, Formula( Log( :chars_per_
 dt << New Column( "mintaps_standard", Numeric, Formula( :corrected_tapstotype_standard / :num_words ) );
 dt << New Column( "mintaps_contextual", Numeric, Formula( :corrected_tapstotype_contextual / :num_words ) );
 dt << New Column( "mintaps_std_minus_contextual", Numeric, Formula( mintaps_standard - mintaps_contextual ) );
+dt << New Column( "mintaps_mean", Numeric, Formula( (mintaps_standard + mintaps_contextual) / 2 ) );
 
 dt << New Column( "num_details_auto", Numeric, Formula( :pos_count_ADJ + :pos_count_NUM + :pos_count_NOUN + :pos_count_VERB + :pos_count_PROPN ) );
+dt << New Column( "num_details_auto_log", Numeric, Formula( Log( :num_details_auto ) ) );
+dt << New Column( "autodetails_per_word", Numeric, Formula( :num_details_auto / :num_words ) );
 
 Wait( 0 );
 
@@ -86,43 +92,46 @@ Wait( 0 );
 
 
 // Main analysis function
-analyze = Function( {response_name, window_title},
-	{},
-	Eval(
-		Parse(
-			"New Window( \!"" || window_title || "\!",
+analyze = Function( {response_name, window_title, extra = ""},
+	{s, resp},
+	s = "New Window( \!"" || window_title || "\!",
 		dt << Graph Builder(
 			Variables( X( :condition ), Y( :" || response_name ||
-			")),
+	")),
 			Elements( Bar( X, Y, Legend( 4 ), Error Bars( \!"Standard Error\!" ), Label( \!"Label by Value\!" ) ) ),
 			SendToReport( 
-				Dispatch( {}, \!"Y title\!", TextEditBox, {Set Text( \!"" || window_title || "\!")} ) ,
+				Dispatch( {}, \!"Y title\!", TextEditBox, {Set Text( \!""
+	 || window_title ||
+	"\!")} ) ,
 				Dispatch( {}, \!"graph title\!", TextEditBox, {Set Text( \!"\!" )} ),
 			)
 		),
-		dt << Fit Model(
-			Y( :" || response_name ||
-			" ),
+		resp = dt << Fit Model(
+			Y( :"
+	 || response_name ||
+	" ),
 			Effects( :experiment, :condition, :idx ),
-			Random Effects( :participant, :participant * :condition, :stimulus ),
+			Random Effects( :participant, :participant * :condition, :stimulus),
 			NoBounds( 1 ),
 			Personality( \!"Standard Least Squares\!" ),
 			Method( \!"REML\!" ),
 			Emphasis( \!"Minimal Report\!" ),
 			Run(
 				Name( \!""
-			 || response_name ||
-			"\!" ) << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
+	 || response_name ||
+	"\!" ) << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
 				Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
 				Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 ), {:condition <<
 				{LSMeans Tukey HSD( 0.05 )}}}
 			),
 			SendToReport( Dispatch( \!"Response "
-			 || response_name || "\!", \!"Effect Details\!", OutlineBox, {Close( 0 )} ) )
+	 || response_name || "\!", \!"Effect Details\!", OutlineBox, {Close( 0 )} ) ),
+			" || extra || "
 		)
-	)"
-		)
-	)
+	)";
+	Show( s );
+	Eval( Parse( s ) );
+	resp;
 );
 
 analyzeWithBaseSpeed = Function( {response_name, window_title},
@@ -240,16 +249,21 @@ gb = dt << Graph Builder(
 );
 
 analyze( "mintaps_standard", "Ideal Taps per Corrected Word" );
-analyze( "mintaps_std_minus_contextual", "Outcome difference between systems" );
+analyze( "mintaps_mean", "Min-Taps average of both rec systems" );
+analyze( "mintaps_std_minus_contextual", "mintaps(Contextual, text) - mintaps(Standard, text)" );
 analyze( "uncorrected_errors_per_char", "Uncorrected Errors per Word" );
-analyze( "num_details_auto", "Num Details (auto)" );
-analyze( "num_words", "Num Words" );
+analyze( "num_details_auto_log", "Log(Num Details (auto))" );
+resp = analyze( "num_words_log", "Log(num_words)" );
+analyze( "num_chars", "Num Chars" );
+analyze( "chars_per_word", "Chars per Word" );
+analyze( "autodetails_per_word", "Num Details per Word" );
 
 /** Process Effects */
 
 analyze( "taps_per_word", "Taps per Word" );
 analyze( "chars_per_sec_log", "Characters per Second" );
 analyze( "backspaces_per_char", "backspaces per char" );
+analyze( "num_recs_used_on_mainline", "Recommendation Use Count", "Where( :condition != \!"norecs\!")" );
 
 /** Rec usage */
 
@@ -264,7 +278,6 @@ Wait( 0 );
 
 
 (dt << Graph Builder(
-	Window Title( "Speed Ratio to Norecs" ),
 	Legend Position( "Inside Left" ),
 	Variables( X( :condition ), Y( :chars_per_sec_ratio_to_norecs ), Overlay( :chars_per_sec_norecs_mean Tertile ) ),
 	Elements( Bar( X, Y, Legend( 10 ), Error Bars( "Standard Error" ) ) ),
@@ -283,6 +296,7 @@ Wait( 0 );
 )) << set window title( "speed ratio to norecs" );
 
 (dt << Graph Builder(
+	Legend Position( "Inside Left" ),
 	Variables(
 		X( :condition ),
 		Y( Transform Column( "chars_per_sec_log-chars_per_sec_norecs_log", Formula( :chars_per_sec_log - :chars_per_sec_norecs_log ) ) ),
@@ -297,7 +311,7 @@ Wait( 0 );
 			ScaleBox,
 			{Legend Model( 10, Level Name( 0, "Slowest Tertile" ), Level Name( 1, "Middle Tertile" ), Level Name( 2, "Fastest Tertile" ) )}
 		),
-		Dispatch( {}, "400", LegendBox, {Set Title( "Baseline Speed" )} ),
+		Dispatch( {}, "400", LegendBox, {Set Title( "Baseline Speed" )} ), 
 
 	)
 	
@@ -380,4 +394,75 @@ analyzeWithNFC( "relevant_use_frac", "Relevant Rec Use" );
 	),
 	SendToReport( Dispatch( response_str, "Effect Details", OutlineBox, {Close( 0 )} ) )
 )) << Set Window Title( "Speed Interaction by Tertile" );
+
+
+
+/*
+Fit Model(
+	Y( :mintaps_contextual ),
+	Effects(
+		:experiment,
+		:condition,
+		:idx,
+		:mintaps_standard,
+		:mintaps_standard * :condition
+	),
+	Random Effects( :participant, :participant * :condition, :stimulus ),
+	NoBounds( 1 ),
+	Personality( "Standard Least Squares" ),
+	Method( "REML" ),
+	Emphasis( "Minimal Report" ),
+	Run(
+		:mintaps_contextual << {Summary of Fit( 1 ), Analysis of Variance( 0 ),
+		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ),
+		Plot Actual by Predicted( 0 ), Plot Regression( 0 ),
+		Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ),
+		Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 ), {:condition
+		 << {LSMeans Tukey HSD( 0.05 ), LSMeans Contrast( [0 0 1 -1], {} )}}}
+	),
+	SendToReport(
+		Dispatch(
+			{"Response mintaps_contextual"},
+			"Effect Details",
+			OutlineBox,
+			{Close( 0 )}
+		)
+	)
+)
+*/
+
+(dt << Graph Builder(
+	Variables( X( :condition ), Y( :mintaps_standard ), Y( :mintaps_contextual, Position( 1 ) ) ),
+	Elements( Bar( X, Y( 1 ), Y( 2 ), Legend( 15 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) ),
+	SendToReport(
+		Dispatch( {}, "400", ScaleBox, {Legend Model( 15, Level Name( 0, "standard" ), Level Name( 1, "contextual" ) )} ),
+		Dispatch( {}, "graph title", TextEditBox, {Set Text( "" )} ),
+		Dispatch( {}, "X title", TextEditBox, {Set Text( "Writing Condition" )} ),
+		Dispatch( {}, "Y title", TextEditBox, {Set Text( "min taps (system, text)" )} ),
+		Dispatch( {}, "400", LegendBox, {Set Title( "System" )} )
+	)
+)) << set window title( "conformity - with gating" );
+
+(dt << Graph Builder(
+	Where( :experiment != "gc1"),
+	Variables( X( :condition ), Y( :mintaps_standard ), Y( :mintaps_contextual, Position( 1 ) ) ),
+	Elements( Bar( X, Y( 1 ), Y( 2 ), Legend( 15 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) ),
+	SendToReport(
+		Dispatch( {}, "400", ScaleBox, {Legend Model( 15, Level Name( 0, "standard" ), Level Name( 1, "contextual" ) )} ),
+		Dispatch( {}, "graph title", TextEditBox, {Set Text( "" )} ),
+		Dispatch( {}, "X title", TextEditBox, {Set Text( "Writing Condition" )} ),
+		Dispatch( {}, "Y title", TextEditBox, {Set Text( "min taps (system, text)" )} ),
+		Dispatch( {}, "400", LegendBox, {Set Title( "System" )} )
+	)
+)) << set window title( "conformity - no gating" );
+
+
+blockLevel = dt << Summary(
+	Group( :experiment, :participant, :block, :condition ),
+	Mean( :num_chars ),
+	Mean( :num_words ),
+	Freq( "None" ),
+	Weight( "None" ),
+	statistics column name format( "column" )
+);
 

@@ -1,10 +1,14 @@
-import numpy as np
-from .util import mem
-from . import onmt_model_2
-import spacy
 from collections import Counter
 
+import numpy as np
+import spacy
+import wordfreq
+
 from textrec.paths import paths
+
+from . import onmt_model_2
+from .util import mem
+
 paths.imgdata_h5 = paths.imgdata_h5_all
 
 print("Loading SpaCy...", end='', flush=True)
@@ -18,6 +22,15 @@ def count_adj(text):
 @mem.cache(verbose=0)
 def pos_counts(text):
     return Counter(token.pos_ for token in nlp(text))
+
+@mem.cache
+def mean_log_freq(text):
+    freqs = []
+    for tok in wordfreq.tokenize(text, 'en'):
+        freq = wordfreq.zipf_frequency(tok, 'en')
+        if freq != 0:
+            freqs.append(freq)
+    return np.mean(freqs)
 
 
 @mem.cache
