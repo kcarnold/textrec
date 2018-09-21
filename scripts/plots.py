@@ -40,7 +40,12 @@ sns.set_style("whitegrid")
 
 os.chdir(paths.top_level)
 
-friendly_names = {"ideal_taps_per_word_corrected": "Taps per Typo-Corrected Word"}
+friendly_names = {
+    "ideal_taps_per_word_corrected": "Taps per Typo-Corrected Word",
+    "num_words": "Number of Words",
+    "uncorrected_errors_per_word": "Uncorrected Errors per Word",
+    "relevant_use_frac": "Utilization Rate of Relevant Recommendations",
+}
 
 
 # Load results of writing experiment
