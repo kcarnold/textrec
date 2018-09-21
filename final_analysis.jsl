@@ -74,6 +74,25 @@ New Window( "Manipulation Checks",
 		Wilcoxon Signed Rank( 1 )
 	),
 	dt << Graph Builder(
+		Variables( X( :condition ), Y( Transform Column( "num_recs_seen/num_taps", Formula( :num_recs_seen / (:num_taps + 1) ) ) ) ),
+		Elements( Bar( X, Y, Legend( 5 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) )
+	),
+	dt << Oneway(
+		Y(
+			Transform Column(
+				"orig_bow_recs_idealuse_cond/orig_bow_recs_offered_cond",
+				Formula( :orig_bow_recs_idealuse_cond / :orig_bow_recs_offered_cond )
+			)
+		),
+		X( :condition ),
+		Means( 1 ),
+		t Test( 1 ),
+		Wilcoxon Test( 1 ),
+		Mean Diamonds( 1 ),
+		Where( :experiment == "gc1" )
+	), 
+
+	dt << Graph Builder(
 		Variables(
 			X( :condition ),
 			Y(
@@ -86,7 +105,8 @@ New Window( "Manipulation Checks",
 		Where( :condition != "norecs" ),
 		Elements( Bar( X, Y, Legend( 4 ), Error Bars( "Standard Error" ) ) ),
 		SendToReport( Dispatch( {}, "Y title", TextEditBox, {Set Text( "Relevance rate (# relevant / # offered)" )} ) )
-	)
+	), 
+
 );
 
 Wait( 0 );
@@ -259,61 +279,24 @@ analyzeWithNFC = Function( {response_name, window_title},
 );
 
 
-/*
-
-analyze2 = Function( {response_name, window_title},
-	{response_str = "Response " || response_name},
-	Eval(Parse("
-	(dt << Fit Model(
-		Y( Name( " || response_name  || ") ),
-		Effects( :experiment, :condition, :idx " || extra_effects || "),
-		Random Effects( :participant, :participant * :condition, :stimulus ),
-		NoBounds( 1 ),
-		Personality( \!"Standard Least Squares\!" ),
-		Method( \!"REML\!" ),
-		Emphasis( \!"Minimal Report\!" ),
-		Run(
-			Name( " || response_name  || ") << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
-			Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
-			Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 ), {:condition << {LSMeans Tukey HSD( 0.05 )
-			}}}
-		),
-		SendToReport( Dispatch( " || response_str, "Effect Details", OutlineBox, {Close( 0 )} ) )
-	)) << Set Window Title( window_title );
-);*/
-
-
-
-
 
 /* Outcome Effects */
-gb = dt << Graph Builder(
-	Variables( X( :condition ), Y( :mintaps_standard ) ),
-	Elements( Bar( X, Y, Legend( 4 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) ),
-	SendToReport(
-		Dispatch( {}, "Graph Builder", OutlineBox, {Set Title( "Ideal Taps per Typo-Corrected Word" )} ),
-		Dispatch( {}, "graph title", TextEditBox, {Set Text( "" )} ),
-		Dispatch( {}, "X title", TextEditBox, {Set Text( "Condition" )} ),
-		Dispatch( {}, "Y title", TextEditBox, {Set Text( "Ideal Taps per Typo-Corrected Word" )} )
-	)
-);
-
 analyze( "mintaps_standard", "Ideal Taps per Corrected Word" );
 analyze( "mintaps_mean", "Min-Taps average of both rec systems" );
 analyze( "mintaps_std_minus_contextual", "mintaps(Standard, text) - mintaps(Contextual, text)" );
-analyze( "uncorrected_errors_per_char", "Uncorrected Errors per Word" );
+analyze( "uncorrected_errors_per_char", "Uncorrected Errors per Character" );
 analyze( "num_details_auto_log", "Log(Num Details (auto))" );
-resp = analyze( "num_words_log", "Log(num_words)" );
-analyze( "num_chars", "Num Chars" );
-analyze( "chars_per_word", "Chars per Word" );
-analyze( "autodetails_per_word", "Num Details per Word" );
+analyze( "num_words_log", "Log(num_words)" );
+//analyze( "num_chars", "Num Chars" );
+//analyze( "chars_per_word", "Chars per Word" );
+//analyze( "autodetails_per_word", "Num Details per Word" );
 
 /** Process Effects */
 
-analyze( "taps_per_word", "Taps per Word" );
+//analyze( "taps_per_word", "Taps per Word" );
 analyze( "taps_per_char", "Taps per Char" );
 analyze( "chars_per_sec_log", "Characters per Second" );
-analyze( "backspaces_per_char", "backspaces per char" );
+//analyze( "backspaces_per_char", "backspaces per char" );
 analyze( "num_recs_used_on_mainline", "Recommendation Use Count", "Where( :condition != \!"norecs\!")" );
 
 /** Rec usage */
@@ -326,6 +309,22 @@ analyze( "relevant_use_frac", "Relevant Rec Use" );
 /*** Interactions with baseline speed **/
 Wait( 0 );
 
+
+(dt << Graph Builder(
+	Size( 570, 564 ),
+	Variables(
+		X( :condition ),
+		Y( :taps_per_char ),
+		Y( :backspaces_per_char, Position( 1 ) ),
+		Y( Transform Column( "num_tapKey/num_chars", Formula( :num_tapKey / :num_chars ) ), Position( 1 ) ),
+		Y( Transform Column( "num_tapSugg_any/num_chars", Formula( :num_tapSugg_any / :num_chars ) ), Position( 1 ) )
+	),
+	Elements(
+		Bar( X, Y( 1 ), Legend( 3 ), Error Bars( "Confidence Interval" ) ),
+		Bar( X, Y( 4 ), Y( 2 ), Y( 3 ), Legend( 5 ), Error Bars( "Standard Error" ), Label( "Label by Percent of Total Values" ) )
+	),
+	SendToReport( Dispatch( {"Bar"}, "", OutlineBox, {Close( 0 )} ), Dispatch( {"Bar"}, "", OutlineBox, {Close( 0 )} ) )
+)) << set window title( "Taps per Character, by type" );
 
 
 (dt << Graph Builder(
@@ -522,8 +521,25 @@ blockLevel = dt << Summary(
 	Group( :experiment, :participant, :block, :condition ),
 	Mean( :num_chars ),
 	Mean( :num_words ),
+	Mean( :relevant_use_frac ),
 	Freq( "None" ),
 	Weight( "None" ),
 	statistics column name format( "column" )
 );
 
+
+blockLevel << Oneway(
+	By( :experiment ),
+	Y( :relevant_use_frac ),
+	X( :condition ),
+	Block( :participant ),
+	Means( 1 ),
+	t Test( 1 ),
+	CDF Plot( 1 ),
+	Mean Diamonds( 1 ),
+	Wilcoxon Each Pair( 1 ),
+	SendToReport(
+		Dispatch( {"Oneway Anova"}, "Block Means", OutlineBox, {Close( 1 )} ),
+		Dispatch( {}, "CDF Plot", OutlineBox, {SetHorizontal( 1 )} )
+	)
+);

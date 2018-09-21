@@ -14,7 +14,7 @@ from textrec import automated_analyses
 
 id2url = util.get_coco_id2url()
 
-include_logprobs = False
+include_logprobs = True
 
 NON_ALPHA_RE = re.compile(r'[^a-z]')
 

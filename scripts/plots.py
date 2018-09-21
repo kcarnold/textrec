@@ -95,10 +95,16 @@ data = dict(
     n_trials=len(trial_level_data),
 )
 
+subgroup_names = dict(gc1="gated", spec1="contextual", spec2="contextual")
+experiment_level_data["subgroup"] = experiment_level_data.experiment.map(subgroup_names)
+block_level_data["subgroup"] = block_level_data.experiment.map(subgroup_names)
+trial_level_data["subgroup"] = trial_level_data.experiment.map(subgroup_names)
 
-for exp, group in experiment_level_data.groupby("experiment"):
-    data.setdefault(exp, {})
-    data[exp]["num_participants"] = len(group)
+data["exp_counts"] = experiment_level_data.groupby("experiment").size().to_dict()
+
+for subgroup, group in experiment_level_data.groupby("subgroup"):
+    data.setdefault(subgroup, {})
+    data[subgroup]["num_participants"] = len(group)
     helpfulness_columns = [
         col for col in experiment_level_data.columns if col.startswith("helpfulRank")
     ]
@@ -115,14 +121,14 @@ for exp, group in experiment_level_data.groupby("experiment"):
         .fillna(0)
         .astype(int)
     )
-    data[exp]["helpful_most_votes"] = (
+    data[subgroup]["helpful_most_votes"] = (
         helpful_ranks_by_condition.loc[
             :, [col for col in helpful_ranks_by_condition.columns if "most" in col]
         ]
         .sum(axis=1)
         .to_dict()
     )
-    data[exp]["helpful_least_votes"] = (
+    data[subgroup]["helpful_least_votes"] = (
         helpful_ranks_by_condition.loc[
             :, [col for col in helpful_ranks_by_condition.columns if "least" in col]
         ]
@@ -164,8 +170,8 @@ data["condition_order_table"] = covc
 def summarize_means(df, by, outcome):
     means = df.groupby(by)[outcome].mean()
     data[f"{outcome}_means"] = means.to_dict()
-    for exp, group in df.groupby("experiment"):
-        data[exp][f"{outcome}_means"] = group.groupby(by)[outcome].mean().to_dict()
+    for subgroup, group in df.groupby("subgroup"):
+        data[subgroup][f"{outcome}_means"] = group.groupby(by)[outcome].mean().to_dict()
     return ", ".join(
         f"{name}={group_mean:.2f}" for name, group_mean in means.iteritems()
     )
