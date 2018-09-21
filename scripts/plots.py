@@ -59,8 +59,13 @@ trial_level_data = pd.read_csv(
 
 assert len(trial_level_data[trial_level_data["corrected_text"].isnull()]) == 0
 
-for col in "participant condition stimulus".split():
+for col in "participant stimulus".split():
     trial_level_data[col] = trial_level_data[col].astype("category")
+
+condition_type = pd.api.types.CategoricalDtype(
+    categories=["gated", "contextual", "standard", "norecs"], ordered=True
+)
+trial_level_data["condition"] = trial_level_data["condition"].astype(condition_type)
 
 trial_level_data["backspaces_per_word"] = (
     trial_level_data["num_tapBackspace"] / trial_level_data["num_words"]
