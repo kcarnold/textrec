@@ -49,7 +49,7 @@ friendly_names = {
 
 
 # Load results of writing experiment
-# Prerequisites: Run `make data/analyzed/combined_data.csv`.
+# Prerequisites: Run `scripts/combined_analysis.py`
 
 # experiments = ['gc1', 'spec2']
 experiment_level_data = pd.read_csv(paths.analyzed / f"combined_experiments.csv")
