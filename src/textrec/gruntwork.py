@@ -102,7 +102,7 @@ def get_automated_analysis(datum):
 def main(batch):
     trial_level_data = pd.read_csv(paths.analyzed / f'trial_{batch}.csv')
     trial_level_data, corrections_todo = get_corrected_text(trial_level_data)
-    corrections_todo_path = paths.gruntwork / 'corrections_todo.csv'
+    corrections_todo_path = paths.gruntwork / f'corrections_todo_{batch}.csv'
     corrections_todo.to_csv(corrections_todo_path, index=False)
     if len(corrections_todo):
         print(f"There are {len(corrections_todo)} corrections to make.")
