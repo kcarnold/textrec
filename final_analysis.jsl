@@ -23,7 +23,7 @@
 // Master data filter
 dt = Subset( dt_all, Rows( dt_all << get rows where( :participant != "pr5hff" & :participant != "7q253f" ) ) );
 Close( dt_all );
-dt << Set Name( "Combined gc1+spec2" );
+dt << Set Name( "Combined Data" );
 
 
 // Set data types
@@ -57,11 +57,8 @@ dt << New Column( "chars_per_sec_norecs_log", Numeric, Formula( Log( :chars_per_
 dt << New Column( "mintaps_standard", Numeric, Formula( :corrected_tapstotype_standard / :num_words ) );
 dt << New Column( "mintaps_contextual", Numeric, Formula( :corrected_tapstotype_contextual / :num_words ) );
 dt << New Column( "mintaps_std_minus_contextual", Numeric, Formula( mintaps_standard - mintaps_contextual ) );
-dt << New Column( "mintaps_mean", Numeric, Formula( (mintaps_standard + mintaps_contextual) / 2 ) );
 
-dt << New Column( "num_details_auto", Numeric, Formula( :pos_count_ADJ + :pos_count_NUM + :pos_count_NOUN + :pos_count_VERB + :pos_count_PROPN ) );
-dt << New Column( "num_details_auto_log", Numeric, Formula( Log( :num_details_auto ) ) );
-dt << New Column( "autodetails_per_word", Numeric, Formula( :num_details_auto / :num_words ) );
+
 
 Wait( 0 );
 
@@ -113,7 +110,9 @@ Wait( 0 );
 
 
 // Main analysis function
-analyze = Function( {response_name, window_title, extra = ""},
+// extra_toplevel is stuff like Where(condition != "norecs")
+// extra_effects is stuff like ", :chars_per_sec_norecs_log "
+analyze = Function( {response_name, window_title, extra_toplevel = "", extra_effects = ""},
 	{s, resp},
 	s = "New Window( \!"" || window_title || "\!",
 		dt << Graph Builder(
@@ -129,58 +128,9 @@ analyze = Function( {response_name, window_title, extra = ""},
 		),
 		resp = dt << Fit Model(
 			Y( :"
-	 || response_name ||
-	" ),
-			Effects( :experiment, :condition, :idx ),
-			Random Effects( :participant, :participant * :condition, :stimulus),
-			NoBounds( 1 ),
-			Personality( \!"Standard Least Squares\!" ),
-			Method( \!"REML\!" ),
-			Emphasis( \!"Minimal Report\!" ),
-			Run(
-				Name( \!""
-	 || response_name ||
-	"\!" ) << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
-				Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
-				Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 ), {:condition <<
-				{LSMeans Tukey HSD( 0.05 )}}}
-			),
-			SendToReport( Dispatch( \!"Response "
-	 || response_name || "\!", \!"Effect Details\!", OutlineBox, {Close( 0 )} ) ),
-			" || extra || "
-		)
-	)";
-	Show( s );
-	Eval( Parse( s ) );
-	resp;
-);
-
-analyzeByBlock = Function( {response_name, window_title, extra = ""},
-	{s, resp},
-	s = "New Window( \!"" || window_title || "\!",
-		dt << Graph Builder(
-			Variables( X( :condition ), Y( :" || response_name ||
-	")),
-			Elements( Bar( X, Y, Legend( 4 ), Error Bars( \!"Standard Error\!" ), Label( \!"Label by Value\!" ) ) ),
-			SendToReport( 
-				Dispatch( {}, \!"Y title\!", TextEditBox, {Set Text( \!""
-	 || window_title ||
-	"\!")} ) ,
-				Dispatch( {}, \!"graph title\!", TextEditBox, {Set Text( \!"\!" )} ),
-			)
-		),
-		resp = (dt << Summary(
-	Group( :experiment, :participant, :block, :condition ),
-	Mean( :"
 	 || response_name || " ),
-	Freq( \!"None\!" ),
-	Weight( \!"None\!" ),
-	statistics column name format( \!"column\!" )
-)) << Fit Model(
-			Y( :"
-	 || response_name ||
-	" ),
-			Effects( :experiment, :condition, :idx ),
+			Effects( :experiment, :condition, :idx " || extra_effects ||
+	"),
 			Random Effects( :participant, :participant * :condition, :stimulus),
 			NoBounds( 1 ),
 			Personality( \!"Standard Least Squares\!" ),
@@ -196,7 +146,7 @@ analyzeByBlock = Function( {response_name, window_title, extra = ""},
 			),
 			SendToReport( Dispatch( \!"Response "
 	 || response_name || "\!", \!"Effect Details\!", OutlineBox, {Close( 0 )} ) ),
-			" || extra || "
+			" || extra_toplevel || "
 		)
 	)";
 	Show( s );
@@ -204,147 +154,45 @@ analyzeByBlock = Function( {response_name, window_title, extra = ""},
 	resp;
 );
 
-analyzeWithBaseSpeed = Function( {response_name, window_title},
-	{response_str = "Response " || response_name},
-	(dt << Fit Model(
-		Y( As Name( response_name ) ),
-		Effects( :experiment, :condition, :idx, chars_per_sec_norecs_log, chars_per_sec_norecs_log * :condition ),
-		Random Effects( :participant, :participant * :condition, :stimulus ),
-		NoBounds( 1 ),
-		Personality( "Standard Least Squares" ),
-		Method( "REML" ),
-		Emphasis( "Minimal Report" ),
-		Run(
-			As Name( response_name ) << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
-			Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
-			Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 ), {:condition << {LSMeans Tukey HSD( 0.05 )
-			}}}
-		),
-		SendToReport( Dispatch( response_str, "Effect Details", OutlineBox, {Close( 0 )} ) )
-	)) << Set Window Title( window_title || " x baseline speed" )
-);
-
-analyzeWithAllTraits = Function( {response_name, window_title},
-	{response_str = "Response " || response_name},
-	(dt << Fit Model(
-		Y( As Name( response_name ) ),
-		Effects(
-			:experiment,
-			:condition,
-			:idx,
-			chars_per_sec_norecs_log,
-			chars_per_sec_norecs_log * :condition,
-			:NFC,
-			:Extraversion,
-			:Openness,
-			:Trust,
-			:NFC * :condition,
-			:Extraversion * :condition,
-			:Openness * :condition,
-			:Trust * :condition
-		),
-		Random Effects( :participant, :participant * :condition, :stimulus ),
-		NoBounds( 1 ),
-		Personality( "Standard Least Squares" ),
-		Method( "REML" ),
-		Emphasis( "Minimal Report" ),
-		Run(
-			As Name( response_name ) << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
-			Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
-			Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 ), {:condition << {LSMeans Tukey HSD( 0.05 )
-			}}}
-		),
-		SendToReport( Dispatch( response_str, "Effect Details", OutlineBox, {Close( 0 )} ) )
-	)) << Set Window Title( window_title || " x traits" )
-);
-
-analyzeWithNFC = Function( {response_name, window_title},
-	{response_str = "Response " || response_name},
-	(dt << Fit Model(
-		Y( As Name( response_name ) ),
-		Effects( :experiment, :condition, :idx, chars_per_sec_norecs_log, chars_per_sec_norecs_log * :condition, :NFC, :NFC * :condition, ),
-		Random Effects( :participant, :participant * :condition, :stimulus ),
-		NoBounds( 1 ),
-		Personality( "Standard Least Squares" ),
-		Method( "REML" ),
-		Emphasis( "Minimal Report" ),
-		Run(
-			As Name( response_name ) << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
-			Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
-			Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 ), {:condition << {LSMeans Tukey HSD( 0.05 )
-			}}}
-		),
-		SendToReport( Dispatch( response_str, "Effect Details", OutlineBox, {Close( 0 )} ) )
-	)) << Set Window Title( window_title || " x speed+NFC" )
-);
 
 
-
-/* Outcome Effects */
+/*** Outcome Effects ***/
+// MTPW(standard)
 analyze( "mintaps_standard", "Ideal Taps per Corrected Word" );
-analyze( "mintaps_mean", "Min-Taps average of both rec systems" );
+// By content of recommendations offered (diff between standard and contextual)
 analyze( "mintaps_std_minus_contextual", "mintaps(Standard, text) - mintaps(Contextual, text)" );
-analyze( "uncorrected_errors_per_char", "Uncorrected Errors per Character" );
-analyze( "num_details_auto_log", "Log(Num Details (auto))" );
-analyze( "num_words_log", "Log(num_words)" );
-//analyze( "num_chars", "Num Chars" );
-//analyze( "chars_per_word", "Chars per Word" );
-//analyze( "autodetails_per_word", "Num Details per Word" );
-
-/** Process Effects */
-
-//analyze( "taps_per_word", "Taps per Word" );
-analyze( "taps_per_char", "Taps per Char" );
-analyze( "chars_per_sec_log", "Characters per Second" );
-//analyze( "backspaces_per_char", "backspaces per char" );
-analyze( "num_recs_used_on_mainline", "Recommendation Use Count", "Where( :condition != \!"norecs\!")" );
-
-/** Rec usage */
-
-analyze( "rec_use_per_word", "Rec Usage Per Word" );
-// FIXME: This is a ratio, violates ANOVA assumptions. Needs a glm (maybe ordinal logistic: never, sometimes, always)
-analyze( "relevant_use_frac", "Relevant Rec Use" );
-
-
-/*** Interactions with baseline speed **/
-Wait( 0 );
 
 
 (dt << Graph Builder(
-	Size( 570, 564 ),
-	Variables(
-		X( :condition ),
-		Y( :taps_per_char ),
-		Y( :backspaces_per_char, Position( 1 ) ),
-		Y( Transform Column( "num_tapKey/num_chars", Formula( :num_tapKey / :num_chars ) ), Position( 1 ) ),
-		Y( Transform Column( "num_tapSugg_any/num_chars", Formula( :num_tapSugg_any / :num_chars ) ), Position( 1 ) )
-	),
-	Elements(
-		Bar( X, Y( 1 ), Legend( 3 ), Error Bars( "Confidence Interval" ) ),
-		Bar( X, Y( 4 ), Y( 2 ), Y( 3 ), Legend( 5 ), Error Bars( "Standard Error" ), Label( "Label by Percent of Total Values" ) )
-	),
-	SendToReport( Dispatch( {"Bar"}, "", OutlineBox, {Close( 0 )} ), Dispatch( {"Bar"}, "", OutlineBox, {Close( 0 )} ) )
-)) << set window title( "Taps per Character, by type" );
-
-
-(dt << Graph Builder(
-	Legend Position( "Inside Left" ),
-	Variables( X( :condition ), Y( :chars_per_sec_ratio_to_norecs ), Overlay( :chars_per_sec_norecs_mean Tertile ) ),
-	Elements( Bar( X, Y, Legend( 10 ), Error Bars( "Standard Error" ) ) ),
-	Where( :condition != "norecs" ),
+	Variables( X( :condition ), Y( :mintaps_standard ), Y( :mintaps_contextual, Position( 1 ) ) ),
+	Elements( Bar( X, Y( 1 ), Y( 2 ), Legend( 15 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) ),
 	SendToReport(
-		Dispatch( {}, "chars_per_sec_ratio_to_norecs", ScaleBox, {Add Ref Line( 1, "Solid", "Black", "", 1 )} ),
-		Dispatch(
-			{},
-			"400",
-			ScaleBox,
-			{Legend Model( 10, Level Name( 0, "Slowest Tertile" ), Level Name( 1, "Middle Tertile" ), Level Name( 2, "Fastest Tertile" ) )}
-		),
-		Dispatch( {}, "400", LegendBox, {Set Title( "Baseline Speed" )} ), 
-
+		Dispatch( {}, "400", ScaleBox, {Legend Model( 15, Level Name( 0, "standard" ), Level Name( 1, "contextual" ) )} ),
+		Dispatch( {}, "graph title", TextEditBox, {Set Text( "" )} ),
+		Dispatch( {}, "X title", TextEditBox, {Set Text( "Writing Condition" )} ),
+		Dispatch( {}, "Y title", TextEditBox, {Set Text( "min taps (system, text)" )} ),
+		Dispatch( {}, "400", LegendBox, {Set Title( "System" )} )
 	)
-)) << set window title( "speed ratio to norecs" );
+)) << set window title( "conformity - with gating" );
 
+
+// Effect on text length in words
+analyze( "num_words_log", "Log(num_words)" );
+
+// Participants left fewer errors uncorrected in recs conditions
+// (For the paper, I did this analysis manually, since uncorrected errors is a rare event so ANOVA assumptions fail badly.
+// analyze( "uncorrected_errors_per_char", "Uncorrected Errors per Character" );
+
+
+
+/*** Process Effects ***/
+
+// Main effect of condition on text entry speed
+// TODO: with more data, we DO see a main effect of condition on speed!
+analyze( "chars_per_sec_log", "Characters per Second" );
+
+// Interaction effect:
+// Graph (log transformed)
 (dt << Graph Builder(
 	Legend Position( "Inside Left" ),
 	Variables(
@@ -367,156 +215,34 @@ Wait( 0 );
 	
 )) << set window tytle( "speed ratio to norecs log" );
 
-Wait( 0 );
 
-analyzeWithBaseSpeed( "mintaps_standard", "Ideal Taps per Corrected Word" );
-analyzeWithBaseSpeed( "mintaps_std_minus_contextual", "Outcome difference between systems" );
-analyzeWithBaseSpeed( "chars_per_sec_log", "Characters per Second" );
-analyzeWithBaseSpeed( "backspaces_per_char", "backspaces per char" );
-analyzeWithBaseSpeed( "rec_use_per_word", "Rec Usage Per Word" );
-analyzeWithBaseSpeed( "relevant_use_frac", "Relevant Rec Use" );
-
-/*
-analyzeWithAllTraits( "mintaps_standard", "Ideal Taps per Corrected Word" );
-analyzeWithAllTraits( "mintaps_std_minus_contextual", "Outcome difference between systems" );
-analyzeWithAllTraits( "chars_per_sec_log", "Characters per Second" );
-analyzeWithAllTraits( "backspaces_per_char", "backspaces per char" );
-analyzeWithAllTraits( "rec_use_per_word", "Rec Usage Per Word" );
-analyzeWithAllTraits( "relevant_use_frac", "Relevant Rec Use" );
-
-analyzeWithNFC( "mintaps_standard", "Ideal Taps per Corrected Word" );
-analyzeWithNFC( "mintaps_std_minus_contextual", "Outcome difference between systems" );
-analyzeWithNFC( "chars_per_sec_log", "Characters per Second" );
-analyzeWithNFC( "backspaces_per_char", "backspaces per char" );
-analyzeWithNFC( "rec_use_per_word", "Rec Usage Per Word" );
-analyzeWithNFC( "relevant_use_frac", "Relevant Rec Use" );
-*/
+analyze( "chars_per_sec_log", "Characters per Second", "", ", :chars_per_sec_norecs_log, :chars_per_sec_norecs_log*:condition " );
 
 
+analyze( "taps_per_char", "Taps per Char" );
 
 
-/*
-(dt << Fit Model(
-	Y( :chars_per_sec_log ),
-	Effects( :condition, :idx, :chars_per_sec_norecs_log, :chars_per_sec_norecs_log * :condition, ),
-	Random Effects( :participant, :participant * :condition, :stimulus ),
-	NoBounds( 1 ),
-	Personality( "Standard Least Squares" ),
-	Method( "REML" ),
-	Emphasis( "Minimal Report" ),
-	Run(
-		:chars_per_sec_log << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
-		Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
-		Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 )}
-	)
-)) << Set window title( "simple speed interaction" );
-*/
-
-
-/** Unclear how to interpret this one*/
-/*
-(dt << Fit Model(
-	By( :chars_per_sec_norecs_mean Tertile ),
-	Y( :chars_per_sec_log),
-//	Where( :experiment == "gc1" & :condition != "norecs" ),
-	Effects( :experiment, :condition, :idx, :chars_per_sec_norecs_log ),
-	Random Effects( :participant, :participant * :condition, :stimulus ),
-	Personality( "Standard Least Squares" ),
-	Emphasis( "Minimal Report" ),
-	Method( "REML" ),
-	Run()
-));
-*/
-
-(dt << Fit Model(
-	By( :chars_per_sec_norecs_mean Tertile ),
-	Y( :chars_per_sec_log ),
-	Effects( :experiment, :condition, :idx, :chars_per_sec_norecs_log ),
-	Random Effects( :participant, :participant * :condition, :stimulus ),
-	NoBounds( 1 ),
-	Personality( "Standard Least Squares" ),
-	Method( "REML" ),
-	Emphasis( "Minimal Report" ),
-	Run(
-		:chars_per_sec_log << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
-		Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
-		Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 ), {:condition << {LSMeans Tukey HSD( 0.05 )}}}
-	),
-	SendToReport( Dispatch( response_str, "Effect Details", OutlineBox, {Close( 0 )} ) )
-)) << Set Window Title( "Speed Interaction by Tertile" );
-
-
-
-/*
-Fit Model(
-	Y( :mintaps_contextual ),
-	Effects(
-		:experiment,
-		:condition,
-		:idx,
-		:mintaps_standard,
-		:mintaps_standard * :condition
-	),
-	Random Effects( :participant, :participant * :condition, :stimulus ),
-	NoBounds( 1 ),
-	Personality( "Standard Least Squares" ),
-	Method( "REML" ),
-	Emphasis( "Minimal Report" ),
-	Run(
-		:mintaps_contextual << {Summary of Fit( 1 ), Analysis of Variance( 0 ),
-		Parameter Estimates( 1 ), Lack of Fit( 0 ), Show Prediction Expression( 1 ),
-		Plot Actual by Predicted( 0 ), Plot Regression( 0 ),
-		Plot Residual by Predicted( 0 ), Plot Studentized Residuals( 0 ),
-		Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 ), {:condition
-		 << {LSMeans Tukey HSD( 0.05 ), LSMeans Contrast( [0 0 1 -1], {} )}}}
-	),
-	SendToReport(
-		Dispatch(
-			{"Response mintaps_contextual"},
-			"Effect Details",
-			OutlineBox,
-			{Close( 0 )}
-		)
-	)
-)
-*/
-
+// Taps per character, by type. Somewhat unusual graph.
 (dt << Graph Builder(
-	Variables( X( :condition ), Y( :mintaps_standard ), Y( :mintaps_contextual, Position( 1 ) ) ),
-	Elements( Bar( X, Y( 1 ), Y( 2 ), Legend( 15 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) ),
-	SendToReport(
-		Dispatch( {}, "400", ScaleBox, {Legend Model( 15, Level Name( 0, "standard" ), Level Name( 1, "contextual" ) )} ),
-		Dispatch( {}, "graph title", TextEditBox, {Set Text( "" )} ),
-		Dispatch( {}, "X title", TextEditBox, {Set Text( "Writing Condition" )} ),
-		Dispatch( {}, "Y title", TextEditBox, {Set Text( "min taps (system, text)" )} ),
-		Dispatch( {}, "400", LegendBox, {Set Title( "System" )} )
-	)
-)) << set window title( "conformity - with gating" );
-
-(dt << Graph Builder(
-	Where( :experiment != "gc1" ),
-	Variables( X( :condition ), Y( :mintaps_standard ), Y( :mintaps_contextual, Position( 1 ) ) ),
-	Elements( Bar( X, Y( 1 ), Y( 2 ), Legend( 15 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) ),
-	SendToReport(
-		Dispatch( {}, "400", ScaleBox, {Legend Model( 15, Level Name( 0, "standard" ), Level Name( 1, "contextual" ) )} ),
-		Dispatch( {}, "graph title", TextEditBox, {Set Text( "" )} ),
-		Dispatch( {}, "X title", TextEditBox, {Set Text( "Writing Condition" )} ),
-		Dispatch( {}, "Y title", TextEditBox, {Set Text( "min taps (system, text)" )} ),
-		Dispatch( {}, "400", LegendBox, {Set Title( "System" )} )
-	)
-)) << set window title( "conformity - no gating" );
-
-
-dt << Graph Builder(
+	Size( 570, 564 ),
 	Variables(
 		X( :condition ),
-		Y( Transform Column( "Ideal taps saved", Formula( 1 - :corrected_tapstotype_cond / :num_chars ) ) ),
-		Y( Transform Column( "Actual taps saved", Formula( 1 - :num_taps / :num_chars ) ), Position( 1 ) )
+		Y( :taps_per_char ),
+		Y( :backspaces_per_char, Position( 1 ) ),
+		Y( Transform Column( "num_tapKey/num_chars", Formula( :num_tapKey / :num_chars ) ), Position( 1 ) ),
+		Y( Transform Column( "num_tapSugg_any/num_chars", Formula( :num_tapSugg_any / :num_chars ) ), Position( 1 ) )
 	),
-	Elements( Bar( X, Y( 1 ), Y( 2 ), Legend( 7 ), Error Bars( "Standard Error" ) ) )
-);
+	Elements(
+		Bar( X, Y( 1 ), Legend( 3 ), Error Bars( "Confidence Interval" ) ),
+		Bar( X, Y( 4 ), Y( 2 ), Y( 3 ), Legend( 5 ), Error Bars( "Standard Error" ), Label( "Label by Percent of Total Values" ) )
+	),
+	SendToReport( Dispatch( {"Bar"}, "", OutlineBox, {Close( 0 )} ), Dispatch( {"Bar"}, "", OutlineBox, {Close( 0 )} ) )
+)) << set window title( "Taps per Character, by type" );
 
 
+
+/** Rec usage */
+// Here we do a nonparametric analysis because utilization rate is very non-Normal. Zero- and one-inflated.
 blockLevel = dt << Summary(
 	Group( :experiment, :participant, :block, :condition ),
 	Mean( :num_chars ),
@@ -542,4 +268,17 @@ blockLevel << Oneway(
 		Dispatch( {"Oneway Anova"}, "Block Means", OutlineBox, {Close( 1 )} ),
 		Dispatch( {}, "CDF Plot", OutlineBox, {SetHorizontal( 1 )} )
 	)
+);
+
+
+(dt << Summary(
+	Group( :experiment, :participant ),
+	Mean( :age ),
+	Mean( :chars_per_sec_norecs_mean ),
+	Freq( "None" ),
+	Weight( "None" ),
+	statistics column name format( "column" )
+)) << Graph Builder(
+	Variables( X( :age ), Y( :chars_per_sec_norecs_mean ) ),
+	Elements( Points( X, Y, Legend( 3 ) ), Line Of Fit( X, Y, Legend( 7 ), F Test( 1 ) ) )
 );
