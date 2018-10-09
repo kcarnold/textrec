@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+"h5py" = "*"
+torch = "==0.3.1"
+opennmt-py = {editable = true, path = "./vendor/OpenNMT-py"}
+textrec = {editable = true, path = "."}
+torchtext = "*"
+nltk = "==3.2.5"
+tornado = "*"
+ujson = "*"
+scipy = "*"
+cytoolz = "*"
+pandas = "*"
+
+[dev-packages]
+ipython = "*"
+
+[requires]
+python_version = "3.6"
