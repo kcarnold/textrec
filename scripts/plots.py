@@ -58,10 +58,6 @@ trial_level_data = pd.read_csv(
     paths.analyzed / f"combined_data.csv", dtype={"stimulus": str}
 )
 
-
-# trial_level_data = pd.read_csv(paths.analyzed / f'trial_{batch}.csv')
-# helpful_ranks_by_condition = pd.read_csv(paths.analyzed / f'helpful_ranks_by_condition_{batch}.csv').set_index('index')
-
 assert len(trial_level_data[trial_level_data["corrected_text"].isnull()]) == 0
 
 for col in "participant stimulus".split():

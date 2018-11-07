@@ -215,6 +215,21 @@ analyze( "chars_per_sec_log", "Characters per Second" );
 	
 )) << set window tytle( "speed ratio to norecs log" );
 
+(dt << Graph Builder(
+	Variables(
+		X( :chars_per_sec_norecs_mean ),
+		Y( Transform Column( "chars_per_sec_log-chars_per_sec_norecs_log", Formula( :chars_per_sec_log - :chars_per_sec_norecs_log ) ) ),
+		Overlay( :condition )
+	),
+	Elements( Points( X, Y, Legend( 18 ) ), Line Of Fit( X, Y, Legend( 19 ) ) ),
+	Where( :condition != "norecs" ),
+	SendToReport(
+		Dispatch( {}, "chars_per_sec_log-chars_per_sec_norecs_log", ScaleBox, {Add Ref Line( 0, "Solid", "Black", "", 1 )} ),
+		Dispatch( {}, "X title", TextEditBox, {Set Text( "Baseline speed (chars per sec)" )} ),
+		Dispatch( {}, "Y title", TextEditBox, {Set Text( "Log ratio of speed to baseline speed" )} )
+	)
+)) << set window title( "Speed ratio to norecs log continuous x" );
+
 
 analyze( "chars_per_sec_log", "Characters per Second", "", ", :chars_per_sec_norecs_log, :chars_per_sec_norecs_log*:condition " );
 
