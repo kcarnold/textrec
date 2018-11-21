@@ -1,4 +1,4 @@
-﻿dt_all = Open(
+dt_all = Open(
 	"/Users/kcarnold/code/textrec/data/analyzed/combined_data.csv",
 	Charset( "utf-8" ),
 	Import Settings(
@@ -178,6 +178,12 @@ analyze( "mintaps_std_minus_contextual", "mintaps(Standard, text) - mintaps(Cont
 
 // Effect on text length in words
 analyze( "num_words_log", "Log(num_words)" );
+
+// MTPW with age
+analyze( "mintaps_standard", "MTPW with age",  "", ", :age, :age * :condition");
+
+
+analyze("ADJ", "Fraction of words that are adjectives");
 
 // Participants left fewer errors uncorrected in recs conditions
 // (For the paper, I did this analysis manually, since uncorrected errors is a rare event so ANOVA assumptions fail badly.

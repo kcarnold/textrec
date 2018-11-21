@@ -40,6 +40,8 @@ def main(redo_analyses):
     all_data["first_block_condition"] = all_data.condition_order.map(
         lambda x: x.split(",", 1)[0]
     )
+
+    # Compute baseline speed
     norecs_speed = (
         all_data[all_data.condition == "norecs"]
         .groupby("participant")
@@ -60,10 +62,30 @@ def main(redo_analyses):
         with_norecs_speed.chars_per_sec_ratio_to_norecs
     )
 
-    # import scipy.stats
-    # with_norecs_speed['chars_per_sec_ratio_to_norecs_boxcox'], boxcox_lambda = scipy.stats.boxcox(with_norecs_speed.chars_per_sec_ratio_to_norecs)
+    # Compute POS tag counts.
+    from textrec import automated_analyses
 
-    with_norecs_speed.to_csv(paths.analyzed / "combined_data.csv", index=False)
+    pos_counts = [
+        automated_analyses.pos_counts(text) for text in with_norecs_speed.corrected_text
+    ]
+    pos_counts = pd.DataFrame(pos_counts).fillna(0).astype(float)
+    normed_pos_counts = pos_counts.div(pos_counts.sum(axis=1), axis=0)
+
+    # Detect use of progressive tense
+    progressive_tense = 0 + with_norecs_speed.corrected_text.str.contains(
+        r"(?:is|are) \w+ing"
+    )
+
+    combined_trial_level_data = pd.concat(
+        [
+            with_norecs_speed,
+            normed_pos_counts,
+            progressive_tense.to_frame("progressive_tense"),
+        ],
+        axis=1,
+    )
+
+    combined_trial_level_data.to_csv(paths.analyzed / "combined_data.csv", index=False)
 
     (
         pd.concat(
@@ -89,9 +111,11 @@ def main(redo_analyses):
         .to_csv(paths.analyzed / "combined_experiments.csv", index=False)
     )
 
+
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--redo', action='store_true')
+    parser.add_argument("--redo", action="store_true")
     opts = parser.parse_args()
     main(opts.redo)
