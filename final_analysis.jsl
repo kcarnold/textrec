@@ -1,5 +1,5 @@
-dt_all = Open(
-	"/Users/kcarnold/code/textrec/data/analyzed/combined_data.csv",
+﻿dt_all = Open(
+	"/Users/kcarnold/thesis/textrec/data/analyzed/combined_data.csv",
 	Charset( "utf-8" ),
 	Import Settings(
 		End Of Line( CRLF, CR, LF ),
@@ -237,8 +237,10 @@ analyze( "chars_per_sec_log", "Characters per Second" );
 )) << set window title( "Speed ratio to norecs log continuous x" );
 
 
-analyze( "chars_per_sec_log", "Characters per Second", "", ", :chars_per_sec_norecs_log, :chars_per_sec_norecs_log*:condition " );
+analyze( "chars_per_sec_log", "Characters per Second with baseline", "", ", :chars_per_sec_norecs_log, :chars_per_sec_norecs_log*:condition " );
 
+analyze( "chars_per_sec_log", "Characters per Second with age", "", ", :age, :age*:condition " );
+analyze( "chars_per_sec_log", "Characters per Second with age and baseline", "", ", :age, :age*:condition, :chars_per_sec_norecs_log, :chars_per_sec_norecs_log*:condition " );
 
 analyze( "taps_per_char", "Taps per Char" );
 
@@ -266,9 +268,11 @@ analyze( "taps_per_char", "Taps per Char" );
 // Here we do a nonparametric analysis because utilization rate is very non-Normal. Zero- and one-inflated.
 blockLevel = dt << Summary(
 	Group( :experiment, :participant, :block, :condition ),
+	Mean( :age ),
 	Mean( :num_chars ),
 	Mean( :num_words ),
 	Mean( :relevant_use_frac ),
+	Mean( :mintaps_standard ),
 	Freq( "None" ),
 	Weight( "None" ),
 	statistics column name format( "column" )
