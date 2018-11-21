@@ -6,18 +6,27 @@ name = "pypi"
 [packages]
 "h5py" = "*"
 torch = "==0.3.1"
-opennmt-py = {editable = true, path = "./vendor/OpenNMT-py"}
-textrec = {editable = true, path = "."}
-torchtext = "*"
+opennmt-py = {editable = true,path = "./vendor/OpenNMT-py"}
+textrec = {editable = true,path = "."}
+torchtext = "==0.2.3"
 nltk = "==3.2.5"
 tornado = "*"
 ujson = "*"
 scipy = "*"
 cytoolz = "*"
 pandas = "*"
+joblib = "*"
+en-core-web-sm = {file = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.0.0/en_core_web_sm-2.0.0.tar.gz"}
+wordfreq = "*"
+scikit-learn = "*"
+tqdm = "*"
+seaborn = "*"
 
 [dev-packages]
 ipython = "*"
+jupyter = "*"
+jupytext = "*"
+jupyter-contrib-nbextensions = "*"
 
 [requires]
 python_version = "3.6"
