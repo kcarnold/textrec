@@ -49,7 +49,7 @@ type Config = {
   handleEvent?: (event: Event) => SideEffects,
 };
 
-export class MasterStateStore {
+class MasterStateStore {
   clientId: string;
   config: Config;
   participantCode: ?string;
@@ -209,4 +209,8 @@ export class MasterStateStore {
     }
     return sideEffects;
   });
+}
+
+export function createState(config: Config) {
+  return new MasterStateStore(config);
 }

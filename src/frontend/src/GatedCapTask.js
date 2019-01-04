@@ -687,7 +687,7 @@ export function createTaskState(loginEvent: LoginEvent) {
     screens = getScreens(conditions, stimuli, personalityBlocks);
   }
 
-  let state = new IOTaskState.MasterStateStore({
+  let state = IOTaskState.createState({
     clientId,
     screens,
     handleEvent,
