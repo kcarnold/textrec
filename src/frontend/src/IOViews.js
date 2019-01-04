@@ -4,9 +4,12 @@ import React, { Component } from "react";
 import every from "lodash/every";
 import { observer, inject } from "mobx-react";
 import { Keyboard } from "./Keyboard";
-import { NextBtn, Welcome, Done } from "./BaseViews";
+import { NextBtn } from "./BaseViews";
 import { CurText } from "./CurText";
 import { SuggestionsBar } from "./SuggestionViews";
+import Consent from "./Consent";
+
+const SITE_DOWN = false;
 
 const tutorialTaskDescs = {
   typeKeyboard: "Type a few words by tapping letters on the keyboard.",
@@ -85,6 +88,29 @@ export const TutorialInstructions = inject("state", "dispatch")(
 //   </div>;
 // }));
 
+export const Welcome = inject("state")(
+  observer(({ state }) => (
+    <div>
+      {SITE_DOWN && (
+        <h1 style={{ paddingBottom: "2500px" }}>
+          Site down for maintenance, please try again in a few hours.
+        </h1>
+      )}
+      <h1>Welcome</h1>
+      <p>
+        You should be seeing this page on a touchscreen device. If not, get one
+        and go to this page's URL (<tt>{window.location.href}</tt>
+        ).
+      </p>
+      <Consent timeEstimate={state.timeEstimate} platform={state.platform} />
+      <p>
+        If you consent to participate, and if you're seeing this{" "}
+        <b>on a touchscreen device</b>, tap here: <NextBtn />
+      </p>
+    </div>
+  ))
+);
+
 const ExperimentHead = inject("state", "spying")(
   observer(
     class ExperimentHead extends Component {
@@ -131,4 +157,21 @@ export const ExperimentScreen = inject("state", "dispatch")(
       </div>
     );
   })
+);
+
+export const Done = inject("clientId", "state")(
+  observer(({ clientId, state }) => (
+    <div>
+      Thanks! Your code is <tt style={{ fontSize: "20pt" }}>{clientId}</tt>
+      <br />
+      <br />
+      {state.isHDSL && (
+        <p>
+          Your participation has been logged. Expect to receive a gift
+          certificate by email in the next few days. Thanks!
+          <img src={state.sonaCreditLink} alt="" />
+        </p>
+      )}
+    </div>
+  ))
 );

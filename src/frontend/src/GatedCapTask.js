@@ -11,7 +11,7 @@ import range from "lodash/range";
 import { createState } from "./MasterState";
 import { ExperimentStateStore } from "./IOExperimentState";
 import * as Views from "./IOViews";
-import { NextBtn, Welcome, Done } from "./BaseViews";
+import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import traitData from "./TraitData_NfCEDTO";
@@ -606,7 +606,7 @@ function getScreens(
   }));
 
   let result = [
-    { screen: "Welcome", view: <Welcome /> },
+    { screen: "Welcome" },
     {
       screen: "IntroSurvey",
       view: surveyView(introSurvey(personalityBlocks[0])),
@@ -627,7 +627,7 @@ function getScreens(
       screen: "PostExpSurvey",
       view: surveyView(closingSurvey(personalityBlocks[4])),
     },
-    { screen: "Done", view: <Done /> },
+    { screen: "Done" },
   ];
   return result;
 }
