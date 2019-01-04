@@ -1,4 +1,5 @@
 [ignore]
+.*old_versions.*
 
 [include]
 
