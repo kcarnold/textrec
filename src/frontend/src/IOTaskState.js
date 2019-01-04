@@ -21,7 +21,7 @@ It also manages a collection of trial states, called "experiment states" for his
 Each trial has a name. There's a notion of a current trial.
  */
 
-import * as M from "mobx";
+import { extendObservable, observable, computed, action, toJS } from "mobx";
 import type { ObservableMap } from "mobx";
 import TutorialTasks from "./TutorialTasks";
 
@@ -49,44 +49,102 @@ type Config = {
   handleEvent?: (event: Event) => SideEffects,
 };
 
-class MasterStateStore {
-  clientId: string;
-  config: Config;
-  participantCode: ?string;
-  platform: string;
-  lastEventTimestamp: number;
-  replaying: boolean;
-
-  phoneSize: { width: number, height: number };
-  pingTime: number;
-
-  // Screens
-  screenNum: number;
-  screenTimes: Array<{ num: number, timestamp: number }>;
-  screens: Array<Screen>;
-
-  // Experiments
-  experiments: ObservableMap<string, ExperimentState>;
-  block: number;
-  curExperiment: string;
-  experimentState: ExperimentState;
-  timerDur: number;
-  timerStartedAt: number;
-
-  controlledInputs: ObservableMap<string, any>;
-
-  tutorialTasks: TutorialTasks;
-
-  doInit() {
-    this.screenNum = 0;
+function handleEvent(state, event) {
+  let sideEffects = [];
+  state.lastEventTimestamp = event.jsTimestamp;
+  if (state.experimentState) {
+    let res = state.experimentState.handleEvent(event);
+    if (res) sideEffects = sideEffects.concat(res);
+  }
+  if (state.tutorialTasks) {
+    state.tutorialTasks.handleEvent(event);
+  }
+  if (state.config.handleEvent) {
+    let res = state.config.handleEvent(event);
+    if (res) sideEffects = sideEffects.concat(res);
   }
 
+  let screenAtStart = state.screenNum;
+  switch (event.type) {
+    case "login":
+      state.screenNum = 0;
+      if (event.platform_id) {
+        state.participantCode = event.platform_id;
+      }
+      if (event.src === "amt") {
+        state.platform = "turk";
+      }
+      if (event.src === "sona") {
+        state.platform = "sona";
+      }
+      break;
+    case "next":
+      state.screenNum += event.delta == null ? 1 : event.delta;
+      break;
+    case "setScreen":
+      state.screenNum = event.screen;
+      break;
+    case "controlledInputChanged":
+      state.controlledInputs.set(event.name, event.value);
+      break;
+    case "resized":
+      if (event.kind === "p") {
+        state.phoneSize = { width: event.width, height: event.height };
+      }
+      break;
+    case "pingResults":
+      if (event.kind === "p") {
+        state.pingTime = event.ping.mean;
+      }
+      break;
+
+    default:
+  }
+
+  if (state.screenNum !== screenAtStart) {
+    sideEffects = sideEffects.concat(initScreen(state));
+  }
+  return sideEffects;
+}
+
+function initScreen(state) {
+  // Execute start-of-screen actions.
+  let sideEffects = [];
+  let screen = state.screens[state.screenNum];
+  if (screen.preEvent) {
+    let { preEvent } = screen;
+    if (preEvent.type === "setupExperiment") {
+      let initReq = setupExperiment(state, preEvent);
+      if (initReq) sideEffects.push(initReq);
+    }
+  }
+  state.screenTimes.push({
+    num: state.screenNum,
+    timestamp: state.lastEventTimestamp,
+  });
+  if (screen.timer) {
+    state.timerStartedAt = state.lastEventTimestamp;
+    state.timerDur = screen.timer;
+  }
+  return sideEffects;
+}
+
+function setupExperiment(state, preEvent) {
+  state.curExperiment = preEvent.name;
+  let experimentObj = state.config.createExperimentState(preEvent.flags);
+  state.experiments.set(preEvent.name, experimentObj);
+  state.tutorialTasks = new TutorialTasks();
+  return experimentObj.init();
+}
+
+class MasterStateStore {
   constructor(config: Config) {
     this.clientId = config.clientId;
     this.config = config;
     this.screens = config.screens;
 
-    M.extendObservable(this, {
+    extendObservable(this, {
+      handleEvent: action(event => handleEvent(this, event)),
       participantCode: null,
       platform: null,
       get sonaCreditLink() {
@@ -99,14 +157,14 @@ class MasterStateStore {
       replaying: true,
       screenNum: null,
       block: null,
-      experiments: M.observable.map({}, { deep: false }),
+      experiments: observable.map({}, { deep: false }),
       curExperiment: null,
       get experimentState() {
         if (this.curExperiment) {
           return this.experiments.get(this.curExperiment);
         }
       },
-      controlledInputs: M.observable.map({}, { deep: false }),
+      controlledInputs: observable.map({}, { deep: false }),
       timerStartedAt: null,
       timerDur: null,
       tutorialTasks: null,
@@ -121,94 +179,6 @@ class MasterStateStore {
       },
     });
   }
-
-  setupExperiment(preEvent) {
-    this.curExperiment = preEvent.name;
-    let experimentObj = this.config.createExperimentState(preEvent.flags);
-    this.experiments.set(preEvent.name, experimentObj);
-    this.tutorialTasks = new TutorialTasks();
-    return experimentObj.init();
-  }
-
-  initScreen() {
-    // Execute start-of-screen actions.
-    let sideEffects = [];
-    let screen = this.screens[this.screenNum];
-    if (screen.preEvent) {
-      let { preEvent } = screen;
-      if (preEvent.type === "setupExperiment") {
-        let initReq = this.setupExperiment(preEvent);
-        if (initReq) sideEffects.push(initReq);
-      }
-    }
-    this.screenTimes.push({
-      num: this.screenNum,
-      timestamp: this.lastEventTimestamp,
-    });
-    if (screen.timer) {
-      this.timerStartedAt = this.lastEventTimestamp;
-      this.timerDur = screen.timer;
-    }
-    return sideEffects;
-  }
-
-  handleEvent = M.action(event => {
-    let sideEffects = [];
-    this.lastEventTimestamp = event.jsTimestamp;
-    if (this.experimentState) {
-      let res = this.experimentState.handleEvent(event);
-      if (res) sideEffects = sideEffects.concat(res);
-    }
-    if (this.tutorialTasks) {
-      this.tutorialTasks.handleEvent(event);
-    }
-    if (this.config.handleEvent) {
-      let res = this.config.handleEvent(event);
-      if (res) sideEffects = sideEffects.concat(res);
-    }
-
-    let screenAtStart = this.screenNum;
-    switch (event.type) {
-      case "login":
-        this.doInit();
-        if (event.platform_id) {
-          this.participantCode = event.platform_id;
-        }
-        if (event.src === "amt") {
-          this.platform = "turk";
-        }
-        if (event.src === "sona") {
-          this.platform = "sona";
-        }
-        break;
-      case "next":
-        this.screenNum += event.delta == null ? 1 : event.delta;
-        break;
-      case "setScreen":
-        this.screenNum = event.screen;
-        break;
-      case "controlledInputChanged":
-        this.controlledInputs.set(event.name, event.value);
-        break;
-      case "resized":
-        if (event.kind === "p") {
-          this.phoneSize = { width: event.width, height: event.height };
-        }
-        break;
-      case "pingResults":
-        if (event.kind === "p") {
-          this.pingTime = event.ping.mean;
-        }
-        break;
-
-      default:
-    }
-
-    if (this.screenNum !== screenAtStart) {
-      sideEffects = sideEffects.concat(this.initScreen());
-    }
-    return sideEffects;
-  });
 }
 
 export function createState(config: Config) {
