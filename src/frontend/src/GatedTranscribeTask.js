@@ -1,7 +1,6 @@
 /** @format */
 
 // @flow
-import "core-js/fn/array/from";
 
 import * as React from "react";
 import { extendObservable } from "mobx";

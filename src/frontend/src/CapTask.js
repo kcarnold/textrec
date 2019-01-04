@@ -2,7 +2,6 @@
  * @format
  * @flow
  */
-import "core-js/fn/array/from";
 
 import * as React from "react";
 import { observer, inject } from "mobx-react";

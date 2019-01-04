@@ -1,3 +1,4 @@
+/** @format */
 import range from "lodash/range";
 
 const blankRec = { words: [] };
@@ -25,20 +26,21 @@ export const finalDataLogger = state => {
   state.eventHandlers.push((state, event) => {
     if (event.type === "next") {
       if (state.screenNum === state.screens.length - 2) {
+        let texts = [];
+        state.experiments.forEach((expState, expName) => {
+          texts.push({
+            name: expName,
+            condition: expState.flags.condition,
+            text: expState.curText,
+          });
+        });
         let finalData = {
           screenTimes: state.screenTimes.map(screen => ({
             ...screen,
             name: state.screens[screen.num].screen,
           })),
           controlledInputs: [...state.controlledInputs.toJS()],
-          texts: Array.from(
-            state.experiments.entries(),
-            ([expName, expState]) => ({
-              name: expName,
-              condition: expState.flags.condition,
-              text: expState.curText,
-            })
-          ),
+          texts,
         };
         return [
           {
@@ -51,4 +53,3 @@ export const finalDataLogger = state => {
     return [];
   });
 };
-
