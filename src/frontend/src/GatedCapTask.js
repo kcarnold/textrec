@@ -670,38 +670,14 @@ function trialScreen(props: {
 let baseConditions = ["norecs", "gated", "always"];
 let conditionOrders = shuffle.permutator(baseConditions);
 
-export function createTaskState(loginEvent: LoginEvent) {
-  let clientId = loginEvent.participant_id;
-
-  let screens, stimuli;
-  let demoConditionName = getDemoConditionName(clientId);
-  if (demoConditionName != null) {
-    screens = getDemoScreens(demoConditionName);
-  } else {
-    if ("n_conditions" in loginEvent) {
-      console.assert(loginEvent.n_conditions === conditionOrders.length);
-    }
-    let conditions = conditionOrders[loginEvent.assignment];
-    stimuli = baseStimuli.slice();
-    const personalityBlocks = splitPersonalityBlocks(5, 8);
-    screens = getScreens(conditions, stimuli, personalityBlocks);
-  }
-
-  let state = IOTaskState.createState({
-    clientId,
-    screens,
-    handleEvent,
-    createExperimentState: flags => new ExperimentStateStore(flags),
-    timeEstimate: "20-25 minutes",
-  });
-
-  function handleEvent(event: Event): SideEffects {
+const finalDataLogger = state => {
+  state.eventHandlers.push((state, event) => {
     if (event.type === "next") {
-      if (state.screenNum === screens.length - 2) {
+      if (state.screenNum === state.screens.length - 2) {
         let finalData = {
           screenTimes: state.screenTimes.map(screen => ({
             ...screen,
-            name: screens[screen.num].screen,
+            name: state.screens[screen.num].screen,
           })),
           controlledInputs: [...state.controlledInputs.toJS()],
           texts: Array.from(
@@ -722,7 +698,33 @@ export function createTaskState(loginEvent: LoginEvent) {
       }
     }
     return [];
+  });
+};
+
+export function createTaskState(loginEvent: LoginEvent) {
+  let clientId = loginEvent.participant_id;
+
+  let screens, stimuli;
+  let demoConditionName = getDemoConditionName(clientId);
+  if (demoConditionName != null) {
+    screens = getDemoScreens(demoConditionName);
+  } else {
+    if ("n_conditions" in loginEvent) {
+      console.assert(loginEvent.n_conditions === conditionOrders.length);
+    }
+    let conditions = conditionOrders[loginEvent.assignment];
+    stimuli = baseStimuli.slice();
+    const personalityBlocks = splitPersonalityBlocks(5, 8);
+    screens = getScreens(conditions, stimuli, personalityBlocks);
   }
+
+  let state = IOTaskState.createState({
+    clientId,
+    screens,
+    createExperimentState: flags => new ExperimentStateStore(flags),
+    timeEstimate: "20-25 minutes",
+  });
+  finalDataLogger(state);
 
   return state;
 }
