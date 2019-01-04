@@ -3,6 +3,24 @@
  * @flow
  */
 
+/**
+This is the top-level state for an experiment. It handles a large amount of configuration and state:
+
+ Configuration:
+  - participant id (called clientId for historical reasons)
+  - task configuration: screen list, time estimate, etc.
+  - platform code (e.g., MTurk, HDSL, ...)
+
+ State:
+  - flag for whether we're replaying events
+  - which screen we're on
+  - tutorial tasks
+  - "controlled inputs" - <input> or <textarea> values for survey responses.
+
+It also manages a collection of trial states, called "experiment states" for historical reasons.
+Each trial has a name. There's a notion of a current trial.
+ */
+
 import * as M from "mobx";
 import type { ObservableMap } from "mobx";
 import TutorialTasks from "./TutorialTasks";
