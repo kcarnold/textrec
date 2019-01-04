@@ -13,8 +13,8 @@ function getAppInt(config) {
   if (config === "gx") {
     return require("./GatedTranscribeTask");
   }
-  if (config === "dc") {
-    return require("./DesktopCapTask");
+  if (config === "cue") {
+    return require("./CueTasks");
   }
 }
 
