@@ -5,21 +5,24 @@
 import "core-js/fn/array/from";
 
 import * as React from "react";
+import { extendObservable, decorate, observable, action } from "mobx";
 import { observer, inject } from "mobx-react";
 
 import flatMap from "lodash/flatMap";
 import range from "lodash/range";
-import * as IOTaskState from "./IOTaskState";
+import { createState } from "./MasterState";
 import * as Views from "./IOViews";
 import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import traitData from "./TraitData_NfCEDTO";
-import { getDemoConditionName, gatingSuggestionFilter } from "./misc";
+import {
+  getDemoConditionName,
+  gatingSuggestionFilter,
+  finalDataLogger,
+} from "./misc";
 
 import * as shuffle from "./shuffle";
-
-import type { Screen } from "./IOTaskState";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
@@ -189,7 +192,7 @@ function getScreens(conditions: string[], prompts: Prompt[]): Screen[] {
 function experimentView(props) {
   return () => {
     let instructions = React.createElement(props.instructions);
-    return <Views.ExperimentScreen instructions={instructions} />;
+    return <div>Experiment</div>;
   };
 }
 
@@ -221,6 +224,27 @@ function trialScreen(props: {
 
 let conditionOrders = shuffle.permutator(baseConditions);
 
+class TrialState {
+  constructor(flags) {
+    this.flags = flags;
+    extendObservable(this, {
+      curText: "",
+    });
+  }
+
+  init() {
+    return [];
+  }
+
+  handleEvent(event) {}
+}
+
+decorate(TrialState, {
+  curText: observable,
+
+  handleEvent: action.bound,
+});
+
 export function createTaskState(loginEvent) {
   let clientId = loginEvent.participant_id;
 
@@ -237,42 +261,13 @@ export function createTaskState(loginEvent) {
     screens = getScreens(conditions, prompts);
   }
 
-  let state = new IOTaskState.MasterStateStore({
+  let state = createState({
     clientId,
     screens,
-    handleEvent,
-    createExperimentState: flags => new ExperimentStateStore(flags),
+    createExperimentState: flags => new TrialState(flags),
     timeEstimate: "20-25 minutes",
   });
-
-  function handleEvent(event: Event): Event[] {
-    if (event.type === "next") {
-      if (state.screenNum === screens.length - 2) {
-        let finalData = {
-          screenTimes: state.screenTimes.map(screen => ({
-            ...screen,
-            name: screens[screen.num].screen,
-          })),
-          controlledInputs: [...state.controlledInputs.toJS()],
-          texts: Array.from(
-            state.experiments.entries(),
-            ([expName, expState]) => ({
-              name: expName,
-              condition: expState.flags.condition,
-              text: expState.curText,
-            })
-          ),
-        };
-        return [
-          {
-            type: "finalData",
-            finalData,
-          },
-        ];
-      }
-    }
-    return [];
-  }
+  finalDataLogger(state);
 
   return state;
 }

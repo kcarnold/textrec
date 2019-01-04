@@ -9,7 +9,7 @@ import { observer, inject } from "mobx-react";
 
 import flatMap from "lodash/flatMap";
 import range from "lodash/range";
-import * as IOTaskState from "./IOTaskState";
+import { createState } from "./MasterState";
 import { ExperimentStateStore } from "./IOExperimentState";
 import * as Views from "./IOViews";
 import { NextBtn } from "./BaseViews";
@@ -17,11 +17,14 @@ import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import traitData from "./TraitData_NfCEDTO";
 import stimulusPairs from "./stimulusPairs";
-import { getDemoConditionName, gatingSuggestionFilter } from "./misc";
+import {
+  getDemoConditionName,
+  gatingSuggestionFilter,
+  finalDataLogger,
+} from "./misc";
 
 import * as shuffle from "./shuffle";
 
-import type { Screen } from "./IOTaskState";
 import type { Event, LoginEvent, SideEffects } from "./Events";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
@@ -670,37 +673,6 @@ function trialScreen(props: {
 let baseConditions = ["norecs", "gated", "always"];
 let conditionOrders = shuffle.permutator(baseConditions);
 
-const finalDataLogger = state => {
-  state.eventHandlers.push((state, event) => {
-    if (event.type === "next") {
-      if (state.screenNum === state.screens.length - 2) {
-        let finalData = {
-          screenTimes: state.screenTimes.map(screen => ({
-            ...screen,
-            name: state.screens[screen.num].screen,
-          })),
-          controlledInputs: [...state.controlledInputs.toJS()],
-          texts: Array.from(
-            state.experiments.entries(),
-            ([expName, expState]) => ({
-              name: expName,
-              condition: expState.flags.condition,
-              text: expState.curText,
-            })
-          ),
-        };
-        return [
-          {
-            type: "finalData",
-            finalData,
-          },
-        ];
-      }
-    }
-    return [];
-  });
-};
-
 export function createTaskState(loginEvent: LoginEvent) {
   let clientId = loginEvent.participant_id;
 
@@ -718,7 +690,7 @@ export function createTaskState(loginEvent: LoginEvent) {
     screens = getScreens(conditions, stimuli, personalityBlocks);
   }
 
-  let state = IOTaskState.createState({
+  let state = createState({
     clientId,
     screens,
     createExperimentState: flags => new ExperimentStateStore(flags),

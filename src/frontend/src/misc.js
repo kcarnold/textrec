@@ -20,3 +20,35 @@ export function getDemoConditionName(clientId: string): ?string {
   }
   return null;
 }
+
+export const finalDataLogger = state => {
+  state.eventHandlers.push((state, event) => {
+    if (event.type === "next") {
+      if (state.screenNum === state.screens.length - 2) {
+        let finalData = {
+          screenTimes: state.screenTimes.map(screen => ({
+            ...screen,
+            name: state.screens[screen.num].screen,
+          })),
+          controlledInputs: [...state.controlledInputs.toJS()],
+          texts: Array.from(
+            state.experiments.entries(),
+            ([expName, expState]) => ({
+              name: expName,
+              condition: expState.flags.condition,
+              text: expState.curText,
+            })
+          ),
+        };
+        return [
+          {
+            type: "finalData",
+            finalData,
+          },
+        ];
+      }
+    }
+    return [];
+  });
+};
+

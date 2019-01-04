@@ -13,9 +13,9 @@ function getAppInt(config) {
   // if (config === "gx") {
   //   return require("./GatedTranscribeTask");
   // }
-  // if (config === "cue") {
-  //   return require("./CueTasks");
-  // }
+  if (config === "cue") {
+    return require("./CueTasks");
+  }
 }
 
 function getApp(config) {
