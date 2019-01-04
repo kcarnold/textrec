@@ -14,16 +14,14 @@ This is the top-level state for an experiment. It handles a large amount of conf
  State:
   - flag for whether we're replaying events
   - which screen we're on
-  - tutorial tasks
   - "controlled inputs" - <input> or <textarea> values for survey responses.
 
 It also manages a collection of trial states, called "experiment states" for historical reasons.
 Each trial has a name. There's a notion of a current trial.
  */
 
-import { extendObservable, observable, computed, action, toJS } from "mobx";
+import { extendObservable, observable, action } from "mobx";
 import type { ObservableMap } from "mobx";
-import TutorialTasks from "./TutorialTasks";
 
 import type { Event, SideEffects } from "./Events";
 
@@ -62,9 +60,6 @@ function handleEvent(state, event) {
   if (state.experimentState) {
     let res = state.experimentState.handleEvent(event);
     if (res) sideEffects = sideEffects.concat(res);
-  }
-  if (state.tutorialTasks) {
-    state.tutorialTasks.handleEvent(event);
   }
   if (state.config.handleEvent) {
     let res = state.config.handleEvent(event);
@@ -117,7 +112,6 @@ function setupExperiment(state, preEvent) {
   state.curExperiment = preEvent.name;
   let experimentObj = state.config.createExperimentState(preEvent.flags);
   state.experiments.set(preEvent.name, experimentObj);
-  state.tutorialTasks = new TutorialTasks();
   return experimentObj.init();
 }
 
@@ -143,7 +137,6 @@ class MasterStateStore {
       },
       timerStartedAt: null,
       timerDur: null,
-      tutorialTasks: null,
       screenTimes: [],
       get curScreen() {
         return this.screens[this.screenNum];
@@ -214,6 +207,10 @@ const controlledInputsTracking = state => {
       state.controlledInputs.set(event.name, event.value);
     }
   });
+};
+
+const screenTracking = state => {
+  extendObservable(state, {});
 };
 
 export function createState(config: Config) {
