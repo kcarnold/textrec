@@ -20,6 +20,7 @@ import {
   gatingSuggestionFilter,
   finalDataLogger,
 } from "./misc";
+import { Editable } from "./Editable";
 
 import * as shuffle from "./shuffle";
 
@@ -27,6 +28,8 @@ const iobs = fn => inject("state", "dispatch")(observer(fn));
 
 const TRIALS_PER_CONDITION = 4;
 const MIN_REC_THRESHOLD = 1;
+
+const TAB_KEYCODE = 9;
 
 function surveyView(props) {
   return () => React.createElement(Survey, props);
@@ -190,8 +193,35 @@ function getScreens(conditions: string[], prompts: Prompt[]): Screen[] {
 
 function experimentView(props) {
   return () => {
-    let instructions = React.createElement(props.instructions);
-    return <div>Experiment</div>;
+    const onKeyDown = evt => {
+      if (evt.which === TAB_KEYCODE) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        console.log("TAB");
+        /*
+          let { start, end } = bodyRange;
+          let text =
+            bodyText.slice(0, start) + msg.tabToInsert + bodyText.slice(end);
+          let newPos = start + msg.tabToInsert.length;
+          let range = { start: newPos, end: newPos };
+          //dispatch({ type: SET_BODY, text, range });
+        }
+        */
+      }
+    };
+    return (
+      <div>
+        Experiment
+        <Editable
+          range={{ start: 0, end: 0 }}
+          text="Test"
+          onChange={newVals => {
+            console.log(newVals);
+          }}
+          onKeyDown={onKeyDown}
+        />
+      </div>
+    );
   };
 }
 
@@ -199,7 +229,7 @@ function trialScreen(props: {
   name: string,
   condition: string,
   flags: ?Object,
-  prompt: PRompt,
+  prompt: Prompt,
 }) {
   let { name, condition, flags, prompt } = props;
   if (!(condition in namedConditions)) {
