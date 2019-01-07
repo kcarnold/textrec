@@ -109,7 +109,7 @@ function experimentBlock(
   prompt: Prompt
 ): Array<Screen> {
   return [
-    {
+    /*    {
       screen: "Instructions",
       view: () => (
         <div>
@@ -118,12 +118,12 @@ function experimentBlock(
           <NextBtn />
         </div>
       ),
-    },
+    },*/
     trialScreen({
       name: `final-${block}`,
       condition: conditionName,
       prompt,
-    }),
+    }) /*
     {
       screen: "PostTaskSurvey",
       view: surveyView({
@@ -131,7 +131,7 @@ function experimentBlock(
         basename: `postTask-${block}`,
         questions: [SurveyData.techDiff, SurveyData.otherMid],
       }),
-    },
+    },*/,
   ];
 }
 
@@ -172,12 +172,12 @@ const StudyDesc = () => (
 
 function getScreens(conditions: string[], prompts: Prompt[]): Screen[] {
   let result = [
-    { screen: "Welcome" },
+    /**     { screen: "Welcome" },
     {
       screen: "IntroSurvey",
       view: surveyView(introSurvey()),
     },
-    { screen: "StudyDesc", view: StudyDesc },
+    { screen: "StudyDesc", view: StudyDesc },*/
     ...flatMap(prompts, (prompt, idx) =>
       experimentBlock(idx, conditions[idx], prompt)
     ),
@@ -192,13 +192,14 @@ function getScreens(conditions: string[], prompts: Prompt[]): Screen[] {
 }
 
 function experimentView(props) {
-  return () => {
-    const onKeyDown = evt => {
-      if (evt.which === TAB_KEYCODE) {
-        evt.preventDefault();
-        evt.stopPropagation();
-        console.log("TAB");
-        /*
+  return inject("state", "dispatch", "clientKind")(
+    observer(({ state, clientKind }) => {
+      const onKeyDown = evt => {
+        if (evt.which === TAB_KEYCODE) {
+          evt.preventDefault();
+          evt.stopPropagation();
+          console.log("TAB");
+          /*
           let { start, end } = bodyRange;
           let text =
             bodyText.slice(0, start) + msg.tabToInsert + bodyText.slice(end);
@@ -207,22 +208,24 @@ function experimentView(props) {
           //dispatch({ type: SET_BODY, text, range });
         }
         */
-      }
-    };
-    return (
-      <div>
-        Experiment
-        <Editable
-          range={{ start: 0, end: 0 }}
-          text="Test"
-          onChange={newVals => {
-            console.log(newVals);
-          }}
-          onKeyDown={onKeyDown}
-        />
-      </div>
-    );
-  };
+        }
+      };
+      return (
+        <div>
+          Experiment {clientKind}
+          <Editable
+            range={{ start: 0, end: 0 }}
+            text="Test"
+            onChange={newVals => {
+              console.log(newVals);
+            }}
+            onKeyDown={onKeyDown}
+          />
+          <div>{JSON.stringify(state.experimentState.suggestions)}</div>
+        </div>
+      );
+    })
+  );
 }
 
 function trialScreen(props: {
@@ -258,6 +261,7 @@ class TrialState {
     this.flags = flags;
     extendObservable(this, {
       curText: "",
+      suggestions: [],
     });
   }
 
