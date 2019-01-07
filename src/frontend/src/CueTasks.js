@@ -194,48 +194,73 @@ function getScreens(conditions: string[], prompts: Prompt[]): Screen[] {
   return result;
 }
 
-function experimentView(props) {
-  return inject("state", "dispatch", "clientKind")(
-    observer(({ state, dispatch, clientKind }) => {
-      const onKeyDown = evt => {
-        if (evt.which === TAB_KEYCODE) {
-          evt.preventDefault();
-          evt.stopPropagation();
-          console.log("TAB");
-          /*
-          let { start, end } = bodyRange;
-          let text =
-            bodyText.slice(0, start) + msg.tabToInsert + bodyText.slice(end);
-          let newPos = start + msg.tabToInsert.length;
-          let range = { start: newPos, end: newPos };
-          //dispatch({ type: SET_BODY, text, range });
-        }
-        */
-        }
-      };
-      let { curText, range } = state.experimentState;
-      return (
-        <div>
-          Experiment {clientKind}
-          <Editable
-            range={range}
-            text={curText}
-            onChange={newVals => {
-              dispatch({
-                type: "setText",
-                text: newVals.text,
-                range: newVals.range,
-              });
-              console.log(newVals);
-            }}
-            onKeyDown={onKeyDown}
-          />
-          <div>{JSON.stringify(state.experimentState.suggestions)}</div>
-        </div>
-      );
+function trialView(props) {
+  return inject("clientKind")(
+    observer(({ clientKind }) => {
+      if (clientKind === "p") {
+        return <WriterView />;
+      } else if (clientKind === "c") {
+        return <SpyView />;
+      }
     })
   );
 }
+
+const SpyView = iobs(({ state, dispatch }) => {
+  let { curText, range, suggestions } = state.experimentState;
+
+  return (
+    <div>
+      <div>{curText}</div>
+      <input
+        type="text"
+        onChange={event =>
+          dispatch({ type: "setSuggestion", idx: 0, text: event.target.value })
+        }
+        value={suggestions[0].text}
+      />
+    </div>
+  );
+});
+
+const WriterView = iobs(({ state, dispatch }) => {
+  const onKeyDown = evt => {
+    if (evt.which === TAB_KEYCODE) {
+      evt.preventDefault();
+      evt.stopPropagation();
+      console.log("TAB");
+      /*
+        let { start, end } = bodyRange;
+        let text =
+          bodyText.slice(0, start) + msg.tabToInsert + bodyText.slice(end);
+        let newPos = start + msg.tabToInsert.length;
+        let range = { start: newPos, end: newPos };
+        //dispatch({ type: SET_BODY, text, range });
+      }
+      */
+    }
+  };
+  let { curText, range, suggestions } = state.experimentState;
+  return (
+    <div>
+      Experiment
+      <Editable
+        range={range}
+        text={curText}
+        onChange={newVals => {
+          dispatch({
+            type: "setText",
+            text: newVals.text,
+            range: newVals.range,
+          });
+          console.log(newVals);
+        }}
+        onKeyDown={onKeyDown}
+      />
+      <div>{JSON.stringify(suggestions)}</div>
+    </div>
+  );
+});
 
 function trialScreen(props: {
   name: string,
@@ -259,7 +284,7 @@ function trialScreen(props: {
       },
     },
     screen: "ExperimentScreen",
-    view: experimentView({}),
+    view: trialView({}),
   };
 }
 

@@ -7,7 +7,7 @@ export class TrialState {
     extendObservable(this, {
       curText: "",
       range: { start: 0, end: 0 },
-      suggestions: [],
+      suggestions: [{ text: "" }],
     });
   }
 
@@ -19,6 +19,8 @@ export class TrialState {
     if (event.type === "setText") {
       this.curText = event.text;
       this.range = event.range;
+    } else if (event.type === "setSuggestion") {
+      this.suggestions[event.idx].text = event.text;
     }
   }
 }
