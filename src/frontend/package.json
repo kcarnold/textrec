@@ -23,7 +23,8 @@
     "react-scripts": "2.0.3",
     "react-star-rating-component": "^1.4.1",
     "seedrandom": "^2.4.2",
-    "source-map-explorer": "1.6.0"
+    "source-map-explorer": "1.6.0",
+    "textarea-caret": "https://github.com/component/textarea-caret-position"
   },
   "scripts": {
     "start": "react-scripts start",

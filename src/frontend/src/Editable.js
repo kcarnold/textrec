@@ -3,6 +3,7 @@
 import React from "react";
 import { findDOMNode } from "react-dom";
 import isEqual from "lodash/isEqual";
+import getCaretCoordinates from "textarea-caret";
 import styles from "./Editable.module.css";
 
 // NOTE: this may be helpful someday: https://github.com/component/textarea-caret-position
@@ -33,7 +34,6 @@ export class Editable extends React.Component {
     window.EDITABLE = node;
     node.value = this.props.text;
     let { start, end } = this.props.range;
-    console.log("setSelRange", start, end);
     node.setSelectionRange(start, end);
     node.focus();
   }
@@ -47,7 +47,9 @@ export class Editable extends React.Component {
       range.start !== this.props.range.start ||
       range.end !== this.props.range.end
     ) {
-      this.props.onChange({ text, range });
+      let caret = getCaretCoordinates(node, range.end);
+      console.log("caret", caret);
+      this.props.onChange({ text, range, caret });
     }
   }
 

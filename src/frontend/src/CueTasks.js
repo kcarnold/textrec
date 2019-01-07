@@ -246,26 +246,39 @@ const WriterView = iobs(({ state, dispatch }) => {
       */
     }
   };
-  let { curText, range, suggestions } = state.experimentState;
+  let { curText, range, caret, suggestions } = state.experimentState;
+  let { top, left } = caret || { top: 0, left: 0 };
   return (
     <div>
       <h1>Write your review</h1>
-      <Editable
-        range={range}
-        text={curText}
-        onChange={newVals => {
-          dispatch({
-            type: "setText",
-            text: newVals.text,
-            range: newVals.range,
-          });
-          console.log(newVals);
-        }}
-        onKeyDown={onKeyDown}
-      />
-      {suggestions.map((suggestion, idx) => (
-        <div key={idx}>{suggestion.text}</div>
-      ))}
+      <div style={{ position: "relative" }}>
+        <Editable
+          range={range}
+          text={curText}
+          onChange={newVals => {
+            dispatch({
+              type: "setText",
+              text: newVals.text,
+              range: newVals.range,
+              caret: newVals.caret,
+            });
+            console.log(newVals);
+          }}
+          onKeyDown={onKeyDown}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: top + 20,
+            left,
+            color: "grey",
+          }}
+        >
+          {suggestions.map((suggestion, idx) => (
+            <div key={idx}>{suggestion.text}</div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 });
