@@ -7,7 +7,7 @@ export class TrialState {
     extendObservable(this, {
       curText: "",
       range: { start: 0, end: 0 },
-      suggestions: [{ text: "" }],
+      suggestions: [{ text: "" }, { text: "" }, { text: "" }],
     });
   }
 

@@ -206,19 +206,25 @@ function trialView(props) {
   );
 }
 
+const SugEditor = ({ text, onChange }) => {};
+
 const SpyView = iobs(({ state, dispatch }) => {
   let { curText, range, suggestions } = state.experimentState;
 
   return (
     <div>
       <div>{curText}</div>
-      <input
-        type="text"
-        onChange={event =>
-          dispatch({ type: "setSuggestion", idx: 0, text: event.target.value })
-        }
-        value={suggestions[0].text}
-      />
+      {suggestions.map((suggestion, idx) => (
+        <div key={idx}>
+          <input
+            type="text"
+            onChange={event =>
+              dispatch({ type: "setSuggestion", idx, text: event.target.value })
+            }
+            value={suggestion.text}
+          />
+        </div>
+      ))}
     </div>
   );
 });
@@ -257,7 +263,9 @@ const WriterView = iobs(({ state, dispatch }) => {
         }}
         onKeyDown={onKeyDown}
       />
-      <div>{JSON.stringify(suggestions)}</div>
+      {suggestions.map((suggestion, idx) => (
+        <div key={idx}>{suggestion.text}</div>
+      ))}
     </div>
   );
 });
