@@ -41,12 +41,6 @@ if (initialPart === "panopt") {
   mod.init(createTaskState, MasterView, loginEvent);
   let ShowAllScreens = mod.default;
   topLevel = <ShowAllScreens />;
-} else if (initialPart === "bench") {
-  let Bench = require("./Bench").default;
-  topLevel = <Bench />;
-  // } else if (initialPart === "demos") {
-  //   let DemoList = require("./DemoList").default;
-  //   topLevel = <DemoList />;
 } else if (query.slice(0, 3) === "new") {
   // e.g., http://localhost:3000/?new&b=gc1
   let params = query
