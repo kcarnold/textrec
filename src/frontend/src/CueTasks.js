@@ -249,7 +249,7 @@ const WriterView = iobs(({ state, dispatch }) => {
   let { curText, range, suggestions } = state.experimentState;
   return (
     <div>
-      Experiment
+      <h1>Write your review</h1>
       <Editable
         range={range}
         text={curText}

@@ -3,6 +3,9 @@
 import React from "react";
 import { findDOMNode } from "react-dom";
 import isEqual from "lodash/isEqual";
+import styles from "./Editable.module.css";
+
+// NOTE: this may be helpful someday: https://github.com/component/textarea-caret-position
 
 export class Editable extends React.Component {
   constructor() {
@@ -51,13 +54,7 @@ export class Editable extends React.Component {
   render() {
     return (
       <textarea
-        style={{
-          position: "relative",
-          width: "100%",
-          height: "300px",
-          overflow: "auto",
-          fontFamily: "sans-serif",
-        }}
+        className={styles.textarea}
         onInput={this.emitChange}
         onBlur={this.emitChange}
         onKeyDown={this.props.onKeyDown}

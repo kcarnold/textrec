@@ -1,0 +1,10 @@
+/** @format */
+
+.textarea {
+    font-size: 12pt;
+    position: relative;
+    width: 100%;
+    height: 300px;
+    overflow: auto;
+    font-family: sans-serif;
+}
