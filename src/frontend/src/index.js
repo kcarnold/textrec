@@ -77,7 +77,7 @@ if (initialPart === "panopt") {
           state={state}
           dispatch={dispatch}
           clientId={clientId}
-          clientKind={"p"}
+          clientKind={clientKind}
         />,
         elt
       );
