@@ -10,6 +10,7 @@ import { observer, inject } from "mobx-react";
 import flatMap from "lodash/flatMap";
 import range from "lodash/range";
 import { createState } from "./MasterState";
+import { TrialState } from "./CueTrialState";
 import * as Views from "./IOViews";
 import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
@@ -53,6 +54,7 @@ const basePrompts = [
     text: "Write a review of a restaurant you visited recently.",
   },
 
+  /**
   {
     name: "movie",
     text: "Write a review of a movie or TV show you watched recently.",
@@ -63,6 +65,7 @@ const basePrompts = [
     text:
       "Write a description of a home or apartment that you're very familiar with.", // TODO: for someone to visit...?
   },
+  */
 ];
 
 const introSurvey = () => ({
@@ -193,7 +196,7 @@ function getScreens(conditions: string[], prompts: Prompt[]): Screen[] {
 
 function experimentView(props) {
   return inject("state", "dispatch", "clientKind")(
-    observer(({ state, clientKind }) => {
+    observer(({ state, dispatch, clientKind }) => {
       const onKeyDown = evt => {
         if (evt.which === TAB_KEYCODE) {
           evt.preventDefault();
@@ -210,13 +213,19 @@ function experimentView(props) {
         */
         }
       };
+      let { curText, range } = state.experimentState;
       return (
         <div>
           Experiment {clientKind}
           <Editable
-            range={{ start: 0, end: 0 }}
-            text="Test"
+            range={range}
+            text={curText}
             onChange={newVals => {
+              dispatch({
+                type: "setText",
+                text: newVals.text,
+                range: newVals.range,
+              });
               console.log(newVals);
             }}
             onKeyDown={onKeyDown}
@@ -254,29 +263,7 @@ function trialScreen(props: {
   };
 }
 
-let conditionOrders = shuffle.permutator(baseConditions);
-
-class TrialState {
-  constructor(flags) {
-    this.flags = flags;
-    extendObservable(this, {
-      curText: "",
-      suggestions: [],
-    });
-  }
-
-  init() {
-    return [];
-  }
-
-  handleEvent(event) {}
-}
-
-decorate(TrialState, {
-  curText: observable,
-
-  handleEvent: action.bound,
-});
+//let conditionOrders = shuffle.permutator(baseConditions);
 
 export function createTaskState(loginEvent) {
   let clientId = loginEvent.participant_id;
@@ -286,10 +273,10 @@ export function createTaskState(loginEvent) {
   if (demoConditionName != null) {
     screens = getDemoScreens(demoConditionName);
   } else {
-    if ("n_conditions" in loginEvent) {
-      console.assert(loginEvent.n_conditions === conditionOrders.length);
-    }
-    let conditions = conditionOrders[loginEvent.assignment];
+    // if ("n_conditions" in loginEvent) {
+    //   console.assert(loginEvent.n_conditions === conditionOrders.length);
+    // }
+    let conditions = [baseConditions[loginEvent.assignment]];
     prompts = basePrompts.slice();
     screens = getScreens(conditions, prompts);
   }

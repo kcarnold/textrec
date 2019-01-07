@@ -30,6 +30,7 @@ export class Editable extends React.Component {
     window.EDITABLE = node;
     node.value = this.props.text;
     let { start, end } = this.props.range;
+    console.log("setSelRange", start, end);
     node.setSelectionRange(start, end);
     node.focus();
   }
