@@ -230,23 +230,16 @@ const SpyView = iobs(({ state, dispatch }) => {
 });
 
 const WriterView = iobs(({ state, dispatch }) => {
+  let { curText, range, caret, suggestions } = state.experimentState;
+
   const onKeyDown = evt => {
     if (evt.which === TAB_KEYCODE) {
       evt.preventDefault();
       evt.stopPropagation();
       console.log("TAB");
-      /*
-        let { start, end } = bodyRange;
-        let text =
-          bodyText.slice(0, start) + msg.tabToInsert + bodyText.slice(end);
-        let newPos = start + msg.tabToInsert.length;
-        let range = { start: newPos, end: newPos };
-        //dispatch({ type: SET_BODY, text, range });
-      }
-      */
+      dispatch({ type: "insertSugWord" });
     }
   };
-  let { curText, range, caret, suggestions } = state.experimentState;
   let { top, left } = caret || { top: 0, left: 0 };
   return (
     <div>
