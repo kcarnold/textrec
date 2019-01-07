@@ -2,7 +2,7 @@
 
 import React, { Component } from "react";
 import { decorate, observable, action, toJS } from "mobx";
-import moment from "moment";
+import { parse, differenceInMinutes, format } from "date-fns";
 import { observer, Provider } from "mobx-react";
 import WSClient from "./wsclient";
 import map from "lodash/map";
@@ -119,9 +119,9 @@ const ScreenTimesTable = ({ screenTimes }) => {
   let lastTime = null;
   let durs = [];
   screenTimes.forEach(({ timestamp }) => {
-    let curTime = moment(timestamp);
+    let curTime = parse(timestamp);
     if (lastTime !== null) {
-      durs.push(curTime.diff(lastTime, "minutes", true));
+      durs.push(differenceInMinutes(curTime, lastTime));
     }
     lastTime = curTime;
   });
@@ -129,13 +129,13 @@ const ScreenTimesTable = ({ screenTimes }) => {
     <table>
       <tbody>
         {screenTimes.map(({ name, num, timestamp }, i) => {
-          let curTime = moment(timestamp);
+          let curTime = parse(timestamp);
           let dur =
             i < durs.length ? `${Math.round(10 * durs[i]) / 10} min` : null;
           return (
             <tr key={num}>
               <td>{name}</td>
-              <td>{curTime.format("LTS")}</td>
+              <td>{format(curTime, "HH:mm:ss")}</td>
               <td>{dur}</td>
             </tr>
           );
