@@ -191,13 +191,16 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
 
     @tornado.gen.coroutine
     def on_message(self, message):
+        # Decompress incoming message
         self.wire_bytes_in += len(message)
         message = self.inflater.decompress(message.encode('latin1'))
         message += self.inflater.flush()
         message = message.decode('utf-8')
         self.message_bytes_in += len(message)
+
         try:
             request = json.loads(message)
+
             if request['type'] == 'rpc':
                 start = time.time()
                 result = dict(type='reply', timestamp=request['timestamp'])
@@ -216,8 +219,10 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
                 logger.info("Request complete: {participant_id} {type} in {dur:.2f}".format(
                     participant_id=getattr(self.participant, 'participant_id'),
                     type=request['type'], dur=dur))
+
             elif request['type'] == 'keyRects':
                 self.keyRects[request['layer']] = request['keyRects']
+
             elif request['type'] == 'init':
                 participant_id = request['participantId']
                 self.kind = request['kind']
@@ -263,8 +268,10 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
                 event = request['event']
                 self.log(event)
                 self.participant.broadcast(dict(type='otherEvent', event=event), exclude_conn=self)
+
             elif request['type'] == 'ping':
                 pass
+
             else:
                 print("Unknown request type:", request['type'])
             # print(', '.join('{}={}'.format(name, getattr(self.ws_connection, '_'+name)) for name in 'message_bytes_in message_bytes_out wire_bytes_in wire_bytes_out'.split()))
