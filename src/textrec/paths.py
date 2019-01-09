@@ -22,3 +22,6 @@ class paths:
     imgdata_h5 = imgdata_h5_subset
 
     old_code = frontend / 'src' / 'old_versions'
+
+    vendor = top_level.parent / 'vendor'
+    kenlm_bin = vendor / 'kenlm' / 'build' / 'bin'
