@@ -10,7 +10,7 @@ import flatMap from "lodash/flatMap";
 import range from "lodash/range";
 import { createState } from "./MasterState";
 import { TrialState } from "./CueTrialState";
-import * as Views from "./IOViews";
+import * as Views from "./CueViews";
 import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
@@ -22,9 +22,6 @@ import { Editable } from "./Editable";
 import * as shuffle from "./shuffle";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
-
-const TRIALS_PER_CONDITION = 4;
-const MIN_REC_THRESHOLD = 1;
 
 const TAB_KEYCODE = 9;
 
@@ -44,8 +41,8 @@ type Prompt = {
   text: string,
 };
 
-const basePrompts = [
-  {
+const namedPrompts = {
+  restaurant: {
     name: "restaurant",
     text: "Write a review of a restaurant you visited recently.",
   },
@@ -62,7 +59,9 @@ const basePrompts = [
       "Write a description of a home or apartment that you're very familiar with.", // TODO: for someone to visit...?
   },
   */
-];
+};
+
+let basePrompts = ["restaurant"];
 
 const introSurvey = () => ({
   title: "Opening Survey",
@@ -135,11 +134,11 @@ function experimentBlock(
 }
 
 function getDemoScreens(condition: string) {
-  return basePrompts.map((prompt, idx) =>
+  return basePrompts.map((promptName, idx) =>
     trialScreen({
       name: `final-${idx}`,
       condition,
-      prompt,
+      prompt: namedPrompts[promptName],
     })
   );
 }
@@ -148,38 +147,41 @@ const StudyDesc = () => (
   <div>
     <h1>Study Preview</h1>
     <p>TODO</p>
-    <p>
-      You'll use {baseConditions.length} different keyboard designs in this
-      study.
-    </p>
-    <p>
-      For each keyboard design, there will be a practice round to get used to
-      it, then you'll type {TRIALS_PER_CONDITION} captions using it, and finally
-      a short survey.
-    </p>
-    <p>
-      You will type a total of {baseConditions.length * TRIALS_PER_CONDITION}{" "}
-      captions.
-    </p>
-    <p>
-      At the end, you will be comparing your experiences between the different
-      keyboards. So <b>please try to remember which is which</b>!
-    </p>
     Ready to get started? <NextBtn />
   </div>
 );
 
-function getScreens(conditions: string[], prompts: Prompt[]): Screen[] {
+const RestaurantPrompt = () => (
+  <div className="Restaurant">
+    Name of the place: <ControlledInput name={"restaurantName"} />
+    <br />
+    About how long ago were you there, in days?{" "}
+    <ControlledInput name={"visitDaysAgo"} type="number" min="0" />
+    <br />
+    How would you rate that visit? <ControlledStarRating name={"star"} />
+  </div>
+);
+
+function getScreens(conditionName: string): Screen[] {
   let result = [
-    /**     { screen: "Welcome" },
+    { screen: "Welcome" },
+    // {
+    //   screen: "IntroSurvey",
+    //   view: surveyView(introSurvey()),
+    // },
     {
-      screen: "IntroSurvey",
-      view: surveyView(introSurvey()),
+      screen: "SelectRestaurant",
+      view: () => (
+        <div>
+          Think of a restaurant (or bar, cafe, diner, etc.) that you've been to
+          recently that you <b>haven't written about before</b>.
+          <RestaurantPrompt />
+          <NextBtn />
+        </div>
+      ),
     },
-    { screen: "StudyDesc", view: StudyDesc },*/
-    ...flatMap(prompts, (prompt, idx) =>
-      experimentBlock(idx, conditions[idx], prompt)
-    ),
+    // { screen: "StudyDesc", view: StudyDesc },
+    ...experimentBlock(0, conditionName, namedPrompts["restaurant"]),
 
     {
       screen: "PostExpSurvey",
@@ -239,7 +241,10 @@ const WriterView = iobs(({ state, dispatch }) => {
   let { top, left } = caret || { top: 0, left: 0 };
   return (
     <div>
-      <h1>Write your review</h1>
+      <h1>
+        Your review of <i>{state.controlledInputs.get("restaurantName")}</i>
+      </h1>
+      <p>Write your review below. Aim to approximately fill the text box.</p>
       <div style={{ position: "relative" }}>
         <Editable
           range={range}
@@ -268,6 +273,7 @@ const WriterView = iobs(({ state, dispatch }) => {
           ))}
         </div>
       </div>
+      <NextBtn>Submit</NextBtn>
     </div>
   );
 });
@@ -311,7 +317,9 @@ export function createTaskState(loginEvent) {
     // if ("n_conditions" in loginEvent) {
     //   console.assert(loginEvent.n_conditions === conditionOrders.length);
     // }
-    let conditions = [baseConditions[loginEvent.assignment]];
+    // Between-subjects for prompt and condition.
+    let condition = baseConditions[loginEvent.assignment];
+    let conditions = [condition];
     prompts = basePrompts.slice();
     screens = getScreens(conditions, prompts);
   }
