@@ -3,7 +3,7 @@
  * @flow
  */
 
-import { extendObservable, observable, action } from "mobx";
+import { extendObservable, action } from "mobx";
 import {
   platformTracking,
   pingTracking,

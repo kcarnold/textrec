@@ -4,7 +4,6 @@
  */
 
 import * as React from "react";
-import { extendObservable, decorate, observable, action } from "mobx";
 import { observer, inject } from "mobx-react";
 
 import flatMap from "lodash/flatMap";
@@ -15,12 +14,9 @@ import * as Views from "./IOViews";
 import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
-import traitData from "./TraitData_NfCEDTO";
-import {
-  getDemoConditionName,
-  gatingSuggestionFilter,
-  finalDataLogger,
-} from "./misc";
+import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
+
+import { getDemoConditionName, finalDataLogger } from "./misc";
 import { Editable } from "./Editable";
 
 import * as shuffle from "./shuffle";

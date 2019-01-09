@@ -24,7 +24,7 @@ import {
 
 import * as shuffle from "./shuffle";
 
-import type { Event, LoginEvent, SideEffects } from "./Events";
+import type { LoginEvent } from "./Events";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 

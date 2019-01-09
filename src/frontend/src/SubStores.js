@@ -115,6 +115,7 @@ export const screenTracking = screens => state => {
       if (this.curExperiment) {
         return this.experiments.get(this.curExperiment);
       }
+      return null;
     },
     timerStartedAt: null,
     timerDur: null,
