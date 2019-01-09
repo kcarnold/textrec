@@ -59,6 +59,9 @@ export class Editable extends React.Component {
         onInput={this.emitChange}
         onBlur={this.emitChange}
         onKeyDown={this.props.onKeyDown}
+        onKeyUp={this.emitChange}
+        onClick={this.emitChange}
+        onScroll={this.emitChange}
       />
     );
   }
