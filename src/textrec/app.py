@@ -11,7 +11,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 import tornado.ioloop
-import tornado.gen
 import tornado.options
 import tornado.web
 import tornado.websocket
@@ -39,10 +38,6 @@ server_settings = dict(
     xheaders=True)
 
 from . import rec_generator
-
-# Convert the normal generator function into a Tornado coroutine.
-# We do this here to avoid tornado imports in the core rec_generator.
-handle_request_async = tornado.gen.coroutine(rec_generator.handle_request_async)
 
 if not os.path.isdir(paths.logdir):
     os.makedirs(paths.logdir)
@@ -189,8 +184,7 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
         self.wire_bytes_out += len(message)
         self.write_message(message.decode('latin1'))
 
-    @tornado.gen.coroutine
-    def on_message(self, message):
+    async def on_message(self, message):
         # Decompress incoming message
         self.wire_bytes_in += len(message)
         message = self.inflater.decompress(message.encode('latin1'))
@@ -205,7 +199,7 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
                 start = time.time()
                 result = dict(type='reply', timestamp=request['timestamp'])
                 try:
-                    result['result'] = yield handle_request_async(process_pool, request['rpc'])
+                    result['result'] = await handle_request_async(process_pool, request['rpc'])
                 except Exception:
                     traceback.print_exc()
                     request_as_string = json.dumps(request)
