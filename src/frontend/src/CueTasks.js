@@ -209,9 +209,26 @@ const SugEditor = ({ text, onChange }) => {};
 const SpyView = iobs(({ state, dispatch }) => {
   let { curText, range, suggestions } = state.experimentState;
 
+  let beforeCursor = curText.slice(0, range.start);
+  let selected = curText.slice(range.start, range.end);
+  let afterCursor = curText.slice(range.end);
+
   return (
     <div>
-      <div>{curText}</div>
+      <div>
+        {beforeCursor}
+        <span
+          style={{
+            minWidth: "2px",
+            height: "17px",
+            background: "blue",
+          }}
+        >
+          {selected}
+        </span>
+        <span className="Cursor" />
+        {afterCursor}
+      </div>
       {suggestions.map((suggestion, idx) => (
         <div key={idx}>
           <input
