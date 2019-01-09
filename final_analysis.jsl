@@ -58,6 +58,7 @@ dt << New Column( "mintaps_standard", Numeric, Formula( :corrected_tapstotype_st
 dt << New Column( "mintaps_contextual", Numeric, Formula( :corrected_tapstotype_contextual / :num_words ) );
 dt << New Column( "mintaps_std_minus_contextual", Numeric, Formula( mintaps_standard - mintaps_contextual ) );
 
+dt << New Column( "any_ADJ", Numeric, Formula(  :ADJ > 0 ) );
 
 
 Wait( 0 );
@@ -158,9 +159,9 @@ analyze = Function( {response_name, window_title, extra_toplevel = "", extra_eff
 
 /*** Outcome Effects ***/
 // MTPW(standard)
-analyze( "mintaps_standard", "Ideal Taps per Corrected Word" );
+analyze( "mintaps_standard", "MTPW(Standard, text)" );
 // By content of recommendations offered (diff between standard and contextual)
-analyze( "mintaps_std_minus_contextual", "mintaps(Standard, text) - mintaps(Contextual, text)" );
+analyze( "mintaps_std_minus_contextual", "MTPW(Standard, text) - MPTW(Contextual, text)" );
 
 
 (dt << Graph Builder(
@@ -184,6 +185,7 @@ analyze( "mintaps_standard", "MTPW with age",  "", ", :age, :age * :condition");
 
 
 analyze("ADJ", "Fraction of words that are adjectives");
+analyze("any_ADJ", "Any adjectives used?");
 
 // Participants left fewer errors uncorrected in recs conditions
 // (For the paper, I did this analysis manually, since uncorrected errors is a rare event so ANOVA assumptions fail badly.
