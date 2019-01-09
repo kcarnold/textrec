@@ -8,11 +8,6 @@ import getCaretCoordinates from "textarea-caret";
 import styles from "./Editable.module.css";
 
 export class Editable extends React.Component {
-  constructor() {
-    super();
-    this.emitChange = this.emitChange.bind(this);
-  }
-
   shouldComponentUpdate(nextProps, nextState) {
     return (
       this.props.text !== nextProps.text ||
@@ -37,7 +32,7 @@ export class Editable extends React.Component {
     node.focus();
   }
 
-  emitChange() {
+  emitChange = () => {
     let node = findDOMNode(this);
     let text = node.value;
     let range = { start: node.selectionStart, end: node.selectionEnd };
@@ -50,7 +45,7 @@ export class Editable extends React.Component {
       console.log("caret", caret);
       this.props.onChange({ text, range, caret });
     }
-  }
+  };
 
   render() {
     return (
