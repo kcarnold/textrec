@@ -4,9 +4,8 @@ import React from "react";
 import { findDOMNode } from "react-dom";
 import isEqual from "lodash/isEqual";
 import getCaretCoordinates from "textarea-caret";
+// https://github.com/component/textarea-caret-position
 import styles from "./Editable.module.css";
-
-// NOTE: this may be helpful someday: https://github.com/component/textarea-caret-position
 
 export class Editable extends React.Component {
   constructor() {
@@ -38,7 +37,7 @@ export class Editable extends React.Component {
     node.focus();
   }
 
-  emitChange(e) {
+  emitChange() {
     let node = findDOMNode(this);
     let text = node.value;
     let range = { start: node.selectionStart, end: node.selectionEnd };
