@@ -19,10 +19,6 @@ CNNB_JOBLIB = str(paths.models / "conceptnet-numberbatch-201609-en.joblib")
 CNNB_H5 = "/Data/ConceptNetNumberBatch/conceptnet-numberbatch-mini-1706.h5"
 
 
-def memcache(fn):
-    return lru_cache()(mem.cache(fn))
-
-
 @attr.s
 class ConceptNetNumberBatch:
     term2id = attr.ib()
@@ -160,7 +156,9 @@ def train_lms_per_cluster(clusterer, vecs, texts, model_basename):
         sentences_in_cluster[c].append(texts[i])
     for cluster_idx, cluster in enumerate(sentences_in_cluster):
         print(cluster_idx)
-        dump_kenlm("{}_{}".format(model_basename, cluster_idx), [s.lower() for s in cluster])
+        dump_kenlm(
+            "{}_{}".format(model_basename, cluster_idx), [s.lower() for s in cluster]
+        )
 
 
 def normalize_vecs(vecs):
@@ -174,7 +172,8 @@ def normalize_dists(dists):
 # Bind all of that together into cacheable objects
 
 
-@memcache
+@lru_cache()
+@mem.cache
 def cached_dataset(name):
     if name == "yelp":
         with open(paths.top_level / "preproc/yelp/train_data.pkl", "rb") as f:
@@ -182,13 +181,15 @@ def cached_dataset(name):
     raise NameError("Unknown dataset " + name)
 
 
-@memcache
+@lru_cache()
+@mem.cache
 def cached_reasonable_length_sents(dataset_name):
     tokenized_docs = cached_dataset(dataset_name).tokenized
     return filter_reasonable_length_sents(flatten_sents(tokenized_docs))
 
 
-@memcache
+@lru_cache()
+@mem.cache
 def cached_vectorizer_and_projections(dataset_name):
     sents = cached_reasonable_length_sents(dataset_name)
     vectorizer, raw_vecs = get_vectorizer(sents)
@@ -203,7 +204,8 @@ def cached_vectorizer_and_projections(dataset_name):
     }
 
 
-@memcache
+@lru_cache()
+@mem.cache
 def cached_clusterer(dataset_name, n_clusters):
     projections_data = cached_vectorizer_and_projections(dataset_name)
     projected_vecs = projections_data["projected_vecs"]
@@ -213,7 +215,8 @@ def cached_clusterer(dataset_name, n_clusters):
     return {"clusterer": clusterer, "cluster_dists": cluster_dists}
 
 
-@memcache
+@lru_cache()
+@mem.cache
 def cached_lms_per_cluster(dataset_name, n_clusters):
     # Get data.
     projections_data = cached_vectorizer_and_projections(dataset_name)
@@ -223,8 +226,10 @@ def cached_lms_per_cluster(dataset_name, n_clusters):
     projected_vecs = projections_data["projected_vecs"]
 
     # Train models (shells out to KenLM)
-    model_basename = f'{dataset_name}_{n_clusters}'
-    train_lms_per_cluster(clusterer, vecs=projected_vecs, texts=sents, model_basename=model_basename)
+    model_basename = f"{dataset_name}_{n_clusters}"
+    train_lms_per_cluster(
+        clusterer, vecs=projected_vecs, texts=sents, model_basename=model_basename
+    )
 
     # Load models
     return [
@@ -233,7 +238,8 @@ def cached_lms_per_cluster(dataset_name, n_clusters):
     ]
 
 
-@memcache
+@lru_cache()
+@mem.cache
 def cached_unique_starts(dataset_name, n_words):
     # Score the first 5 words of every sentence.
     projections_data = cached_vectorizer_and_projections(dataset_name)
@@ -249,7 +255,8 @@ def cached_unique_starts(dataset_name, n_words):
         ]
 
 
-@memcache
+@lru_cache()
+@mem.cache
 def cached_scores_by_cluster(dataset_name, n_clusters, n_words=5):
     unique_starts = cached_unique_starts(dataset_name, n_words=n_words)
     models = cached_lms_per_cluster(dataset_name, n_clusters)
@@ -280,7 +287,8 @@ def get_cached_vectorizer(dataset_name):
     return vectorize_sents
 
 
-@memcache
+@lru_cache()
+@mem.cache
 def cached_scores_by_cluster_argsort(
     dataset_name, n_clusters, n_words=5, likelihood_bias_weight=0.85
 ):
