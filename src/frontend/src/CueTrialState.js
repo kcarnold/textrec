@@ -1,5 +1,6 @@
 /** @format */
 import { extendObservable, decorate, observable, action } from "mobx";
+import isEqual from "lodash/isEqual";
 
 export class TrialState {
   constructor(flags) {
@@ -13,10 +14,23 @@ export class TrialState {
   }
 
   init() {
-    return [];
+    return this.getCueRequest();
+  }
+
+  getCueRequest() {
+    return {
+      type: "rpc",
+      rpc: {
+        method: "get_cue",
+        text: this.curText,
+      },
+    };
   }
 
   handleEvent(event) {
+    let prevCueRequest = this.getCueRequest();
+
+    let sideEffects = [];
     if (event.type === "setText") {
       this.curText = event.text;
       this.range = event.range;
@@ -41,6 +55,13 @@ export class TrialState {
         }
       }
     }
+
+    let newCueRequest = this.getCueRequest();
+    if (!isEqual(prevCueRequest, newCueRequest)) {
+      sideEffects.push(newCueRequest);
+    }
+
+    return sideEffects;
   }
 }
 
