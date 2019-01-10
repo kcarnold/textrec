@@ -37,6 +37,14 @@ export class TrialState {
       this.caret = event.caret;
     } else if (event.type === "setSuggestion") {
       this.suggestions[event.idx].text = event.text;
+    } else if (event.type === "backendReply") {
+      // TODO: ignore other backend replies.
+      console.log(event);
+      if (event.msg.result && event.msg.result.cues) {
+        this.suggestions = event.msg.result.cues.map(cue => ({
+          text: cue.phrase,
+        }));
+      }
     } else if (event.type === "insertSugWord") {
       let { curText, range, suggestions } = this;
       if (suggestions.length && suggestions[0].text.length) {
