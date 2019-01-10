@@ -1,9 +1,49 @@
 import json
 import traceback
-from . import onmt_model_2
+import nltk
+import numpy as np
+import asyncio
 
 
 async def handle_request_async(executor, request):
+    method = request['method']
+    if method == 'get_rec':
+        result = await get_keystroke_rec(executor, request)
+    elif method == 'get_cue':
+        result = await get_cue(executor, request)
+    print("Result:", result)
+    return result
+
+
+async def get_cue(executor, request):
+    from .cueing import get_clizer
+    clizer = get_clizer()
+
+    text = request['text']
+    sents = nltk.sent_tokenize(text)
+
+    n_clusters = clizer.n_clusters
+    assert clizer.scores_by_cluster_argsort.shape[0] == n_clusters
+
+    # Quick hack.
+    rs = np.random.RandomState(len(sents))
+    clusters_to_cue = rs.choice(n_clusters, size=3, replace=False)
+
+    cues = []
+    for cluster_to_cue in clusters_to_cue:
+        # Cue one of the top 10 phrases for this cluster.
+        phrase_ids = clizer.scores_by_cluster_argsort[cluster_to_cue][:10]
+        phrase = clizer.unique_starts[rs.choice(phrase_ids)]
+
+        cues.append(dict(cluster=cluster_to_cue, phrase=phrase))
+
+    return {
+        'cues:': cues
+    }
+
+
+async def get_keystroke_rec(executor, request):
+    from . import onmt_model_2
     request_id = request.get('request_id')
     flags = request.get('flags', {})
     prefix = None

@@ -4,6 +4,7 @@ import joblib
 import numpy as np
 import tqdm
 import logging
+import pickle
 logger = logging.getLogger(__name__)
 
 from .paths import paths
@@ -181,5 +182,21 @@ class Clusterizer:
     def vectorize_sents(self, sents):
         return self.vectorizer.transform(sents).dot(self.projection_mat)
 
+    def pickle_todo(self):
+        from scipy.special import logsumexp
+        likelihood_bias = logsumexp(self.scores_by_cluster, axis=1, keepdims=True)
+        self.scores_by_cluster_bias = self.scores_by_cluster - .85 * likelihood_bias
+        self.scores_by_cluster_argsort = np.argsort(self.scores_by_cluster_bias.T, axis=1)[:,::-1]
+
+
+clizer = None
+
+def get_clizer():
+    global clizer
+    if clizer is None:
+        with open(paths.models / 'clusterizer.pkl', 'rb') as f:
+            clizer = pickle.load(f)
+            clizer.pickle_todo()
+    return clizer
 
 ## Predict next 

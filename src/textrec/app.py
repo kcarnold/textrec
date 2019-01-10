@@ -8,7 +8,6 @@ import io
 import zlib
 import logging
 
-logger = logging.getLogger(__name__)
 
 import tornado.ioloop
 import tornado.options
@@ -19,6 +18,8 @@ from .paths import paths
 from . import counterbalancing
 
 import subprocess
+
+logger = logging.getLogger(__name__)
 
 def get_git_commit():
     return subprocess.check_output(['git', 'describe', '--always']).decode('ascii').strip()
@@ -199,7 +200,7 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
                 start = time.time()
                 result = dict(type='reply', timestamp=request['timestamp'])
                 try:
-                    result['result'] = await handle_request_async(process_pool, request['rpc'])
+                    result['result'] = await rec_generator.handle_request_async(process_pool, request['rpc'])
                 except Exception:
                     traceback.print_exc()
                     request_as_string = json.dumps(request)
@@ -348,6 +349,7 @@ def main():
     logger.info(f"Serving on port {options.port}")
     app.listen(options.port, **server_settings)
     tornado.ioloop.IOLoop.instance().start()
+
 
 if __name__ == '__main__':
     main()
