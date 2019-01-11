@@ -178,6 +178,7 @@ analyze( "mintaps_std_minus_contextual", "MTPW(Standard, text) - MPTW(Contextual
 
 
 // Effect on text length in words
+analyze( "num_words", "num_words" );
 analyze( "num_words_log", "Log(num_words)" );
 
 // MTPW with age
