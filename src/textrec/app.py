@@ -213,91 +213,22 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
             request = json.loads(message)
 
             if request["type"] == "rpc":
-                start = time.time()
-                result = dict(type="reply", timestamp=request["timestamp"])
-                try:
-                    result["result"] = await rec_generator.handle_request_async(
-                        process_pool, request["rpc"]
-                    )
-                except Exception:
-                    traceback.print_exc()
-                    request_as_string = json.dumps(request)
-                    logger.error(f"Request failed: {request_as_string}", exc_info=1)
-                    print("Failing request:", request_as_string)
-                    result["result"] = None
-                dur = time.time() - start
-                result["dur"] = dur
-                self.send_json(**result)
-                self.log(dict(type="rpc", kind="meta", request=request))
-                logger.info(
-                    "Request complete: {participant_id} {type} in {dur:.2f}".format(
-                        participant_id=getattr(self.participant, "participant_id"),
-                        type=request["type"],
-                        dur=dur,
-                    )
-                )
+                await self.do_rpc(request)
 
             elif request["type"] == "keyRects":
                 self.keyRects[request["layer"]] = request["keyRects"]
 
             elif request["type"] == "init":
-                participant_id = request["participantId"]
-                self.kind = request["kind"]
-                if participant_id.startswith("demo") or participant_id.startswith(
-                    "test"
-                ):
-                    self.participant = DemoParticipant(participant_id)
-                elif self.kind == "panopt" and participant_id == "42":
-                    self.participant = Panopticon()
-                else:
-                    validate_participant_id(participant_id)
-                    self.participant = Participant.get_participant(participant_id)
-                self.participant.connected(self)
-                self.log(dict(kind="meta", type="init", request=request))
-                messageCount = request.get("messageCount", {})
-                logger.info(
-                    f"Client {participant_id}-{self.kind} connecting with messages {messageCount}"
-                )
-                backlog = []
-                cur_msg_idx = {}
-                for entry in self.participant.get_log_entries():
-                    kind = entry["kind"]
-                    if kind == "meta":
-                        continue
-                    idx = cur_msg_idx.get(kind, 0)
-                    if idx >= messageCount.get(kind, 0):
-                        backlog.append(entry)
-                    cur_msg_idx[kind] = idx + 1
-                self.send_json(type="backlog", body=backlog)
+                self.do_init(request)
 
             elif request["type"] == "get_logs":
-                assert self.participant.is_panopticon
-                participant_id = request["participantId"]
-                validate_participant_id(participant_id)
-                participant = Participant.get_participant(participant_id)
-                self.send_json(
-                    type="logs",
-                    participant_id=participant_id,
-                    logs=participant.get_log_entries(),
-                )
+                self.do_get_logs(request)
 
             elif request["type"] == "get_analyzed":
-                assert self.participant.is_panopticon
-                participant_id = request["participantId"]
-                validate_participant_id(participant_id)
-                from .analysis_util import get_log_analysis
-
-                analysis = get_log_analysis(participant_id)
-                self.send_json(
-                    type="analyzed", participant_id=participant_id, analysis=analysis
-                )
+                self.do_get_analyzed(request)
 
             elif request["type"] == "log":
-                event = request["event"]
-                self.log(event)
-                self.participant.broadcast(
-                    dict(type="otherEvent", event=event), exclude_conn=self
-                )
+                self.do_log(request)
 
             elif request["type"] == "ping":
                 pass
@@ -308,6 +239,88 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
             # print('wire i={wire_bytes_in} o={wire_bytes_out}, msg i={message_bytes_in} o={msg_bytes_out}'.format(**self.__dict__))
         except Exception:
             traceback.print_exc()
+
+    async def do_rpc(self, request):
+        start = time.time()
+        result = dict(type="reply", timestamp=request["timestamp"])
+        try:
+            result["result"] = await rec_generator.handle_request_async(
+                process_pool, request["rpc"]
+            )
+        except Exception:
+            traceback.print_exc()
+            request_as_string = json.dumps(request)
+            logger.error(f"Request failed: {request_as_string}", exc_info=1)
+            print("Failing request:", request_as_string)
+            result["result"] = None
+        dur = time.time() - start
+        result["dur"] = dur
+        self.send_json(**result)
+        self.log(dict(type="rpc", kind="meta", request=request))
+        logger.info(
+            "Request complete: {participant_id} {type} in {dur:.2f}".format(
+                participant_id=getattr(self.participant, "participant_id"),
+                type=request["type"],
+                dur=dur,
+            )
+        )
+
+    def do_init(self, request):
+        participant_id = request["participantId"]
+        self.kind = request["kind"]
+        if participant_id.startswith("demo") or participant_id.startswith("test"):
+            self.participant = DemoParticipant(participant_id)
+        elif self.kind == "panopt" and participant_id == "42":
+            self.participant = Panopticon()
+        else:
+            validate_participant_id(participant_id)
+            self.participant = Participant.get_participant(participant_id)
+        self.participant.connected(self)
+        self.log(dict(kind="meta", type="init", request=request))
+        messageCount = request.get("messageCount", {})
+        logger.info(
+            f"Client {participant_id}-{self.kind} connecting with messages {messageCount}"
+        )
+        backlog = []
+        cur_msg_idx = {}
+        for entry in self.participant.get_log_entries():
+            kind = entry["kind"]
+            if kind == "meta":
+                continue
+            idx = cur_msg_idx.get(kind, 0)
+            if idx >= messageCount.get(kind, 0):
+                backlog.append(entry)
+            cur_msg_idx[kind] = idx + 1
+        self.send_json(type="backlog", body=backlog)
+
+    def do_get_logs(self, request):
+        assert self.participant.is_panopticon
+        participant_id = request["participantId"]
+        validate_participant_id(participant_id)
+        participant = Participant.get_participant(participant_id)
+        self.send_json(
+            type="logs",
+            participant_id=participant_id,
+            logs=participant.get_log_entries(),
+        )
+
+    def do_get_analyzed(self, request):
+        assert self.participant.is_panopticon
+        participant_id = request["participantId"]
+        validate_participant_id(participant_id)
+        from .analysis_util import get_log_analysis
+
+        analysis = get_log_analysis(participant_id)
+        self.send_json(
+            type="analyzed", participant_id=participant_id, analysis=analysis
+        )
+
+    def do_log(self, request):
+        event = request["event"]
+        self.log(event)
+        self.participant.broadcast(
+            dict(type="otherEvent", event=event), exclude_conn=self
+        )
 
     def check_origin(self, origin):
         """Allow any CORS access."""
