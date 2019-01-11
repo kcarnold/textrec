@@ -11,7 +11,7 @@ async def handle_request_async(executor, request):
     if method == "get_rec":
         result = await get_keystroke_rec(executor, request)
     elif method == "get_cue":
-        result = await get_cue(executor, request)
+        result = await get_cue_API(executor, request)
     print("Result:", result)
     return result
 
@@ -24,16 +24,21 @@ def get_cueing_data(dataset_name, n_clusters, n_words):
     return scores_by_cluster_argsort, unique_starts
 
 
-async def get_cue(executor, request):
+async def get_cue_API(executor, request):
     text = request["text"]
+
+    return {
+        "cues": await get_cue(
+            executor, text, dataset_name="yelp", n_clusters=20, n_words=5
+        )
+    }
+
+
+async def get_cue(executor, text, dataset_name, n_clusters, n_words):
     sents = nltk.sent_tokenize(text)
-
-    dataset_name = 'yelp'
-    n_clusters = 20
-    n_words = 5
-
     scores_by_cluster_argsort, unique_starts = get_cueing_data(
-        dataset_name=dataset_name, n_clusters=n_clusters, n_words=n_words)
+        dataset_name=dataset_name, n_clusters=n_clusters, n_words=n_words
+    )
     assert scores_by_cluster_argsort.shape[0] == n_clusters
 
     # Quick hack.
@@ -45,15 +50,37 @@ async def get_cue(executor, request):
         # Cue one of the top 10 phrases for this cluster.
         phrase_ids = scores_by_cluster_argsort[cluster_to_cue][:10]
         phrase = unique_starts[rs.choice(phrase_ids)]
-        phrase = ' '.join(phrase)
+        phrase = " ".join(phrase)
         phrase = phrase[0].upper() + phrase[1:]
 
         cues.append(dict(cluster=int(cluster_to_cue), phrase=phrase))
-
-    return {"cues": cues}
+    return cues
 
 
 async def get_keystroke_rec(executor, request):
+    """
+    Generate keystorke recs, with cues at transition points.
+
+    """
+    text = request["sofar"]
+    sents = nltk.sent_tokenize(text)
+
+    if len(sents) == 0:
+        at_transition_point = True
+    else:
+        last_sentence_ends_in_punct = sents[-1][-1] in ".?!"
+        at_transition_point = not last_sentence_ends_in_punct
+
+    if at_transition_point:
+        cues = await get_cue(
+            executor, text, dataset_name="yelp", n_clusters=20, n_words=5
+        )
+        return {"cues": cues}
+
+    return {}
+
+
+async def get_keystroke_rec_onmt(executor, request):
     from . import onmt_model_2
 
     request_id = request.get("request_id")
