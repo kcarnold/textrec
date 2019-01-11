@@ -1,7 +1,6 @@
 /** @format */
 
-import React, { Component } from "react";
-import every from "lodash/every";
+import React from "react";
 import { observer, inject } from "mobx-react";
 import { NextBtn } from "./BaseViews";
 import Consent from "./Consent";

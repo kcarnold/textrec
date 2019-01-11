@@ -1,5 +1,5 @@
 /** @format */
-import { extendObservable, decorate, observable, action } from "mobx";
+import { extendObservable, decorate, observable, action, computed } from "mobx";
 import isEqual from "lodash/isEqual";
 
 export class TrialState {
@@ -25,6 +25,12 @@ export class TrialState {
         text: this.curText,
       },
     };
+  }
+
+  get numFinishedSents() {
+    // OR: https://www.npmjs.com/package/sentence-splitter
+    return (this.curText.replace(/\.{3,}/, " _ELLIPS_ ").match(/[.?!]+/g) || [])
+      .length;
   }
 
   handleEvent(event) {
@@ -75,6 +81,8 @@ export class TrialState {
 
 decorate(TrialState, {
   curText: observable,
+
+  numFinishedSents: computed,
 
   handleEvent: action.bound,
 });
