@@ -167,6 +167,10 @@ def validate_participant_id(participant_id):
 class WebsocketHandler(tornado.websocket.WebSocketHandler):
     def get_compression_options(self):
         # Non-None enables compression with default options.
+        # Note: we're keeping compression off because we're compressing on our own (see
+        # send_json and on_message). In the future we probably want to let the protocol
+        # do that. We're logging extensions supported by clients to see if any don't
+        # support the necessary extension.
         return None
 
     def on_close(self):
