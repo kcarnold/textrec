@@ -96,7 +96,7 @@ class Model:
         self._load()
 
     def __reduce__(self):
-        return Model.get_model, (self.name,)
+        return Model.get_or_load_model, (self.name,)
 
     def _load(self):
         print("Loading model", self.name, '...', file=sys.stderr, end='')
