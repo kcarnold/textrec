@@ -3,7 +3,6 @@ import traceback
 import nltk
 import numpy as np
 from functools import lru_cache
-from . import cueing
 
 
 async def handle_request_async(executor, request):
@@ -18,6 +17,7 @@ async def handle_request_async(executor, request):
 
 @lru_cache()
 def get_cueing_data(dataset_name, n_clusters, n_words):
+    from . import cueing
     scores_by_cluster_argsort, unique_starts = cueing.cached_scores_by_cluster_argsort(
         dataset_name=dataset_name, n_clusters=n_clusters, n_words=n_words
     )
