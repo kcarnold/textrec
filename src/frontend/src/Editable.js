@@ -41,7 +41,11 @@ export class Editable extends React.Component {
       range.start !== this.props.range.start ||
       range.end !== this.props.range.end
     ) {
-      let caret = getCaretCoordinates(node, range.end);
+      let { top: caretTop, left: caretLeft } = getCaretCoordinates(
+        node,
+        range.end
+      );
+      let caret = { top: caretTop, left: caretLeft };
       console.log("caret", caret);
       this.props.onChange({ text, range, caret });
     }
