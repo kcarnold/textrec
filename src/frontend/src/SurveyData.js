@@ -104,12 +104,17 @@ export const verbalized_during = {
   options: ["Yes", "No"],
 };
 
-export const age = {
-  text: "How old are you?",
+export const numericResponse = ({ name, text }) => ({
   responseType: "text",
-  name: "age",
   flags: { type: "number" },
-};
+  text,
+  name,
+});
+
+export const age = numericResponse({
+  text: "How old are you?",
+  name: "age",
+});
 
 export const gender = {
   text: "What is your gender?",
@@ -118,7 +123,8 @@ export const gender = {
 };
 
 export const english_proficiency = {
-  text: "How proficient would you say you are in English?",
+  text:
+    "How proficient would you say you are in English? (Be honest, no penalty here!)",
   responseType: "options",
   name: "english_proficiency",
   options: ["Basic", "Conversational", "Fluent", "Native or bilingual"],
@@ -129,13 +135,13 @@ export const techDiff = {
     "Did you experience any technical difficulties that you haven't reported already?",
   responseType: "text",
   name: "techDiff",
-  flags: { multiline: true },
+  flags: { multiline: true, placeholder: "optional" },
 };
 
 export const otherFinal = {
   text:
-    "Aaaand... we're done! How was this experiment? What went well? What could have been better? Any ideas?",
+    "Aaaand... we're done! Any feedback or ideas for us? What went well? What could have been better? You may leave this blank.",
   responseType: "text",
   name: "other",
-  flags: { multiline: true },
+  flags: { multiline: true, placeholder: "optional" },
 };

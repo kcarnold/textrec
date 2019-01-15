@@ -1,6 +1,7 @@
 /** @format */
 import { extendObservable, decorate, observable, action, computed } from "mobx";
 import isEqual from "lodash/isEqual";
+import countWords from "./CountWords";
 
 export class TrialState {
   constructor(flags) {
@@ -10,6 +11,9 @@ export class TrialState {
       range: { start: 0, end: 0 },
       caret: null,
       suggestions: [{ text: "" }, { text: "" }, { text: "" }],
+      get wordCount() {
+        return countWords(this.curText);
+      },
     });
   }
 
@@ -18,13 +22,16 @@ export class TrialState {
   }
 
   getCueRequest() {
-    return {
-      type: "rpc",
-      rpc: {
-        method: "get_cue",
-        text: this.curText,
-      },
-    };
+    if (this.flags.recType === "cue") {
+      return {
+        type: "rpc",
+        rpc: {
+          method: "get_cue",
+          text: this.curText,
+        },
+      };
+    }
+    return null;
   }
 
   get numFinishedSents() {
@@ -83,6 +90,7 @@ decorate(TrialState, {
   curText: observable,
 
   numFinishedSents: computed,
+  wordCount: computed,
 
   handleEvent: action.bound,
 });

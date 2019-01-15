@@ -30,24 +30,19 @@ function surveyView(props) {
 }
 
 const namedConditions = {
-  norecs: {},
-  phrases: {},
-  questions: {},
+  norecs: { recType: null },
+  phrases: { recType: "phraseCue" },
+  questions: { recType: "questionCue" },
 };
-let baseConditions = ["norecs", "phrases", "questions"];
+let baseConditions = ["norecs", "norecs", "norecs"];
 
-type Prompt = {
-  name: string,
-  text: string,
-};
-
+/**
 const namedPrompts = {
   restaurant: {
     name: "restaurant",
     text: "Write a review of a restaurant you visited recently.",
   },
 
-  /**
   {
     name: "movie",
     text: "Write a review of a movie or TV show you watched recently.",
@@ -58,10 +53,10 @@ const namedPrompts = {
     text:
       "Write a description of a home or apartment that you're very familiar with.", // TODO: for someone to visit...?
   },
-  */
 };
 
 let basePrompts = ["restaurant"];
+  */
 
 const introSurvey = () => ({
   title: "Opening Survey",
@@ -79,6 +74,11 @@ const closingSurvey = () => ({
   basename: "postExp",
   questions: [
     SurveyData.verbalized_during,
+    SurveyData.numericResponse({
+      name: "howManyReviewsWritten",
+      text:
+        "About how many online reviews (of restaurants or otherwise) have you written in the past 3 months, excluding this one?",
+    }),
     SurveyData.age,
     SurveyData.gender,
     SurveyData.english_proficiency,
@@ -102,11 +102,7 @@ const closingSurvey = () => ({
 
 /** Experiment Blocks **/
 
-function experimentBlock(
-  block: number,
-  conditionName: string,
-  prompt: Prompt
-): Array<Screen> {
+function experimentBlock(block: number, conditionName: string): Array<Screen> {
   return [
     /*    {
       screen: "Instructions",
@@ -121,7 +117,6 @@ function experimentBlock(
     trialScreen({
       name: `final-${block}`,
       condition: conditionName,
-      prompt,
     }) /*
     {
       screen: "PostTaskSurvey",
@@ -135,13 +130,12 @@ function experimentBlock(
 }
 
 function getDemoScreens(condition: string) {
-  return basePrompts.map((promptName, idx) =>
+  return [
     trialScreen({
-      name: `final-${idx}`,
+      name: `final-0`,
       condition,
-      prompt: namedPrompts[promptName],
-    })
-  );
+    }),
+  ];
 }
 
 const StudyDesc = () => (
@@ -182,7 +176,7 @@ function getScreens(conditionName: string): Screen[] {
       ),
     },
     // { screen: "StudyDesc", view: StudyDesc },
-    ...experimentBlock(0, conditionName, namedPrompts["restaurant"]),
+    ...experimentBlock(0, conditionName),
 
     {
       screen: "PostExpSurvey",
@@ -262,7 +256,10 @@ const WriterView = iobs(({ state, dispatch }) => {
       <h1>
         Your review of <i>{state.controlledInputs.get("restaurantName")}</i>
       </h1>
-      <p>Write your review below. Aim to approximately fill the text box.</p>
+      <p>
+        Write your review below. Aim for about 125 words (you're at{" "}
+        {state.experimentState.wordCount}).
+      </p>
       <div style={{ position: "relative" }}>
         <Editable
           range={range}
@@ -300,9 +297,8 @@ function trialScreen(props: {
   name: string,
   condition: string,
   flags: ?Object,
-  prompt: Prompt,
 }) {
-  let { name, condition, flags, prompt } = props;
+  let { name, condition, flags } = props;
   if (!(condition in namedConditions)) {
     throw new Error(`Invalid condition name: ${condition}`);
   }
@@ -313,7 +309,6 @@ function trialScreen(props: {
       flags: {
         condition,
         ...namedConditions[condition],
-        prompt,
         ...flags,
       },
     },
@@ -322,12 +317,10 @@ function trialScreen(props: {
   };
 }
 
-//let conditionOrders = shuffle.permutator(baseConditions);
-
 export function createTaskState(loginEvent) {
   let clientId = loginEvent.participant_id;
 
-  let screens, prompts;
+  let screens;
   let demoConditionName = getDemoConditionName(clientId);
   if (demoConditionName != null) {
     screens = getDemoScreens(demoConditionName);
@@ -335,11 +328,12 @@ export function createTaskState(loginEvent) {
     // if ("n_conditions" in loginEvent) {
     //   console.assert(loginEvent.n_conditions === conditionOrders.length);
     // }
-    // Between-subjects for prompt and condition.
+    // Between-subjects for prompt (passed as config option) and condition (passed as counterbalanced assignment).
     let condition = baseConditions[loginEvent.assignment];
     let conditions = [condition];
-    prompts = basePrompts.slice();
-    screens = getScreens(conditions, prompts);
+    let prompt = loginEvent.prompt;
+    console.log("Prompt: ", prompt);
+    screens = getScreens(conditions);
   }
 
   let state = createState({
