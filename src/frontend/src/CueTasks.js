@@ -85,14 +85,15 @@ const closingSurvey = () => ({
     SurveyData.techDiff,
     {
       type: "options",
+      responseType: "options",
       text: (
         <span>
-          Is there any reason that we shouldn't use your data?{" "}
-          <b>There's no penalty for answering Yes here.</b> If yes, please
-          explain in the next question.
+          Is there any reason that we shouldn't use your data? If so, please
+          explain in the next question.{" "}
+          <b>There's no penalty for answering "don't use" here.</b>
         </span>
       ),
-      options: ["Yes", "No"],
+      options: ["Use my data", "Don't use my data"],
       name: "shouldExclude",
     },
     SurveyData.otherFinal,
