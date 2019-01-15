@@ -93,7 +93,7 @@ def get_vectorizer(sents):
     return vectorizer, all_vecs
 
 
-def get_projection_mat(vectorizer):
+def get_projection_mat(vectorizer, normalize_by_wordfreq=True):
     import wordfreq
 
     global cnnb
@@ -111,19 +111,26 @@ def get_projection_mat(vectorizer):
     cnnb_vecs_for_sklearn_vocab = np.array(
         [get_or_zero(cnnb, word) for word in sklearn_vocab]
     )
-    wordfreqs_for_sklearn_vocab = [
-        wordfreq.word_frequency(word, "en", "large", minimum=1e-9)
-        for word in sklearn_vocab
-    ]
-    return -np.log(wordfreqs_for_sklearn_vocab)[:, None] * cnnb_vecs_for_sklearn_vocab
+
+    if normalize_by_wordfreq:
+        wordfreqs_for_sklearn_vocab = [
+            wordfreq.word_frequency(word, "en", "large", minimum=1e-9)
+            for word in sklearn_vocab
+        ]
+        return (
+            -np.log(wordfreqs_for_sklearn_vocab)[:, None] * cnnb_vecs_for_sklearn_vocab
+        )
+    else:
+        return cnnb_vecs_for_sklearn_vocab
 
 
 def filter_by_norm(vecs, texts, min_norm=0.5):
     norms = np.linalg.norm(vecs, axis=1)
     large_enough = norms > min_norm
     vecs = vecs[large_enough] / norms[large_enough][:, None]
-    texts = [texts[i] for i in np.flatnonzero(large_enough)]
-    return texts, vecs
+    indices = np.flatnonzero(large_enough)
+    texts = [texts[i] for i in indices]
+    return texts, vecs, indices
 
 
 # Clustering sentences
@@ -195,12 +202,13 @@ def cached_vectorizer_and_projections(dataset_name):
     vectorizer, raw_vecs = get_vectorizer(sents)
     projection_mat = get_projection_mat(vectorizer)
     vecs = raw_vecs.dot(projection_mat)
-    new_sents, projected_vecs = filter_by_norm(vecs, sents)
+    new_sents, projected_vecs, filtered_indices = filter_by_norm(vecs, sents)
     return {
         "vectorizer": vectorizer,
         "projection_mat": projection_mat,
         "filtered_sents": new_sents,
         "projected_vecs": projected_vecs,
+        "filtered_indices": filtered_indices,
     }
 
 
