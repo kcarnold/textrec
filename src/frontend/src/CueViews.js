@@ -3,7 +3,7 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
 import { NextBtn } from "./BaseViews";
-import Consent from "./Consent";
+import Consent from "./ConsentDesktop";
 
 const SITE_DOWN = false;
 
@@ -15,7 +15,7 @@ export const Welcome = inject("state")(
           Site down for maintenance, please try again in a few hours.
         </h1>
       )}
-      <h1>Welcome</h1>
+      <h1>Consent to Participate in Academic Research</h1>
       <Consent timeEstimate={state.timeEstimate} platform={state.platform} />
       <p>
         If you consent to participate, click here: <NextBtn />
