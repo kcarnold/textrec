@@ -21,6 +21,7 @@ spacy = "^2.0"
 #wordfreq = {path = "vendor/wordfreq/"}
 #kenlm = { path = "vendor/kenlm" }
 
+tornado = "^5.1"
 [tool.poetry.dev-dependencies]
 ipython = "^7.2"
 
