@@ -9,7 +9,7 @@ BATCH_DATA = {
     'gc1': dict(n_conditions=6, config='gcap'),
     'spec2': dict(n_conditions=6, config='cap'),
     'xs1': dict(n_conditions=6, config="gx"),
-    'cue0': dict(n_conditions=3, config="cue")
+    'cue0': dict(n_conditions=1, config="cue") # BASELINE, only one actual condition (norecs).
 }
 
 invalid = set('h52x67 3vf5fg 73qq5q ffhgxm mhh838 j39263 pqf6q5 49cm8f'.split())
