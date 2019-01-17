@@ -1,5 +1,6 @@
 /** @format */
 import range from "lodash/range";
+import { observer, inject } from "mobx-react";
 
 const blankRec = { words: [] };
 const blankRecs = range(3).map(() => blankRec);
@@ -53,3 +54,5 @@ export const finalDataLogger = state => {
     return [];
   });
 };
+
+export const iobs = fn => inject("state", "dispatch")(observer(fn));

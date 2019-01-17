@@ -14,12 +14,8 @@ import { Survey } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
 
-import { getDemoConditionName, finalDataLogger } from "./misc";
-import { Editable } from "./Editable";
-
-const iobs = fn => inject("state", "dispatch")(observer(fn));
-
-const TAB_KEYCODE = 9;
+import { getDemoConditionName, finalDataLogger, iobs } from "./misc";
+import { WriterView } from "./DesktopPhraseView";
 
 function surveyView(props) {
   return () => React.createElement(Survey, props);
@@ -123,7 +119,12 @@ function trialView(props) {
   return inject("clientKind")(
     observer(({ clientKind }) => {
       if (clientKind === "p") {
-        return <WriterView />;
+        return (
+          <div>
+            <RestaurantReviewHeader />
+            <WriterView />
+          </div>
+        );
       } else if (clientKind === "c") {
         return <SpyView />;
       }
@@ -169,59 +170,17 @@ const SpyView = iobs(({ state, dispatch }) => {
   );
 });
 
-const WriterView = iobs(({ state, dispatch }) => {
-  let { curText, range, caret, suggestions } = state.experimentState;
-
-  const onKeyDown = evt => {
-    if (evt.which === TAB_KEYCODE) {
-      evt.preventDefault();
-      evt.stopPropagation();
-      console.log("TAB");
-      dispatch({ type: "insertSugWord" });
-    }
-  };
-  let { top, left } = caret || { top: 0, left: 0 };
-  return (
-    <div>
-      <h1>
-        Your review of <i>{state.controlledInputs.get("restaurantName")}</i>
-      </h1>
-      <p>
-        Write your review below. Aim for about 125 words (you're at{" "}
-        {state.experimentState.wordCount}).
-      </p>
-      <div style={{ position: "relative" }}>
-        <Editable
-          range={range}
-          text={curText}
-          onChange={newVals => {
-            dispatch({
-              type: "setText",
-              text: newVals.text,
-              range: newVals.range,
-              caret: newVals.caret,
-            });
-            console.log(newVals);
-          }}
-          onKeyDown={onKeyDown}
-        />
-        <div
-          style={{
-            position: "absolute",
-            top: top + 20,
-            left,
-            color: "grey",
-          }}
-        >
-          {suggestions.map((suggestion, idx) => (
-            <div key={idx}>{suggestion.text}</div>
-          ))}
-        </div>
-      </div>
-      <NextBtn>Submit</NextBtn>
-    </div>
-  );
-});
+const RestaurantReviewHeader = iobs(({ state }) => (
+  <div>
+    <h1>
+      Your review of <i>{state.controlledInputs.get("restaurantName")}</i>
+    </h1>
+    <p>
+      Write your review below. Aim for about 125 words (you're at{" "}
+      {state.experimentState.wordCount}).
+    </p>
+  </div>
+));
 
 function trialScreen(props: {
   name: string,
