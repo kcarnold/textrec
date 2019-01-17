@@ -171,7 +171,7 @@ const reviewHeader = (controlledInputName, targetWords) =>
   iobs(({ state }) => (
     <div>
       <h1>
-        Your review of <i>{state.controlledInputs.get()}</i>
+        Your review of <i>{state.controlledInputs.get(controlledInputName)}</i>
       </h1>
       <p>
         Write your review below. Aim for about {targetWords} words (you're at{" "}
