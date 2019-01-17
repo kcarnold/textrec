@@ -78,10 +78,13 @@ def deploy(c):
     build_frontend(c)
 
 
-def get_data():
-    subprocess.run(["./scripts/pull-logs"], env=dict(os.environ, SERVER="gcp1"))
+@task
+def get_data(c):
+    for host in my_hosts:
+        subprocess.run(["./scripts/pull-logs"], env=dict(os.environ, SERVER=host))
 
 
+@task
 def gen_traits(c):
     def traits_flags(traits):
         return " ".join(f"--trait {trait}" for trait in traits)
