@@ -81,7 +81,7 @@ target/
 !/data/invalid.txt
 
 /logs
-/logs-gcp1
+/logs-*
 
 /models
 /models-local
