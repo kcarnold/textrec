@@ -28,16 +28,17 @@ if (initialPart === "panopt") {
 } else if (initialPart === "showall") {
   // e.g., /?showall/c=gcap&a=0
   let mod = require("./ShowAllScreens");
-  let match = remainder.match(/^c=(\w+)&a=(\d+)$/);
-  let config = match[1];
-  let assignment = +match[2];
-  let { createTaskState, MasterView } = getApp(config);
   let loginEvent = {
     type: "login",
     participant_id: "zzzzzz",
-    config,
-    assignment,
   };
+  remainder.split("&").forEach(part => {
+    let [k, v] = part.split("=", 2);
+    if (k === "c") k = "config";
+    else if (k == "a") k = "assignment";
+    loginEvent[k] = v;
+  });
+  let { createTaskState, MasterView } = getApp(loginEvent.config);
   mod.init(createTaskState, MasterView, loginEvent);
   let ShowAllScreens = mod.default;
   topLevel = <ShowAllScreens />;
