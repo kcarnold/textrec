@@ -15,7 +15,7 @@ import * as SurveyData from "./SurveyData";
 import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
 
 import { getDemoConditionName, finalDataLogger, iobs } from "./misc";
-import { WriterView } from "./DesktopPhraseView";
+import { WriterView, SpyView } from "./DesktopPhraseView";
 
 function surveyView(props) {
   return () => React.createElement(Survey, props);
@@ -30,54 +30,29 @@ let baseConditions = ["norecs", "norecs", "norecs"];
 
 //movie:  "Write a review of a movie or TV show you watched recently.",
 
-const closingSurvey = () => ({
-  title: "Closing Survey",
-  basename: "postExp",
-  questions: [
-    SurveyData.verbalized_during,
-    SurveyData.numericResponse({
-      name: "howManyReviewsWritten",
-      text:
-        "About how many online reviews (of restaurants or otherwise) have you written in the past 3 months, excluding this one?",
-    }),
-    SurveyData.age,
-    SurveyData.gender,
-    SurveyData.english_proficiency,
-    SurveyData.techDiff,
-    {
-      type: "options",
-      responseType: "options",
-      text: (
-        <span>
-          Is there any reason that we shouldn't use your data? If so, please
-          explain in the next question.{" "}
-          <b>There's no penalty for answering "don't use" here.</b>
-        </span>
-      ),
-      options: ["Use my data", "Don't use my data"],
-      name: "shouldExclude",
-    },
-    SurveyData.otherFinal,
-  ],
-});
+const demographicsSurvey = [
+  SurveyData.age,
+  SurveyData.gender,
+  SurveyData.english_proficiency,
+  SurveyData.techDiff,
+];
 
-function experimentBlock(block: number, conditionName: string): Array<Screen> {
-  return [
-    trialScreen({
-      name: `final-${block}`,
-      condition: conditionName,
-    }),
-  ];
-}
-
-function getDemoScreens(condition: string) {
-  return [
-    trialScreen({
-      name: `final-0`,
-      condition,
-    }),
-  ];
-}
+const finalSurveyQuestions = [
+  {
+    type: "options",
+    responseType: "options",
+    text: (
+      <span>
+        Is there any reason that we shouldn't use your data? If so, please
+        explain in the next question.{" "}
+        <b>There's no penalty for answering "don't use" here.</b>
+      </span>
+    ),
+    options: ["Use my data", "Don't use my data"],
+    name: "shouldExclude",
+  },
+  SurveyData.otherFinal,
+];
 
 const RestaurantPrompt = () => (
   <div className="Restaurant">
@@ -90,38 +65,99 @@ const RestaurantPrompt = () => (
   </div>
 );
 
-function getScreens(conditionName: string): Screen[] {
-  let result = [
-    { screen: "Welcome" },
-    {
-      screen: "SelectRestaurant",
-      view: () => (
-        <div>
-          Think of a restaurant (or bar, cafe, diner, etc.) that you've been to
-          recently that you <b>haven't written about before</b>.
-          <RestaurantPrompt />
-          <NextBtn />
-        </div>
-      ),
-    },
-    ...experimentBlock(0, conditionName),
+const reviewClosingSurvey = reviewType => ({
+  screen: "PostExpSurvey",
+  view: surveyView({
+    title: "Closing Survey",
+    basename: "postExp",
+    questions: [
+      SurveyData.verbalized_during,
+      SurveyData.numericResponse({
+        name: "howManyReviewsWritten",
+        text: `About how many online reviews (of ${reviewType} or otherwise) have you written in the past 3 months, excluding this one?`,
+      }),
+      ...demographicsSurvey,
+      ...finalSurveyQuestions,
+    ],
+  }),
+});
 
-    {
-      screen: "PostExpSurvey",
-      view: surveyView(closingSurvey()),
-    },
-    { screen: "Done" },
-  ];
-  return result;
-}
+const WelcomeScreen = { screen: "Welcome", view: Views.Welcome };
+const DoneScreen = { screen: "Done", view: Views.Done };
 
-function trialView(props) {
-  return inject("clientKind")(
+const restaurantTask = {
+  getScreens(conditionName: string, demo = false): Screen[] {
+    let trial = trialScreen({
+      name: `final-0`,
+      condition: conditionName,
+      HeaderComponent: reviewHeader("restaurantName", 125),
+    });
+    if (demo) return [trial];
+    return [
+      WelcomeScreen,
+      {
+        screen: "SelectRestaurant",
+        view: () => (
+          <div>
+            Think of a restaurant (or bar, cafe, diner, etc.) that you've been
+            to recently that you <b>haven't written about before</b>.
+            <RestaurantPrompt />
+            <NextBtn />
+          </div>
+        ),
+      },
+      trial,
+      reviewClosingSurvey("restaurants"),
+      DoneScreen,
+    ];
+  },
+};
+
+const movieTask = {
+  getScreens(conditionName: string): Screen[] {
+    return [
+      WelcomeScreen,
+      {
+        screen: "SelectMovie",
+        view: () => (
+          <div>
+            Think of a movie or TV show that you've recently watched and haven't
+            written about before.
+            <div>
+              <p>
+                Name of the movie or TV show:{" "}
+                <ControlledInput name={"movieName"} />
+              </p>
+              <p>
+                About how long ago did you watch it, in days?{" "}
+                <ControlledInput name={"watchDaysAgo"} type="number" min="0" />
+              </p>
+              <p>
+                How would you rate it? <ControlledStarRating name={"star"} />
+              </p>
+            </div>
+            <NextBtn />
+          </div>
+        ),
+      },
+      trialScreen({
+        name: `final-0`,
+        condition: conditionName,
+        HeaderComponent: reviewHeader("movieName", 125),
+      }),
+      reviewClosingSurvey("movies"),
+      DoneScreen,
+    ];
+  },
+};
+
+const trialView = HeaderComponent =>
+  inject("clientKind")(
     observer(({ clientKind }) => {
       if (clientKind === "p") {
         return (
           <div>
-            <RestaurantReviewHeader />
+            <HeaderComponent />
             <WriterView />
           </div>
         );
@@ -130,64 +166,27 @@ function trialView(props) {
       }
     })
   );
-}
 
-const SpyView = iobs(({ state, dispatch }) => {
-  let { curText, range, suggestions } = state.experimentState;
-
-  let beforeCursor = curText.slice(0, range.start);
-  let selected = curText.slice(range.start, range.end);
-  let afterCursor = curText.slice(range.end);
-
-  return (
+const reviewHeader = (controlledInputName, targetWords) =>
+  iobs(({ state }) => (
     <div>
-      <div>
-        {beforeCursor}
-        <span
-          style={{
-            minWidth: "2px",
-            height: "17px",
-            background: "blue",
-          }}
-        >
-          {selected}
-        </span>
-        <span className="Cursor" />
-        {afterCursor}
-      </div>
-      {suggestions.map((suggestion, idx) => (
-        <div key={idx}>
-          <input
-            type="text"
-            onChange={event =>
-              dispatch({ type: "setSuggestion", idx, text: event.target.value })
-            }
-            value={suggestion.text}
-          />
-        </div>
-      ))}
+      <h1>
+        Your review of <i>{state.controlledInputs.get()}</i>
+      </h1>
+      <p>
+        Write your review below. Aim for about {targetWords} words (you're at{" "}
+        {state.experimentState.wordCount}).
+      </p>
     </div>
-  );
-});
-
-const RestaurantReviewHeader = iobs(({ state }) => (
-  <div>
-    <h1>
-      Your review of <i>{state.controlledInputs.get("restaurantName")}</i>
-    </h1>
-    <p>
-      Write your review below. Aim for about 125 words (you're at{" "}
-      {state.experimentState.wordCount}).
-    </p>
-  </div>
-));
+  ));
 
 function trialScreen(props: {
   name: string,
   condition: string,
+  HeaderComponent: React.Component,
   flags: ?Object,
 }) {
-  let { name, condition, flags } = props;
+  let { name, condition, flags, HeaderComponent } = props;
   if (!(condition in namedConditions)) {
     throw new Error(`Invalid condition name: ${condition}`);
   }
@@ -202,7 +201,7 @@ function trialScreen(props: {
       },
     },
     screen: "ExperimentScreen",
-    view: trialView({}),
+    view: trialView(HeaderComponent),
   };
 }
 
@@ -212,7 +211,7 @@ export function createTaskState(loginEvent) {
   let screens;
   let demoConditionName = getDemoConditionName(clientId);
   if (demoConditionName != null) {
-    screens = getDemoScreens(demoConditionName);
+    screens = restaurantTask.getScreens(demoConditionName, true);
   } else {
     // if ("n_conditions" in loginEvent) {
     //   console.assert(loginEvent.n_conditions === conditionOrders.length);
@@ -222,7 +221,11 @@ export function createTaskState(loginEvent) {
     let conditions = [condition];
     let prompt = loginEvent.prompt;
     console.log("Prompt: ", prompt);
-    screens = getScreens(conditions);
+    let task;
+    if (prompt === "restaurant") task = restaurantTask;
+    else if (prompt === "movie") task = movieTask;
+    else console.assert(`Unknown prompt ${prompt}`);
+    screens = task.getScreens(conditions);
   }
 
   let state = createState({
@@ -237,10 +240,6 @@ export function createTaskState(loginEvent) {
 }
 
 export function screenToView(screenDesc: Screen) {
-  if (screenDesc.view) {
-    return React.createElement(screenDesc.view);
-  }
-  let screenName = screenDesc.screen;
-  console.assert(screenName in Views);
-  return React.createElement(Views[screenName]);
+  console.assert(screenDesc.view);
+  return React.createElement(screenDesc.view);
 }
