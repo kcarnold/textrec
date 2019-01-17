@@ -22,15 +22,15 @@ export const MasterView = screenToView =>
           if (state.pingTime === null) {
             return (
               <div>
-                Please wait while we test your phone's communication with our
+                Please wait while we test your browser's communication with our
                 server.
               </div>
             );
           } else if (state.pingTime > MAX_PING_TIME) {
             return (
               <div>
-                Sorry, your phone's connection to our server is too slow (your
-                ping is {Math.round(state.pingTime)} ms). Check your WiFi
+                Sorry, your browser's connection to our server is too slow (your
+                "ping" is {Math.round(state.pingTime)} ms). Check your WiFi
                 connection and reload the page.
               </div>
             );
