@@ -7,6 +7,7 @@ import re
 import subprocess
 import time
 import traceback
+import platform
 import zlib
 from concurrent.futures import ProcessPoolExecutor
 
@@ -28,6 +29,8 @@ def get_git_commit():
         subprocess.check_output(["git", "describe", "--always"]).decode("ascii").strip()
     )
 
+
+MY_HOSTNAME = platform.node()
 
 define("port", default=5000, help="run on the given port", type=int)
 
@@ -378,6 +381,8 @@ class LoginHandler(tornado.web.RequestHandler):
         login_event["batch"] = batch
         login_event["platform_id"] = params.pop("p", None)
         login_event["jsTimestamp"] = data["jsTimestamp"]
+        login_event["hostname"] = MY_HOSTNAME
+        login_event["request_hostname"] = self.request.host
         login_event.update(params)
         login_event.update(counterbalancing_flags)
         participant.log(login_event)
