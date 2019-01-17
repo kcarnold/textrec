@@ -6,20 +6,16 @@
 import * as React from "react";
 import { observer, inject } from "mobx-react";
 
-import flatMap from "lodash/flatMap";
-import range from "lodash/range";
 import { createState } from "./MasterState";
 import { TrialState } from "./CueTrialState";
 import * as Views from "./CueViews";
 import { NextBtn } from "./BaseViews";
-import { Survey, likert } from "./SurveyViews";
+import { Survey } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
 
 import { getDemoConditionName, finalDataLogger } from "./misc";
 import { Editable } from "./Editable";
-
-import * as shuffle from "./shuffle";
 
 const iobs = fn => inject("state", "dispatch")(observer(fn));
 
@@ -36,38 +32,7 @@ const namedConditions = {
 };
 let baseConditions = ["norecs", "norecs", "norecs"];
 
-/**
-const namedPrompts = {
-  restaurant: {
-    name: "restaurant",
-    text: "Write a review of a restaurant you visited recently.",
-  },
-
-  {
-    name: "movie",
-    text: "Write a review of a movie or TV show you watched recently.",
-  },
-
-  {
-    name: "home",
-    text:
-      "Write a description of a home or apartment that you're very familiar with.", // TODO: for someone to visit...?
-  },
-};
-
-let basePrompts = ["restaurant"];
-  */
-
-const introSurvey = () => ({
-  title: "Opening Survey",
-  basename: "intro",
-  questions: [
-    {
-      text:
-        "There will be several short surveys like this as breaks from the writing task.",
-    },
-  ],
-});
+//movie:  "Write a review of a movie or TV show you watched recently.",
 
 const closingSurvey = () => ({
   title: "Closing Survey",
@@ -100,32 +65,12 @@ const closingSurvey = () => ({
   ],
 });
 
-/** Experiment Blocks **/
-
 function experimentBlock(block: number, conditionName: string): Array<Screen> {
   return [
-    /*    {
-      screen: "Instructions",
-      view: () => (
-        <div>
-          Now we'll be using
-          <h1>Keyboard Design {block + 1}</h1>
-          <NextBtn />
-        </div>
-      ),
-    },*/
     trialScreen({
       name: `final-${block}`,
       condition: conditionName,
-    }) /*
-    {
-      screen: "PostTaskSurvey",
-      view: surveyView({
-        title: `Survey for Keyboard Design ${block + 1}`,
-        basename: `postTask-${block}`,
-        questions: [SurveyData.techDiff, SurveyData.otherMid],
-      }),
-    },*/,
+    }),
   ];
 }
 
@@ -137,14 +82,6 @@ function getDemoScreens(condition: string) {
     }),
   ];
 }
-
-const StudyDesc = () => (
-  <div>
-    <h1>Study Preview</h1>
-    <p>TODO</p>
-    Ready to get started? <NextBtn />
-  </div>
-);
 
 const RestaurantPrompt = () => (
   <div className="Restaurant">
@@ -160,10 +97,6 @@ const RestaurantPrompt = () => (
 function getScreens(conditionName: string): Screen[] {
   let result = [
     { screen: "Welcome" },
-    // {
-    //   screen: "IntroSurvey",
-    //   view: surveyView(introSurvey()),
-    // },
     {
       screen: "SelectRestaurant",
       view: () => (
@@ -175,7 +108,6 @@ function getScreens(conditionName: string): Screen[] {
         </div>
       ),
     },
-    // { screen: "StudyDesc", view: StudyDesc },
     ...experimentBlock(0, conditionName),
 
     {
@@ -198,8 +130,6 @@ function trialView(props) {
     })
   );
 }
-
-const SugEditor = ({ text, onChange }) => {};
 
 const SpyView = iobs(({ state, dispatch }) => {
   let { curText, range, suggestions } = state.experimentState;
