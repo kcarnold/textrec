@@ -1,0 +1,352 @@
+﻿dt_all = Open(
+	"/Users/kcarnold/thesis/textrec/data/analyzed/combined_data.csv",
+	Charset( "utf-8" ),
+	Import Settings(
+		End Of Line( CRLF, CR, LF ),
+		End Of Field( Comma, CSV( 1 ) ),
+		Strip Quotes( 1 ),
+		Use Apostrophe as Quotation Mark( 0 ),
+		Use Regional Settings( 0 ),
+		Scan Whole File( 0 ),
+		Treat empty columns as numeric( 0 ),
+		CompressNumericColumns( 0 ),
+		CompressCharacterColumns( 0 ),
+		CompressAllowListCheck( 0 ),
+		Labels( 1 ),
+		Column Names Start( 1 ),
+		Data Starts( 2 ),
+		Lines To Read( "All" ),
+		Year Rule( "20xx" )
+	)
+);
+
+// Master data filter
+dt = Subset( dt_all, Rows( dt_all << get rows where( :participant != "pr5hff" & :participant != "7q253f" ) ) );
+Close( dt_all );
+dt << Set Name( "Combined Data" );
+
+
+// Set data types
+Column( dt, "stimulus" ) << Data Type( "Character" ) << Modeling Type( "Nominal" );
+// "The last level is the level with the highest value order coding; it is the level whose indicator function is not included in the model." (https://www.jmp.com/support/help/14/indicator-parameterization-estimates.shtml)
+Column( dt, "condition" ) << Set Property( "Value Ordering", {"gated", "contextual", "standard", "norecs"} );
+
+
+// Create formula columns
+dt << New Column( "taps_per_word", Numeric, Formula( :num_taps / :num_words ) );
+dt << New Column( "taps_per_char", Numeric, Formula( :num_taps / :num_chars ) );
+dt << New Column( "chars_per_word", Numeric, Formula( :num_chars / :num_words ) );
+
+dt << New Column( "num_words_log", Numeric, Formula( Log( :num_words ) ) );
+
+dt << New Column( "chars_per_sec_log", Numeric, Formula( Log( :characters_per_sec ) ) );
+dt << New Column( "chars_per_sec_norecs_log", Numeric, Formula( Log( :chars_per_sec_norecs_mean ) ) );
+
+
+dt << New Column( "mintaps_standard", Numeric, Formula( :corrected_tapstotype_standard / :num_words ) );
+dt << New Column( "mintaps_contextual", Numeric, Formula( :corrected_tapstotype_contextual / :num_words ) );
+dt << New Column( "mintaps_std_minus_contextual", Numeric, Formula( mintaps_standard - mintaps_contextual ) );
+
+dt << New Column( "any_ADJ", Numeric, Formula(  :ADJ > 0 ) );
+
+
+
+// Compute the means of all quantities by block.
+
+blockLevel = dt << Summary(
+	Group( :experiment, :participant, :block, :condition ),
+	Mean( :age ),
+	Mean( :num_chars ),
+	Mean( :num_words ),
+	Mean( :relevant_use_frac ),
+	Mean( :mintaps_standard ),
+	Mean( :chars_per_sec_norecs_mean ),
+	Mean( :chars_per_sec_norecs_log ),
+	Mean( :chars_per_sec_log ),
+	Mean( :taps_per_char),
+	Freq( "None" ),
+	Weight( "None" ),
+	statistics column name format( "column" )
+);
+
+
+
+// Transform columns
+// /*"NFC", "Extraversion", "Openness", "Trust",*/ 
+quartilify = {"chars_per_sec_norecs_mean"};
+For( i = 1, i <= N Items( quartilify ), i++, 
+	/*dt << New Column( quartilify[i] || " Quartile",
+		Ordinal,
+		Formula( 1 + Floor( (4 * (Col Rank( Column( quartilify[i] ), <<tie( "average" ) ) - 1)) / N Row() ) )
+	)*/
+	blockLevel  << New Column( quartilify[i] || " Tertile",
+		Ordinal,
+		Formula( 1 + Floor( (3 * (Col Rank( Column( quartilify[i] ), <<tie( "average" ) ) - 1)) / N Row() ) )
+	)
+);
+
+Wait( 0 );
+
+
+
+
+// Main analysis function
+// extra_toplevel is stuff like Where(condition != "norecs")
+// extra_effects is stuff like ", :chars_per_sec_norecs_log "
+analyze = Function( {response_name, window_title, extra_toplevel = "", extra_effects = ""},
+	{s, resp},
+	s = "New Window( \!"" || window_title || "\!",
+		blockLevel << Graph Builder(
+			Variables( X( :condition ), Y( :" || response_name ||
+	")),
+			Elements( Bar( X, Y, Legend( 4 ), Error Bars( \!"Standard Error\!" ), Label( \!"Label by Value\!" ) ) ),
+			SendToReport( 
+				Dispatch( {}, \!"Y title\!", TextEditBox, {Set Text( \!""
+	 || window_title ||
+	"\!")} ) ,
+				Dispatch( {}, \!"graph title\!", TextEditBox, {Set Text( \!"\!" )} ),
+			)
+		),
+		resp = blockLevel << Fit Model(
+			Y( :"
+	 || response_name || " ),
+			Effects( :experiment, :condition " || extra_effects ||
+	"),
+			Random Effects( :participant ),
+			NoBounds( 1 ),
+			Personality( \!"Standard Least Squares\!" ),
+			Method( \!"REML\!" ),
+			Emphasis( \!"Minimal Report\!" ),
+			Run(
+				Name( \!""
+	 || response_name ||
+	"\!" ) << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
+				Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
+				Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 ), {:condition <<
+				{LSMeans Tukey HSD( 0.05 )}}}
+			),
+			SendToReport( Dispatch( \!"Response "
+	 || response_name || "\!", \!"Effect Details\!", OutlineBox, {Close( 0 )} ) ),
+			" || extra_toplevel || "
+		)
+	)";
+	Show( s );
+	Eval( Parse( s ) );
+	resp;
+);
+
+
+
+/*** Outcome Effects ***/
+// MTPW(standard)
+analyze( "mintaps_standard", "MTPW(Standard, text)" );
+// By content of recommendations offered (diff between standard and contextual)
+//analyze( "mintaps_std_minus_contextual", "MTPW(Standard, text) - MPTW(Contextual, text)" );
+
+
+
+
+
+/*** Process Effects ***/
+
+// Main effect of condition on text entry speed
+analyze( "chars_per_sec_log", "Characters per Second" );
+
+
+analyze( "chars_per_sec_log", "Characters per Second with baseline", "", ", :chars_per_sec_norecs_log, :chars_per_sec_norecs_log*:condition " );
+
+analyze( "chars_per_sec_log", "Characters per Second with age", "", ", :age, :age*:condition " );
+analyze( "chars_per_sec_log", "Characters per Second with age and baseline", "", ", :age, :age*:condition, :chars_per_sec_norecs_log, :chars_per_sec_norecs_log*:condition " );
+
+analyze( "taps_per_char", "Taps per Char" );
+
+
+
+//// Original datatable
+
+/***************
+******* TODO BELOW HERE
+*************/
+
+New Window( "Manipulation Checks",
+	dt << Matched Pairs(
+		X( :condition ),
+		Y( :mintaps_standard, :mintaps_contextual ),
+		Plot Dif By Row( 1 ),
+		Reference Frame( 0 ),
+		Wilcoxon Signed Rank( 1 )
+	),
+	dt << Graph Builder(
+		Variables( X( :condition ), Y( Transform Column( "num_recs_seen/num_taps", Formula( :num_recs_seen / (:num_taps + 1) ) ) ) ),
+		Elements( Bar( X, Y, Legend( 5 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) )
+	),
+	dt << Oneway(
+		Y(
+			Transform Column(
+				"orig_bow_recs_idealuse_cond/orig_bow_recs_offered_cond",
+				Formula( :orig_bow_recs_idealuse_cond / :orig_bow_recs_offered_cond )
+			)
+		),
+		X( :condition ),
+		Means( 1 ),
+		t Test( 1 ),
+		Wilcoxon Test( 1 ),
+		Mean Diamonds( 1 ),
+		Where( :experiment == "gc1" )
+	), 
+
+	dt << Graph Builder(
+		Variables(
+			X( :condition ),
+			Y(
+				Transform Column(
+					"orig_bow_recs_idealuse_cond/orig_bow_recs_offered_cond",
+					Formula( :orig_bow_recs_idealuse_cond / :orig_bow_recs_offered_cond )
+				)
+			)
+		),
+		Where( :condition != "norecs" ),
+		Elements( Bar( X, Y, Legend( 4 ), Error Bars( "Standard Error" ) ) ),
+		SendToReport( Dispatch( {}, "Y title", TextEditBox, {Set Text( "Relevance rate (# relevant / # offered)" )} ) )
+	), 
+
+);
+
+Wait( 0 );
+
+
+(dt << Graph Builder(
+	Variables( X( :condition ), Y( :mintaps_standard ), Y( :mintaps_contextual, Position( 1 ) ) ),
+	Elements( Bar( X, Y( 1 ), Y( 2 ), Legend( 15 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) ),
+	SendToReport(
+		Dispatch( {}, "400", ScaleBox, {Legend Model( 15, Level Name( 0, "standard" ), Level Name( 1, "contextual" ) )} ),
+		Dispatch( {}, "graph title", TextEditBox, {Set Text( "" )} ),
+		Dispatch( {}, "X title", TextEditBox, {Set Text( "Writing Condition" )} ),
+		Dispatch( {}, "Y title", TextEditBox, {Set Text( "min taps (system, text)" )} ),
+		Dispatch( {}, "400", LegendBox, {Set Title( "System" )} )
+	)
+)) << set window title( "conformity - with gating" );
+
+
+
+// Effect on text length in words
+analyze( "num_words", "num_words" );
+analyze( "num_words_log", "Log(num_words)" );
+
+// MTPW with age
+analyze( "mintaps_standard", "MTPW with age",  "", ", :age, :age * :condition");
+
+
+analyze("ADJ", "Fraction of words that are adjectives");
+analyze("any_ADJ", "Any adjectives used?");
+
+// Participants left fewer errors uncorrected in recs conditions
+// (For the paper, I did this analysis manually, since uncorrected errors is a rare event so ANOVA assumptions fail badly.
+// analyze( "uncorrected_errors_per_char", "Uncorrected Errors per Character" );
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Text entry speed Interaction effect:
+// Graph (log transformed)
+(dt << Graph Builder(
+	Legend Position( "Inside Left" ),
+	Variables(
+		X( :condition ),
+		Y( Transform Column( "chars_per_sec_log-chars_per_sec_norecs_log", Formula( :chars_per_sec_log - :chars_per_sec_norecs_log ) ) ),
+		Overlay( :chars_per_sec_norecs_mean Tertile )
+	),
+	Elements( Bar( X, Y, Legend( 17 ), Error Bars( "Standard Error" ) ) ),
+	Where( :condition != "norecs" ),
+	SendToReport(
+		Dispatch(
+			{},
+			"400",
+			ScaleBox,
+			{Legend Model( 10, Level Name( 0, "Slowest Tertile" ), Level Name( 1, "Middle Tertile" ), Level Name( 2, "Fastest Tertile" ) )}
+		),
+		Dispatch( {}, "400", LegendBox, {Set Title( "Baseline Speed" )} ), 
+
+	)
+	
+)) << set window tytle( "speed ratio to norecs log" );
+
+(dt << Graph Builder(
+	Variables(
+		X( :chars_per_sec_norecs_mean ),
+		Y( Transform Column( "chars_per_sec_log-chars_per_sec_norecs_log", Formula( :chars_per_sec_log - :chars_per_sec_norecs_log ) ) ),
+		Overlay( :condition )
+	),
+	Elements( Points( X, Y, Legend( 18 ) ), Line Of Fit( X, Y, Legend( 19 ) ) ),
+	Where( :condition != "norecs" ),
+	SendToReport(
+		Dispatch( {}, "chars_per_sec_log-chars_per_sec_norecs_log", ScaleBox, {Add Ref Line( 0, "Solid", "Black", "", 1 )} ),
+		Dispatch( {}, "X title", TextEditBox, {Set Text( "Baseline speed (chars per sec)" )} ),
+		Dispatch( {}, "Y title", TextEditBox, {Set Text( "Log ratio of speed to baseline speed" )} )
+	)
+)) << set window title( "Speed ratio to norecs log continuous x" );
+
+
+
+
+
+// Taps per character, by type. Somewhat unusual graph.
+(dt << Graph Builder(
+	Size( 570, 564 ),
+	Variables(
+		X( :condition ),
+		Y( :taps_per_char ),
+		Y( :backspaces_per_char, Position( 1 ) ),
+		Y( Transform Column( "num_tapKey/num_chars", Formula( :num_tapKey / :num_chars ) ), Position( 1 ) ),
+		Y( Transform Column( "num_tapSugg_any/num_chars", Formula( :num_tapSugg_any / :num_chars ) ), Position( 1 ) )
+	),
+	Elements(
+		Bar( X, Y( 1 ), Legend( 3 ), Error Bars( "Confidence Interval" ) ),
+		Bar( X, Y( 4 ), Y( 2 ), Y( 3 ), Legend( 5 ), Error Bars( "Standard Error" ), Label( "Label by Percent of Total Values" ) )
+	),
+	SendToReport( Dispatch( {"Bar"}, "", OutlineBox, {Close( 0 )} ), Dispatch( {"Bar"}, "", OutlineBox, {Close( 0 )} ) )
+)) << set window title( "Taps per Character, by type" );
+
+
+
+/** Rec usage */
+// Here we do a nonparametric analysis because utilization rate is very non-Normal. Zero- and one-inflated.
+
+
+blockLevel << Oneway(
+	By( :experiment ),
+	Y( :relevant_use_frac ),
+	X( :condition ),
+	Block( :participant ),
+	Means( 1 ),
+	t Test( 1 ),
+	CDF Plot( 1 ),
+	Mean Diamonds( 1 ),
+	Wilcoxon Each Pair( 1 ),
+	SendToReport(
+		Dispatch( {"Oneway Anova"}, "Block Means", OutlineBox, {Close( 1 )} ),
+		Dispatch( {}, "CDF Plot", OutlineBox, {SetHorizontal( 1 )} )
+	)
+);
+
+
+(dt << Summary(
+	Group( :experiment, :participant ),
+	Mean( :age ),
+	Mean( :chars_per_sec_norecs_mean ),
+	Freq( "None" ),
+	Weight( "None" ),
+	statistics column name format( "column" )
+)) << Graph Builder(
+	Variables( X( :age ), Y( :chars_per_sec_norecs_mean ) ),
+	Elements( Points( X, Y, Legend( 3 ) ), Line Of Fit( X, Y, Legend( 7 ), F Test( 1 ) ) )
+);
