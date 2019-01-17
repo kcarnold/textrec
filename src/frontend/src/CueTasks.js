@@ -304,7 +304,7 @@ function trialScreen(props: {
   }
   return {
     preEvent: {
-      type: "setupExperiment",
+      type: "setupTrial",
       name,
       flags: {
         condition,

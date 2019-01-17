@@ -83,8 +83,8 @@ export const screenTracking = screens => state => {
     let screen = state.screens[state.screenNum];
     if (screen.preEvent) {
       let { preEvent } = screen;
-      if (preEvent.type === "setupExperiment") {
-        let initReq = setupExperiment(state, preEvent);
+      if (preEvent.type === "setupTrial") {
+        let initReq = setupTrial(state, preEvent);
         if (initReq) sideEffects.push(initReq);
       }
     }
@@ -99,7 +99,7 @@ export const screenTracking = screens => state => {
     return sideEffects;
   }
 
-  function setupExperiment(state, preEvent) {
+  function setupTrial(state, preEvent) {
     state.curExperiment = preEvent.name;
     let experimentObj = state.config.createExperimentState(preEvent.flags);
     state.experiments.set(preEvent.name, experimentObj);

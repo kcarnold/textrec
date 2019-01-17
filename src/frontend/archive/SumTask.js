@@ -26,7 +26,7 @@ function experimentBlock(block: number, conditionName: string): Array<Screen> {
   return [
     {
       preEvent: {
-        type: "setupExperiment",
+        type: "setupTrial",
         block,
         condition: conditionName,
         name: `final-${block}`,
@@ -41,7 +41,7 @@ function experimentBlock(block: number, conditionName: string): Array<Screen> {
 function getScreens(conditions: string[]) {
   let tutorials = tutorialStimuli.map(({ stimulus, transcribe }, idx) => ({
     preEvent: {
-      type: "setupExperiment",
+      type: "setupTrial",
       block: 0,
       condition: "general",
       name: `practice-${idx}`,

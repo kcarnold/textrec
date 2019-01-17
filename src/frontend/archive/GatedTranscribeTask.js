@@ -489,7 +489,7 @@ function trialScreen(props: {
   }
   return {
     preEvent: {
-      type: "setupExperiment",
+      type: "setupTrial",
       name,
       flags: {
         condition,
@@ -568,7 +568,7 @@ export function createTaskState(loginEvent: LoginEvent) {
     if (event.type === "textVisibility") {
       state.experimentState.textShown = event.visible;
       if (event.visible) {
-        return state.setupExperiment(state.curScreen.preEvent);
+        return state.setupTrial(state.curScreen.preEvent);
       }
     }
     return [];
