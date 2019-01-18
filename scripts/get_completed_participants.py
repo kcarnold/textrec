@@ -1,14 +1,16 @@
 import datetime
-import glob
 import json
 import os
-import pathlib
 import re
 
 import dateutil.parser
 import toolz
 
 from textrec.paths import paths
+
+log_path = paths.top_level / "logs-textrec-aws"
+earliest = datetime.datetime(2018, 5, 2)
+
 
 override_batch = {}
 for p in "gmq64w xq9hcm qj5rm6 fg392m".split():
@@ -82,9 +84,7 @@ def get_logs(log_path, earliest):
     return log_files
 
 
-log_files = get_logs(
-    paths.top_level / "logs-gcp1", earliest=datetime.datetime(2018, 5, 2)
-)
+log_files = get_logs(log_path, earliest=earliest)
 not_invalid = [entry for entry in log_files if entry["participant_id"] not in INVALID]
 complete = [entry for entry in not_invalid if entry["complete"]]
 complete.sort(key=lambda x: x["timestamp"])
