@@ -35,7 +35,7 @@ if (initialPart === "panopt") {
   remainder.split("&").forEach(part => {
     let [k, v] = part.split("=", 2);
     if (k === "c") k = "config";
-    else if (k == "a") k = "assignment";
+    else if (k === "a") k = "assignment";
     loginEvent[k] = v;
   });
   let { createTaskState, MasterView } = getApp(loginEvent.config);
