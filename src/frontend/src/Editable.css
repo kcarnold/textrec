@@ -1,6 +1,6 @@
 /** @format */
 
-.textarea {
+textarea.Editable {
     font-size: 12pt;
     position: relative;
     width: 100%;
