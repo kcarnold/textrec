@@ -5,7 +5,7 @@ import { findDOMNode } from "react-dom";
 import isEqual from "lodash/isEqual";
 import getCaretCoordinates from "textarea-caret";
 // https://github.com/component/textarea-caret-position
-import styles from "./Editable.module.css";
+import "./Editable.css";
 
 export class Editable extends React.Component {
   shouldComponentUpdate(nextProps, nextState) {
@@ -54,7 +54,7 @@ export class Editable extends React.Component {
   render() {
     return (
       <textarea
-        className={styles.textarea}
+        className={"Editable"}
         onInput={this.emitChange}
         onBlur={this.emitChange}
         onKeyDown={this.props.onKeyDown}
