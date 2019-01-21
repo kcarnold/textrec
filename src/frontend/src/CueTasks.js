@@ -177,6 +177,11 @@ const reviewHeader = (controlledInputName, targetWords) =>
         Write your review below. Aim for about {targetWords} words (you're at{" "}
         {state.experimentState.wordCount}).
       </p>
+      <p>
+        <strong>Reviews must be written from scratch in this window</strong>;
+        using an already-written review or copying and pasting from a different
+        app is not allowed.
+      </p>
     </div>
   ));
 
