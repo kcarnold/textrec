@@ -71,15 +71,17 @@ def get_log_analysis_many(participants):
             analyses[participant] = analyzed
 
     if todo:
-        logpaths = [x[1] for x in todo]
+        logpaths = [str(x[1]) for x in todo]
         # Compute a batch of analyses.
         for git_rev, real_git_rev in revisions_needed:
             subprocess.check_call(
                 [paths.scripts / "checkout-old.sh", git_rev, real_git_rev]
             )
         analyzer_path = str(paths.frontend / "run-analysis")
+        analyzer_cmd = [analyzer_path, "--"] + logpaths
+        print(' '.join(analyzer_cmd))
         completion = subprocess.run(
-            [analyzer_path, "--"] + logpaths,
+            analyzer_cmd,
             stdout=subprocess.PIPE,
         )
 
