@@ -2,26 +2,47 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
+  "proxy": {
+    "/ws": {
+      "target": "ws://localhost:5000/",
+      "ws": true
+    },
+    "/ping": {
+      "target": "ws://localhost:5000/",
+      "ws": true
+    },
+    "/login": {
+      "target": "ws://localhost:5000/"
+    }
+  },
   "devDependencies": {
+    "@storybook/addon-actions": "^3.4.8",
+    "@storybook/addon-links": "^3.4.8",
+    "@storybook/addons": "^3.4.8",
+    "@storybook/react": "^3.4.8",
     "babel-cli": "^6.26.0",
     "babel-plugin-dynamic-import-node": "^1.0.2",
     "babel-runtime": "^6.26.0",
     "flow-bin": "^0.89.0"
   },
   "dependencies": {
+    "babel-core": "^6.26.0",
     "classnames": "^2.2.5",
+    "core-js": "^2.5.5",
     "date-fns": "^1.30.1",
-    "http-proxy-middleware": "^0.19.1",
+    "enzyme": "^3.3.0",
+    "enzyme-adapter-react-16": "^1.1.1",
     "lodash": "^4.17.2",
     "mobx": "^4.2.0",
     "mobx-react": "^5.0.0",
     "mobx-react-devtools": "^5.0.1",
     "pako": "^1.0.4",
     "raven-js": "^3.17.0",
-    "react": "^16.7.0",
-    "react-dom": "^16.7.0",
-    "react-scripts": "2.0.3",
-    "react-star-rating-component": "^1.4.1",
+    "react": "^16.3.2",
+    "react-dom": "^16.3.2",
+    "react-scripts": "1.1.4",
+    "react-star-rating-component": "^1.3.0",
+    "react-test-renderer": "^16.3.2",
     "seedrandom": "^2.4.2",
     "source-map-explorer": "1.6.0",
     "textarea-caret": "https://github.com/component/textarea-caret-position"
@@ -32,7 +53,9 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "analyze": "source-map-explorer build/static/js/main.*",
-    "flow": "flow"
+    "flow": "flow",
+    "storybook": "start-storybook -p 9009 -s public",
+    "build-storybook": "build-storybook -s public"
   },
   "stylelint": {
     "extends": "stylelint-config-recommended"
@@ -40,11 +63,5 @@
   "prettier": {
     "trailingComma": "es5",
     "requirePragma": true
-  },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ]
+  }
 }
