@@ -81,7 +81,6 @@ def get_log_analysis_many(participants):
         completion = subprocess.run(
             [analyzer_path, "--"] + logpaths,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
         )
 
         for line in completion.stdout.split(b"\n"):
