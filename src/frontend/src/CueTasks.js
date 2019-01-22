@@ -173,15 +173,21 @@ const reviewHeader = (controlledInputName, targetWords) =>
       <h1>
         Your review of <i>{state.controlledInputs.get(controlledInputName)}</i>
       </h1>
-      <p>
-        Write your review below. Aim for about {targetWords} words (you're at{" "}
+      <p>Write your review below. A few guidelines:</p>
+      <ul>
+        <li>
+          Try to discuss as many different topics/aspects as you can think of.
+        </li>
+        <li>
+          Aim for about {targetWords} words (you're at{" "}
         {state.experimentState.wordCount}).
-      </p>
-      <p>
+        </li>
+        <li>
         <strong>Reviews must be written from scratch in this window</strong>;
-        using an already-written review or copying and pasting from a different
-        app is not allowed.
-      </p>
+          using an already-written review or copying and pasting from a
+          different app is not allowed.
+        </li>
+      </ul>
     </div>
   ));
 
