@@ -74,12 +74,12 @@ def get_cueing_data(dataset_name, n_clusters, n_words):
 
 
 async def get_cue_API(executor, request):
-    recType = request['recType']
+    recType = request["recType"]
 
     if recType == "staticPhrases":
         return dict(staticCues=staticPhrases)
     elif recType == "staticSentences":
-        return dict(staticCues=staticSentences)    
+        return dict(staticCues=staticSentences)
 
     text = request["text"]
     return {
