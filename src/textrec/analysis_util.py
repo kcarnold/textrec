@@ -8,7 +8,12 @@ import ujson
 from .paths import paths
 from .util import mem
 
-rev_overrides = {"8b70b51": "4d07df8", "024ef59": "3f52c04", "3761b2d": "66b19ec"}
+rev_overrides = {
+    "8b70b51": "4d07df8",
+    "024ef59": "3f52c04",
+    "3761b2d": "66b19ec",
+    "4740cdc": "ae035cf",
+}
 
 
 def get_rev(logpath):
