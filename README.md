@@ -22,6 +22,20 @@ Workflows
 2. Run script on downloaded data: `scripts/find_invalid_workers.py`.
 
 
+### Make a hotfix for analysis of a deployed frontend build
+
+1. Make a new branch from the frontend commit (git_rev in the "init" request):
+   `git branch tmp $frontend_commit`
+2. Make the hotfix there (perhaps by cherry-picking or copying from master).
+3. Note the current hash.
+4. Checkout master, edit analysis_util.py to add an entry mapping frontend
+   commit to the hash just recorded in #3.
+5. Incorporate the hotfix commit into the git history: `git merge -s ours tmp`.
+
+You can use a worktree to make this easier;
+* `git worktree add tmp-worktere -b tmp $frontend_commit`
+* then when you're done: `git worktree remove tmp-worktree`.
+
 Approach for counterbalancing
 ----
 
