@@ -3,13 +3,19 @@ import time
 import numpy as np
 from textrec.paths import paths
 import logging
+
 logger = logging.getLogger(__name__)
 
 BATCH_DATA = {
-    'gc1': dict(n_conditions=6, config='gcap'),
-    'spec2': dict(n_conditions=6, config='cap'),
-    'xs1': dict(n_conditions=6, config="gx"),
-    'cue0': dict(n_conditions=3, config="cue") # BASELINE, only one actual condition (norecs).
+    "gc1": dict(n_conditions=6, config="gcap"),
+    "spec2": dict(n_conditions=6, config="cap"),
+    "xs1": dict(n_conditions=6, config="gx"),
+    "cue0": dict(
+        n_conditions=3, config="cue"
+    ),  # BASELINE, only one actual condition (norecs).
+    "cue1": dict(
+        n_conditions=3, config="cue"
+    ),  # This is norecs vs static-phrases vs static-sentences.
 }
 
 invalid = set("h52x67 3vf5fg 73qq5q ffhgxm mhh838 j39263 pqf6q5 49cm8f".split())
@@ -47,7 +53,7 @@ def get_completion_data(batch, logdir=paths.logdir):
             continue
         results.append(
             dict(
-            participant_id=participant_id,
+                participant_id=participant_id,
                 login_timestamp=login_event["pyTimestamp"],
                 assignment=login_event["assignment"],
                 completed=completed_fname(participant_id, logdir).exists(),
