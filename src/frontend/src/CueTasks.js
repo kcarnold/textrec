@@ -23,10 +23,11 @@ function surveyView(props) {
 
 const namedConditions = {
   norecs: { recType: null },
-  phrases: { recType: "phraseCue" },
+  staticPhrases: { recType: "staticPhrases" },
+  staticSentences: { recType: "staticSentences" },
   questions: { recType: "questionCue" },
 };
-let baseConditions = ["norecs", "norecs", "norecs"];
+let baseConditions = ["norecs", "staticSentences", "staticPhrases"];
 
 //movie:  "Write a review of a movie or TV show you watched recently.",
 
@@ -167,6 +168,37 @@ const trialView = HeaderComponent =>
     })
   );
 
+const StaticCues = iobs(({ state }) => {
+  let { experimentState } = state;
+  let { staticCues, flags } = experimentState;
+  let { recType } = flags;
+  let suffix =
+    recType === "staticPhrases" ? (
+      <span>&hellip;&rdquo;</span>
+    ) : (
+      <span>&rdquo;</span>
+    );
+  if (staticCues) {
+    return (
+      <div>
+        <p>
+          <b>Ideas</b> based on reviews from other people
+        </p>
+        <ul>
+          {staticCues.map((cue, i) => (
+            <li key={i}>
+              &ldquo;{cue}
+              {suffix}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  } else {
+    return false;
+  }
+});
+
 const reviewHeader = (controlledInputName, targetWords) =>
   iobs(({ state }) => (
     <div>
@@ -180,14 +212,15 @@ const reviewHeader = (controlledInputName, targetWords) =>
         </li>
         <li>
           Aim for about {targetWords} words (you're at{" "}
-        {state.experimentState.wordCount}).
+          {state.experimentState.wordCount}).
         </li>
         <li>
-        <strong>Reviews must be written from scratch in this window</strong>;
+          <strong>Reviews must be written from scratch in this window</strong>;
           using an already-written review or copying and pasting from a
           different app is not allowed.
         </li>
       </ul>
+      <StaticCues />
     </div>
   ));
 

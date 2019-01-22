@@ -3,6 +3,14 @@ import { extendObservable, decorate, observable, action, computed } from "mobx";
 import isEqual from "lodash/isEqual";
 import countWords from "./CountWords";
 
+const rpc = (method, params) => ({
+  type: "rpc",
+  rpc: {
+    method,
+    ...params,
+  },
+});
+
 export class TrialState {
   constructor(flags) {
     this.flags = flags;
@@ -10,6 +18,7 @@ export class TrialState {
       curText: "",
       range: { start: 0, end: 0 },
       caret: null,
+      staticCues: null,
       suggestions: [{ text: "" }, { text: "" }, { text: "" }],
       get wordCount() {
         return countWords(this.curText);
@@ -22,14 +31,14 @@ export class TrialState {
   }
 
   getCueRequest() {
-    if (this.flags.recType === "cue") {
-      return {
-        type: "rpc",
-        rpc: {
-          method: "get_cue",
-          text: this.curText,
-        },
-      };
+    let { recType } = this.flags;
+    if (recType === "staticPhrases" || recType === "staticSentences") {
+      if (this.curText === "") {
+        return rpc("get_cue", { dataset: "yelp", recType });
+      }
+    }
+    if (recType === "cue") {
+      return rpc("get_cue", { text: this.curText });
     }
     return null;
   }
@@ -53,10 +62,14 @@ export class TrialState {
     } else if (event.type === "backendReply") {
       // TODO: ignore other backend replies.
       console.log(event);
-      if (event.msg.result && event.msg.result.cues) {
-        this.suggestions = event.msg.result.cues.map(cue => ({
-          text: cue.phrase,
-        }));
+      if (event.msg.result) {
+        if (event.msg.result.cues) {
+          this.suggestions = event.msg.result.cues.map(cue => ({
+            text: cue.phrase,
+          }));
+        } else if (event.msg.result.staticCues) {
+          this.staticCues = event.msg.result.staticCues;
+        }
       }
     } else if (event.type === "insertSugWord") {
       let { curText, range, suggestions } = this;
