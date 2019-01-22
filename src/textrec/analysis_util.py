@@ -84,11 +84,8 @@ def get_log_analysis_many(participants):
             )
         analyzer_path = str(paths.frontend / "run-analysis")
         analyzer_cmd = [analyzer_path, "--"] + logpaths
-        print(' '.join(analyzer_cmd))
-        completion = subprocess.run(
-            analyzer_cmd,
-            stdout=subprocess.PIPE,
-        )
+        print(" ".join(analyzer_cmd))
+        completion = subprocess.run(analyzer_cmd, stdout=subprocess.PIPE)
 
         for line in completion.stdout.split(b"\n"):
             if len(line) == 0:
