@@ -4,6 +4,54 @@ import nltk
 import numpy as np
 from functools import lru_cache
 
+staticPhrases = """
+It tasted like a lot
+Shepherd pie and fried chicken
+Everything I've ever had on
+Haven't tried their tea yet
+My fiancee and I tried
+It really had no focus
+Finally got to go here
+Those two slices have made
+Some of the other rolls
+No matter what I get
+It was like eating can
+I always knew she was
+This place has cool decor
+The service starts while you're
+You can't even compare this
+Never been a pizza hut
+I will stick to apps
+This place seemed ok and
+Just forget about how much
+Service is nice with hip"""
+
+staticPhrases = staticPhrases.strip().split("\n")
+
+staticSentences = """
+But I guess that's why they serve it all day.
+Had the Vietnamese hot coffee (kind of similar to Thai coffee with the condensed milk).
+Take for instance the fake plant in the window -- it has never been dusted.
+Our group of five was hungry for dinner.
+I've been to Cherry Street three times in the last week!
+I love chocolate and hazelnut so I'm loving this flavor combination.
+I did lose my sake bomb virginity here, which was pretty exciting.
+My cousin and I had such a horrible experience.
+We had dinner here and quite liked it.
+If only all Pittsburgh restaurants could be like you, the world would be a better place.
+I would definitely go back to this restaurant.
+If you like habatchi style restuarants for a decent price I would recommend this.
+When we went to Pisticci, it was for a friend's birthday.
+We had lunch here yesterday while attending the Art Festifall.
+I have zero complaints with this place and would love to go back.
+I was stunned by how big the plate was, but was able to finish nearly the entire portion.
+I get it and hope you do too!
+Even so we had to wait about 15 - 20 minutes for the hummus to arrive.
+Now I know why it's so much cheaper than anything else nearby.
+And that's the story of how Hemenay's saved our Valentine's Day!"""
+
+staticSentences = staticSentences.strip().split("\n")
+
 
 async def handle_request_async(executor, request):
     method = request["method"]
@@ -18,6 +66,7 @@ async def handle_request_async(executor, request):
 @lru_cache()
 def get_cueing_data(dataset_name, n_clusters, n_words):
     from . import cueing
+
     scores_by_cluster_argsort, unique_starts = cueing.cached_scores_by_cluster_argsort(
         dataset_name=dataset_name, n_clusters=n_clusters, n_words=n_words
     )
@@ -25,8 +74,14 @@ def get_cueing_data(dataset_name, n_clusters, n_words):
 
 
 async def get_cue_API(executor, request):
-    text = request["text"]
+    recType = request['recType']
 
+    if recType == "staticPhrases":
+        return dict(staticCues=staticPhrases)
+    elif recType == "staticSentences":
+        return dict(staticCues=staticSentences)    
+
+    text = request["text"]
     return {
         "cues": await get_cue(
             executor, text, dataset_name="yelp", n_clusters=20, n_words=5
