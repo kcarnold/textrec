@@ -361,10 +361,14 @@ class LoginHandler(tornado.web.RequestHandler):
         params = dict(data["params"])
 
         # Allocate a condition.
-        batch = params.pop("b")
+        batch = params.pop("b")            
         counterbalancing_flags = counterbalancing.get_conditions_for_new_participant(
             batch
         )
+        if "assignment" in params:
+            assignment = int(params['assignment'])
+            print(f"Overriding assignment! {assignment}")
+            counterbalancing_flags = dict(counterbalancing_flags, assignment=assignment)
 
         # Allocate a participant id.
         while True:
