@@ -17,11 +17,24 @@ rev_overrides = {
 
 
 def get_rev(logpath):
+    """Retrieve the **frontend** git revision from a log.
+
+    The frontend includes a "git_rev" in each "hello" message,
+    which the backend logs as:
+    
+    kind="meta", type="init", request=request
+
+    Technically each reload of the frontend could theoretically be a different revision.
+    For simplicity, we take just the first one.
+    """
     with open(logpath) as logfile:
         for line in logfile:
             line = json.loads(line)
-            if "rev" in line:
-                return line["rev"]
+            # This would be a good use of assignment expressions, once they're released.
+            if line.get("kind") == "meta" and line.get("type") == "init":
+                request = line.get("request", {})
+                if "git_rev" in request:
+                    return request["git_rev"]
     raise ValueError(f"No git revision logged in {logpath}")
 
 
