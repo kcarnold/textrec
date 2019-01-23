@@ -264,7 +264,6 @@ export function createTaskState(loginEvent) {
     let condition = baseConditions[loginEvent.assignment];
     let conditions = [condition];
     let prompt = loginEvent.prompt;
-    console.log("Prompt: ", prompt);
     let task;
     if (prompt === "restaurant") task = restaurantTask;
     else if (prompt === "movie") task = movieTask;

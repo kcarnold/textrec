@@ -61,7 +61,6 @@ export class TrialState {
       this.suggestions[event.idx].text = event.text;
     } else if (event.type === "backendReply") {
       // TODO: ignore other backend replies.
-      console.log(event);
       if (event.msg.result) {
         if (event.msg.result.cues) {
           this.suggestions = event.msg.result.cues.map(cue => ({
