@@ -21,7 +21,7 @@ def get_rev(logpath):
 
     The frontend includes a "git_rev" in each "hello" message,
     which the backend logs as:
-    
+
     kind="meta", type="init", request=request
 
     Technically each reload of the frontend could theoretically be a different revision.
@@ -92,9 +92,9 @@ def get_log_analysis_many(participants):
         logpaths = [str(x[1]) for x in todo]
         # Compute a batch of analyses.
         for git_rev, real_git_rev in revisions_needed:
-            subprocess.check_call(
-                [paths.scripts / "checkout-old.sh", git_rev, real_git_rev]
-            )
+            cmd = [str(paths.scripts / "checkout-old.sh"), git_rev, real_git_rev]
+            print(" ".join(cmd))
+            subprocess.check_call(cmd)
         analyzer_path = str(paths.frontend / "run-analysis")
         analyzer_cmd = [analyzer_path, "--"] + logpaths
         print(" ".join(analyzer_cmd))
