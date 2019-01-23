@@ -105,7 +105,11 @@ def get_log_analysis_many(participants):
                 continue
             line = json.loads(line.decode("utf-8"))
             if "error" in line:
-                print(f"Error processing {line}")
+                print(f"Error processing {line['filename']}")
+                error = json.loads(line["error"])
+                print(error["message"])
+                print(error["stack"])
+                print()
             else:
                 result = line["result"]
                 participant_id = result["participant_id"]
