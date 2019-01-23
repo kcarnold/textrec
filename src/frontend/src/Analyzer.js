@@ -276,10 +276,14 @@ export function processLogGivenState(state, log) {
 }
 
 export function getRev(log) {
+  // See docs for corresponding function in analysis_util.py
   for (let i = 0; i < log.length; i++) {
-    let entry = log[i];
-    if ("rev" in entry) {
-      return entry["rev"];
+    let line = log[i];
+    if (line.kind === "meta" && line.type === "init") {
+      let { request } = line;
+      if (request && request.git_rev) {
+        return request.git_rev;
+      }
     }
   }
 }
