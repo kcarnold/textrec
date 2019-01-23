@@ -308,10 +308,5 @@ export async function getState(log) {
 
 export async function analyzeLog(log) {
   let state = await getState(log);
-  try {
-    return processLogGivenState(state, log);
-  } catch (e) {
-    console.log(e, e.stack);
-    throw e;
-  }
+  return processLogGivenState(state, log);
 }
