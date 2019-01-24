@@ -46,6 +46,13 @@ get-data:
 	poetry run fab get-data
 
 # Analyses
+
+get-completed-participants:
+	poetry run python scripts/get_completed_participants.py
+
+data/analyzed/trial_cue%.csv: data/participants.txt src/textrec/logs_to_csv_cue.py
+	poetry run python -m textrec.logs_to_csv_cue cue$*
+
 # This rule needs to go first or else the logs_to_csv rule will match a 'withmanual' :(
 data/analyzed/trial_withmanual_%.csv: src/textrec/gruntwork.py data/analyzed/trial_%.csv data/gruntwork
 	python -m textrec.gruntwork $*
