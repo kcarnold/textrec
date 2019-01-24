@@ -8,7 +8,6 @@ import WSClient from "./wsclient";
 import map from "lodash/map";
 import filter from "lodash/filter";
 import { getOldCode } from "./Analyzer";
-import { MasterView as MasterViewFactory } from "./MasterView";
 
 let match = window.location.search.slice(1).match(/^(\w+)\/(\w+)$/);
 let panopt = match[1],
@@ -95,9 +94,10 @@ ws.onmessage = async function(msg) {
     let { participant_id, logs } = msg;
     // logs[participant_id] = msg.logs;
     oldCodes[participant_id] = await getOldCode(logs);
-    let { createTaskState, screenToView } = oldCodes[participant_id];
-    let state = createTaskState(participant_id);
-    masterViews[participant_id] = MasterViewFactory(screenToView);
+    let { createTaskState, MasterView } = oldCodes[participant_id];
+    let loginEvent = logs[0];
+    let state = createTaskState(loginEvent);
+    masterViews[participant_id] = MasterView;
     store.states.set(participant_id, state);
     replay(msg.logs, state);
     state.replaying = false;
@@ -224,7 +224,7 @@ const AnalyzedView = observer(({ store, participantId }) => {
                       style={{
                         maxWidth: "200px",
                         fontSize: "10px",
-                        overflow: "hidden",
+                        overflow: "scroll",
                         whiteSpace: "nowrap",
                         direction: "rtl",
                       }}
@@ -244,7 +244,7 @@ const AnalyzedView = observer(({ store, participantId }) => {
       <ScreenTimesTable screenTimes={analysis.screenTimes} />
       <table style={{ fontSize: "10px" }}>
         <tbody>
-          {Object.entries(analysis.allControlledInputs).map(([k, v]) => (
+          {analysis.allControlledInputs.map(([k, v]) => (
             <tr key={k}>
               <td>{k}</td>
               <td>{v}</td>
@@ -260,27 +260,25 @@ const ReplayView = observer(({ store, participantId }) => {
   let state = store.states.get(participantId);
   if (!state) return null;
   let MasterView = masterViews[participantId];
-
+  if (!MasterView) return null;
   return (
     <div style={{ display: "flex", flexFlow: "row" }}>
       <div
         style={{
-          overflow: "hidden",
+          overflow: "scroll",
           width: state.phoneSize.width,
           height: state.phoneSize.height,
           border: "1px solid black",
           flex: "0 0 auto",
         }}
       >
-        <Provider
+        <MasterView
           state={state}
           dispatch={nullDispatch}
           clientId={participantId}
           clientKind={"p"}
           spying={true}
-        >
-          <MasterView kind={"p"} />
-        </Provider>
+        />
       </div>
       <div style={{ flex: "1 1 auto" }}>
         {/*state.experiments.entries().map(([name, expState]) => (
@@ -343,6 +341,13 @@ export default Panopticon;
 window.toJS = toJS;
 window.store = store;
 
-store.addViewers(
-  "945w6h c658mr f8c7v9 pccq8v rhwgvj rx4rm4 4g535w 2gxh47 67xx59 pr372v wvmc84"
-);
+store.addViewers("76g63q");
+
+/*
+f8q3m5
+fjx759
+9fwwq6
+26f43h
+
+hj2w37
+*/
