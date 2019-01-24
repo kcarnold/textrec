@@ -5,7 +5,6 @@ import { findDOMNode } from "react-dom";
 import isEqual from "lodash/isEqual";
 import getCaretCoordinates from "textarea-caret";
 // https://github.com/component/textarea-caret-position
-import "./Editable.css";
 
 export class Editable extends React.Component {
   shouldComponentUpdate(nextProps, nextState) {
