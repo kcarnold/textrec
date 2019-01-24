@@ -90,7 +90,7 @@ export class TrialState {
     }
 
     let newCueRequest = this.getCueRequest();
-    if (!isEqual(prevCueRequest, newCueRequest)) {
+    if (newCueRequest && !isEqual(prevCueRequest, newCueRequest)) {
       sideEffects.push(newCueRequest);
     }
 
