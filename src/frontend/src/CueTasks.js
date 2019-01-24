@@ -252,24 +252,28 @@ function trialScreen(props: {
 export function createTaskState(loginEvent) {
   let clientId = loginEvent.participant_id;
 
-  let screens;
-  let demoConditionName = getDemoConditionName(clientId);
-  if (demoConditionName != null) {
-    screens = restaurantTask.getScreens(demoConditionName, true);
+  let prompt,
+    conditions,
+    isDemo = false;
+  if (clientId.slice(0, 4) === "demo") {
+    // Demo URLs are formatted: `demo(config)-(condition)-(prompt)-p`
+    let match = clientId.match(/^demo(\w+)-(\w+)-(\w+)$/);
+    console.assert(match);
+    conditions = [match[2]];
+    prompt = match[3];
+    isDemo = true;
   } else {
-    // if ("n_conditions" in loginEvent) {
-    //   console.assert(loginEvent.n_conditions === conditionOrders.length);
-    // }
     // Between-subjects for prompt (passed as config option) and condition (passed as counterbalanced assignment).
     let condition = baseConditions[loginEvent.assignment];
-    let conditions = [condition];
-    let prompt = loginEvent.prompt;
-    let task;
-    if (prompt === "restaurant") task = restaurantTask;
-    else if (prompt === "movie") task = movieTask;
-    else console.assert(`Unknown prompt ${prompt}`);
-    screens = task.getScreens(conditions);
+    conditions = [condition];
+    prompt = loginEvent.prompt;
   }
+
+  let task;
+  if (prompt === "restaurant") task = restaurantTask;
+  else if (prompt === "movie") task = movieTask;
+  else console.assert(`Unknown prompt ${prompt}`);
+  let screens = task.getScreens(conditions, isDemo);
 
   let state = createState({
     clientId,

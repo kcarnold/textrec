@@ -10,6 +10,13 @@ Workflows
 
 (TODO: write up)
 
+### See what tasks look like:
+
+Demos:
+* http://mbp-zt.megacomplete.net:3000/?democue-norecs-restaurant-p
+* http://mbp-zt.megacomplete.net:3000/?democue-staticSentences-restaurant-p
+* http://mbp-zt.megacomplete.net:3000/?democue-staticPhrases-restaurant-p
+
 ### Post writing task
 
 1. Deploy code to production: `fab deploy`. Test on server.
