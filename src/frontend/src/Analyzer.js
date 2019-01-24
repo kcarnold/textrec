@@ -2,10 +2,6 @@
 
 import _ from "lodash";
 
-function getCurCondition(state) {
-  return state.conditionName || state.experimentState.flags.condition;
-}
-
 export function processLogGivenState(state, log) {
   let { participant_id } = log[0];
   let finalData = null;

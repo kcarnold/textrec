@@ -3,7 +3,7 @@
 import React, { Component } from "react";
 import { decorate, observable, action, toJS } from "mobx";
 import { parse, differenceInMinutes, format } from "date-fns";
-import { observer, Provider } from "mobx-react";
+import { observer } from "mobx-react";
 import WSClient from "./wsclient";
 import map from "lodash/map";
 import filter from "lodash/filter";
