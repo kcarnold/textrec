@@ -9,6 +9,20 @@ import map from "lodash/map";
 import filter from "lodash/filter";
 import { getOldCode } from "./Analyzer";
 
+function commonPrefixLength(x, y) {
+  // Get longest common prefix between x and y.
+  let prefixLength = 0;
+  let maxLen = Math.min(x.length, y.length);
+  while (prefixLength < maxLen) {
+    if (x[prefixLength] === y[prefixLength]) {
+      prefixLength++;
+    } else {
+      break;
+    }
+  }
+  return prefixLength;
+}
+
 let match = window.location.search.slice(1).match(/^(\w+)\/(\w+)$/);
 let panopt = match[1],
   panopticode = match[2];
@@ -32,6 +46,7 @@ class PanoptStore {
   startTimes = observable.map({}, { deep: false });
   times = observable.map({}, { deep: false });
   analyses = observable.map({}, { deep: false });
+  textHistories = observable.map({}, { deep: true });
 
   addViewer(id) {
     if (this.showingIds.indexOf(id) !== -1) return; // Already a viewer.
@@ -64,25 +79,25 @@ function replay(log, state) {
     delete toLog.timestamp;
     delete toLog.kind;
     delete toLog.jsTimestamp;
-    if (event.type === "requestSuggestions") {
-      let requestCurText =
-        event.request.sofar +
-        event.request.cur_word.map(ent => ent.letter).join("");
-      if (
-        event.request.request_id === state.experimentState.contextSequenceNum &&
-        requestCurText !== state.experimentState.curText
-      ) {
-        debugger;
-      }
-    }
+    let textHistory = store.textHistories.get(event.participant_id);
+
     state.handleEvent(event);
+
+    let curText = (state.experimentState || {}).curText;
+    let lastText =
+      textHistory.length > 0 ? textHistory[textHistory.length - 1] : {};
+    if (curText !== lastText.text) {
+      textHistory.push({ timestamp: event.jsTimestamp, text: curText });
+    }
+
     if (idx === log.length - 1) return;
     setTimeout(
       tick,
-      Math.min(
-        1000,
-        (log[idx + 1].jsTimestamp - log[idx].jsTimestamp) / store.acceleration
-      )
+      0
+      // Math.min(
+      //   1000,
+      //   (log[idx + 1].jsTimestamp - log[idx].jsTimestamp) / store.acceleration
+      // )
     );
     idx++;
   }
@@ -99,6 +114,7 @@ ws.onmessage = async function(msg) {
     let state = createTaskState(loginEvent);
     masterViews[participant_id] = MasterView;
     store.states.set(participant_id, state);
+    store.textHistories.set(participant_id, []);
     replay(msg.logs, state);
     state.replaying = false;
     // store.startTimes.set(participantId, msg.logs[0].jsTimestamp);
@@ -203,44 +219,48 @@ const AnnotatedFinalText = ({ chunks }) => (
   </div>
 );
 
+const TextHistoryView = observer(({ history }) => {
+  if (history.length === 0) return <div />;
+  let lastEntry = history[0];
+  let firstTimestamp = history[0].timestamp;
+  return (
+    <div
+      style={{
+        position: "relative",
+        height: "500px",
+        overflow: "scroll",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {history.map((entry, i) => {
+        let preLen = 0;
+        if (i > 0) {
+          let lastText = lastEntry.text;
+          preLen = commonPrefixLength(lastText, entry.text);
+        }
+        lastEntry = entry;
+        return (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              top: (entry.timestamp - firstTimestamp) / 1000,
+            }}
+          >
+            <span style={{ opacity: 0.01 }}>{entry.text.slice(0, preLen)}</span>
+            {entry.text.slice(preLen)}
+          </div>
+        );
+      })}
+    </div>
+  );
+});
+
 const AnalyzedView = observer(({ store, participantId }) => {
   let analysis = store.analyses.get(participantId);
   if (!analysis) return null;
   return (
     <div>
-      {map(analysis.byExpPage, (content, pageName) => {
-        let synonymTaps = filter(content.displayedSuggs, {
-          action: { type: "tapSuggestion", which: "synonyms" },
-        });
-        return (
-          <div key={pageName}>
-            {pageName} ({content.condition}) ({JSON.stringify(content.place)})
-            <AnnotatedFinalText chunks={content.chunks} />
-            <table>
-              <tbody>
-                {synonymTaps.map(({ context, recs, action }, i) => (
-                  <tr key={i}>
-                    <td
-                      style={{
-                        maxWidth: "200px",
-                        fontSize: "10px",
-                        overflow: "scroll",
-                        whiteSpace: "nowrap",
-                        direction: "rtl",
-                      }}
-                    >
-                      <bdi>{context}</bdi>
-                    </td>
-                    <td>
-                      <ShowRecs recs={recs} action={action} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      })}
       <ScreenTimesTable screenTimes={analysis.screenTimes} />
       <table style={{ fontSize: "10px" }}>
         <tbody>
@@ -322,8 +342,11 @@ const Panopticon = observer(
                 <h1>
                   {participantId} {conditions.join(",")}
                 </h1>
+                <TextHistoryView
+                  history={store.textHistories.get(participantId) || []}
+                />
                 <AnalyzedView store={store} participantId={participantId} />
-                {SHOW_REPLAY && (
+                {false && (
                   <ReplayView store={store} participantId={participantId} />
                 )}
               </div>
@@ -341,13 +364,4 @@ export default Panopticon;
 window.toJS = toJS;
 window.store = store;
 
-store.addViewers("76g63q");
-
-/*
-f8q3m5
-fjx759
-9fwwq6
-26f43h
-
-hj2w37
-*/
+store.addViewers("269xh7 9rq5rw pvqf36 3rh4cc crqp24 87f3mv");
