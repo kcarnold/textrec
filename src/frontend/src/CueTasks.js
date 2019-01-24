@@ -228,9 +228,6 @@ const reviewHeader = (controlledInputName, targetWords) =>
       <p>Write your review below. A few guidelines:</p>
       <ul>
         <li>
-          Try to discuss as many different topics/aspects as you can think of.
-        </li>
-        <li>
           Aim for about {targetWords} words (you're at{" "}
           {state.experimentState.wordCount}).
         </li>
