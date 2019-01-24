@@ -16,6 +16,9 @@ BATCH_DATA = {
     "cue1": dict(
         n_conditions=3, config="cue"
     ),  # This is norecs vs static-phrases vs static-sentences.
+    "cue2": dict(
+        n_conditions=3, config="cue"
+    ),  # This is norecs vs static-phrases vs static-sentences, longer.
 }
 
 invalid = set("h52x67 3vf5fg 73qq5q ffhgxm mhh838 j39263 pqf6q5 49cm8f".split())
