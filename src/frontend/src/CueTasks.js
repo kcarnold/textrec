@@ -14,7 +14,7 @@ import { Survey } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
 
-import { getDemoConditionName, finalDataLogger, iobs } from "./misc";
+import { finalDataLogger, iobs } from "./misc";
 import { WriterView, SpyView } from "./DesktopPhraseView";
 
 function surveyView(props) {
@@ -88,10 +88,12 @@ const DoneScreen = { screen: "Done", view: Views.Done };
 
 const restaurantTask = {
   getScreens(conditionName: string, demo = false): Screen[] {
+    let targetWords = 250;
     let trial = trialScreen({
       name: `final-0`,
       condition: conditionName,
-      HeaderComponent: reviewHeader("restaurantName", 125),
+      HeaderComponent: reviewHeader("restaurantName", targetWords),
+      targetWords,
     });
     if (demo) return [trial];
     return [
@@ -144,7 +146,7 @@ const movieTask = {
       trialScreen({
         name: `final-0`,
         condition: conditionName,
-        HeaderComponent: reviewHeader("movieName", 125),
+        HeaderComponent: reviewHeader("movieName", 250),
       }),
       reviewClosingSurvey("movies"),
       DoneScreen,
@@ -152,7 +154,24 @@ const movieTask = {
   },
 };
 
-const trialView = HeaderComponent =>
+const WordCountTargetAdvance = iobs(({ state, targetWords }) => {
+  let { wordCount } = state.experimentState;
+  let allowAdvance = wordCount >= targetWords;
+  return (
+    <div>
+      <p>
+        Word count: {state.experimentState.wordCount} / {targetWords}{" "}
+        <NextBtn disabled={state.experimentState.wordCount < targetWords}>
+          {allowAdvance
+            ? "Submit"
+            : `Please write ${targetWords - wordCount} more words.`}
+        </NextBtn>
+      </p>
+    </div>
+  );
+});
+
+const trialView = (HeaderComponent, targetWords) =>
   inject("clientKind")(
     observer(({ clientKind }) => {
       if (clientKind === "p") {
@@ -160,6 +179,7 @@ const trialView = HeaderComponent =>
           <div>
             <HeaderComponent />
             <WriterView />
+            <WordCountTargetAdvance targetWords={targetWords} />
           </div>
         );
       } else if (clientKind === "c") {
@@ -228,12 +248,14 @@ function trialScreen(props: {
   name: string,
   condition: string,
   HeaderComponent: React.Component,
+  targetWords: number,
   flags: ?Object,
 }) {
-  let { name, condition, flags, HeaderComponent } = props;
+  let { name, condition, flags, HeaderComponent, targetWords } = props;
   if (!(condition in namedConditions)) {
     throw new Error(`Invalid condition name: ${condition}`);
   }
+  console.assert(targetWords);
   return {
     preEvent: {
       type: "setupTrial",
@@ -245,7 +267,7 @@ function trialScreen(props: {
       },
     },
     screen: "ExperimentScreen",
-    view: trialView(HeaderComponent),
+    view: trialView(HeaderComponent, targetWords),
   };
 }
 

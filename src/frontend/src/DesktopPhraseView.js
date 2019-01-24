@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Editable } from "./Editable";
-import { NextBtn } from "./BaseViews";
 import { iobs } from "./misc";
 
 const TAB_KEYCODE = 9;
@@ -49,7 +48,6 @@ export const WriterView = iobs(({ state, dispatch }) => {
           ))}
         </div>
       </div>
-      <NextBtn>Submit</NextBtn>
     </div>
   );
 });
