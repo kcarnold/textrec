@@ -25,6 +25,7 @@ pyyaml = "^3.13"
 ua-parser = "^0.8.0"
 user-agents = "^1.1"
 wordfreq = "^2.2"
+kenlm = {git = "git@github.com:kpu/kenlm.git"}
 
 [tool.poetry.dev-dependencies]
 ipython = "^7.2"
