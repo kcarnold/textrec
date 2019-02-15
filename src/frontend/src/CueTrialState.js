@@ -11,6 +11,8 @@ const rpc = (method, params) => ({
   },
 });
 
+const emptySuggestions = [{ text: "" }, { text: "" }, { text: "" }];
+
 export class TrialState {
   constructor(flags) {
     this.flags = flags;
@@ -19,7 +21,17 @@ export class TrialState {
       range: { start: 0, end: 0 },
       caret: null,
       staticCues: null,
-      suggestions: [{ text: "" }, { text: "" }, { text: "" }],
+      get suggestions() {
+        let shouldShow = true;
+        if (flags.onRequest && !this.writerRequestedCues) shouldShow = false;
+        if (shouldShow) {
+          return this._suggestions;
+        } else {
+          return emptySuggestions;
+        }
+      },
+      _suggestions: emptySuggestions,
+      writerRequestedCues: false,
       get wordCount() {
         return countWords(this.curText);
       },
@@ -31,16 +43,13 @@ export class TrialState {
   }
 
   getCueRequest() {
-    let { recType } = this.flags;
-    if (recType === "staticPhrases" || recType === "staticSentences") {
+    let { recType, domain } = this.flags;
+    if (recType === "randomPhrases" || recType === "randomSentences") {
       if (this.curText === "") {
-        return rpc("get_cue", { dataset: "yelp", recType });
+        return rpc("get_cue", { domain, recType });
       }
     }
-    if (recType === "cue") {
-      return rpc("get_cue", { text: this.curText });
-    }
-    return null;
+    return rpc("get_cue", { domain, recType, text: this.curText });
   }
 
   get numFinishedSents() {
@@ -58,12 +67,12 @@ export class TrialState {
       this.range = event.range;
       this.caret = event.caret;
     } else if (event.type === "setSuggestion") {
-      this.suggestions[event.idx].text = event.text;
+      this._suggestions[event.idx].text = event.text;
     } else if (event.type === "backendReply") {
       // TODO: ignore other backend replies.
       if (event.msg.result) {
         if (event.msg.result.cues) {
-          this.suggestions = event.msg.result.cues.map(cue => ({
+          this._suggestions = event.msg.result.cues.map(cue => ({
             text: cue.phrase,
           }));
         } else if (event.msg.result.staticCues) {
@@ -84,9 +93,11 @@ export class TrialState {
           let newRange = { start: newPos, end: newPos };
           this.curText = newText;
           this.range = newRange;
-          this.suggestions = [{ text: words[2].trim() }];
+          this._suggestions = [{ text: words[2].trim() }];
         }
       }
+    } else if (event.type === "toggleInspiration") {
+      this.writerRequestedCues = !this.writerRequestedCues;
     }
 
     let newCueRequest = this.getCueRequest();
@@ -103,6 +114,7 @@ decorate(TrialState, {
 
   numFinishedSents: computed,
   wordCount: computed,
+  suggestions: computed,
 
   handleEvent: action.bound,
 });

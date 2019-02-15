@@ -4,7 +4,7 @@ import nltk
 import numpy as np
 from functools import lru_cache
 
-staticPhrases = """
+randomPhrases = """
 It tasted like a lot
 Shepherd pie and fried chicken
 Everything I've ever had on
@@ -26,9 +26,9 @@ This place seemed ok and
 Just forget about how much
 Service is nice with hip"""
 
-staticPhrases = staticPhrases.strip().split("\n")
+randomPhrases = randomPhrases.strip().split("\n")
 
-staticSentences = """
+randomSentences = """
 But I guess that's why they serve it all day.
 Had the Vietnamese hot coffee (kind of similar to Thai coffee with the condensed milk).
 Take for instance the fake plant in the window -- it has never been dusted.
@@ -50,7 +50,7 @@ Even so we had to wait about 15 - 20 minutes for the hummus to arrive.
 Now I know why it's so much cheaper than anything else nearby.
 And that's the story of how Hemenay's saved our Valentine's Day!"""
 
-staticSentences = staticSentences.strip().split("\n")
+randomSentences = randomSentences.strip().split("\n")
 
 
 async def handle_request_async(executor, request):
@@ -76,10 +76,10 @@ def get_cueing_data(dataset_name, n_clusters, n_words):
 async def get_cue_API(executor, request):
     recType = request["recType"]
 
-    if recType == "staticPhrases":
-        return dict(staticCues=staticPhrases)
-    elif recType == "staticSentences":
-        return dict(staticCues=staticSentences)
+    if recType == "randomPhrases":
+        return dict(staticCues=randomPhrases)
+    elif recType == "randomSentences":
+        return dict(staticCues=randomSentences)
 
     text = request["text"]
     return {

@@ -23,11 +23,12 @@ function surveyView(props) {
 
 const namedConditions = {
   norecs: { recType: null },
-  staticPhrases: { recType: "staticPhrases" },
-  staticSentences: { recType: "staticSentences" },
-  questions: { recType: "questionCue" },
+  randomPhrases: { recType: "randomPhrases" },
+  randomSentences: { recType: "randomSentences" },
+  ambientPhrases: { recType: "phraseCue", onRequest: false },
+  requestPhrases: { recType: "phraseCue", onRequest: true },
 };
-let baseConditions = ["norecs", "staticSentences", "staticPhrases"];
+let baseConditions = ["norecs", "ambientPhrases", "requestPhrases"];
 
 //movie:  "Write a review of a movie or TV show you watched recently.",
 
@@ -94,6 +95,9 @@ const restaurantTask = {
       condition: conditionName,
       HeaderComponent: reviewHeader("restaurantName", targetWords),
       targetWords,
+      flags: {
+        domain: "restaurant",
+      },
     });
     if (demo) return [trial];
     return [
@@ -147,6 +151,10 @@ const movieTask = {
         name: `final-0`,
         condition: conditionName,
         HeaderComponent: reviewHeader("movieName", 250),
+        targetWords: 250,
+        flags: {
+          domain: "movie",
+        },
       }),
       reviewClosingSurvey("movies"),
       DoneScreen,
@@ -192,31 +200,42 @@ const StaticCues = iobs(({ state }) => {
   let { experimentState } = state;
   let { staticCues, flags } = experimentState;
   let { recType } = flags;
+  if (!staticCues) return false;
   let suffix =
-    recType === "staticPhrases" ? (
+    recType === "randomPhrases" ? (
       <span>&hellip;&rdquo;</span>
     ) : (
       <span>&rdquo;</span>
     );
-  if (staticCues) {
-    return (
-      <div>
-        <p>
-          <b>Ideas</b> based on reviews from other people
-        </p>
-        <ul>
-          {staticCues.map((cue, i) => (
-            <li key={i}>
-              &ldquo;{cue}
-              {suffix}
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  } else {
-    return false;
-  }
+  return (
+    <div>
+      <p>
+        <b>Ideas</b> based on reviews from other people
+      </p>
+      <ul>
+        {staticCues.map((cue, i) => (
+          <li key={i}>
+            &ldquo;{cue}
+            {suffix}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+});
+
+const InspireMe = iobs(({ state, dispatch }) => {
+  let { experimentState } = state;
+  let { flags } = experimentState;
+  let { onRequest } = flags;
+
+  if (!onRequest) return false;
+
+  return (
+    <button onClick={evt => dispatch({ type: "toggleInspiration" })}>
+      Inspire Me!
+    </button>
+  );
 });
 
 const reviewHeader = (controlledInputName, targetWords) =>
@@ -238,6 +257,7 @@ const reviewHeader = (controlledInputName, targetWords) =>
         </li>
       </ul>
       <StaticCues />
+      <InspireMe />
     </div>
   ));
 
