@@ -396,12 +396,22 @@ class LoginHandler(tornado.web.RequestHandler):
         self.write(json.dumps(dict(participant_id=participant_id)))
 
 
+class ApiHandler(tornado.web.RequestHandler):
+    async def post(self):
+        rpc = json.loads(self.request.body.decode("utf-8"))
+        result = await rec_generator.handle_request_async(
+            process_pool, rpc
+        )
+        self.write(json.dumps(result))
+
+
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
             (r"/", MainHandler),
             (r"/ws", WebsocketHandler),
             (r"/login", LoginHandler),
+            (r"/api/cue", ApiHandler),
             (r"/ping", WSPingHandler),
             (r"/(style\.css)", tornado.web.StaticFileHandler, dict(path=paths.ui)),
         ]

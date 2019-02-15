@@ -74,6 +74,11 @@ const handlers = {
     };
     xhr.send(JSON.stringify({ params, jsTimestamp: +new Date() }));
   },
+
+  showrecs() {
+    let ShowRecs = require("./ShowRecs").default;
+    topLevel = <ShowRecs />;
+  },
 };
 
 // Dispatch by initial part
