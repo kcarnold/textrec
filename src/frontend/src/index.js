@@ -28,50 +28,59 @@ let query = window.location.search.slice(1);
 let initialPart = query.split("/", 1)[0] || query;
 let remainder = query.slice(initialPart.length + 1);
 
-if (initialPart === "panopt") {
-  let Panopticon = require("./Panopticon").default;
-  topLevel = <Panopticon />;
-} else if (initialPart === "showall") {
-  // e.g., /?showall/c=gcap&a=0
-  let mod = require("./ShowAllScreens");
-  let loginEvent = {
-    type: "login",
-    participant_id: "zzzzzz",
-  };
-  remainder.split("&").forEach(part => {
-    let [k, v] = part.split("=", 2);
-    if (k === "c") k = "config";
-    else if (k === "a") k = "assignment";
-    loginEvent[k] = v;
-  });
-  let { createTaskState, MasterView } = getApp(loginEvent.config);
-  mod.init(createTaskState, MasterView, loginEvent);
-  let ShowAllScreens = mod.default;
-  topLevel = <ShowAllScreens />;
-} else if (query.slice(0, 3) === "new") {
-  // e.g., http://localhost:3000/?new&b=gc1
-  let params = query
-    .split("&")
-    .slice(1)
-    .map(x => x.split("="));
-  topLevel = <div>Logging in...</div>;
-  let xhr = new XMLHttpRequest();
-  xhr.open("POST", "/login", true);
-  xhr.setRequestHeader("Accept", "application/json");
-  xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState === XMLHttpRequest.DONE) {
-      console.log("response", xhr.responseText);
-      let { participant_id } = JSON.parse(xhr.responseText);
-      window.location.replace(
-        `${window.location.protocol}//${
-          window.location.host
-        }/?${participant_id}-p`
-      );
-    }
-  };
-  xhr.send(JSON.stringify({ params, jsTimestamp: +new Date() }));
+const handlers = {
+  panopt() {
+    let Panopticon = require("./Panopticon").default;
+    topLevel = <Panopticon />;
+  },
+
+  showall() {
+    // e.g., /?showall/c=gcap&a=0
+    let mod = require("./ShowAllScreens");
+    let loginEvent = {
+      type: "login",
+      participant_id: "zzzzzz",
+    };
+    remainder.split("&").forEach(part => {
+      let [k, v] = part.split("=", 2);
+      if (k === "c") k = "config";
+      else if (k === "a") k = "assignment";
+      loginEvent[k] = v;
+    });
+    let { createTaskState, MasterView } = getApp(loginEvent.config);
+    mod.init(createTaskState, MasterView, loginEvent);
+    let ShowAllScreens = mod.default;
+    topLevel = <ShowAllScreens />;
+  },
+
+  new: () => {
+    // e.g., http://localhost:3000/?new/b=gc1
+    let params = remainder.split("&").map(x => x.split("="));
+    topLevel = <div>Logging in...</div>;
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", "/login", true);
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        console.log("response", xhr.responseText);
+        let { participant_id } = JSON.parse(xhr.responseText);
+        window.location.replace(
+          `${window.location.protocol}//${
+            window.location.host
+          }/?${participant_id}-p`
+        );
+      }
+    };
+    xhr.send(JSON.stringify({ params, jsTimestamp: +new Date() }));
+  },
+};
+
+// Dispatch by initial part
+if (handlers[initialPart]) {
+  handlers[initialPart]();
 } else {
+  // Otherwise, this is a participant view, of the form "xxxxxx-p"
   let match = query.match(/^(.+)-(\w+)$/);
   if (match) {
     let clientId = match[1];
