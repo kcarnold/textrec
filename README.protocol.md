@@ -3,7 +3,7 @@ Client-Server Protocol
 
 ## Setup and Participant ID allocation
 
-* An experiment starts with a participant opening a URL like `http://server/?new&b=gc1`. The server unconditionally returns the complete create-react-app application to the client, which then dispatches based on the query string. Here, `b` is short for `batch`; we abbreviate here because participants may need to actually type this link on their mobile devices.
+* An experiment starts with a participant opening a URL like `http://server/?new/b=gc1`. The server unconditionally returns the complete create-react-app application to the client, which then dispatches based on the query string. Here, `b` is short for `batch`; we abbreviate here because participants may need to actually type this link on their mobile devices.
 * Upon seeing `new`, it makes an HTTP POST to `/login` on the same origin, with the query parameters it was passed, re-encoded to JSON, with the Javascript timestamp also. For example, the above would result in a POST of `{"b": "gc1", "jsTimestamp": 9999999}`.
 * The server allocates a condition in the provided batch according to its counterbalancing logic (described elsewhere). It then allocates a participant ID by generating a 6-character string randomly chosen from the characters `23456789cfghjmpqrvwx` with replacement (this is the alphabet used for Google's Open Location Codes), ensuring that no logfile under that id already exists. It then records a single event to that participant's log-file: the "login event". As the result of the POST, it returns a JSON object: `{"participant_id": "participant id"}`.
 
