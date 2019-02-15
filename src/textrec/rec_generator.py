@@ -82,14 +82,30 @@ async def get_cue_API(executor, request):
         return dict(staticCues=randomSentences)
 
     text = request["text"]
-    return {
-        "cues": await get_cue(
-            executor, text, dataset_name="yelp", n_clusters=20, n_words=5
-        )
-    }
+    #cues = await get_cue_auto(
+    #    executor, text, dataset_name="yelp", n_clusters=20, n_words=5
+    #)
+    cues = get_cue(text)
+    return {"cues": cues}
 
 
-async def get_cue(executor, text, dataset_name, n_clusters, n_words):
+def get_cue(text):
+    # Manual cue FTW.
+    sents = nltk.sent_tokenize(text)
+
+    if len(sents) == 0:
+        phrases = ["I came here with my", "We came here on a", "I'm so glad I was"]
+    else:
+        phrases = [
+            "I'm not a vegetarian but",
+            "There was plenty of seating",
+            "When I first walked in,",
+        ]
+
+    return [dict(phrase=phrase) for phrase in phrases]
+
+
+async def get_cue_auto(executor, text, dataset_name, n_clusters, n_words):
     sents = nltk.sent_tokenize(text)
     scores_by_cluster_argsort, unique_starts = get_cueing_data(
         dataset_name=dataset_name, n_clusters=n_clusters, n_words=n_words
