@@ -8,6 +8,8 @@ import * as Dispatcher from "./Dispatcher";
 import getApp from "./Apps";
 
 import Raven from "raven-js";
+
+// Configure error logging.
 if (process.env.NODE_ENV === "production") {
   Raven.config("https://c0c96b3696f14e4eb2fe4f35f4da3176@sentry.io/186354")
     .config({
@@ -18,6 +20,10 @@ if (process.env.NODE_ENV === "production") {
 
 let elt = document.getElementById("root");
 let topLevel = <h3>Invalid URL</h3>;
+
+// Parse URL into an initial part and remainder. e.g.,
+// /?showall/c=cue&a=0&prompt=restaurant
+// gets split into "showall" and "c=cue..."
 let query = window.location.search.slice(1);
 let initialPart = query.split("/", 1)[0] || query;
 let remainder = query.slice(initialPart.length + 1);
