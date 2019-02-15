@@ -774,10 +774,6 @@ langcodes = ">=1.4.1"
 msgpack = "*"
 regex = ">=2017.07.11,<=2018.02.21"
 
-[package.source]
-reference = "4cd7b4bada89e72dec956f7bafdb3e348c456a4a"
-type = "git"
-url = "git@github.com:LuminosoInsight/wordfreq.git"
 [[package]]
 category = "main"
 description = "Module for decorators, wrappers and monkey patching."
@@ -787,7 +783,7 @@ python-versions = "*"
 version = "1.10.11"
 
 [metadata]
-content-hash = "9fafff64f6281a3036dab62fbf33316b69288300ce688ba210b58472ff3c74d1"
+content-hash = "7d6190772ed50d2efd446cd91f53b66bad3b00b12a77366d1e98cef174935f54"
 python-versions = "^3.6"
 
 [metadata.hashes]
@@ -865,5 +861,5 @@ ujson = ["f66073e5506e91d204ab0c614a148d5aa938bdbf104751be66f8ad7a222f5f86"]
 urllib3 = ["61bf29cada3fc2fbefad4fdf059ea4bd1b4a86d2b6d15e1c7c0b582b9752fe39", "de9529817c93f27c8ccbfead6985011db27bd0ddfcdb2d86f3f663385c6a9c22"]
 user-agents = ["0ce5b1b44c8d11b9f3d6152ef9c8a2109409273ef8de600d577f549a3a3cbc6c", "643d16772280052b546d956971d719989ef6dc9b17d9ff0386aa21391a038039"]
 wcwidth = ["3df37372226d6e63e1b1e1eda15c594bca98a22d33a23832a90998faa96bc65e", "f4ebe71925af7b40a864553f761ed559b43544f8f71746c2d756c7fe788ade7c"]
-wordfreq = []
+wordfreq = ["15e85da56abd458909a514860219b91b16512cadc81aefe76e87141669dd72ca", "7cc7058859b8ef195110f8dae0764706cf33e4d0e72a7ed6a9f6adf89cb109d5"]
 wrapt = ["d4d560d479f2c21e1b5443bbd15fe7ec4b37fe7e53d335d3b9b0a7b1226fe3c6"]

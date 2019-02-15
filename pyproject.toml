@@ -18,14 +18,14 @@ cytoolz = "^0.9.0"
 joblib = "^0.13.0"
 nltk = "^3.4"
 spacy = "^2.0"
-wordfreq = { git="git@github.com:LuminosoInsight/wordfreq.git", branch="relax-regex-version" }
 #kenlm = { path = "vendor/kenlm" }
-
 tornado = "^5.1"
 patchwork = "^1.0"
 pyyaml = "^3.13"
 ua-parser = "^0.8.0"
 user-agents = "^1.1"
+wordfreq = "^2.2"
+
 [tool.poetry.dev-dependencies]
 ipython = "^7.2"
 fabric = "^2.4"
