@@ -11,7 +11,7 @@ const getCue = context => {
     domain: "restaurant",
     text: context,
   };
-  return fetch("/api/cue", {
+  return fetch("/api", {
     headers: {
       "Content-Type": "application/json",
     },

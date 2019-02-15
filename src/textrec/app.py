@@ -411,7 +411,7 @@ class Application(tornado.web.Application):
             (r"/", MainHandler),
             (r"/ws", WebsocketHandler),
             (r"/login", LoginHandler),
-            (r"/api/cue", ApiHandler),
+            (r"/api", ApiHandler),
             (r"/ping", WSPingHandler),
             (r"/(style\.css)", tornado.web.StaticFileHandler, dict(path=paths.ui)),
         ]
