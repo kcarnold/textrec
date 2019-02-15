@@ -1,8 +1,10 @@
 import json
+import re
 import traceback
+from functools import lru_cache
+
 import nltk
 import numpy as np
-from functools import lru_cache
 
 randomPhrases = """
 It tasted like a lot
@@ -52,6 +54,273 @@ And that's the story of how Hemenay's saved our Valentine's Day!"""
 
 randomSentences = randomSentences.strip().split("\n")
 
+manual_cues = [
+    (
+        0,
+        "seating",
+        """
+there were plenty of empty
+we sat at one of
+we were seated by the""",
+    ),
+    (
+        3,
+        "ingredients",
+        """
+        the quality of ingredients is
+        the ingredients were fresh and
+""",
+    ),
+    (
+        4,
+        "location convenience",
+        """
+    if you live in the
+if i lived nearby
+""",
+    ),
+    (6, "decor", """the decor was nice,"""),
+    (
+        8,
+        "alcoholics",
+        """
+    we had a bottle of
+they brew their own beer
+they have beer and wine
+they also serve beer and
+""",
+    ),
+    (
+        9,
+        "return?",
+        """probably won't be coming back
+i won't be going back
+this place is a hit
+""",
+    ),
+    (
+        12,
+        "flavor",
+        """
+        it has just the right
+the flavor was a bit
+you can really taste the
+when they say spicy ,
+it was full of flavor
+""",
+    ),
+    (13, "portions", """the portions are very generous"""),
+    (
+        14,
+        "should-add",
+        """i also wish they had
+i also wish there was
+""",
+    ),
+    (
+        16,
+        "sound level",
+        """the atmosphere is loud ,
+it can get pretty loud
+the music was a bit""",
+    ),
+    (
+        21,
+        "value",
+        """
+        for the price you're paying
+i don't mind paying a
+you get what you pay
+for the price , i
+however , for the price
+""",
+    ),
+    (
+        22,
+        "veg/vegan",
+        """
+    i'm a vegetarian and i
+i'm not a vegetarian but
+""",
+    ),
+    (
+        31,
+        "flavorful/juicy/tender",
+        """the meat was flavorful and
+the chicken was juicy and
+""",
+    ),
+    (
+        33,
+        "ambiance/atmosphere",
+        """
+    the ambiance is really nice
+the atmosphere of the place""",
+    ),
+    (
+        37,
+        "summary, enjoyed",
+        """it's a fun place to
+i enjoyed it , but
+we sat outside and enjoyed
+overall , i enjoyed my""",
+    ),
+    (40, "payment (credit cards)?", """they do take credit cards"""),
+    (
+        41,
+        "refills",
+        """our drinks were never refilled
+i had to ask for
+if you want a refill
+""",
+    ),
+    (
+        43,
+        "coming back?",
+        """i am definitely coming back
+i don't think i'll be""",
+    ),
+    (
+        52,
+        "what impressed/not?",
+        """i was really impressed by
+i was not impressed by
+""",
+    ),
+    (
+        53,
+        "prior visits?",
+        """i frequent this place for
+i will be a regular""",
+    ),
+    (
+        59,
+        "service",
+        """the service was ridiculously slow
+it was a little awkward
+""",
+    ),
+    (
+        60,
+        "occasion",
+        """i met a friend here
+we went there for dinner
+i had dinner here last
+i met a friend for""",
+    ),
+    (
+        61,
+        "pricey",
+        """it's a bit pricey ,
+it's a little pricey for
+a little on the pricey""",
+    ),
+    (
+        62,
+        "companions",
+        """my fiance and i went
+i came here with my
+i took my girlfriend here
+my boyfriend and i went
+i went there with my
+my boyfriend took me here
+""",
+    ),
+    (
+        68,
+        "disappointment?",
+        """you won't be disappointed .
+i was disappointed with the
+i have never been disappointed
+""",
+    ),
+    (
+        70,
+        "day of week",
+        """we came here on a
+it was a saturday night
+it was a friday night
+""",
+    ),
+    (
+        71,
+        "frequency",
+        """i've been here multiple times
+i've only been here twice
+this was my first time
+""",
+    ),
+    (
+        72,
+        "parking",
+        """there is plenty of parking
+parking was easy to find
+parking is hard to find""",
+    ),
+    (
+        86,
+        "wait",
+        """it took about 10 minutes
+we were in and out
+""",
+    ),
+    (
+        87,
+        "food tasty?",
+        """the food is simple ,
+the food is absolutely delicious
+""",
+    ),
+    (
+        90,
+        "choices, menu selection",
+        """there are so many choices
+the menu is limited ,
+there are so many options
+""",
+    ),
+    (
+        101,
+        "returning, recommending",
+        """wouldn't go out of my
+i wouldn't recommend going here
+i wouldn't recommend this place""",
+    ),
+    (
+        117,
+        "salads/greens?",
+        """they also have salads ,
+soups , salads , and
+""",
+    ),
+    (
+        120,
+        "size / appropriate for groups?",
+        """
+    the place is huge and
+we had a large group
+the space is small and
+""",
+    ),
+    (
+        127,
+        "non-alcoholic drinks?",
+        """i ordered an iced tea
+i ordered an iced coffee
+also , the coffee is
+""",
+    ),
+]
+
+
+def detokenize(x):
+    x = re.sub(r"\bi\b", "I", x)
+    x = x.replace(' , ', ', ')
+    return x[0].upper() + x[1:]
+
+
+manual_cues = [(idx, name, [detokenize(x) for x in cues.strip().split("\n")]) for idx, name, cues in manual_cues]
+
 
 async def handle_request_async(executor, request):
     method = request["method"]
@@ -82,9 +351,9 @@ async def get_cue_API(executor, request):
         return dict(staticCues=randomSentences)
 
     text = request["text"]
-    #cues = await get_cue_auto(
+    # cues = await get_cue_auto(
     #    executor, text, dataset_name="yelp", n_clusters=20, n_words=5
-    #)
+    # )
     cues = get_cue(text)
     return {"cues": cues}
 
@@ -93,16 +362,28 @@ def get_cue(text):
     # Manual cue FTW.
     sents = nltk.sent_tokenize(text)
 
-    if len(sents) == 0:
-        phrases = ["I came here with my", "We came here on a", "I'm so glad I was"]
-    else:
-        phrases = [
-            "I'm not a vegetarian but",
-            "There was plenty of seating",
-            "When I first walked in,",
-        ]
+    n_clusters = len(manual_cues)
+    rs = np.random.RandomState(len(sents))
+    clusters_to_cue = rs.choice(n_clusters, size=3, replace=False)
 
-    return [dict(phrase=phrase) for phrase in phrases]
+    cues = []
+    for cluster_to_cue in clusters_to_cue:
+        # Cue one of the top 10 phrases for this cluster.
+        phrases = manual_cues[cluster_to_cue][2]
+        phrase = phrases[rs.choice(len(phrases))]
+        cues.append(dict(cluster=int(cluster_to_cue), phrase=phrase))
+
+    return cues
+    # if len(sents) == 0:
+    #     phrases = ["I came here with my", "We came here on a", "I'm so glad I was"]
+    # else:
+    #     phrases = [
+    #         "I'm not a vegetarian but",
+    #         "There was plenty of seating",
+    #         "When I first walked in,",
+    #     ]
+
+    # return [dict(phrase=phrase) for phrase in phrases]
 
 
 async def get_cue_auto(executor, text, dataset_name, n_clusters, n_words):
