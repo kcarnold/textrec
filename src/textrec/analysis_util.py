@@ -61,7 +61,7 @@ def get_log_analysis_many(participants):
 
     # Load already-cached.
     analysis_files = {
-        name: sha1_file(paths.frontend / name) for name in ["src/Analyzer.js"]
+        name: sha1_file(paths.frontend / name) for name in ["src/TouchAnalyzer.js"]
     }
 
     analyses = {}
