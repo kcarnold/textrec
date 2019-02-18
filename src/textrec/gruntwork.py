@@ -85,6 +85,7 @@ def get_automated_analysis(datum):
     for pos in 'ADJ ADV NUM NOUN VERB PROPN'.split():
         datum[f'pos_count_{pos}'] = pos_counts.get(pos, 0)
     datum['mean_log_freq'] = automated_analyses.mean_log_freq(text)
+    datum['total_rarity'] = automated_analyses.total_rarity(text)
     if include_logprobs:
         # Note that eval_logprobs_* actually returns the _negative_ logprob.
         datum['logprob_conditional'] = -automated_analyses.eval_logprobs_conditional(datum['stimulus'], text)

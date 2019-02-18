@@ -24,13 +24,22 @@ def pos_counts(text):
     return Counter(token.pos_ for token in nlp(text))
 
 @mem.cache
-def mean_log_freq(text):
+def wordfreqs(text):
     freqs = []
     for tok in wordfreq.tokenize(text, 'en'):
         freq = wordfreq.zipf_frequency(tok, 'en')
         if freq != 0:
             freqs.append(freq)
-    return np.mean(freqs)
+    return np.array(freqs)
+
+
+def mean_log_freq(text):
+    return np.mean(wordfreqs(text))
+
+
+def total_rarity(text):
+    rarities = 1 - wordfreqs(text) / 7.
+    return np.sum(rarities)
 
 
 @mem.cache
