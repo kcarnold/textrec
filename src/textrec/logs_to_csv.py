@@ -29,8 +29,7 @@ class ColType:
 PossiblyMissingInt = ColType(float)
 Count = ColType(int, fill=0)
 
-BoxCox = ColType(float, boxcox=True)
-TraitColumn = ColType(float, boxcox=True)
+TraitColumn = ColType(float)
 
 gender_map = {
     'fenale': 'female',
@@ -105,8 +104,8 @@ columns = {
         'num_recs_seen': Count,
         'num_recs_full_seen': Count,
         'num_recs_full_gated': Count,
-        'rec_use_full_per_seen': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: divide_zerosafe(datum['num_tapSugg_full'], datum['num_recs_full_seen'])),
-        'rec_use_per_seen': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: divide_zerosafe(datum['num_tapSugg_any'], datum['num_recs_seen'])),
+        'rec_use_full_per_seen': ColType(float, f=lambda datum: divide_zerosafe(datum['num_tapSugg_full'], datum['num_recs_full_seen'])),
+        'rec_use_per_seen': ColType(float, f=lambda datum: divide_zerosafe(datum['num_tapSugg_any'], datum['num_recs_seen'])),
 
         'num_recs_seen_on_mainline': Count,
         'num_recs_used_on_mainline': Count,
@@ -114,19 +113,19 @@ columns = {
         'relevant_use_frac': ColType(float, f=lambda datum: divide_zerosafe(datum['num_recs_used_on_mainline'], datum['num_recs_useful'])),
         'rec_use_per_word': ColType(float, f=lambda datum: divide_zerosafe(datum['num_recs_used_on_mainline'], datum['num_words'])),
 
-        'delay_before_start': BoxCox,
-        'seconds_spent_typing': BoxCox,
-        'characters_per_sec': ColType(float, f=lambda datum: datum['num_chars'] / datum['seconds_spent_typing'], boxcox=True),
-        'taps_per_second': ColType(float, f=lambda datum: datum['num_taps'] / datum['seconds_spent_typing'], boxcox=True),
+        'delay_before_start': float,
+        'seconds_spent_typing': float,
+        'characters_per_sec': ColType(float, f=lambda datum: datum['num_chars'] / datum['seconds_spent_typing']),
+        'taps_per_second': ColType(float, f=lambda datum: datum['num_taps'] / datum['seconds_spent_typing']),
         'taps_per_word': ColType(float, f=lambda datum: datum['num_taps'] / datum['num_words']),
 
-        'backspaces_per_tap': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: datum['num_tapBackspace'] / datum['num_taps']),
-        'backspaces_per_char': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: datum['num_tapBackspace'] / datum['num_chars']),
+        'backspaces_per_tap': ColType(float, f=lambda datum: datum['num_tapBackspace'] / datum['num_taps']),
+        'backspaces_per_char': ColType(float, f=lambda datum: datum['num_tapBackspace'] / datum['num_chars']),
 
-        'extraneous_inputs': ColType(float, boxcox=True, bc_shift=10, f=lambda datum: datum['num_taps'] - datum['orig_tapstotype_cond']),
-        'extraneous_inputs_per_input': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: (datum['num_taps'] - datum['orig_tapstotype_cond']) / datum['num_taps']),
-        'extraneous_inputs_per_char': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: (datum['num_taps'] - datum['orig_tapstotype_cond']) / datum['num_chars']),
-        'extraneous_inputs_per_word': ColType(float, boxcox=True, bc_shift=1, f=lambda datum: (datum['num_taps'] - datum['orig_tapstotype_cond']) / datum['num_words']),
+        'extraneous_inputs': ColType(float, f=lambda datum: datum['num_taps'] - datum['orig_tapstotype_cond']),
+        'extraneous_inputs_per_input': ColType(float, f=lambda datum: (datum['num_taps'] - datum['orig_tapstotype_cond']) / datum['num_taps']),
+        'extraneous_inputs_per_char': ColType(float, f=lambda datum: (datum['num_taps'] - datum['orig_tapstotype_cond']) / datum['num_chars']),
+        'extraneous_inputs_per_word': ColType(float, f=lambda datum: (datum['num_taps'] - datum['orig_tapstotype_cond']) / datum['num_words']),
 
         'ideal_taps_per_word': ColType(float, f=lambda datum: datum['orig_tapstotype_standard'] / datum['num_words']),
     }
@@ -170,16 +169,6 @@ def coerce_columns(df, column_types):
         if 'lower' in typ.flags:
             assert typ.type is str
             result[column_name] = result[column_name].str.lower()
-        if 'boxcox' in typ.flags:
-            boxcox_name = f'{column_name}_boxcox'
-            column_order.append(boxcox_name)
-            col_data = result[column_name]
-            if 'bc_shift' in typ.flags:
-                col_data = col_data + typ.flags['bc_shift']
-            if np.min(col_data) <= 0:
-                print(f"Failed to BoxCox because {boxcox_name} has non-positive minimum {np.min(col_data)}")
-            # ... and fail here:
-            result[boxcox_name], _ = scipy.stats.boxcox(col_data)
         if 'recode' in typ.flags:
             result[column_name] = result[column_name].apply(lambda x: typ.flags['recode'].get(x, x))
     extra_columns = sorted(set(result.columns) - set(column_order))
