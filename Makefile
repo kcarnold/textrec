@@ -55,13 +55,13 @@ data/analyzed/trial_cue%.csv: data/participants.txt src/textrec/logs_to_csv_cue.
 
 # This rule needs to go first or else the logs_to_csv rule will match a 'withmanual' :(
 data/analyzed/trial_withmanual_%.csv: src/textrec/gruntwork.py data/analyzed/trial_%.csv data/gruntwork
-	python -m textrec.gruntwork $*
+	poetry run python -m textrec.gruntwork $*
 
 data/analyzed/trial_%.csv: data/participants.txt src/textrec/logs_to_csv.py
-	python -m textrec.logs_to_csv $*
+	poetry run python -m textrec.logs_to_csv $*
 
 data/analyzed/combined_data.csv: data/analyzed/trial_withmanual_gc1.csv data/analyzed/trial_withmanual_spec2.csv
-	python scripts/merge_data_from_all_experiments.py
+	poetry run python scripts/merge_data_from_all_experiments.py
 
 
 
