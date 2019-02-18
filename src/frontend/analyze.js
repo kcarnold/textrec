@@ -1,4 +1,5 @@
-import {analyzeLog} from './src/Analyzer.js';
+import * as TouchAnalyzer from './src/TouchAnalyzer.js';
+import * as CueAnalyzer from './src/CueAnalyzer.js';
 var fs = require('fs');
 
 console.log = console.warn;
@@ -24,7 +25,7 @@ Promise.all(files.map(filename => {
     .split('\n')
     .filter(line => line.length > 0)
     .map(line => JSON.parse(line)));
-  return analyzeLog(log).then(
+  return TouchAnalyzer.analyzeLog(log).then(
     result => ({filename, result}),
     // Magic: https://stackoverflow.com/a/26199752/69707
     error => ({filename, error: JSON.stringify(error, Object.getOwnPropertyNames(error))}),
