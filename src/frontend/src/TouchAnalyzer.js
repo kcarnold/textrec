@@ -10,6 +10,7 @@ export function processLogGivenState(state, log) {
   let { participant_id } = log[0];
   let byExpPage = {};
   let pageSeq = [];
+  let steppedBack = false;
 
   function getPageData() {
     let page = state.curExperiment;
@@ -55,6 +56,10 @@ export function processLogGivenState(state, log) {
             finalData = JSON.parse(JSON.stringify(effect.finalData));
           }
         });
+      }
+
+      if (entry.type === "next" && entry.delta === -1) {
+        steppedBack = true;
       }
 
       // Validate the log parsing by checking that the final data matches what was logged.
@@ -272,6 +277,7 @@ export function processLogGivenState(state, log) {
     pageSeq,
     screenTimes,
     allControlledInputs: state.controlledInputs.toJS(),
+    steppedBack,
   };
 }
 
