@@ -37,6 +37,19 @@ gender_map = {
     'make': 'male'
 }
 
+first_screen_traits = """\
+I feel comfortable around people.
+I like to solve complex problems.
+I trust others
+I have difficulty understanding abstract ideas.
+I distrust people
+I believe in the importance of art.
+I am not interested in abstract ideas.
+I have little to say.\
+""".split('\n')
+
+USE_ONLY_INTRO_TRAITS = True
+
 columns = {
     'experiment': {
         'participant': str,
@@ -408,12 +421,21 @@ def decode_experiment_level(experiment_level, traits):
     import json
     with open(paths.data / 'trait_data.json') as f:
         trait_data = json.load(f)
-        trait_items_by_trait = toolz.groupby('trait', trait_data)
+        all_trait_items = [item['item'] for item in trait_data if item['trait'] in traits]
 
-    all_trait_items = []
+    if USE_ONLY_INTRO_TRAITS:
+        trait_data = [item for item in trait_data if item['item'] in first_screen_traits]
+
+    trait_items_by_trait = toolz.groupby('trait', trait_data)
+
+    if USE_ONLY_INTRO_TRAITS:
+        # The intro survey has a positive and a negative item for each trait.
+        for trait, items in trait_items_by_trait.items():
+            assert len(items) == 2
+            assert {item['is_negated'] for item in items} == set([0, 1])
+
     for trait in traits:
         items = trait_items_by_trait[trait]
-        all_trait_items.extend([item['item'] for item in items])
         item_data = []
         for item in items:
             this_col = pd.to_numeric(experiment_level_pivot[item['item']]) / NUM_LIKERT_DEGREES_FOR_TRAITS
@@ -421,7 +443,6 @@ def decode_experiment_level(experiment_level, traits):
                 this_col = 1 - this_col
             item_data.append(this_col)
         experiment_level_pivot[trait] = sum(item_data) / len(item_data)
-
 
     experiment_level_pivot = experiment_level_pivot.drop(all_trait_items, axis=1)
 
