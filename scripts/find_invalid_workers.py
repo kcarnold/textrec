@@ -17,7 +17,8 @@ titles = {
     'Which image fits a given description?': 'anno',
     'Pick the image that this sentence is more likely to be describing.': 'anno',
     'Which images fit a given description?': 'anno',
-    'Try writing with different mobile-phone keyboards': 'write'
+    'Try writing with different mobile-phone keyboards': 'write',
+    'Try typing with different mobile-phone keyboards': 'write,'
 }
 
 relevant_hits = [hit for hit in hits if hit['Title'] in titles.keys()]
