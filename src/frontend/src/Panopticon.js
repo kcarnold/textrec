@@ -7,7 +7,7 @@ import { observer } from "mobx-react";
 import WSClient from "./wsclient";
 import map from "lodash/map";
 import filter from "lodash/filter";
-import { getOldCode } from "./Analyzer";
+import { getOldCode } from "./TouchAnalyzer";
 
 function commonPrefixLength(x, y) {
   // Get longest common prefix between x and y.
