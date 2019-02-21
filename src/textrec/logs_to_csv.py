@@ -59,6 +59,7 @@ columns = {
         'other': str,
         'techDiff': str,
         'total_time': float,
+        'steppedBack': bool,
         'use_predictive': str,
         'verbalized_during': str,
         'condition_order': str,
@@ -340,6 +341,8 @@ def get_survey_data(participants, analyses):
             analyzed['screenTimes'][-1]['timestamp']
              - analyzed['screenTimes'][0]['timestamp']) / 1000 / 60
         experiment_level.append((participant_id, 'total_time', total_time))
+
+        experiment_level.append((participant_id, 'steppedBack', analyzed['steppedBack']))
 
         conditions = [condition_name_map[analyzed['byExpPage'][page]['condition']] for page in analyzed['pageSeq']]
         assert len(conditions) % 3 == 0
