@@ -1,12 +1,12 @@
-import numpy as np
-import pandas as pd
-import scipy.stats
-from .paths import paths
-from . import analysis_util, automated_analyses
 from collections import Counter
-import toolz
+from typing import Any, List
 
-from typing import List, Any
+import pandas as pd
+import toolz
+import tqdm
+
+from . import analysis_util, automated_analyses
+from .paths import paths
 
 condition_name_map = dict(
     norecs='norecs',
@@ -251,7 +251,7 @@ def rec_is_useful(sofar: str, txt: str, words: list):
 def get_trial_data(participants, analyses) -> List[Any]:
     results = []
 
-    for participant_id in participants:
+    for participant_id in tqdm.tqdm(participants, desc="Extracting trial data"):
         analyzed = analyses[participant_id]
 
         controlledInputsDict = dict(analyzed['allControlledInputs'])
@@ -451,6 +451,7 @@ def analyze_all(participants, traits='NFC Extraversion'):
     for trait in traits:
         expected_experiment_columns[trait] = TraitColumn
 
+    print(f"Getting log analyses for {len(participants)} participants.")
     analyses = analysis_util.get_log_analysis_many(participants)
 
     trial_data = get_trial_data(participants, analyses)
