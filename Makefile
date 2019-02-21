@@ -61,7 +61,7 @@ data/analyzed/trial_%.csv: data/participants.txt src/textrec/logs_to_csv.py
 	poetry run python -m textrec.logs_to_csv $*
 
 # === Build this rule for the full analysis! ===
-data/analyzed/combined_data.csv: data/analyzed/trial_withmanual_gc1.csv data/analyzed/trial_withmanual_spec2.csv
+data/analyzed/combined_data.csv: data/analyzed/trial_withmanual_gc1.csv data/analyzed/trial_withmanual_spec1.csv data/analyzed/trial_withmanual_spec2.csv
 	poetry run python scripts/combined_analysis.py
 
 
