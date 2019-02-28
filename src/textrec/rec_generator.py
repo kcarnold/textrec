@@ -315,11 +315,14 @@ also , the coffee is
 
 def detokenize(x):
     x = re.sub(r"\bi\b", "I", x)
-    x = x.replace(' , ', ', ')
+    x = x.replace(" , ", ", ")
     return x[0].upper() + x[1:]
 
 
-manual_cues = [(idx, name, [detokenize(x) for x in cues.strip().split("\n")]) for idx, name, cues in manual_cues]
+manual_cues = [
+    (idx, name, [detokenize(x.strip()) for x in cues.strip().split("\n")])
+    for idx, name, cues in manual_cues
+]
 
 
 async def handle_request_async(executor, request):
