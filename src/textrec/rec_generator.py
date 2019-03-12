@@ -1,10 +1,14 @@
 import json
+import pickle
 import re
 import traceback
 from functools import lru_cache
 
 import nltk
 import numpy as np
+import wordfreq
+
+from .paths import paths
 
 randomPhrases = """
 It tasted like a lot
@@ -324,6 +328,8 @@ manual_cues = [
     for idx, name, cues in manual_cues
 ]
 
+manual_cues_by_idx = {idx: (name, cues) for idx, name, cues in manual_cues}
+
 
 async def handle_request_async(executor, request):
     method = request["method"]
@@ -354,39 +360,54 @@ async def get_cue_API(executor, request):
         return dict(staticCues=randomSentences)
 
     text = request["text"]
+    dataset_name = 'yelp'
     # cues = await get_cue_auto(
     #    executor, text, dataset_name="yelp", n_clusters=20, n_words=5
     # )
-    cues = get_cue(text)
+    cues = get_cue(text, dataset_name=dataset_name)
     return {"cues": cues}
 
 
-def get_cue(text):
-    # Manual cue FTW.
-    sents = nltk.sent_tokenize(text)
+def get_cue(text, dataset_name):
+    clusters_to_cue = get_predicted_cluster(text, dataset_name)
 
-    n_clusters = len(manual_cues)
+    sents = nltk.sent_tokenize(text)
     rs = np.random.RandomState(len(sents))
-    clusters_to_cue = rs.choice(n_clusters, size=3, replace=False)
 
     cues = []
     for cluster_to_cue in clusters_to_cue:
-        # Cue one of the top 10 phrases for this cluster.
-        phrases = manual_cues[cluster_to_cue][2]
+        # Cue one of the phrases for this cluster.
+        name, phrases = manual_cues_by_idx[cluster_to_cue]
         phrase = phrases[rs.choice(len(phrases))]
         cues.append(dict(cluster=int(cluster_to_cue), phrase=phrase))
 
     return cues
-    # if len(sents) == 0:
-    #     phrases = ["I came here with my", "We came here on a", "I'm so glad I was"]
-    # else:
-    #     phrases = [
-    #         "I'm not a vegetarian but",
-    #         "There was plenty of seating",
-    #         "When I first walked in,",
-    #     ]
 
-    # return [dict(phrase=phrase) for phrase in phrases]
+
+cluster_prediction_data = pickle.load(open(paths.data / "predict_cluster.pkl", 'rb'))
+cluster_idx2id = [0, 3, 4, 8, 9, 12, 13, 14, 16, 21, 22, 31, 33, 37, 41, 43, 52, 53, 59, 60, 61, 62, 68, 70, 71, 72, 86, 87, 90, 101, 117, 120, 127]
+
+
+# Cribbed from preprocess_yelp.py
+def tokenize(text):
+    sents = nltk.sent_tokenize(text)
+    token_spaced_sents = (
+        " ".join(wordfreq.tokenize(sent, "en", include_punctuation=True))
+        for sent in sents
+    )
+    return "\n".join(token_spaced_sents)
+
+
+def get_predicted_cluster(text, dataset_name):
+    assert dataset_name == 'yelp'
+
+    tokenized = tokenize(text)
+    vectorizer = cluster_prediction_data['vectorizer']
+    sent_idx = np.array([len(tokenized.split('\n'))])
+    X = np.append(vectorizer.transform([tokenized]).A, sent_idx[:, None], axis=1)
+    probas = cluster_prediction_data['clf'].predict_proba(X)[0]
+    top_clusters = np.argsort(probas)[-3:][::-1]
+    return [cluster_idx2id[predicted_cluster] for predicted_cluster in top_clusters]
 
 
 async def get_cue_auto(executor, text, dataset_name, n_clusters, n_words):
