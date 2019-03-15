@@ -24,20 +24,6 @@ def summarize_clusters(doc_texts, cluster_dists):
         print()
 
 
-def train_lms_per_cluster(clusterer, vecs, texts, model_basename):
-    """
-    Train a language model for each cluster.
-    """
-    sentences_in_cluster = [[] for i in range(clusterer.n_clusters)]
-    for text, cluster_idx in zip(texts, clusterer.predict(vecs)):
-        sentences_in_cluster[cluster_idx].append(text)
-    for cluster_idx, cluster in enumerate(sentences_in_cluster):
-        print(cluster_idx)
-        dump_kenlm(
-            "{}_{}".format(model_basename, cluster_idx), [s.lower() for s in cluster]
-        )
-
-
 def normalize_dists(dists):
     return dists / np.sum(dists, axis=1, keepdims=True)
 
@@ -144,29 +130,58 @@ def cached_topic_data(dataset_name, n_clusters=75):
         projection_mat=projection_mat,
         clusterer=clusterer,
         pervasiveness_by_topic=pervasiveness_by_topic,
+        total_num_docs=len(df_full),
     )
+
+
+MIN_SENTS_IN_CLUSTER = 50
 
 
 @lru_cache()
 @mem.cache
-def cached_lms_per_cluster(dataset_name, n_clusters):
+def cached_lms_per_cluster(dataset_name, n_clusters, min_pervasiveness_frac=0.01):
     # Get data.
     topic_data = cached_topic_data(dataset_name, n_clusters=n_clusters)
     clusterer = topic_data["clusterer"]
-    sents = topic_data["sentences"].sent
+    texts = topic_data["sentences"].sent
     projected_vecs = topic_data["projected_vecs"]
+
+    # Group sentences by cluster.
+    sentences_in_cluster = [[] for i in range(clusterer.n_clusters)]
+    for text, cluster_idx in zip(texts, clusterer.predict(projected_vecs)):
+        sentences_in_cluster[cluster_idx].append(text)
+
+    # Filter to include only topics that occur in more than 1% of documents.
+    min_pervasiveness = min_pervasiveness_frac * topic_data["total_num_docs"]
+    clusters_to_use = []
+    for topic, num_documents_with_topic in topic_data[
+        "pervasiveness_by_topic"
+    ].iteritems():
+        if (
+            num_documents_with_topic >= min_pervasiveness
+            and len(sentences_in_cluster) >= MIN_SENTS_IN_CLUSTER
+        ):
+            clusters_to_use.append(topic)
+
+    print(f"Using {len(clusters_to_use)} out of {clusterer.n_clusters} clusters.")
 
     # Train models (shells out to KenLM)
     model_basename = f"{dataset_name}_{n_clusters}"
-    train_lms_per_cluster(
-        clusterer, vecs=projected_vecs, texts=sents, model_basename=model_basename
-    )
+
+    for cluster_idx in clusters_to_use:
+        print(cluster_idx)
+        dump_kenlm(
+            "{}_{}".format(model_basename, cluster_idx),
+            [s.lower() for s in sentences_in_cluster[cluster_idx]],
+        )
 
     # Load models
-    return [
-        lang_model.Model.get_or_load_model(f"{model_basename}_{cluster_idx}")
-        for cluster_idx in range(n_clusters)
-    ]
+    return {
+        cluster_idx: lang_model.Model.get_or_load_model(
+            f"{model_basename}_{cluster_idx}"
+        )
+        for cluster_idx in clusters_to_use
+    }
 
 
 @lru_cache()
@@ -191,14 +206,14 @@ def cached_unique_starts(dataset_name, n_words):
 def cached_scores_by_cluster(dataset_name, n_clusters, n_words=5):
     unique_starts = cached_unique_starts(dataset_name, n_words=n_words)
     models = cached_lms_per_cluster(dataset_name, n_clusters)
-    return (
-        np.array(
-            [
-                [model.score_seq(model.bos_state, k)[0] for model in models]
-                for k in tqdm(unique_starts, desc="Score starts")
-            ]
-        ).T,
-        unique_starts,
+    return dict(
+        unique_starts=unique_starts,
+        scores={
+            cluster_idx: np.array(
+                [model.score_seq(model.bos_state, k)[0] for k in unique_starts]
+            )
+            for cluster_idx, model in tqdm(models.items(), desc="Score by cluster")
+        },
     )
 
 
@@ -212,15 +227,17 @@ def cached_scores_by_cluster(dataset_name, n_clusters, n_words=5):
 def cached_scores_by_cluster_argsort(
     dataset_name, n_clusters, n_words=5, likelihood_bias_weight=0.85
 ):
-    scores_by_cluster, unique_starts = cached_scores_by_cluster(
+    sbc_data = cached_scores_by_cluster(
         dataset_name, n_clusters=n_clusters, n_words=n_words
     )
-
+    cluster_indices, scores_by_cluster = zip(*sorted(sbc_data["scores"].items()))
+    scores_by_cluster = np.array(list(scores_by_cluster))
     likelihood_bias = logsumexp(scores_by_cluster, axis=0, keepdims=True)
     biased_scores_by_cluster = (
         scores_by_cluster - likelihood_bias_weight * likelihood_bias
     )
-    return np.argsort(biased_scores_by_cluster, axis=1)[:, ::-1], unique_starts
+    argsorts = np.argsort(biased_scores_by_cluster, axis=1)[:, ::-1]
+    return dict(zip(cluster_indices, argsorts)), sbc_data["unique_starts"]
 
 
 def get_topic_sequences(tokenized_docs, vectorizer, projection_mat, clusterer):
@@ -243,6 +260,7 @@ def topic_seq_model_name(dataset_name):
 @lru_cache()
 @mem.cache
 def cached_topic_sequence_lm(dataset_name, n_clusters=75):
+    # TODO: should we use UNK or something for a rare topic?
     df_full = cached_dataset(dataset_name)
     topic_data = cached_topic_data(dataset_name, n_clusters=n_clusters)
     topic_sequences = get_topic_sequences(
