@@ -1,7 +1,7 @@
 import logging
 import pickle
 
-from .numberbatch_vecs import get_cnnb
+from .numberbatch_vecs import get_projection_mat
 import cytoolz
 import numpy as np
 import tqdm
@@ -40,35 +40,6 @@ def get_vectorizer(sents):
     vectorizer = TfidfVectorizer(min_df=5, max_df=0.5, stop_words="english")
     all_vecs = vectorizer.fit_transform(sents)
     return vectorizer, all_vecs
-
-
-def get_projection_mat(vectorizer, normalize_by_wordfreq=True):
-    import wordfreq
-
-    cnnb = get_cnnb()
-
-    sklearn_vocab = vectorizer.get_feature_names()
-
-    def get_or_zero(cnnb, item):
-        try:
-            return cnnb[item]
-        except KeyError:
-            return np.zeros(cnnb.ndim)
-
-    cnnb_vecs_for_sklearn_vocab = np.array(
-        [get_or_zero(cnnb, word) for word in sklearn_vocab]
-    )
-
-    if normalize_by_wordfreq:
-        wordfreqs_for_sklearn_vocab = [
-            wordfreq.word_frequency(word, "en", "large", minimum=1e-9)
-            for word in sklearn_vocab
-        ]
-        return (
-            -np.log(wordfreqs_for_sklearn_vocab)[:, None] * cnnb_vecs_for_sklearn_vocab
-        )
-    else:
-        return cnnb_vecs_for_sklearn_vocab
 
 
 def filter_by_norm(vecs, texts, min_norm=0.5):
@@ -143,7 +114,8 @@ def cached_reasonable_length_sents(dataset_name):
 def cached_vectorizer_and_projections(dataset_name):
     sents = cached_reasonable_length_sents(dataset_name)
     vectorizer, raw_vecs = get_vectorizer(sents)
-    projection_mat = get_projection_mat(vectorizer)
+    vocab = vectorizer.get_feature_names()
+    projection_mat = get_projection_mat(vocab, normalize_by_wordfreq=True)
     vecs = raw_vecs.dot(projection_mat)
     new_sents, projected_vecs, filtered_indices = filter_by_norm(vecs, sents)
     return {
