@@ -1,67 +1,19 @@
 import logging
 import pickle
-
-from .numberbatch_vecs import get_projection_mat
-import cytoolz
-import numpy as np
-import tqdm
-from scipy.special import logsumexp
 from functools import lru_cache
 
-from . import lang_model
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
+from scipy.special import logsumexp
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+from . import lang_model, numberbatch_vecs
 from .paths import paths
-from .util import dump_kenlm, mem
+from .util import VecPile, dump_kenlm, mem
 
 logger = logging.getLogger(__name__)
-
-
-def flatten_sents(tokenized_docs):
-    """
-    Concatenate sentences from all tokenized docs.
-    Assumes that sentences in tokenized docs are separated by newlines (\n)
-    """
-    return list(cytoolz.concat(doc.split("\n") for doc in tokenized_docs))
-
-
-def filter_reasonable_length_sents(sents, min_percentile=25, max_percentile=75):
-    """
-    Return only sentences with reasonable length, defined as 25-to-75%ile.
-    """
-    sent_lens = np.array([len(sent.split()) for sent in sents])
-    min_sent_len, max_sent_len = np.percentile(
-        sent_lens, [min_percentile, max_percentile]
-    )
-    return [sent for sent in sents if min_sent_len <= len(sent.split()) <= max_sent_len]
-
-
-def get_vectorizer(sents):
-    from sklearn.feature_extraction.text import TfidfVectorizer
-
-    vectorizer = TfidfVectorizer(min_df=5, max_df=0.5, stop_words="english")
-    all_vecs = vectorizer.fit_transform(sents)
-    return vectorizer, all_vecs
-
-
-def filter_by_norm(vecs, texts, min_norm=0.5):
-    norms = np.linalg.norm(vecs, axis=1)
-    large_enough = norms > min_norm
-    vecs = vecs[large_enough] / norms[large_enough][:, None]
-    indices = np.flatnonzero(large_enough)
-    texts = [texts[i] for i in indices]
-    return texts, vecs, indices
-
-
-# Clustering sentences
-
-
-def get_clusterer_and_dists(sentence_vecs, n_clusters, random_state):
-    from sklearn.cluster import MiniBatchKMeans
-
-    clusterer = MiniBatchKMeans(
-        init="k-means++", n_clusters=n_clusters, n_init=10, random_state=random_state
-    )
-    distance_to_centers = clusterer.fit_transform(sentence_vecs)
-    return clusterer, distance_to_centers
 
 
 def summarize_clusters(doc_texts, cluster_dists):
@@ -77,8 +29,8 @@ def train_lms_per_cluster(clusterer, vecs, texts, model_basename):
     Train a language model for each cluster.
     """
     sentences_in_cluster = [[] for i in range(clusterer.n_clusters)]
-    for i, c in enumerate(clusterer.predict(vecs)):
-        sentences_in_cluster[c].append(texts[i])
+    for text, cluster_idx in zip(texts, clusterer.predict(vecs)):
+        sentences_in_cluster[cluster_idx].append(text)
     for cluster_idx, cluster in enumerate(sentences_in_cluster):
         print(cluster_idx)
         dump_kenlm(
@@ -104,49 +56,105 @@ def cached_dataset(name):
 
 @lru_cache()
 @mem.cache
-def cached_reasonable_length_sents(dataset_name):
-    tokenized_docs = cached_dataset(dataset_name).tokenized
-    return filter_reasonable_length_sents(flatten_sents(tokenized_docs))
+def cached_topic_data(dataset_name, n_clusters=75):
+    # Load dataset
+    df_full = cached_dataset(dataset_name)
 
+    # flag_best_reviews(df_full)
 
-@lru_cache()
-@mem.cache
-def cached_vectorizer_and_projections(dataset_name):
-    sents = cached_reasonable_length_sents(dataset_name)
-    vectorizer, raw_vecs = get_vectorizer(sents)
-    vocab = vectorizer.get_feature_names()
-    projection_mat = get_projection_mat(vocab, normalize_by_wordfreq=True)
-    vecs = raw_vecs.dot(projection_mat)
-    new_sents, projected_vecs, filtered_indices = filter_by_norm(vecs, sents)
-    return {
-        "vectorizer": vectorizer,
-        "projection_mat": projection_mat,
-        "filtered_sents": new_sents,
-        "projected_vecs": projected_vecs,
-        "filtered_indices": filtered_indices,
-    }
+    # Split sentences.
+    sentences = []
+    for row in df_full.itertuples():
+        doc_id = row.review_id
+        sents = row.tokenized.split("\n")
+        doc_n_sents = len(sents)
+        for sent_idx, sent in enumerate(sents):
+            sentences.append((doc_id, doc_n_sents, sent_idx, sent))
 
-
-@lru_cache()
-@mem.cache
-def cached_clusterer(dataset_name, n_clusters):
-    projections_data = cached_vectorizer_and_projections(dataset_name)
-    projected_vecs = projections_data["projected_vecs"]
-    clusterer, cluster_dists = get_clusterer_and_dists(
-        projected_vecs, n_clusters=n_clusters, random_state=0
+    sentences = pd.DataFrame(
+        sentences, columns="doc_id doc_n_sents sent_idx sent".split()
     )
-    return {"clusterer": clusterer, "cluster_dists": cluster_dists}
+    print("{:,} sentences".format(len(sentences)))
+
+    # Filter 1: length
+    sentences["sent_length"] = [len(sent.split()) for sent in sentences.sent]
+
+    min_percentile = 25
+    max_percentile = 75
+    min_sent_len, max_sent_len = np.percentile(
+        sentences.sent_length, [min_percentile, max_percentile]
+    )
+    length_filtered = VecPile(
+        sentences=sentences[
+            sentences.sent_length.between(min_sent_len, max_sent_len)
+        ].copy()
+    )
+    print("{:,} length-filtered sentences".format(len(length_filtered)))
+
+    # Project into word-vector space
+    vectorizer = TfidfVectorizer(min_df=5, max_df=0.5, stop_words="english")
+    length_filtered.raw_vecs = vectorizer.fit_transform(length_filtered.sentences.sent)
+
+    vocab = vectorizer.get_feature_names()
+    projection_mat = numberbatch_vecs.get_projection_mat(vocab)
+
+    length_filtered.projected_vecs = length_filtered.raw_vecs.dot(projection_mat)
+
+    # Let's skip norm filtering, since it didn't do much.
+    norm_filtered = length_filtered
+
+    # Cluster
+    random_state = 0
+    clusterer = MiniBatchKMeans(
+        init="k-means++", n_clusters=n_clusters, n_init=10, random_state=random_state
+    )
+    clusterer.fit(norm_filtered.projected_vecs)
+    norm_filtered.dists_to_centers = clusterer.transform(norm_filtered.projected_vecs)
+
+    # Hard-assign topics, filter to those close enough.
+
+    norm_filtered.sentences["topic"] = np.argmin(norm_filtered.dists_to_centers, axis=1)
+    norm_filtered.dist_to_closest_cluster = np.min(
+        norm_filtered.dists_to_centers, axis=1
+    )
+    norm_filtered.is_close = norm_filtered.dist_to_closest_cluster < np.median(
+        norm_filtered.dist_to_closest_cluster
+    )
+
+    distance_filtered = VecPile(
+        indices=np.flatnonzero(norm_filtered.is_close),
+        sentences=norm_filtered.sentences.iloc[norm_filtered.is_close].copy(),
+        projected_vecs=norm_filtered.projected_vecs[norm_filtered.is_close],
+    )
+    print("{:,} close enough to cluster center".format(len(distance_filtered)))
+
+    distance_filtered.raw_vecs = norm_filtered.raw_vecs[distance_filtered.indices]
+
+    # For each topic, how many different docs does it occur in?
+    pervasiveness_by_topic = (
+        distance_filtered.sentences[["doc_id", "topic"]]
+        .drop_duplicates()
+        .groupby("topic")
+        .size()
+    )
+
+    return dict(
+        vars(norm_filtered),
+        vectorizer=vectorizer,
+        projection_mat=projection_mat,
+        clusterer=clusterer,
+        pervasiveness_by_topic=pervasiveness_by_topic,
+    )
 
 
 @lru_cache()
 @mem.cache
 def cached_lms_per_cluster(dataset_name, n_clusters):
     # Get data.
-    projections_data = cached_vectorizer_and_projections(dataset_name)
-    clusterer_data = cached_clusterer(dataset_name, n_clusters)
-    clusterer = clusterer_data["clusterer"]
-    sents = projections_data["filtered_sents"]
-    projected_vecs = projections_data["projected_vecs"]
+    topic_data = cached_topic_data(dataset_name, n_clusters=n_clusters)
+    clusterer = topic_data["clusterer"]
+    sents = topic_data["sentences"].sent
+    projected_vecs = topic_data["projected_vecs"]
 
     # Train models (shells out to KenLM)
     model_basename = f"{dataset_name}_{n_clusters}"
@@ -165,8 +173,8 @@ def cached_lms_per_cluster(dataset_name, n_clusters):
 @mem.cache
 def cached_unique_starts(dataset_name, n_words):
     # Score the first 5 words of every sentence.
-    projections_data = cached_vectorizer_and_projections(dataset_name)
-    sents = projections_data["filtered_sents"]
+    topic_data = cached_topic_data(dataset_name)
+    sents = topic_data["sentences"].sent
 
     if n_words is None:
         # Special-case: Use all vocab.
@@ -187,7 +195,7 @@ def cached_scores_by_cluster(dataset_name, n_clusters, n_words=5):
         np.array(
             [
                 [model.score_seq(model.bos_state, k)[0] for model in models]
-                for k in tqdm.tqdm(unique_starts, desc="Score starts")
+                for k in tqdm(unique_starts, desc="Score starts")
             ]
         ).T,
         unique_starts,
@@ -197,17 +205,6 @@ def cached_scores_by_cluster(dataset_name, n_clusters, n_words=5):
 #         params['omit_unks'] = np.flatnonzero([
 #             [any(model.model.vocab_index(tok) == 0 for tok in toks) for model in models]
 #             for toks in unique_starts])
-
-
-def get_cached_vectorizer(dataset_name):
-    projections_data = cached_vectorizer_and_projections(dataset_name)
-    vectorizer = projections_data["vectorizer"]
-    projection_mat = projections_data["projection_mat"]
-
-    def vectorize_sents(sents):
-        return vectorizer.transform(sents).dot(projection_mat)
-
-    return vectorize_sents
 
 
 @lru_cache()
@@ -224,3 +221,36 @@ def cached_scores_by_cluster_argsort(
         scores_by_cluster - likelihood_bias_weight * likelihood_bias
     )
     return np.argsort(biased_scores_by_cluster, axis=1)[:, ::-1], unique_starts
+
+
+def get_topic_sequences(tokenized_docs, vectorizer, projection_mat, clusterer):
+    """For each document, label the sentences in it by topic."""
+
+    def label_topics(tokenized_doc):
+        sents = tokenized_doc.split("\n")
+        vecs = vectorizer.transform(sents)
+        projected = vecs.dot(projection_mat)
+        clusters = clusterer.predict(projected)
+        return " ".join(str(cluster) for cluster in clusters)
+
+    return [label_topics(tokenized) for tokenized in tqdm(tokenized_docs)]
+
+
+def topic_seq_model_name(dataset_name):
+    return f"{dataset_name}_topic_seq"
+
+
+@lru_cache()
+@mem.cache
+def cached_topic_sequence_lm(dataset_name, n_clusters=75):
+    df_full = cached_dataset(dataset_name)
+    topic_data = cached_topic_data(dataset_name, n_clusters=n_clusters)
+    topic_sequences = get_topic_sequences(
+        df_full.tokenized,
+        vectorizer=topic_data["vectorizer"],
+        projection_mat=topic_data["projection_mat"],
+        clusterer=topic_data["clusterer"],
+    )
+    model_name = topic_seq_model_name(dataset_name)
+    dump_kenlm(model_name, topic_sequences, order=6, discount_fallback=True)
+    return lang_model.Model.get_or_load_model(model_name)
