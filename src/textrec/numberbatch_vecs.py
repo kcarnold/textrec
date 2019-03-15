@@ -58,6 +58,32 @@ def normalize_vecs(vecs):
     return vecs / (np.linalg.norm(vecs, axis=1, keepdims=True) + 1e-7)
 
 
-@lru_cache
+@lru_cache()
 def get_cnnb():
     return ConceptNetNumberBatch.load()
+
+
+def get_projection_mat(vocab, normalize_by_wordfreq=True):
+    cnnb = get_cnnb()
+
+    def get_or_zero(item):
+        try:
+            return cnnb[item]
+        except KeyError:
+            return np.zeros(cnnb.ndim)
+
+    cnnb_vecs_for_vocab = np.array(
+        [get_or_zero(word) for word in vocab]
+    )
+
+    if normalize_by_wordfreq:
+        import wordfreq
+        wordfreqs = [
+            wordfreq.word_frequency(word, "en", "large", minimum=1e-9)
+            for word in vocab
+        ]
+        return (
+            -np.log(wordfreqs)[:, None] * cnnb_vecs_for_vocab
+        )
+    else:
+        return cnnb_vecs_for_vocab
