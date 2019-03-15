@@ -1,14 +1,18 @@
-import joblib
 import json
+import subprocess
+
+import joblib
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+from .paths import paths
+
 try:
     import ujson
 except ImportError:
     # Slower but still works fine.
     ujson = json
-from .paths import paths
-import subprocess
 
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 mem = joblib.Memory(str(paths.cache), mmap_mode='r')
 
@@ -117,3 +121,54 @@ def flatten_dict(x, prefix=''):
             result[prefix + k] = v
     return result
 
+
+class VecPile:
+    """An attribute-accesed collection that asserts that all of its elements have the same length.
+
+    Useful for keeping several collections together, such as vectors with labels, or several different representations of the same data."""
+
+    def __init__(self, **kw):
+        for k, v in kw.items():
+            setattr(self, k, v)
+
+    @staticmethod
+    def get_len(x):
+        try:
+            return x.shape[0]
+        except AttributeError:
+            return len(x)
+
+    def __setattr__(self, key, value):
+        new_len = self.get_len(value)
+        for existing in self.__dict__.values():
+            existing_len = self.get_len(existing)
+            if existing_len != new_len:
+                raise ValueError(
+                    f"Dimension mismatch: vecpile has dimension {existing_len} but trying to add a {new_len}"
+                )
+        self.__dict__[key] = value
+
+    def __len__(self):
+        for existing in self.__dict__.values():
+            return self.get_len(existing)
+
+
+def test_vecpile():
+    vp = VecPile()
+    x = np.zeros(10)
+    vp.x = x
+    assert vp.x is x
+    try:
+        raised = False
+        vp.y = np.zeros(2)
+    except ValueError:
+        raised = True
+    assert raised
+
+    vp = VecPile(x=x)
+    assert vp.x is x
+
+    assert len(vp) == len(x)
+
+
+test_vecpile()
