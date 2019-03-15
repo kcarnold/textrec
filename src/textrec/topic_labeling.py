@@ -81,28 +81,3 @@ def other():
 
     # Represent a document as a sequence of topics.
 
-
-def get_topic_sequences(tokenized_docs, vectorizer, projection_mat, clusterer):
-    """For each document, label the sentences in it by topic."""
-    def label_topics(tokenized_doc):
-        sents = tokenized_doc.split("\n")
-        vecs = vectorizer.transform(sents)
-        projected = vecs.dot(projection_mat)
-        clusters = clusterer.predict(projected)
-        return " ".join(str(cluster) for cluster in clusters)
-
-    return [
-        label_topics(tokenized) for tokenized in tqdm.tqdm_notebook(tokenized_docs)
-    ]
-
-def topic_seq_model_name(dataset_name):
-    return f"{dataset_name}_topic_seq"
-
-
-def cached_topic_sequence_lm(dataset_name):
-
-    topic_sequences = get_topic_sequences(df_full.tokenized)
-    model_name = topic_seq_model_name(dataset_name)
-    dump_kenlm(model_name, topic_sequences, order=6, discount_fallback=True)
-    return lang_model.Model.get_or_load_model(model_name)
-
