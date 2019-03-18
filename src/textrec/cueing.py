@@ -42,7 +42,7 @@ def cached_dataset(name):
 
 @lru_cache()
 @mem.cache
-def cached_topic_data(dataset_name, n_clusters=75):
+def cached_topic_data(dataset_name, n_clusters):
     # Load dataset
     df_full = cached_dataset(dataset_name)
 
@@ -184,13 +184,7 @@ def cached_lms_per_cluster(dataset_name, n_clusters, min_pervasiveness_frac=0.01
     }
 
 
-@lru_cache()
-@mem.cache
-def cached_unique_starts(dataset_name, n_words):
-    # Score the first 5 words of every sentence.
-    topic_data = cached_topic_data(dataset_name)
-    sents = topic_data["sentences"].sent
-
+def get_unique_starts(sents, n_words):
     if n_words is None:
         # Special-case: Use all vocab.
         return sorted({tok for sent in sents for tok in sent.split()})
@@ -204,7 +198,10 @@ def cached_unique_starts(dataset_name, n_words):
 @lru_cache()
 @mem.cache
 def cached_scores_by_cluster(dataset_name, n_clusters, n_words=5):
-    unique_starts = cached_unique_starts(dataset_name, n_words=n_words)
+    # Score the first n_words words of every sentence.
+    topic_data = cached_topic_data(dataset_name, n_clusters=n_clusters)
+    sents = topic_data["sentences"].sent
+    unique_starts = get_unique_starts(sents, n_words=n_words)
     models = cached_lms_per_cluster(dataset_name, n_clusters)
     return dict(
         unique_starts=unique_starts,
@@ -253,8 +250,8 @@ def get_topic_sequences(tokenized_docs, vectorizer, projection_mat, clusterer):
     return [label_topics(tokenized) for tokenized in tqdm(tokenized_docs)]
 
 
-def topic_seq_model_name(dataset_name):
-    return f"{dataset_name}_topic_seq"
+def topic_seq_model_name(dataset_name, n_clusters):
+    return f"{dataset_name}_{n_clusters}_topic_seq"
 
 
 @lru_cache()
@@ -269,6 +266,6 @@ def cached_topic_sequence_lm(dataset_name, n_clusters=75):
         projection_mat=topic_data["projection_mat"],
         clusterer=topic_data["clusterer"],
     )
-    model_name = topic_seq_model_name(dataset_name)
+    model_name = topic_seq_model_name(dataset_name, n_clusters=n_clusters)
     dump_kenlm(model_name, topic_sequences, order=6, discount_fallback=True)
     return lang_model.Model.get_or_load_model(model_name)
