@@ -9,6 +9,9 @@ from textrec.paths import paths
 from . import onmt_model_2
 from .util import mem
 
+# Computed by compute_gating_threshold. See also GatedCapTask.js
+GATING_THRESHOLD = -0.989417552947998
+
 paths.imgdata_h5 = paths.imgdata_h5_all
 
 print("Loading SpaCy...", end='', flush=True)
@@ -106,7 +109,7 @@ def all_taps_to_type(stimulus, text, prefix):
         norecs=[dict(type='key', key=c) for c in text_without_punct],
         standard=taps_to_type(None, text_without_punct),
         contextual=taps_to_type(stimulus, text_without_punct),
-        gated=taps_to_type(None, text_without_punct, threshold=-0.989417552947998),
+        gated=taps_to_type(None, text_without_punct, threshold=GATING_THRESHOLD),
     )
     res = {}
     for condition, taps in taps_by_cond.items():
