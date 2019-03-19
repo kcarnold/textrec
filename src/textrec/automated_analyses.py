@@ -15,7 +15,7 @@ GATING_THRESHOLD = -0.989417552947998
 paths.imgdata_h5 = paths.imgdata_h5_all
 
 print("Loading SpaCy...", end='', flush=True)
-nlp = spacy.load('en_core_web_sm')
+nlp = spacy.load('en_core_web_md')
 print("done")
 
 @mem.cache(verbose=0)
