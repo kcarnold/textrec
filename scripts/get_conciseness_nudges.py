@@ -23,7 +23,7 @@ trial_level_data = pd.read_csv(
 skips = []
 for idx in trange(len(trial_level_data)):
     stimulus = trial_level_data.stimulus.iloc[idx]
-    text = trial_level_data.text.iloc[idx]
+    text = trial_level_data.corrected_text.iloc[idx]
     text_without_punct = text.replace(".", "").replace(",", "")
     tokens = text_without_punct.split()
     spacy_doc = nlp(text_without_punct)
