@@ -60,8 +60,14 @@ class ShowRecs extends Component {
         <tbody>
           {contexts.map(ctx => (
             <tr key={ctx}>
-              <td>{ctx}</td>
-              <td>
+              <td
+                style={{ verticalAlign: "top", borderTop: "1px solid black" }}
+              >
+                {ctx}
+              </td>
+              <td
+                style={{ verticalAlign: "top", borderTop: "1px solid black" }}
+              >
                 <CuesView cues={recs[ctx]} />
               </td>
             </tr>
