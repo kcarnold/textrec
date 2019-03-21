@@ -56,6 +56,7 @@ dt << New Column( "chars_per_sec_norecs_log", Numeric, Formula( Log( :chars_per_
 
 dt << New Column( "mintaps_standard", Numeric, Formula( :corrected_tapstotype_standard / :num_words ) );
 dt << New Column( "mintaps_contextual", Numeric, Formula( :corrected_tapstotype_contextual / :num_words ) );
+dt << New Column( "mintaps_gated", Numeric, Formula( :corrected_tapstotype_gated / :num_words ) );
 dt << New Column( "mintaps_std_minus_contextual", Numeric, Formula( mintaps_standard - mintaps_contextual ) );
 
 dt << New Column( "any_ADJ", Numeric, Formula(  :ADJ > 0 ) );
@@ -180,6 +181,8 @@ analyze( "mintaps_std_minus_contextual", "MTPW(Standard, text) - MPTW(Contextual
 // Effect on text length in words
 analyze( "num_words", "num_words" );
 analyze( "num_words_log", "Log(num_words)" );
+
+analyze( "mean_log_freq", "Zipf frequency");
 
 // MTPW with age
 analyze( "mintaps_standard", "MTPW with age",  "", ", :age, :age * :condition");
@@ -310,3 +313,35 @@ blockLevel << Oneway(
 	Variables( X( :age ), Y( :chars_per_sec_norecs_mean ) ),
 	Elements( Points( X, Y, Legend( 3 ) ), Line Of Fit( X, Y, Legend( 7 ), F Test( 1 ) ) )
 );
+
+
+
+/*** Length nudges ***/
+dt << Graph Builder(
+	Variables(
+		X( :num_words ),
+		Y( :mintaps_standard ),
+		Y( :mintaps_gated ),
+		Y( :mintaps_contextual )
+	),
+	Elements(
+		Position( 1, 1 ),
+		Points( X, Y, Legend( 3 ) ),
+		Line Of Fit( X, Y, Legend( 11 ), R²( 1 ), Equation( 1 ), F Test( 1 ) )
+	),
+	Elements(
+		Position( 1, 2 ),
+		Points( X, Y, Legend( 8 ) ),
+		Line Of Fit( X, Y, Legend( 11 ), R²( 1 ), Equation( 1 ), F Test( 1 ) )
+	),
+	Elements(
+		Position( 1, 3 ),
+		Points( X, Y, Legend( 12 ) ),
+		Line Of Fit( X, Y, Legend( 13 ), R²( 1 ), Equation( 1 ), F Test( 1 ) )
+	),
+	Local Data Filter(
+		Add Filter(
+			columns( :mintaps_standard, :num_words ),
+		)
+	)
+)
