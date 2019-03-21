@@ -1,6 +1,6 @@
 import pandas as pd
 import wordfreq
-from tqdm import tqdm, trange
+from tqdm import trange
 
 from textrec import onmt_model_2
 from textrec.paths import paths
