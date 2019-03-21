@@ -1,4 +1,4 @@
-﻿dt_all = Open(
+dt_all = Open(
 	"/Users/kcarnold/thesis/textrec/data/analyzed/combined_data.csv",
 	Charset( "utf-8" ),
 	Import Settings(
@@ -21,7 +21,7 @@
 );
 
 // Master data filter
-dt = Subset( dt_all, Rows( dt_all << get rows where( :participant != "pr5hff" & :participant != "7q253f" ) ) );
+dt = Subset( dt_all, Rows( dt_all << get rows where( :participant != "pr5hff" & :participant != "7q253f" & :experiment == "gc1" ) ) );
 Close( dt_all );
 dt << Set Name( "Combined Data" );
 
@@ -29,7 +29,7 @@ dt << Set Name( "Combined Data" );
 // Set data types
 Column( dt, "stimulus" ) << Data Type( "Character" ) << Modeling Type( "Nominal" );
 // "The last level is the level with the highest value order coding; it is the level whose indicator function is not included in the model." (https://www.jmp.com/support/help/14/indicator-parameterization-estimates.shtml)
-Column( dt, "condition" ) << Set Property( "Value Ordering", {"gated", "contextual", "standard", "norecs"} );
+Column( dt, "condition" ) << Set Property( "Value Ordering", {"gated", "standard", "norecs"} );
 
 // Transform columns
 quartilify = {/*"NFC", "Extraversion", "Openness", "Trust",*/ "chars_per_sec_norecs_mean"};
