@@ -1,4 +1,4 @@
-dt_all = Open(
+﻿dt_all = Open(
 	"/Users/kcarnold/thesis/textrec/data/analyzed/combined_data.csv",
 	Charset( "utf-8" ),
 	Import Settings(
@@ -59,11 +59,17 @@ dt << New Column( "mintaps_contextual", Numeric, Formula( :corrected_tapstotype_
 dt << New Column( "mintaps_gated", Numeric, Formula( :corrected_tapstotype_gated / :num_words ) );
 dt << New Column( "mintaps_std_minus_contextual", Numeric, Formula( mintaps_standard - mintaps_contextual ) );
 
-dt << New Column( "any_ADJ", Numeric, Formula(  :ADJ > 0 ) );
+
+dt << New Column( "num_words_not_BOW_recs", Numeric, Formula( :num_words - :corrected_bow_recs_idealuse_standard ) );
+dt << New Column( "frac_words_not_BOW_recs", Numeric, Formula( (:num_words - :corrected_bow_recs_idealuse_standard) / :num_words ) );
+
+
+dt << New Column( "any_ADJ", Numeric, Formula( :ADJ > 0 ) );
 
 
 Wait( 0 );
 
+/*
 New Window( "Manipulation Checks",
 	dt << Matched Pairs(
 		X( :condition ),
@@ -108,7 +114,7 @@ New Window( "Manipulation Checks",
 
 );
 
-Wait( 0 );
+Wait( 0 );*/
 
 
 // Main analysis function
@@ -131,7 +137,7 @@ analyze = Function( {response_name, window_title, extra_toplevel = "", extra_eff
 		resp = dt << Fit Model(
 			Y( :"
 	 || response_name || " ),
-			Effects( :experiment, :condition, :idx " || extra_effects ||
+			Effects( :condition_order, :condition, :block, :idx_in_block, :steppedBack, :condition * :steppedBack" || extra_effects ||
 	"),
 			Random Effects( :participant, :participant * :condition, :stimulus),
 			NoBounds( 1 ),
@@ -161,11 +167,20 @@ analyze = Function( {response_name, window_title, extra_toplevel = "", extra_eff
 /*** Outcome Effects ***/
 // MTPW(standard)
 analyze( "mintaps_standard", "MTPW(Standard, text)" );
+
+// Total taps
+analyze( "corrected_tapstotype_standard", "Min-Taps total" );
+
+// Deviations from BOW recs
+analyze( "num_words_not_BOW_recs", "Num words typed that weren't BOW recommendations" );
+analyze( "frac_words_not_BOW_recs", "Frac words typed that weren't BOW recommendations" );
+
+
 // By content of recommendations offered (diff between standard and contextual)
-analyze( "mintaps_std_minus_contextual", "MTPW(Standard, text) - MPTW(Contextual, text)" );
+//analyze( "mintaps_std_minus_contextual", "MTPW(Standard, text) - MPTW(Contextual, text)" );
 
 
-(dt << Graph Builder(
+/*(dt << Graph Builder(
 	Variables( X( :condition ), Y( :mintaps_standard ), Y( :mintaps_contextual, Position( 1 ) ) ),
 	Elements( Bar( X, Y( 1 ), Y( 2 ), Legend( 15 ), Error Bars( "Standard Error" ), Label( "Label by Value" ) ) ),
 	SendToReport(
@@ -175,21 +190,24 @@ analyze( "mintaps_std_minus_contextual", "MTPW(Standard, text) - MPTW(Contextual
 		Dispatch( {}, "Y title", TextEditBox, {Set Text( "min taps (system, text)" )} ),
 		Dispatch( {}, "400", LegendBox, {Set Title( "System" )} )
 	)
-)) << set window title( "conformity - with gating" );
+)) << set window title( "conformity - with gating" );*/
 
 
 // Effect on text length in words
 analyze( "num_words", "num_words" );
-analyze( "num_words_log", "Log(num_words)" );
+/*analyze( "num_words_log", "Log(num_words)" );*/
 
-analyze( "mean_log_freq", "Zipf frequency");
+analyze( "mean_log_freq", "Zipf frequency" );
 
 // MTPW with age
-analyze( "mintaps_standard", "MTPW with age",  "", ", :age, :age * :condition");
+//analyze( "mintaps_standard", "MTPW with age",  "", ", :age, :age * :condition");
 
 
-analyze("ADJ", "Fraction of words that are adjectives");
-analyze("any_ADJ", "Any adjectives used?");
+analyze( "ADJ", "Fraction of words that are adjectives" );
+analyze( "any_ADJ", "Any adjectives used?" );
+
+analyze( "total_rarity", "Total rarity" );
+
 
 // Participants left fewer errors uncorrected in recs conditions
 // (For the paper, I did this analysis manually, since uncorrected errors is a rare event so ANOVA assumptions fail badly.
@@ -201,7 +219,7 @@ analyze("any_ADJ", "Any adjectives used?");
 
 // Main effect of condition on text entry speed
 // TODO: with more data, we DO see a main effect of condition on speed!
-analyze( "chars_per_sec_log", "Characters per Second" );
+/*analyze( "chars_per_sec_log", "Characters per Second" );
 
 // Interaction effect:
 // Graph (log transformed)
@@ -245,12 +263,14 @@ analyze( "chars_per_sec_log", "Characters per Second" );
 
 analyze( "chars_per_sec_log", "Characters per Second with baseline", "", ", :chars_per_sec_norecs_log, :chars_per_sec_norecs_log*:condition " );
 
-analyze( "chars_per_sec_log", "Characters per Second with age", "", ", :age, :age*:condition " );
-analyze( "chars_per_sec_log", "Characters per Second with age and baseline", "", ", :age, :age*:condition, :chars_per_sec_norecs_log, :chars_per_sec_norecs_log*:condition " );
+//analyze( "chars_per_sec_log", "Characters per Second with age", "", ", :age, :age*:condition " );
+//analyze( "chars_per_sec_log", "Characters per Second with age and baseline", "", ", :age, :age*:condition, :chars_per_sec_norecs_log, :chars_per_sec_norecs_log*:condition " );
 
-analyze( "taps_per_char", "Taps per Char" );
+//analyze( "taps_per_char", "Taps per Char" );
 
+*/
 
+/*
 // Taps per character, by type. Somewhat unusual graph.
 (dt << Graph Builder(
 	Size( 570, 564 ),
@@ -267,7 +287,7 @@ analyze( "taps_per_char", "Taps per Char" );
 	),
 	SendToReport( Dispatch( {"Bar"}, "", OutlineBox, {Close( 0 )} ), Dispatch( {"Bar"}, "", OutlineBox, {Close( 0 )} ) )
 )) << set window title( "Taps per Character, by type" );
-
+*/
 
 
 /** Rec usage */
@@ -318,30 +338,99 @@ blockLevel << Oneway(
 
 /*** Length nudges ***/
 dt << Graph Builder(
-	Variables(
-		X( :num_words ),
+	Variables( X( :num_words ), Y( :mintaps_standard ), Y( :mintaps_gated ), Y( :mintaps_contextual ) ),
+	Elements( Position( 1, 1 ), Points( X, Y, Legend( 3 ) ), Line Of Fit( X, Y, Legend( 11 ), R²( 1 ), Equation( 1 ), F Test( 1 ) ) ),
+	Elements( Position( 1, 2 ), Points( X, Y, Legend( 8 ) ), Line Of Fit( X, Y, Legend( 11 ), R²( 1 ), Equation( 1 ), F Test( 1 ) ) ),
+	Elements( Position( 1, 3 ), Points( X, Y, Legend( 12 ) ), Line Of Fit( X, Y, Legend( 13 ), R²( 1 ), Equation( 1 ), F Test( 1 ) ) ),
+	Local Data Filter( Add Filter( columns( :mintaps_standard, :num_words, :condition ), ) )
+);
+
+dt << Fit Group(
+	Fit Model(
 		Y( :mintaps_standard ),
+		Effects( :num_words ),
+		Random Effects( :stimulus ),
+		NoBounds( 1 ),
+		Personality( "Standard Least Squares" ),
+		Method( "REML" ),
+		Emphasis( "Minimal Report" ),
+		Run(
+			:mintaps_standard << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
+			Show Prediction Expression( 1 ), Scaled Estimates( 0 ), Plot Actual by Predicted( 0 ), Plot Residual by Predicted( 0 ),
+			Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Plot Residual by Normal Quantiles( 0 ), Show All Confidence Intervals( 1 )}
+		)
+	),
+	Fit Model(
 		Y( :mintaps_gated ),
-		Y( :mintaps_contextual )
+		Effects( :num_words ),
+		Random Effects( :stimulus ),
+		NoBounds( 1 ),
+		Personality( "Standard Least Squares" ),
+		Method( "REML" ),
+		Emphasis( "Minimal Report" ),
+		Run(
+			:mintaps_gated << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
+			Show Prediction Expression( 1 ), Scaled Estimates( 0 ), Plot Actual by Predicted( 0 ), Plot Residual by Predicted( 0 ),
+			Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Plot Residual by Normal Quantiles( 0 ), Show All Confidence Intervals( 1 )}
+		)
 	),
-	Elements(
-		Position( 1, 1 ),
-		Points( X, Y, Legend( 3 ) ),
-		Line Of Fit( X, Y, Legend( 11 ), R²( 1 ), Equation( 1 ), F Test( 1 ) )
-	),
-	Elements(
-		Position( 1, 2 ),
-		Points( X, Y, Legend( 8 ) ),
-		Line Of Fit( X, Y, Legend( 11 ), R²( 1 ), Equation( 1 ), F Test( 1 ) )
-	),
-	Elements(
-		Position( 1, 3 ),
-		Points( X, Y, Legend( 12 ) ),
-		Line Of Fit( X, Y, Legend( 13 ), R²( 1 ), Equation( 1 ), F Test( 1 ) )
-	),
-	Local Data Filter(
-		Add Filter(
-			columns( :mintaps_standard, :num_words ),
+	Fit Model(
+		Y( :mintaps_contextual ),
+		Effects( :num_words ),
+		Random Effects( :stimulus ),
+		NoBounds( 1 ),
+		Personality( "Standard Least Squares" ),
+		Method( "REML" ),
+		Emphasis( "Minimal Report" ),
+		Run(
+			:mintaps_contextual << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
+			Show Prediction Expression( 1 ), Scaled Estimates( 0 ), Plot Actual by Predicted( 0 ), Plot Residual by Predicted( 0 ),
+			Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Plot Residual by Normal Quantiles( 0 ), Show All Confidence Intervals( 1 )}
 		)
 	)
-)
+);
+
+
+
+
+Graph Builder(
+	Size( 1877, 579 ),
+	Variables( X( :Openness ), Y( :corrected_tapstotype_standard ), Overlay( :condition ) ),
+	Elements( Points( X, Y, Legend( 4 ) ), Line Of Fit( X, Y, Legend( 6 ), F Test( 1 ) ) )
+);
+
+
+posStack = dt << Stack(
+	columns( :ADJ, :ADP, :ADV, :CCONJ, :DET, :NOUN, :NUM, :PART, :PRON, :PROPN, :PUNCT, :SYM, :VERB ),
+	Source Label Column( "POS" ),
+	Stacked Data Column( "Frac" )
+);
+
+(posStack << Graph Builder(
+	Size( 2044, 1290 ),
+	Variables( X( :mintaps_standard ), Y( :Frac ), Wrap( :POS ) ),
+	Elements( Points( X, Y, Legend( 6 ) ), Line Of Fit( X, Y, Legend( 7 ), F Test( 1 ) ) ),
+	SendToReport(
+		Dispatch(
+			{},
+			"400",
+			ScaleBox,
+			{Legend Model(
+				6,
+				Base( -1, 0, 0, Item ID( "ADJ", 1 ) ),
+				Base( -1, 0, 0, Item ID( "ADP", 1 ) ),
+				Base( -1, 0, 0, Item ID( "ADV", 1 ) ),
+				Base( -1, 0, 0, Item ID( "CCONJ", 1 ) ),
+				Base( -1, 0, 0, Item ID( "DET", 1 ) ),
+				Base( -1, 0, 0, Item ID( "NOUN", 1 ) ),
+				Base( -1, 0, 0, Item ID( "NUM", 1 ) ),
+				Base( -1, 0, 0, Item ID( "PART", 1 ) ),
+				Base( -1, 0, 0, Item ID( "PRON", 1 ) ),
+				Base( -1, 0, 0, Item ID( "PROPN", 1 ) ),
+				Base( -1, 0, 0, Item ID( "PUNCT", 1 ) ),
+				Base( -1, 0, 0, Item ID( "SYM", 1 ) ),
+				Base( -1, 0, 0, Item ID( "VERB", 1 ) )
+			)}
+		)
+	)
+)) << set window title( "POS fracs vs MTPW" );
