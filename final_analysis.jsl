@@ -290,15 +290,30 @@ analyze( "chars_per_sec_log", "Characters per Second with baseline", "", ", :cha
 
 */
 
-analyze( "corrected_tapstotype_standard", "taps by Openness", "", ", :Openness, :Openness * :condition, :NFC, :NFC * :condition" );
-analyze( "mintaps_standard", "taps by Openness", "", ", :Openness, :Openness * :condition, :NFC, :NFC * :condition" );
-analyze( "num_words", "taps by Openness", "", ", :Openness, :Openness * :condition, :NFC, :NFC * :condition" );
+/*
+analyze( "corrected_tapstotype_standard", "taps by traits", "", ", :Openness, :Openness * :condition, :NFC, :NFC * :condition" );
+analyze( "mintaps_standard", "mintaps by traits", "", ", :Openness, :Openness * :condition, :NFC, :NFC * :condition" );
+analyze( "num_words", "num words by traits", "", ", :Openness, :Openness * :condition, :NFC, :NFC * :condition" );
 analyze(
 	"num_words",
-	"taps by Openness",
+	"num words by traits interaction",
 	"",
 	", :Openness, :Openness * :condition, :NFC, :NFC * :condition, :NFC * :Openness, :NFC * :Openness * :condition"
 );
+
+(
+dt << Contour Plot(
+	X( :NFC, :Openness ),
+	Y( :num_words, :mintaps_standard, :corrected_tapstotype_standard ),
+	Show Data Points( 0 ),
+	Fill Areas( 0 ),
+	Label Contours( 0 ),
+	Transform( "None" ),
+
+)) << set window title("Contours by traits");
+
+*/
+
 
 
 /*
@@ -353,23 +368,27 @@ blockLevel << Oneway(
 );
 
 
+only_norecs = Subset(
+	dt,
+	Rows( dt << get rows where( :condition == "norecs" ) )
+);
+
 
 /*** Length nudges ***/
-(dt << Graph Builder(
-	Variables( X( :num_words ), Y( :mintaps_standard ), Y( :mintaps_gated ), /*Y( :mintaps_contextual )*/ ),
+(only_norecs << Graph Builder(
+	Variables( Y( :num_words ), X( :mintaps_standard ), X( :mintaps_gated ) ),
 	Elements( Position( 1, 1 ), Points( X, Y, Legend( 3 ) ), Line Of Fit( X, Y, Legend( 11 ), R²( 1 ), Equation( 1 ), F Test( 1 ) ) ),
-	Elements( Position( 1, 2 ), Points( X, Y, Legend( 8 ) ), Line Of Fit( X, Y, Legend( 11 ), R²( 1 ), Equation( 1 ), F Test( 1 ) ) ), 
-//	Elements( Position( 1, 3 ), Points( X, Y, Legend( 12 ) ), Line Of Fit( X, Y, Legend( 13 ), R²( 1 ), Equation( 1 ), F Test( 1 ) ) ),
-	Local Data Filter( Add Filter( columns( :mintaps_standard, :num_words, :condition ), Where( :condition == "norecs" ) ) )
+	Elements( Position( 2, 1 ), Points( X, Y, Legend( 8 ) ), Line Of Fit( X, Y, Legend( 11 ), R²( 1 ), Equation( 1 ), F Test( 1 ) ) ), 
+//	Local Data Filter( Add Filter( columns( :mintaps_standard, :num_words, :condition ), Where( :condition == "norecs" ) ) )
 )) << set window title( "Longer captions have longer MTPW" );
 
 
 
-(dt << Fit Group(
+(only_norecs << Fit Group(
 	Fit Model(
-		Where( :condition == "norecs" ),
-		Y( :mintaps_standard ),
-		Effects( :num_words ),
+//		Where( :condition == "norecs" ),
+		Effects( :mintaps_standard ),
+		Y( :num_words ),
 		Random Effects( :stimulus ),
 		NoBounds( 1 ),
 		Personality( "Standard Least Squares" ),
@@ -382,9 +401,9 @@ blockLevel << Oneway(
 		)
 	),
 	Fit Model(
-		Where( :condition == "norecs" ),
-		Y( :mintaps_gated ),
-		Effects( :num_words ),
+//		Where( :condition == "norecs" ),
+		Effects( :mintaps_gated ),
+		Y( :num_words ),
 		Random Effects( :stimulus ),
 		NoBounds( 1 ),
 		Personality( "Standard Least Squares" ),
@@ -395,23 +414,55 @@ blockLevel << Oneway(
 			Show Prediction Expression( 1 ), Scaled Estimates( 0 ), Plot Actual by Predicted( 0 ), Plot Residual by Predicted( 0 ),
 			Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Plot Residual by Normal Quantiles( 0 ), Show All Confidence Intervals( 1 )}
 		)
-	), 
-/*	Fit Model(
-		Y( :mintaps_contextual ),
-		Effects( :num_words ),
-		Random Effects( :stimulus ),
-		NoBounds( 1 ),
-		Personality( "Standard Least Squares" ),
-		Method( "REML" ),
-		Emphasis( "Minimal Report" ),
-		Run(
-			:mintaps_contextual << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
-			Show Prediction Expression( 1 ), Scaled Estimates( 0 ), Plot Actual by Predicted( 0 ), Plot Residual by Predicted( 0 ),
-			Plot Studentized Residuals( 0 ), Plot Effect Leverage( 0 ), Plot Residual by Normal Quantiles( 0 ), Show All Confidence Intervals( 1 )}
-		)
-	)*/
+	)
 )) << set window title( "System nudges captions towards shorter" );
 
+
+
+byMTPW = Function( {response_name, window_title, extra_toplevel = "", extra_effects = ""},
+	{s, resp},
+	s = "New Window( \!"" || window_title || "\!",
+		only_norecs << Graph Builder(
+			Variables( X( :mintaps_standard ), Y( :" || response_name ||
+	")),
+            Elements( Points( X, Y, Legend( 3 ) ), Line Of Fit( X, Y, Legend( 11 ), R²( 1 ), Equation( 1 ), F Test( 1 ) ) ),
+			SendToReport( 
+				Dispatch( {}, \!"Y title\!", TextEditBox, {Set Text( \!""
+	 || window_title ||
+	"\!")} ) ,
+				Dispatch( {}, \!"graph title\!", TextEditBox, {Set Text( \!"\!" )} ),
+			),
+		),
+		resp = only_norecs << Fit Model(
+			Y( :"
+	 || response_name || " ),
+			Effects( :mintaps_standard" || extra_effects ||
+	"),
+			Random Effects( :stimulus ),
+			NoBounds( 1 ),
+			Personality( \!"Standard Least Squares\!" ),
+			Method( \!"REML\!" ),
+			Emphasis( \!"Minimal Report\!" ),
+			Run(
+				Name( \!""
+	 || response_name ||
+	"\!" ) << {Summary of Fit( 1 ), Analysis of Variance( 0 ), Parameter Estimates( 1 ), Lack of Fit( 0 ),
+				Show Prediction Expression( 1 ), Plot Actual by Predicted( 0 ), Plot Regression( 0 ), Plot Residual by Predicted( 0 ),
+				Plot Studentized Residuals( 0 ), Plot Residual by Normal Quantiles( 1 ), 
+				Plot Effect Leverage( 0 ), Show All Confidence Intervals( 1 ) }
+			),
+			SendToReport( Dispatch( \!"Response "
+	 || response_name || "\!", \!"Effect Details\!", OutlineBox, {Close( 0 )} ) ),
+			" || extra_toplevel || "
+		)
+	)";
+	Show( s );
+	Eval( Parse( s ) );
+	resp;
+);
+
+byMTPW("num_words", "num_words nudge");
+byMTPW("ADJ", "ADJ nudge");
 
 
 
@@ -457,12 +508,3 @@ posStack = dt << Stack(
 	)
 )) << set window title( "POS fracs vs MTPW" );
 
-dt << Contour Plot(
-	X( :NFC, :Openness ),
-	Y( :num_words, :mintaps_standard, :corrected_tapstotype_standard ),
-	Show Data Points( 0 ),
-	Fill Areas( 0 ),
-	Label Contours( 0 ),
-	Transform( "None" ),
-
-);
