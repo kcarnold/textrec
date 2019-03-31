@@ -34,6 +34,7 @@ en-core-web-md = {path = "vendor/en_core_web_md-2.1.0/"}
 pyxdameraulevenshtein = "^1.5"
 lexical-diversity = "^0.1.0"
 ujson = "^1.35"
+jupytext = "^1.0"
 
 [tool.poetry.dev-dependencies]
 ipython = "^7.2"
