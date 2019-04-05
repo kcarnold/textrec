@@ -23,7 +23,7 @@
 // Master data filter
 dt = Subset(
 	dt_all,
-	Rows( dt_all << get rows where( :participant != "pr5hff" & :participant != "7q253f" & :experiment == "gc1" & :steppedBack == "False" ) )
+	Rows( dt_all << get rows where( :participant != "pr5hff" & :participant != "7q253f" & :experiment == "gc1" ))//& :steppedBack == "False" ) )
 );
 Close( dt_all );
 dt << Set Name( "Combined Data" );
