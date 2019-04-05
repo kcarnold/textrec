@@ -82,13 +82,16 @@ def dump_data_for_pairwise(batch, trial_level_data):
 colors = "black white tan grey brown red blue yellow silver blond pink gray blonde beige turquoise orange green teal bluish greenish olive yellowy brownish burgundy blackish aquamarine".split()
 color_regex = re.compile(r'\b({})\b'.format('|'.join(colors)))
 
+#desired_pos = 'ADJ ADV NUM NOUN VERB PROPN'.split()
+desired_pos = "ADJ ADP ADV CCONJ DET NOUN NUM PART PRON PROPN PUNCT SYM VERB".split()
+
 def get_automated_analysis(datum):
     datum = datum.to_dict()
     text = datum['corrected_text']
     pos_counts = automated_analyses.pos_counts(text)
-    for pos in 'ADJ ADV NUM NOUN VERB PROPN'.split():
+    for pos in desired_pos:
         datum[f'pos_count_{pos}'] = pos_counts.get(pos, 0)
-    datum['has_color'] = bool(color_regex.search(text))
+    datum['num_colors'] = len(color_regex.findall(text))
     datum['mean_log_freq'] = automated_analyses.mean_log_freq(text)
     datum['total_rarity'] = automated_analyses.total_rarity(text)
     if include_logprobs:
