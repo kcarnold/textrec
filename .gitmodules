@@ -1,0 +1,3 @@
+[submodule "vendor/OpenNMT-py"]
+        path = vendor/OpenNMT-py
+        url = git@github.com:kcarnold/OpenNMT-py.git
