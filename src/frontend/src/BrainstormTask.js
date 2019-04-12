@@ -29,7 +29,8 @@ const namedConditions = {
   ambientPhrases: { recType: "phraseCue", onRequest: false },
   requestPhrases: { recType: "phraseCue", onRequest: true },
 };
-let baseConditions = ["norecs", "randomSentences"];
+
+let baseConditions = ["norecs"];
 
 const demographicsSurvey = [
   SurveyData.age,
