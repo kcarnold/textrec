@@ -32,7 +32,7 @@ async def get_cue_API(executor, request):
     return get_cue(text, dataset_name=dataset_name)
 
 
-def get_cue(text, dataset_name):
+def get_cue(text, dataset_name, num_clusters_to_cue=10):
     existing_clusters, next_cluster_scores = next_cluster_distribution(
         text, dataset_name
     )
@@ -41,12 +41,16 @@ def get_cue(text, dataset_name):
         "yelp", 128
     )
 
-    clusters_to_cue = np.argsort(next_cluster_scores)[-3:][::-1]
+    clusters_to_cue = np.argsort(next_cluster_scores)[-num_clusters_to_cue:][::-1]
     print("Cueing", clusters_to_cue)
 
     cues = []
     for cluster_to_cue in clusters_to_cue:
         # Cue one of the phrases for this cluster.
+        if cluster_to_cue not in scores_by_cluster_argsort:
+            # Some clusters were deleted... for now just skip them :()
+            continue
+
         phrase_idx = scores_by_cluster_argsort[cluster_to_cue][0]
         phrase = " ".join(unique_starts[phrase_idx])
         cues.append(dict(cluster=int(cluster_to_cue), phrase=phrase))

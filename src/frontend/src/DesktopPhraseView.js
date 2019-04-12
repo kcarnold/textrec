@@ -37,9 +37,9 @@ export const WriterView = iobs(({ state, dispatch }) => {
         />
         <div
           style={{
-            position: "absolute",
-            top: top + 20,
-            left,
+            // position: "absolute",
+            // top: top + 20,
+            // left,
             color: "grey",
           }}
         >
