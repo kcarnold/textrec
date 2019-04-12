@@ -10,7 +10,7 @@ const Timer = inject("dispatch", "state")(
         let { dispatch, state, timedOut } = this.props;
         if (!state.timerStartedAt) return;
         let elapsed = (+new Date() - state.timerStartedAt) / 1000;
-        let remain = state.timerDur - elapsed;
+        let remain = Math.max(0, state.timerDur - elapsed);
         this.setState({ remain });
         if (remain > 0) {
           this.timeout = setTimeout(this.tick, 100);
@@ -36,9 +36,9 @@ const Timer = inject("dispatch", "state")(
         let remainMin = Math.floor(remain / 60);
         let remainSec = ("00" + Math.floor(remain - 60 * remainMin)).slice(-2);
         return (
-          <div className="timer">
+          <span className="timer">
             {remainMin}:{remainSec}
-          </div>
+          </span>
         );
       }
     }

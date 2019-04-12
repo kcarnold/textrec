@@ -24,7 +24,7 @@ export class TrialState {
 
   getCueRequest() {
     let { recType, domain } = this.flags;
-    return rpc("get_cue", { domain, recType, text: this.curText });
+    return rpc("get_cue", { domain, recType, text: this.ideas.join("\n") });
   }
 
   handleEvent(event) {

@@ -62,7 +62,7 @@ const closingSurvey = () => ({
     title: "Closing Survey",
     basename: "postExp",
     questions: [
-      SurveyData.verbalized_during,
+      // SurveyData.verbalized_during,
       // SurveyData.numericResponse({
       //   name: "howManyReviewsWritten",
       //   text: `About how many online reviews (of ${reviewType} or otherwise) have you written in the past 3 months, excluding this one?`,
@@ -154,6 +154,10 @@ const SmartIdeaList = iobs(({ state, dispatch, initialIdeas }) => {
   );
 });
 
+const TimerWithAdvance = iobs(({ dispatch }) => (
+  <Timer timedOut={() => dispatch({ type: "next" })} />
+));
+
 function baseGetScreens(conditionName: string, isDemo, header, initialIdeas) {
   let flags = { domain: "restaurant" };
   let trial = {
@@ -163,15 +167,29 @@ function baseGetScreens(conditionName: string, isDemo, header, initialIdeas) {
     view: () => (
       <div>
         {header}
-        <Timer timedOut={() => {}} />
+        Time remaining: <TimerWithAdvance />
         <SmartIdeaList initialIdeas={initialIdeas} />
-        <NextBtn>Submit Ideas</NextBtn>
       </div>
     ),
   };
 
   if (isDemo) return [trial];
-  return [WelcomeScreen, trial, closingSurvey(), DoneScreen];
+
+  const instructions = {
+    screen: "Instructions",
+    view: () => (
+      <div>
+        {header}
+        <p>
+          Once you click "Start Writing Ideas", you can type your ideas in the
+          text box that appears below. To add an idea, click "Add" or press
+          Enter.
+        </p>
+        <NextBtn>Start Writing Ideas</NextBtn>
+      </div>
+    ),
+  };
+  return [WelcomeScreen, instructions, trial, closingSurvey(), DoneScreen];
 }
 const InspireMe = iobs(({ state, dispatch }) => {
   let { experimentState } = state;
