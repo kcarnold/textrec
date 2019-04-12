@@ -10,6 +10,9 @@ function getAppInt(config) {
   if (config === "cue") {
     return require("./CueTasks");
   }
+  if (config === "idea") {
+    return require("./BrainstormTask");
+  }
 }
 
 function getApp(config) {
