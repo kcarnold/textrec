@@ -111,10 +111,14 @@ class DemoParticipant:
         self.config = participant_id[4:].split("-", 1)[0]
 
     def get_log_entries(self):
+        pyTimestamp = time.time()
+        jsTimestamp = pyTimestamp * 1000
         return [
             dict(
                 type="login",
                 kind="p",
+                jsTimestamp=jsTimestamp,
+                pyTimestamp=pyTimestamp,
                 participant_id=self.participant_id,
                 config=self.config,
                 assignment=0,

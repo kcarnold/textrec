@@ -1,12 +1,13 @@
+/** @format */
 import React, { Component } from "react";
 import { observer, inject } from "mobx-react";
 
-export default (Timer = inject("dispatch", "state")(
+const Timer = inject("dispatch", "state")(
   observer(
     class Timer extends Component {
       state = { remain: Infinity };
       tick = () => {
-        let { dispatch, state } = this.props;
+        let { dispatch, state, timedOut } = this.props;
         if (!state.timerStartedAt) return;
         let elapsed = (+new Date() - state.timerStartedAt) / 1000;
         let remain = state.timerDur - elapsed;
@@ -15,7 +16,7 @@ export default (Timer = inject("dispatch", "state")(
           this.timeout = setTimeout(this.tick, 100);
         } else {
           this.timeout = null;
-          advance(state, dispatch);
+          timedOut();
         }
       };
 
@@ -42,4 +43,6 @@ export default (Timer = inject("dispatch", "state")(
       }
     }
   )
-));
+);
+
+export default Timer;

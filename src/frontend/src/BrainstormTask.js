@@ -13,6 +13,7 @@ import { NextBtn } from "./BaseViews";
 import { Survey } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
+import Timer from "./Timer";
 
 import { finalDataLogger, iobs } from "./misc";
 import { WriterView, SpyView } from "./DesktopPhraseView";
@@ -83,15 +84,14 @@ const TASKS = {
         <p>
           Your friend J wants to write a review of a nice Italian restaurant
           they went to last night. J doesn't have much experience writing
-          reviews, so they ask you for help coming up with ideas about what to
-          write about.
+          reviews, so they asked you for ideas for topics to include in their
+          review.
         </p>
 
         <p>
-          Give J as many different ideas about what they might include in their
-          review as you can think of. J already knows to mention the food and
-          the service. Aim for quantity over quality, but try to make sure each
-          idea is different from your previous ones.
+          Take <b>4 minutes</b> to give J{" "}
+          <b>lots of ideas about what they might include in their review</b>.
+          Quantity matters more than quality.
         </p>
       </div>
     ),
@@ -112,9 +112,15 @@ const TASKS = {
 // Hacky: this needs to be an observer because userIdeas is an observable...
 const IdeaList = observer(({ initialIdeas, userIdeas, addIdea }) => {
   let newIdeaEntry = React.createRef();
-  function _addIdea(evt) {
+  function _addIdea() {
     addIdea(newIdeaEntry.current.value);
     newIdeaEntry.current.value = "";
+  }
+
+  function onKey(evt) {
+    if (evt.key === "Enter") {
+      _addIdea();
+    }
   }
   return (
     <div>
@@ -126,7 +132,7 @@ const IdeaList = observer(({ initialIdeas, userIdeas, addIdea }) => {
           <li key={idx}>{idea}</li>
         ))}
         <li>
-          <input type="text" ref={newIdeaEntry} />
+          <input type="text" ref={newIdeaEntry} onKeyPress={onKey} />
           <button onClick={_addIdea}>Add</button>
         </li>
       </ul>
@@ -152,11 +158,13 @@ function baseGetScreens(conditionName: string, isDemo, header, initialIdeas) {
   let trial = {
     preEvent: setupTrialEvent(`final-0`, conditionName, flags),
     screen: "ExperimentScreen",
+    timer: 4 * 60,
     view: () => (
       <div>
         {header}
+        <Timer timedOut={() => {}} />
         <SmartIdeaList initialIdeas={initialIdeas} />
-        <NextBtn />
+        <NextBtn>Submit Ideas</NextBtn>
       </div>
     ),
   };
