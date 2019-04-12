@@ -19,6 +19,9 @@ BATCH_DATA = {
     "cue2": dict(
         n_conditions=3, config="cue"
     ),  # This is norecs vs static-phrases vs static-sentences, longer.
+    "idea0": dict(
+        n_conditions=1, config="idea"
+    ), # This is piloting the brainstorming task.
 }
 
 invalid = set("h52x67 3vf5fg 73qq5q ffhgxm mhh838 j39263 pqf6q5 49cm8f".split())
