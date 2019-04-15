@@ -137,7 +137,10 @@ export const screenTracking = screens => state => {
         state.screenNum = 0;
         break;
       case "next":
-        state.screenNum += event.delta == null ? 1 : event.delta;
+        state.screenNum = Math.min(
+          state.screens.length - 1,
+          Math.max(0, state.screenNum + (event.delta == null ? 1 : event.delta))
+        );
         break;
       case "setScreen":
         state.screenNum = event.screen;
