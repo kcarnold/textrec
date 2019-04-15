@@ -8,7 +8,6 @@ let contexts = [
   "I felt like I am waiting for my food in the cafeteria, but it's a new experience to eat barbecues.",
   "I enjoyed West Egg.  The spot feels so hip and cool.",
 ];
-let recs = {};
 
 const getCue = context => {
   let requestBody = {

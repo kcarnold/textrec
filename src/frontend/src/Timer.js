@@ -2,12 +2,12 @@
 import React, { Component } from "react";
 import { observer, inject } from "mobx-react";
 
-const Timer = inject("dispatch", "state")(
+const Timer = inject("state")(
   observer(
     class Timer extends Component {
       state = { remain: Infinity };
       tick = () => {
-        let { dispatch, state, timedOut } = this.props;
+        let { state, timedOut } = this.props;
         if (!state.timerStartedAt) return;
         let elapsed = (+new Date() - state.timerStartedAt) / 1000;
         let remain = Math.max(0, state.timerDur - elapsed);
