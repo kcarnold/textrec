@@ -33,6 +33,9 @@ def rsync_models(c):
     rsync(
         c, target="~/code/textrec/models/", source="models/", delete=False
     )  # TODO: delete=True
+    rsync(
+        c, target="~/code/textrec/preproc/", source="preproc/", delete=True
+    )
 
 
 @task
@@ -73,7 +76,7 @@ def build_frontend(c):
 @task(hosts=my_hosts)
 def deploy(c):
     git_push(c)
-    # rsync_models(c)
+    rsync_models(c)
     git_pull(c)
     build_frontend(c)
 
