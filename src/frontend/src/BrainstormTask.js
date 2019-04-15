@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { observer, inject } from "mobx-react";
+import { observer } from "mobx-react";
 
 import { createState } from "./MasterState";
 import { TrialState } from "./BrainstormTrialState";
@@ -16,7 +16,6 @@ import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
 import Timer from "./Timer";
 
 import { finalDataLogger, iobs } from "./misc";
-import { WriterView, SpyView } from "./DesktopPhraseView";
 
 function surveyView(props) {
   return () => React.createElement(Survey, props);
@@ -154,6 +153,14 @@ const SmartIdeaList = iobs(({ state, dispatch, initialIdeas }) => {
   );
 });
 
+const Inspiration = iobs(({ state }) => (
+  <div>
+    {state.experimentState.suggestions.map((s, idx) => (
+      <div key={idx}>{s.text}</div>
+    ))}
+  </div>
+));
+
 const TimerWithAdvance = iobs(({ dispatch }) => (
   <Timer timedOut={() => dispatch({ type: "next" })} />
 ));
@@ -169,6 +176,7 @@ function baseGetScreens(conditionName: string, isDemo, header, initialIdeas) {
         {header}
         Time remaining: <TimerWithAdvance />
         <SmartIdeaList initialIdeas={initialIdeas} />
+        <Inspiration />
       </div>
     ),
   };

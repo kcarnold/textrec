@@ -1,5 +1,5 @@
 /** @format */
-import { extendObservable, decorate, observable, action, computed } from "mobx";
+import { extendObservable, decorate, action } from "mobx";
 import isEqual from "lodash/isEqual";
 
 const rpc = (method, params) => ({
@@ -15,6 +15,7 @@ export class TrialState {
     this.flags = flags;
     extendObservable(this, {
       ideas: [],
+      suggestions: [],
     });
   }
 
@@ -24,7 +25,11 @@ export class TrialState {
 
   getCueRequest() {
     let { recType, domain } = this.flags;
-    return rpc("get_cue", { domain, recType, text: this.ideas.join("\n") });
+    return rpc("get_cue", {
+      domain,
+      recType,
+      text: this.ideas.map(x => x + ".").join("\n"),
+    });
   }
 
   handleEvent(event) {
@@ -37,7 +42,7 @@ export class TrialState {
       // TODO: ignore other backend replies.
       if (event.msg.result) {
         if (event.msg.result.cues) {
-          this._suggestions = event.msg.result.cues.map(cue => ({
+          this.suggestions = event.msg.result.cues.map(cue => ({
             text: cue.phrase,
           }));
         }

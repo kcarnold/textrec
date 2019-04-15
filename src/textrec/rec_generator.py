@@ -60,7 +60,10 @@ def get_cue(text, dataset_name, num_clusters_to_cue=10):
 
 # Cribbed from preprocess_yelp.py
 def tokenize(text):
-    sents = nltk.sent_tokenize(text)
+    if isinstance(text, list):
+        sents = text
+    else:
+        sents = nltk.sent_tokenize(text)
     token_spaced_sents = (
         " ".join(wordfreq.tokenize(sent, "en", include_punctuation=True))
         for sent in sents
