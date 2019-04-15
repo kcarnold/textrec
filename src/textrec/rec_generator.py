@@ -41,7 +41,7 @@ def get_cue(text, dataset_name, num_clusters_to_cue=10):
         "yelp", 128
     )
 
-    clusters_to_cue = np.argsort(next_cluster_scores)[-num_clusters_to_cue:][::-1]
+    clusters_to_cue = np.argsort(next_cluster_scores)[::-1]
     print("Cueing", clusters_to_cue)
 
     cues = []
@@ -54,6 +54,8 @@ def get_cue(text, dataset_name, num_clusters_to_cue=10):
         phrase_idx = scores_by_cluster_argsort[cluster_to_cue][0]
         phrase = " ".join(unique_starts[phrase_idx])
         cues.append(dict(cluster=int(cluster_to_cue), phrase=phrase))
+        if len(cues) == num_clusters_to_cue:
+            break
 
     return dict(cues=cues, existing_clusters=existing_clusters.tolist())
 
