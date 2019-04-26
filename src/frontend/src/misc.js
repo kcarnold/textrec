@@ -27,7 +27,7 @@ export const finalDataLogger = state => {
   state.eventHandlers.push((state, event) => {
     if (event.type === "next") {
       let delta = event.delta || 1;
-      if (delta === 1 && state.screenNum === state.screens.length - 2) {
+      if (delta === 1 && state.screenNum === state.screens.length - 1) {
         state.experiments.forEach((expState, expName) => {
           texts.push({
             name: expName,
