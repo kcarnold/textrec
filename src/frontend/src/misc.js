@@ -26,8 +26,8 @@ export function getDemoConditionName(clientId: string): ?string {
 export const finalDataLogger = state => {
   state.eventHandlers.push((state, event) => {
     if (event.type === "next") {
-      if (state.screenNum === state.screens.length - 2) {
-        let texts = [];
+      let delta = event.delta || 1;
+      if (delta === 1 && state.screenNum === state.screens.length - 2) {
         state.experiments.forEach((expState, expName) => {
           texts.push({
             name: expName,
