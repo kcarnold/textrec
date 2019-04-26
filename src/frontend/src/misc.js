@@ -28,11 +28,11 @@ export const finalDataLogger = state => {
     if (event.type === "next") {
       let delta = event.delta || 1;
       if (delta === 1 && state.screenNum === state.screens.length - 1) {
+        let trialData = [];
         state.experiments.forEach((expState, expName) => {
-          texts.push({
+          trialData.push({
             name: expName,
-            condition: expState.flags.condition,
-            text: expState.curText,
+            ...expState.getSerialized(),
           });
         });
         let finalData = {
@@ -41,7 +41,7 @@ export const finalDataLogger = state => {
             name: state.screens[screen.num].screen,
           })),
           controlledInputs: [...state.controlledInputs.toJS()],
-          texts,
+          trialData,
         };
         return [
           {

@@ -461,6 +461,13 @@ export class ExperimentStateStore {
 
     return sideEffects;
   }
+
+  getSerialized() {
+    return {
+      condition: this.flags.condition,
+      text: this.curText,
+    };
+  }
 }
 
 decorate(ExperimentStateStore, {

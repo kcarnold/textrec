@@ -62,6 +62,13 @@ export class TrialState {
 
     return sideEffects;
   }
+
+  getSerialized() {
+    return {
+      condition: this.flags.condition,
+      ideas: this.ideas,
+    };
+  }
 }
 
 decorate(TrialState, {
