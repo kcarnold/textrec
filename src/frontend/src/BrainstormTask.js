@@ -77,32 +77,34 @@ const closingSurvey = () => ({
 const WelcomeScreen = { screen: "Welcome", view: Views.Welcome };
 const DoneScreen = { screen: "Done", view: Views.Done };
 
+const ReviewHeader = iobs(({ controlledInputName, state }) => (
+  <div>
+    <h1>
+      Pre-writing for your review of{" "}
+      <i>{state.controlledInputs.get(controlledInputName)}</i>
+    </h1>
+    <p>
+      Before we write a review, we're going to do a little pre-writing exercise.
+    </p>
+    <blockquote>
+      <b>
+        Imagine someone is interviewing you about your visit to this restaurant.
+        What relevant questions could they ask you? Think of as many as you can
+        in 4 minutes.
+      </b>
+    </blockquote>
+  </div>
+));
+
 const TASKS = {
   restaurant: {
-    prompt: (
-      <div>
-        <p>
-          Your friend J wants to write a review of a nice Italian restaurant
-          they went to last night. J doesn't have much experience writing
-          reviews, so they asked you for ideas for topics to include in their
-          review.
-        </p>
-
-        <p>
-          Take <b>4 minutes</b> to give J{" "}
-          <b>lots of ideas about what they might include in their review</b>.
-          Quantity matters more than quality.
-        </p>
-      </div>
-    ),
-
-    initialIdeas: ["food", "service"],
+    initialIdeas: [],
 
     getScreens(conditionName: string, isDemo): Screen[] {
       return baseGetScreens(
         conditionName,
         isDemo,
-        this.prompt,
+        <ReviewHeader controlledInputName="restaurantName" />,
         this.initialIdeas
       );
     },
@@ -161,9 +163,31 @@ const Inspiration = iobs(({ state }) => (
   </div>
 ));
 
+const InspirationBox = iobs(({ state }) =>
+  state.experimentState.suggestions ? (
+    <div style={{ padding: "10px", border: "1px solid black" }}>
+      <p>
+        <b>Ideas</b> from other people's writing
+      </p>
+      <Inspiration />
+    </div>
+  ) : null
+);
+
 const TimerWithAdvance = iobs(({ dispatch }) => (
   <Timer timedOut={() => dispatch({ type: "next" })} />
 ));
+
+const RestaurantPrompt = () => (
+  <div className="Restaurant">
+    Name of the place: <ControlledInput name={"restaurantName"} />
+    <br />
+    About how long ago were you there, in days?{" "}
+    <ControlledInput name={"visitDaysAgo"} type="number" min="0" />
+    <br />
+    How would you rate that visit? <ControlledStarRating name={"star"} />
+  </div>
+);
 
 function baseGetScreens(conditionName: string, isDemo, header, initialIdeas) {
   let flags = { domain: "restaurant" };
@@ -175,8 +199,10 @@ function baseGetScreens(conditionName: string, isDemo, header, initialIdeas) {
       <div>
         {header}
         Time remaining: <TimerWithAdvance />
-        <SmartIdeaList initialIdeas={initialIdeas} />
-        <Inspiration />
+        <div style={{ display: "flex", flexFlow: "col nowrap" }}>
+          <SmartIdeaList initialIdeas={initialIdeas} />
+          <InspirationBox />
+        </div>
       </div>
     ),
   };
@@ -189,15 +215,34 @@ function baseGetScreens(conditionName: string, isDemo, header, initialIdeas) {
       <div>
         {header}
         <p>
-          Once you click "Start Writing Ideas", you can type your ideas in the
-          text box that appears below. To add an idea, click "Add" or press
-          Enter.
+          Once you click "Start", you can type your questions in the text box
+          that appears below. You can click Add or press Enter.
         </p>
-        <NextBtn>Start Writing Ideas</NextBtn>
+        <NextBtn>Start</NextBtn>
       </div>
     ),
   };
-  return [WelcomeScreen, instructions, trial, closingSurvey(), DoneScreen];
+
+  const precommitScreen = {
+    screen: "Precommit",
+    view: () => (
+      <div>
+        Think of a restaurant (or bar, cafe, diner, etc.) that you've been to
+        recently that you <b>haven't written about before</b>.
+        <RestaurantPrompt />
+        <NextBtn />
+      </div>
+    ),
+  };
+
+  return [
+    WelcomeScreen,
+    precommitScreen,
+    instructions,
+    trial,
+    closingSurvey(),
+    DoneScreen,
+  ];
 }
 const InspireMe = iobs(({ state, dispatch }) => {
   let { experimentState } = state;
@@ -228,7 +273,11 @@ function setupTrialEvent(name: string, condition: string, flags: ?Object) {
   };
 }
 
-export function createTaskState(loginEvent) {
+export function createTaskState(loginEvent: {
+  participant_id: string,
+  assignment: number,
+  prompt: string,
+}) {
   let clientId = loginEvent.participant_id;
 
   let prompt,
