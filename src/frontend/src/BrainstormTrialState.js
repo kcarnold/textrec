@@ -15,7 +15,13 @@ export class TrialState {
     this.flags = flags;
     extendObservable(this, {
       ideas: [],
-      suggestions: [],
+      _suggestions: [],
+      get suggestions() {
+        if (this.flags.recType) {
+          return this._suggestions;
+        }
+        return null;
+      },
     });
   }
 
@@ -42,7 +48,7 @@ export class TrialState {
       // TODO: ignore other backend replies.
       if (event.msg.result) {
         if (event.msg.result.cues) {
-          this.suggestions = event.msg.result.cues.map(cue => ({
+          this._suggestions = event.msg.result.cues.map(cue => ({
             text: cue.phrase,
           }));
         }
