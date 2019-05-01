@@ -1,17 +1,14 @@
 import json
-import pickle
-import re
 import traceback
-from functools import lru_cache
 
 import nltk
 import numpy as np
 import wordfreq
 
-from . import cueing, lang_model
-from .paths import paths
+from . import cueing
 
 N_CLUSTERS = 128
+MIN_CLUSTER_SIZE = 20
 
 
 async def handle_request_async(executor, request):
@@ -25,38 +22,65 @@ async def handle_request_async(executor, request):
 
 
 async def get_cue_API(executor, request):
-    recType = request["recType"]
+    rec_type = request["recType"]
 
     text = request["text"]
     dataset_name = "yelp"
-    return get_cue(text, dataset_name=dataset_name)
+
+    if rec_type == "randomSents":
+        return get_cue_random(dataset_name=dataset_name)
+    elif rec_type == "cueSents":
+        return get_cue(text, dataset_name=dataset_name, mode="example")
 
 
-def get_cue(text, dataset_name, num_clusters_to_cue=10):
+def get_cue_random(*, dataset_name):
+    sentences = cueing.cached_sentences(dataset_name)
+
+    cues = [dict(sentence=sentence) for sentence in sentences.sent.sample(n=10)]
+    return cues
+
+
+def get_cue(text, *, dataset_name, num_clusters_to_cue=10, mode, num_clusters=128):
     existing_clusters, next_cluster_scores = next_cluster_distribution(
         text, dataset_name
     )
 
     scores_by_cluster_argsort, unique_starts = cueing.cached_scores_by_cluster_argsort(
-        "yelp", 128
+        dataset_name=dataset_name, num_clusters=num_clusters
     )
+
+    topic_data = cueing.cached_topic_data(
+        dataset_name=dataset_name, num_clusters=num_clusters
+    )
+    topic_labeled_sentences = topic_data["sentences"]
 
     clusters_to_cue = np.argsort(next_cluster_scores)[::-1]
 
     cues = []
     for cluster_to_cue in clusters_to_cue:
-        # Cue one of the phrases for this cluster.
-        if cluster_to_cue not in scores_by_cluster_argsort:
-            # Some clusters were deleted... for now just skip them :()
-            continue
+        if mode == "cue_phrase":
+            # Cue one of the phrases for this cluster.
+            if cluster_to_cue not in scores_by_cluster_argsort:
+                # Some clusters were deleted... for now just skip them :(
+                continue
 
-        phrase_idx = scores_by_cluster_argsort[cluster_to_cue][0]
-        phrase = " ".join(unique_starts[phrase_idx])
-        cues.append(dict(cluster=int(cluster_to_cue), phrase=phrase))
+            phrase_idx = scores_by_cluster_argsort[cluster_to_cue][0]
+            phrase = " ".join(unique_starts[phrase_idx])
+            cues.append(dict(cluster=int(cluster_to_cue), phrase=phrase))
+        elif mode == "example":
+            cluster_sentences = topic_labeled_sentences[
+                topic_labeled_sentences.topic == cluster_to_cue
+            ]
+            if len(cluster_sentences) > MIN_CLUSTER_SIZE:
+                sentence = cluster_sentences.sent.sample(n=1)
+                cues.append(dict(sentence=sentence))
+        else:
+            assert False
+
         if len(cues) == num_clusters_to_cue:
             break
 
-    cued_clusters = [cue['cluster'] for cue in cues]
+    cued_clusters = [cue["cluster"] for cue in cues]
     print("Cueing", cued_clusters)
 
     return dict(cues=cues, existing_clusters=existing_clusters.tolist())

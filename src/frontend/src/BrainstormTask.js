@@ -23,10 +23,8 @@ function surveyView(props) {
 
 const namedConditions = {
   norecs: { recType: null },
-  randomPhrases: { recType: "randomPhrases" },
-  randomSentences: { recType: "randomSentences" },
-  ambientPhrases: { recType: "phraseCue", onRequest: false },
-  requestPhrases: { recType: "phraseCue", onRequest: true },
+  randomSents: { recType: "randomSents" },
+  cueSents: { recType: "cueSents" },
 };
 
 let baseConditions = ["norecs"];

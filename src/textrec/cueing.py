@@ -39,16 +39,11 @@ def cached_dataset(name):
             return pickle.load(f)["data"]
     raise NameError("Unknown dataset " + name)
 
-
 @lru_cache()
 @mem.cache
-def cached_topic_data(dataset_name, n_clusters):
-    # Load dataset
+def cached_sentences(dataset_name):
+    '''Split sentences.'''
     df_full = cached_dataset(dataset_name)
-
-    # flag_best_reviews(df_full)
-
-    # Split sentences.
     sentences = []
     for row in df_full.itertuples():
         doc_id = row.review_id
@@ -60,6 +55,18 @@ def cached_topic_data(dataset_name, n_clusters):
     sentences = pd.DataFrame(
         sentences, columns="doc_id doc_n_sents sent_idx sent".split()
     )
+    return sentences
+
+
+@lru_cache()
+@mem.cache
+def cached_topic_data(dataset_name, n_clusters):
+    # Load dataset
+    df_full = cached_dataset(dataset_name)
+
+    # flag_best_reviews(df_full)
+
+    sentences = cached_sentences(dataset_name)
     print("{:,} sentences".format(len(sentences)))
 
     # Filter 1: length
