@@ -96,6 +96,12 @@ export const traitQuestion = ({ item }) => ({
   options: ["Very Inaccurate", "", "", "", "Very Accurate"],
 });
 
+export const selfEfficacy = text =>
+  likert(`efficacy-${text}`, `How confident are you ${text}?`, 7, [
+    "Not confident at all",
+    "Very confident",
+  ]);
+
 export const verbalized_during = {
   text:
     "While you were writing, did you speak or whisper what you were writing?",

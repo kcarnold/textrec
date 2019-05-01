@@ -38,29 +38,18 @@ const demographicsSurvey = [
   SurveyData.techDiff,
 ];
 
-const finalSurveyQuestions = [
-  {
-    type: "options",
-    responseType: "options",
-    text: (
-      <span>
-        Is there any reason that we shouldn't use your data? If so, please
-        explain in the next question.{" "}
-        <b>There's no penalty for answering "don't use" here.</b>
-      </span>
-    ),
-    options: ["Use my data", "Don't use my data"],
-    name: "shouldExclude",
-  },
-  SurveyData.otherFinal,
+const selfEfficacyQuestions = writingType => [
+  SurveyData.selfEfficacy(`recognizing good ${writingType}`),
+  SurveyData.selfEfficacy(`writing good ${writingType}`),
 ];
 
-const closingSurvey = () => ({
+const closingSurvey = writingType => ({
   screen: "PostExpSurvey",
   view: surveyView({
     title: "Closing Survey",
     basename: "postExp",
     questions: [
+      ...selfEfficacyQuestions(writingType),
       // SurveyData.verbalized_during,
       // SurveyData.numericResponse({
       //   name: "howManyReviewsWritten",
@@ -69,15 +58,67 @@ const closingSurvey = () => ({
 
       // Not going to use demographic survey for the pilot, no need for that data.
       // ...demographicsSurvey,
-      ...finalSurveyQuestions,
+
+      {
+        type: "options",
+        responseType: "options",
+        text: (
+          <span>
+            Is there any reason that we shouldn't use your data? If so, please
+            explain in the next question.{" "}
+            <b>There's no penalty for answering "don't use" here.</b>
+          </span>
+        ),
+        options: ["Use my data", "Don't use my data"],
+        name: "shouldExclude",
+      },
+      SurveyData.otherFinal,
     ],
   }),
 });
 
 const WelcomeScreen = { screen: "Welcome", view: Views.Welcome };
 const DoneScreen = { screen: "Done", view: Views.Done };
+const baseTrial = (header, conditionName, flags, minutes) => ({
+  preEvent: setupTrialEvent(`final-0`, conditionName, flags),
+  screen: "ExperimentScreen",
+  timer: minutes * 60,
+  view: () => (
+    <div>
+      {header}
+      Time remaining: <TimerWithAdvance />
+      <div style={{ display: "flex", flexFlow: "col nowrap" }}>
+        <SmartIdeaList initialIdeas={[]} />
+        <InspirationBox />
+      </div>
+    </div>
+  ),
+});
+const precommitScreen = lead => ({
+  screen: "Precommit",
+  view: () => (
+    <div>
+      {lead}
+      <div
+        style={{
+          borderBottom: "1px solid black",
+          padding: "12px",
+          lineHeight: 1.5,
+        }}
+      >
+        Name: <ControlledInput name={"thingName"} />
+        <br />
+        About how long ago, in days?{" "}
+        <ControlledInput name={"daysAgo"} type="number" min="0" />
+        <br />
+        How would you rate it? <ControlledStarRating name={"star"} />
+      </div>
+      <NextBtn />
+    </div>
+  ),
+});
 
-const ReviewHeader = iobs(({ controlledInputName, state }) => (
+const ReviewHeader = iobs(({ controlledInputName, state, minutes }) => (
   <div>
     <h1>
       Pre-writing for your review of{" "}
@@ -88,9 +129,9 @@ const ReviewHeader = iobs(({ controlledInputName, state }) => (
     </p>
     <blockquote>
       <b>
-        Imagine someone is interviewing you about your visit to this restaurant.
-        What relevant questions could they ask you? Think of as many as you can
-        in 4 minutes.
+        Imagine someone is interviewing you about your experience. What relevant
+        questions could they ask you? Think of as many as you can in {minutes}{" "}
+        minutes.
       </b>
     </blockquote>
   </div>
@@ -98,15 +139,165 @@ const ReviewHeader = iobs(({ controlledInputName, state }) => (
 
 const TASKS = {
   restaurant: {
-    initialIdeas: [],
-
     getScreens(conditionName: string, isDemo): Screen[] {
-      return baseGetScreens(
-        conditionName,
-        isDemo,
-        <ReviewHeader controlledInputName="restaurantName" />,
-        this.initialIdeas
+      const minutes = 4;
+      const writingType = "restaurant reviews";
+      const header = (
+        <ReviewHeader controlledInputName="thingName" minutes={minutes} />
       );
+      let flags = { domain: "restaurant" };
+      let trial = baseTrial(header, conditionName, flags, minutes);
+
+      if (isDemo) return [trial];
+
+      const introSurvey = {
+        screen: "IntroSurvey",
+        view: surveyView({
+          title: "Opening Survey",
+          basename: "intro",
+          questions: [...selfEfficacyQuestions(writingType)],
+        }),
+      };
+
+      const instructions = {
+        screen: "Instructions",
+        view: () => (
+          <div>
+            {header}
+            <p>
+              Once you click "Start", you can type your questions in the text
+              box that appears below. You can click Add or press Enter.
+            </p>
+            <NextBtn>Start</NextBtn>
+          </div>
+        ),
+      };
+
+      return [
+        WelcomeScreen,
+        introSurvey,
+        precommitScreen(
+          <span>
+            Think of a restaurant (or bar, cafe, diner, etc.) that you've been
+            to recently that you <b>haven't written about before</b>.
+          </span>
+        ),
+        instructions,
+        trial,
+        closingSurvey(writingType),
+        DoneScreen,
+      ];
+    },
+  },
+
+  movie: {
+    getScreens(conditionName: string, isDemo): Screen[] {
+      const minutes = 4;
+      const writingType = "movie reviews";
+      const header = (
+        <ReviewHeader controlledInputName="thingName" minutes={minutes} />
+      );
+      let flags = { domain: "movie" };
+      let trial = baseTrial(header, conditionName, flags, minutes);
+
+      if (isDemo) return [trial];
+
+      const introSurvey = {
+        screen: "IntroSurvey",
+        view: surveyView({
+          title: "Opening Survey",
+          basename: "intro",
+          questions: [...selfEfficacyQuestions(writingType)],
+        }),
+      };
+
+      const instructions = {
+        screen: "Instructions",
+        view: () => (
+          <div>
+            {header}
+            <p>
+              Once you click "Start", you can type your questions in the text
+              box that appears below. You can click Add or press Enter.
+            </p>
+            <NextBtn>Start</NextBtn>
+          </div>
+        ),
+      };
+
+      return [
+        WelcomeScreen,
+        introSurvey,
+        precommitScreen(
+          <span>
+            Think of a movie or TV show that you've seen recently that you{" "}
+            <b>haven't written about before</b>.
+          </span>
+        ),
+        instructions,
+        trial,
+        closingSurvey(writingType),
+        DoneScreen,
+      ];
+    },
+  },
+
+  bio: {
+    getScreens(conditionName: string, isDemo): Screen[] {
+      const minutes = 4;
+      const writingType = "bios";
+      const header = (
+        <div>
+          <h1>Pre-writing for your bio</h1>
+          <p>
+            Before we write the bio, we're going to do a little pre-writing
+            exercise.
+          </p>
+          <blockquote>
+            <b>
+              Imagine someone is interviewing you about yourself. What relevant
+              questions could they ask you? Think of as many as you can in{" "}
+              {minutes} minutes.
+            </b>
+          </blockquote>
+        </div>
+      );
+      let flags = { domain: "bio" };
+      let trial = baseTrial(header, conditionName, flags, minutes);
+
+      if (isDemo) return [trial];
+
+      const introSurvey = {
+        screen: "IntroSurvey",
+        view: surveyView({
+          title: "Opening Survey",
+          basename: "intro",
+          questions: [...selfEfficacyQuestions(writingType)],
+        }),
+      };
+
+      const instructions = {
+        screen: "Instructions",
+        view: () => (
+          <div>
+            {header}
+            <p>
+              Once you click "Start", you can type your questions in the text
+              box that appears below. You can click Add or press Enter.
+            </p>
+            <NextBtn>Start</NextBtn>
+          </div>
+        ),
+      };
+
+      return [
+        WelcomeScreen,
+        introSurvey,
+        instructions,
+        trial,
+        closingSurvey(writingType),
+        DoneScreen,
+      ];
     },
   },
 };
@@ -178,72 +369,6 @@ const TimerWithAdvance = iobs(({ dispatch }) => (
   <Timer timedOut={() => dispatch({ type: "next" })} />
 ));
 
-const RestaurantPrompt = () => (
-  <div className="Restaurant">
-    Name of the place: <ControlledInput name={"restaurantName"} />
-    <br />
-    About how long ago were you there, in days?{" "}
-    <ControlledInput name={"visitDaysAgo"} type="number" min="0" />
-    <br />
-    How would you rate that visit? <ControlledStarRating name={"star"} />
-  </div>
-);
-
-function baseGetScreens(conditionName: string, isDemo, header, initialIdeas) {
-  let flags = { domain: "restaurant" };
-  let trial = {
-    preEvent: setupTrialEvent(`final-0`, conditionName, flags),
-    screen: "ExperimentScreen",
-    timer: 4 * 60,
-    view: () => (
-      <div>
-        {header}
-        Time remaining: <TimerWithAdvance />
-        <div style={{ display: "flex", flexFlow: "col nowrap" }}>
-          <SmartIdeaList initialIdeas={initialIdeas} />
-          <InspirationBox />
-        </div>
-      </div>
-    ),
-  };
-
-  if (isDemo) return [trial];
-
-  const instructions = {
-    screen: "Instructions",
-    view: () => (
-      <div>
-        {header}
-        <p>
-          Once you click "Start", you can type your questions in the text box
-          that appears below. You can click Add or press Enter.
-        </p>
-        <NextBtn>Start</NextBtn>
-      </div>
-    ),
-  };
-
-  const precommitScreen = {
-    screen: "Precommit",
-    view: () => (
-      <div>
-        Think of a restaurant (or bar, cafe, diner, etc.) that you've been to
-        recently that you <b>haven't written about before</b>.
-        <RestaurantPrompt />
-        <NextBtn />
-      </div>
-    ),
-  };
-
-  return [
-    WelcomeScreen,
-    precommitScreen,
-    instructions,
-    trial,
-    closingSurvey(),
-    DoneScreen,
-  ];
-}
 const InspireMe = iobs(({ state, dispatch }) => {
   let { experimentState } = state;
   let { flags } = experimentState;
