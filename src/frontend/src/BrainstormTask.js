@@ -454,7 +454,7 @@ export function createTaskState(loginEvent: {
     clientId,
     screens,
     createExperimentState: flags => new TrialState(flags),
-    timeEstimate: "5 minutes", // TODO: pull from Task.
+    timeEstimate: "10 minutes", // TODO: pull from Task.
   });
   finalDataLogger(state);
 
