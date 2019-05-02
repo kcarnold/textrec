@@ -392,20 +392,6 @@ const TimedNextBtn = iobs(({ state, dispatch }) =>
   )
 );
 
-const InspireMe = iobs(({ state, dispatch }) => {
-  let { experimentState } = state;
-  let { flags } = experimentState;
-  let { onRequest } = flags;
-
-  if (!onRequest) return false;
-
-  return (
-    <button onClick={evt => dispatch({ type: "toggleInspiration" })}>
-      Inspire Me!
-    </button>
-  );
-});
-
 function setupTrialEvent(name: string, condition: string, flags: ?Object) {
   if (!(condition in namedConditions)) {
     throw new Error(`Invalid condition name: ${condition}`);
