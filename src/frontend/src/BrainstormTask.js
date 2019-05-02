@@ -105,7 +105,7 @@ const baseTrial = (header, conditionName, flags, minutes) => ({
 const precommitScreen = lead => ({
   screen: "Precommit",
   view: () => (
-    <div>
+    <div className="Survey">
       {lead}
       <div
         style={{
@@ -169,7 +169,7 @@ const TASKS = {
       const instructions = {
         screen: "Instructions",
         view: () => (
-          <div>
+          <div className="Survey">
             {header}
             <p>
               Once you click "Start", you can type your questions in the text
@@ -359,7 +359,7 @@ const SmartIdeaList = iobs(({ state, dispatch, initialIdeas }) => {
 });
 
 const InspirationBox = iobs(({ state, dispatch }) =>
-  state.experimentState.suggestions ? (
+  state.experimentState.flags.recType !== null ? (
     <div style={{ padding: "10px", border: "1px solid black", width: "350px" }}>
       <button onClick={e => dispatch({ type: "inspireMe" })}>
         Inspire Me!
