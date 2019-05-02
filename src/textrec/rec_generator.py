@@ -36,8 +36,8 @@ async def get_cue_API(executor, request):
 def get_cue_random(*, dataset_name):
     sentences = cueing.cached_sentences(dataset_name)
 
-    cues = [dict(sentence=sentence) for sentence in sentences.sent.sample(n=10)]
-    return cues
+    cues = [dict(text=sentence) for sentence in sentences.raw_sent.sample(n=10)]
+    return dict(cues=cues)
 
 
 def get_cue(text, *, dataset_name, num_clusters_to_cue=10, mode, num_clusters=128):

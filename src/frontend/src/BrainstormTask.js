@@ -10,7 +10,7 @@ import { createState } from "./MasterState";
 import { TrialState } from "./BrainstormTrialState";
 import * as Views from "./CueViews";
 import { NextBtn } from "./BaseViews";
-import { Survey } from "./SurveyViews";
+import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
 import Timer from "./Timer";
@@ -41,18 +41,28 @@ const selfEfficacyQuestions = writingType => [
   SurveyData.selfEfficacy(`writing good ${writingType}`),
 ];
 
+const experienceAndSelfEfficacyQuestions = writingType => [
+  SurveyData.numericResponse({
+    name: "howManyReviewsWritten",
+    text: `About how many ${writingType} have you written in the past 3 months?`,
+  }),
+  ...selfEfficacyQuestions(writingType),
+];
+
 const closingSurvey = writingType => ({
   screen: "PostExpSurvey",
   view: surveyView({
     title: "Closing Survey",
     basename: "postExp",
     questions: [
+      {
+        type: "text",
+        text:
+          "We were actually only interested in the pre-writing. So you don't actually have to do the writing task! Just answer the following questions and we'll be done.",
+      },
+      // likert("fluency", "How fluent did you feel ")
       ...selfEfficacyQuestions(writingType),
       // SurveyData.verbalized_during,
-      // SurveyData.numericResponse({
-      //   name: "howManyReviewsWritten",
-      //   text: `About how many online reviews (of ${reviewType} or otherwise) have you written in the past 3 months, excluding this one?`,
-      // }),
 
       // Not going to use demographic survey for the pilot, no need for that data.
       // ...demographicsSurvey,
@@ -82,13 +92,13 @@ const baseTrial = (header, conditionName, flags, minutes) => ({
   screen: "ExperimentScreen",
   timer: minutes * 60,
   view: () => (
-    <div>
+    <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
       {header}
-      Time remaining: <TimerWithAdvance />
       <div style={{ display: "flex", flexFlow: "col nowrap" }}>
         <SmartIdeaList initialIdeas={[]} />
         <InspirationBox />
       </div>
+      <TimedNextBtn />
     </div>
   ),
 });
@@ -122,9 +132,7 @@ const ReviewHeader = iobs(({ controlledInputName, state, minutes }) => (
       Pre-writing for your review of{" "}
       <i>{state.controlledInputs.get(controlledInputName)}</i>
     </h1>
-    <p>
-      Before we write a review, we're going to do a little pre-writing exercise.
-    </p>
+    <p>Before we write a review, we're going to do a pre-writing exercise.</p>
     <blockquote>
       <b>
         Imagine someone is interviewing you about your experience. What relevant
@@ -132,6 +140,7 @@ const ReviewHeader = iobs(({ controlledInputName, state, minutes }) => (
         minutes.
       </b>
     </blockquote>
+    <p>You can click Add or press Enter to add a question.</p>
   </div>
 ));
 
@@ -153,7 +162,7 @@ const TASKS = {
         view: surveyView({
           title: "Opening Survey",
           basename: "intro",
-          questions: [...selfEfficacyQuestions(writingType)],
+          questions: [...experienceAndSelfEfficacyQuestions(writingType)],
         }),
       };
 
@@ -164,7 +173,7 @@ const TASKS = {
             {header}
             <p>
               Once you click "Start", you can type your questions in the text
-              box that appears below. You can click Add or press Enter.
+              box that appears below.
             </p>
             <NextBtn>Start</NextBtn>
           </div>
@@ -205,7 +214,7 @@ const TASKS = {
         view: surveyView({
           title: "Opening Survey",
           basename: "intro",
-          questions: [...selfEfficacyQuestions(writingType)],
+          questions: [...experienceAndSelfEfficacyQuestions(writingType)],
         }),
       };
 
@@ -270,7 +279,7 @@ const TASKS = {
         view: surveyView({
           title: "Opening Survey",
           basename: "intro",
-          questions: [...selfEfficacyQuestions(writingType)],
+          questions: [...experienceAndSelfEfficacyQuestions(writingType)],
         }),
       };
 
@@ -314,7 +323,7 @@ const IdeaList = observer(({ initialIdeas, userIdeas, addIdea }) => {
     }
   }
   return (
-    <div>
+    <div style={{ flex: "1 0 auto" }}>
       <ul>
         {initialIdeas.map(idea => (
           <li key={idea}>{idea}</li>
@@ -323,7 +332,12 @@ const IdeaList = observer(({ initialIdeas, userIdeas, addIdea }) => {
           <li key={idx}>{idea}</li>
         ))}
         <li>
-          <input type="text" ref={newIdeaEntry} onKeyPress={onKey} />
+          <input
+            style={{ width: "250px" }}
+            type="text"
+            ref={newIdeaEntry}
+            onKeyPress={onKey}
+          />{" "}
           <button onClick={_addIdea}>Add</button>
         </li>
       </ul>
@@ -345,16 +359,18 @@ const SmartIdeaList = iobs(({ state, dispatch, initialIdeas }) => {
 });
 
 const Inspiration = iobs(({ state }) => (
-  <div>
+  <ul>
     {state.experimentState.suggestions.map((s, idx) => (
-      <div key={idx}>{s.text}</div>
+      <li key={idx} style={{ marginBottom: "5px" }}>
+        {s.text}
+      </li>
     ))}
-  </div>
+  </ul>
 ));
 
 const InspirationBox = iobs(({ state }) =>
   state.experimentState.suggestions ? (
-    <div style={{ padding: "10px", border: "1px solid black" }}>
+    <div style={{ padding: "10px", border: "1px solid black", width: "350px" }}>
       <p>
         <b>Ideas</b> from other people's writing
       </p>
@@ -363,9 +379,16 @@ const InspirationBox = iobs(({ state }) =>
   ) : null
 );
 
-const TimerWithAdvance = iobs(({ dispatch }) => (
-  <Timer timedOut={() => dispatch({ type: "next" })} />
-));
+const TimedNextBtn = iobs(({ state, dispatch }) =>
+  state.experimentState.allowSubmit ? (
+    <NextBtn>Submit</NextBtn>
+  ) : (
+    <p>
+      Time remaining:{" "}
+      <Timer timedOut={() => dispatch({ type: "allowSubmit" })} />
+    </p>
+  )
+);
 
 const InspireMe = iobs(({ state, dispatch }) => {
   let { experimentState } = state;

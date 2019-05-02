@@ -22,6 +22,7 @@ export class TrialState {
         }
         return null;
       },
+      allowSubmit: false,
     });
   }
 
@@ -49,10 +50,12 @@ export class TrialState {
       if (event.msg.result) {
         if (event.msg.result.cues) {
           this._suggestions = event.msg.result.cues.map(cue => ({
-            text: cue.phrase,
+            ...cue,
           }));
         }
       }
+    } else if (event.type === "allowSubmit") {
+      this.allowSubmit = true;
     }
 
     let newCueRequest = this.getCueRequest();

@@ -11,7 +11,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 from . import lang_model, numberbatch_vecs
 from .paths import paths
-from .util import VecPile, dump_kenlm, mem
+from .util import VecPile, dump_kenlm, mem, tokenize
 
 logger = logging.getLogger(__name__)
 
@@ -28,32 +28,86 @@ def normalize_dists(dists):
     return dists / np.sum(dists, axis=1, keepdims=True)
 
 
-# Bind all of that together into cacheable objects
+@lru_cache()
+def load_yelp():
+    with open(paths.top_level / "preproc/yelp/train_data.pkl", "rb") as f:
+        df = pickle.load(f)["data"]
+
+    # Some edits...
+    df = df.rename(columns={"review_id": "doc_id"})
+    # Temporary hack.
+    df["sentences"] = df["tokenized"]
+    return df
 
 
 @lru_cache()
 @mem.cache
-def cached_dataset(name):
-    if name == "yelp":
-        with open(paths.top_level / "preproc/yelp/train_data.pkl", "rb") as f:
-            return pickle.load(f)["data"]
-    raise NameError("Unknown dataset " + name)
+def load_bios():
+    import wordfreq
+    import nltk
+
+    with open("/Data/biosbias/BIOS.pkl", "rb") as f:
+        bios = pickle.load(f)
+    print(f"Loaded {len(bios)} bios")
+
+    texts = [bio["raw"] for bio in bios]
+    sentences = [
+        nltk.sent_tokenize(text) for text in tqdm(texts, desc="Splitting sentences")
+    ]
+    tokenized = [
+        "\n".join(
+            " ".join(wordfreq.tokenize(sent, "en", include_punctuation=True))
+            for sent in sents
+        )
+        for sents in tqdm(sentences, desc="Tokenizing bios")
+    ]
+    return (
+        pd.DataFrame(
+            dict(
+                text=texts,
+                sentences=["\n".join(sents) for sents in sentences],
+                tokenized=tokenized,
+            )
+        )
+        .rename_axis(index="doc_id")
+        .reset_index()
+    )
+
+
+data_loaders = {"yelp": load_yelp, "bios": load_bios}
+
+
+def cached_dataset(dataset_name):
+    """Datasets have the following form:
+
+    - doc_id
+    - text: raw text
+    - sentences: raw text split to sentences joined by newlines
+    - tokenized: space-separated tokens for each sentence; sentences joined by newlines
+
+    They may also have other columns of metadata.
+    """
+    if dataset_name in data_loaders:
+        return data_loaders[dataset_name]()
+    raise NameError("Unknown dataset " + dataset_name)
+
 
 @lru_cache()
 @mem.cache
 def cached_sentences(dataset_name):
-    '''Split sentences.'''
+    """Split sentences."""
     df_full = cached_dataset(dataset_name)
     sentences = []
     for row in df_full.itertuples():
-        doc_id = row.review_id
+        doc_id = row.doc_id
+        untokenized_sents = row.sentences.split("\n")
         sents = row.tokenized.split("\n")
         doc_n_sents = len(sents)
-        for sent_idx, sent in enumerate(sents):
-            sentences.append((doc_id, doc_n_sents, sent_idx, sent))
+        for sent_idx, (raw_sent, sent) in enumerate(zip(untokenized_sents, sents)):
+            sentences.append((doc_id, doc_n_sents, sent_idx, raw_sent, sent))
 
     sentences = pd.DataFrame(
-        sentences, columns="doc_id doc_n_sents sent_idx sent".split()
+        sentences, columns="doc_id doc_n_sents sent_idx raw_sent sent".split()
     )
     return sentences
 
