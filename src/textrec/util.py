@@ -193,3 +193,17 @@ def test_vecpile():
 
 
 test_vecpile()
+
+
+def tokenize(text):
+    import nltk
+    import wordfreq
+    if isinstance(text, list):
+        sents = text
+    else:
+        sents = nltk.sent_tokenize(text)
+    token_spaced_sents = (
+        " ".join(wordfreq.tokenize(sent, "en", include_punctuation=True))
+        for sent in sents
+    )
+    return "\n".join(token_spaced_sents)
