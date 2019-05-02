@@ -17,48 +17,12 @@ const Consent = ({ timeEstimate, platform }) => (
       Participants must be adults (at least 18 years old).
     </p>
 
-    <table
-      cellPadding={0}
-      cellSpacing={0}
-      style={{
-        marginLeft: "5.4pt",
-        borderCollapse: "collapse",
-        border: "none",
-      }}
-    >
-      <tbody>
-        <tr>
-          <td
-            style={{
-              border: "solid black 1.5pt",
-              borderBottom: "solid silver 1.5pt",
-              padding: "0in 2.15pt 0in 2.9pt",
-            }}
-          >
-            <p>
-              <span style={{ fontSize: "14.0pt" }}>
-                Study Title: Writing with Predictive Typing
-              </span>
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td
-            style={{
-              border: "solid black 1.5pt",
-              borderTop: "none",
-              padding: "0in 2.15pt 0in 2.9pt",
-            }}
-          >
-            <p>
-              <span style={{ fontSize: "14.0pt" }}>
-                Researcher: Kenneth C. Arnold
-              </span>
-            </p>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <p>
+      <b>Study Title</b>: Writing with Predictive Typing
+    </p>
+    <p>
+      <b>Researcher</b>: Kenneth C. Arnold
+    </p>
     <p>
       <b>
         <span style={{ fontSize: "14.0pt" }}>Participation is voluntary</span>

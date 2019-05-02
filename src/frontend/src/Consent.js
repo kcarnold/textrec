@@ -1,3 +1,4 @@
+/** @format */
 import React from "react";
 
 const Consent = ({ timeEstimate, platform }) => (
@@ -24,48 +25,14 @@ const Consent = ({ timeEstimate, platform }) => (
       task.
     </p>
 
-    <table
-      cellPadding={0}
-      cellSpacing={0}
-      style={{
-        marginLeft: "5.4pt",
-        borderCollapse: "collapse",
-        border: "none",
-      }}
-    >
-      <tbody>
-        <tr>
-          <td
-            style={{
-              border: "solid black 1.5pt",
-              borderBottom: "solid silver 1.5pt",
-              padding: "0in 2.15pt 0in 2.9pt",
-            }}
-          >
-            <p>
-              <span style={{ fontSize: "14.0pt" }}>
-                Study Title: Writing with Predictive Typing
-              </span>
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td
-            style={{
-              border: "solid black 1.5pt",
-              borderTop: "none",
-              padding: "0in 2.15pt 0in 2.9pt",
-            }}
-          >
-            <p>
-              <span style={{ fontSize: "14.0pt" }}>
-                Researcher: Kenneth C. Arnold
-              </span>
-            </p>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <p>
+      <span style={{ fontSize: "14.0pt" }}>
+        Study Title: Writing with Predictive Typing
+      </span>
+    </p>
+    <p>
+      <span style={{ fontSize: "14.0pt" }}>Researcher: Kenneth C. Arnold</span>
+    </p>
     <p>
       <b>
         <span style={{ fontSize: "14.0pt" }}>Participation is voluntary</span>
