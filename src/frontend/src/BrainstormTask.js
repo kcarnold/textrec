@@ -358,23 +358,25 @@ const SmartIdeaList = iobs(({ state, dispatch, initialIdeas }) => {
   );
 });
 
-const Inspiration = iobs(({ state }) => (
-  <ul>
-    {state.experimentState.suggestions.map((s, idx) => (
-      <li key={idx} style={{ marginBottom: "5px" }}>
-        {s.text}
-      </li>
-    ))}
-  </ul>
-));
-
-const InspirationBox = iobs(({ state }) =>
+const InspirationBox = iobs(({ state, dispatch }) =>
   state.experimentState.suggestions ? (
     <div style={{ padding: "10px", border: "1px solid black", width: "350px" }}>
-      <p>
-        <b>Ideas</b> from other people's writing
-      </p>
-      <Inspiration />
+      <button onClick={e => dispatch({ type: "inspireMe" })}>
+        Inspire Me!
+      </button>
+      <br />
+      {state.experimentState.suggestions.length > 0 && (
+        <div>
+          <b>Ideas</b> from other people's writing
+          <ul>
+            {state.experimentState.suggestions.map((s, idx) => (
+              <li key={idx} style={{ marginBottom: "5px" }}>
+                {s.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   ) : null
 );

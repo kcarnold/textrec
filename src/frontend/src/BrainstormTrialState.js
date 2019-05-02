@@ -16,12 +16,7 @@ export class TrialState {
     extendObservable(this, {
       ideas: [],
       _suggestions: [],
-      get suggestions() {
-        if (this.flags.recType) {
-          return this._suggestions;
-        }
-        return null;
-      },
+      suggestions: [],
       allowSubmit: false,
     });
   }
@@ -54,6 +49,8 @@ export class TrialState {
           }));
         }
       }
+    } else if (event.type === "inspireMe") {
+      this.suggestions = this._suggestions;
     } else if (event.type === "allowSubmit") {
       this.allowSubmit = true;
     }
