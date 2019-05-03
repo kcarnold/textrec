@@ -21,11 +21,19 @@ async def handle_request_async(executor, request):
     return result
 
 
+domain_to_dataset = dict(
+    restaurant="yelp",
+    movie="imdb",
+    bio="bios"
+)
+
+
 async def get_cue_API(executor, request):
     rec_type = request["recType"]
+    domain = request['domain']
 
     text = request["text"]
-    dataset_name = "yelp"
+    dataset_name = domain_to_dataset[domain]
 
     if rec_type == "randomSents":
         return get_cue_random(dataset_name=dataset_name)
@@ -100,7 +108,7 @@ def tokenize(text):
 
 
 def next_cluster_distribution(text, dataset_name, n_clusters=N_CLUSTERS):
-    assert dataset_name == "yelp"
+    # assert dataset_name == "yelp"
     topic_data = cueing.cached_topic_data(dataset_name, n_clusters=n_clusters)
 
     tokenized_doc = tokenize(text)
