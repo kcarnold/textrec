@@ -45,43 +45,53 @@ def get_cue_random(*, dataset_name):
 
 
 def get_cue(text, *, dataset_name, n_clusters_to_cue=10, mode, n_clusters=128):
-    # TODO: this is still trying to use an LM to pick the next cluster. Not relevant right now.
     existing_clusters, next_cluster_scores = next_cluster_distribution(
-        text, dataset_name
+        text=text,
+        dataset_name=dataset_name,
+        n_clusters=n_clusters,
+        use_sequence_lm=False,
     )
 
-    scores_by_cluster_argsort, unique_starts = cueing.cached_scores_by_cluster_argsort(
-        dataset_name=dataset_name, n_clusters=n_clusters
-    )
+    if mode == "cue_phrase":
+        scores_by_cluster_argsort, unique_starts = cueing.cached_scores_by_cluster_argsort(
+            dataset_name=dataset_name, n_clusters=n_clusters
+        )
 
-    topic_data = cueing.cached_topic_data(
-        dataset_name=dataset_name, n_clusters=n_clusters
-    )
-    topic_labeled_sentences = topic_data["sentences"]
-
-    clusters_to_cue = np.argsort(next_cluster_scores)[::-1]
-
-    cues = []
-    for cluster_to_cue in clusters_to_cue:
-        cue = dict(cluster=int(cluster_to_cue))
-        if mode == "cue_phrase":
+        def get_cue_for_cluster(cluster_to_cue):
             # Cue one of the phrases for this cluster.
             if cluster_to_cue not in scores_by_cluster_argsort:
                 # Some clusters were deleted... for now just skip them :(
-                continue
+                return
 
             phrase_idx = scores_by_cluster_argsort[cluster_to_cue][0]
             phrase = " ".join(unique_starts[phrase_idx])
-            cue["text"] = phrase
-        elif mode == "example":
+            return dict(text=phrase)
+
+    elif mode == "example":
+        topic_data = cueing.cached_topic_data(
+            dataset_name=dataset_name, n_clusters=n_clusters
+        )
+        topic_labeled_sentences = topic_data["sentences"]
+
+        def get_cue_for_cluster(cluster_to_cue):
             cluster_sentences = topic_labeled_sentences[
                 topic_labeled_sentences.topic == cluster_to_cue
             ]
             if len(cluster_sentences) > MIN_CLUSTER_SIZE:
                 sentence = cluster_sentences.raw_sent.sample(n=1).iloc[0]
-                cue["text"] = sentence
-        else:
-            assert False
+                return dict(text=sentence)
+
+    else:
+        assert False
+
+    clusters_to_cue = np.argsort(next_cluster_scores)[::-1]
+
+    cues = []
+    for cluster_to_cue in clusters_to_cue:
+        cue = get_cue_for_cluster(cluster_to_cue)
+        if cue is None:
+            continue
+        cue["cluster"] = int(cluster_to_cue)
 
         cues.append(cue)
         if len(cues) == n_clusters_to_cue:
@@ -106,7 +116,17 @@ def tokenize(text):
     return "\n".join(token_spaced_sents)
 
 
-def next_cluster_distribution(text, dataset_name, n_clusters=N_CLUSTERS):
+def topic_sequence_logprobs(existing_clusters, dataset_name, n_clusters):
+    seq_model = cueing.cached_topic_sequence_lm(dataset_name, n_clusters)
+    state, _ = seq_model.get_state(
+        " ".join(str(c) for c in existing_clusters), bos=True
+    )
+    cluster_indices = [seq_model.model.vocab_index(str(n)) for n in range(n_clusters)]
+    logprobs = seq_model.eval_logprobs_for_words(state, cluster_indices)
+    return logprobs
+
+
+def next_cluster_distribution(text, dataset_name, n_clusters, use_sequence_lm):
     # assert dataset_name == "yelp"
     topic_data = cueing.cached_topic_data(dataset_name, n_clusters=n_clusters)
 
@@ -120,12 +140,10 @@ def next_cluster_distribution(text, dataset_name, n_clusters=N_CLUSTERS):
     projected = vecs.dot(projection_mat)
     existing_clusters = clusterer.predict(projected)
 
-    seq_model = cueing.cached_topic_sequence_lm(dataset_name, n_clusters)
-    state, _ = seq_model.get_state(
-        " ".join(str(c) for c in existing_clusters), bos=True
-    )
-    cluster_indices = [seq_model.model.vocab_index(str(n)) for n in range(128)]
-    logprobs = seq_model.eval_logprobs_for_words(state, cluster_indices)
+    if use_sequence_lm:
+        logprobs = topic_sequence_logprobs(existing_clusters, dataset_name, n_clusters)
+    else:
+        logprobs = np.zeros(n_clusters)
 
     # Avoid already-discussed clusters.
     logprobs[existing_clusters] -= 100
