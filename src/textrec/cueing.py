@@ -42,6 +42,39 @@ def load_yelp():
 
 @lru_cache()
 @mem.cache
+def load_imdb():
+    import zipfile
+    import re
+    import wordfreq
+    import nltk
+
+    zf = zipfile.ZipFile("/Data/Reviews/IMDB/Maas2011/aclImdb.zip")
+
+    imdb_reviews = []
+    for f in zf.filelist:
+        match = re.match(
+            r"^aclImdb/train/(?P<group>pos|neg|unsup)/(?P<review_id>\d+)_(?P<rating>\d+)\.txt",
+            f.filename,
+        )
+        if match:
+            item = {}
+            item["doc_id"] = match.groups()
+            item["text"] = text = (
+                zf.read(f.filename).decode("utf-8").replace("<br />", " ")
+            )
+            sents = nltk.sent_tokenize(text)
+            item["sentences"] = "\n".join(sents)
+            item["tokenized"] = "\n".join(
+                " ".join(wordfreq.tokenize(sent, "en", include_punctuation=True))
+                for sent in sents
+            )
+            imdb_reviews.append(item)
+
+    return pd.DataFrame(imdb_reviews)
+
+
+@lru_cache()
+@mem.cache
 def load_bios():
     import wordfreq
     import nltk
@@ -74,7 +107,7 @@ def load_bios():
     )
 
 
-data_loaders = {"yelp": load_yelp, "bios": load_bios}
+data_loaders = {"yelp": load_yelp, "bios": load_bios, "imdb": load_imdb}
 
 
 def cached_dataset(dataset_name):
