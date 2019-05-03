@@ -56,12 +56,13 @@ def get_raw_analysis_cheating(participant, logfile_size, git_rev, analysis_files
     return cheating_analysis_results.get(participant, None)
 
 
-def get_log_analysis_many(participants):
+def get_log_analysis_many(participants, analyzer="TouchAnalyzer"):
     cheating_analysis_results.clear()
 
-    # Load already-cached.
+    analyzer_js = f"src/{analyzer}.js"
+
     analysis_files = {
-        name: sha1_file(paths.frontend / name) for name in ["src/TouchAnalyzer.js"]
+        name: sha1_file(paths.frontend / name) for name in [analyzer_js]
     }
 
     analyses = {}
@@ -96,7 +97,7 @@ def get_log_analysis_many(participants):
             print(" ".join(cmd))
             subprocess.check_call(cmd)
         analyzer_path = str(paths.frontend / "run-analysis")
-        analyzer_cmd = [analyzer_path, "--"] + logpaths
+        analyzer_cmd = [analyzer_path, "--", analyzer] + logpaths
         print(" ".join(analyzer_cmd))
         completion = subprocess.run(analyzer_cmd, stdout=subprocess.PIPE)
 

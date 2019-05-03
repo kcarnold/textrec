@@ -8,6 +8,7 @@ global.alert = () => {};
 
 let skip = true;
 let files = [];
+let analyzer = null;
 process.argv.forEach(filename => {
   if (filename === "--") {
     skip = false;
@@ -16,8 +17,17 @@ process.argv.forEach(filename => {
   if (skip) {
     return;
   }
-  files.push(filename);
+  if (analyzer === null) {
+    analyzer = filename;
+  } else {
+    files.push(filename);
+  }
 });
+
+let analyzerMod = {
+  TouchAnalyzer: TouchAnalyzer,
+  CueAnalyzer: CueAnalyzer,
+}[analyzer];
 
 Promise.all(
   files.map(filename => {
@@ -26,7 +36,7 @@ Promise.all(
       .split("\n")
       .filter(line => line.length > 0)
       .map(line => JSON.parse(line));
-    return TouchAnalyzer.analyzeLog(log).then(
+    return analyzerMod.analyzeLog(log).then(
       result => ({ filename, result }),
       // Magic: https://stackoverflow.com/a/26199752/69707
       error => ({
