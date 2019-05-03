@@ -21,16 +21,12 @@ async def handle_request_async(executor, request):
     return result
 
 
-domain_to_dataset = dict(
-    restaurant="yelp",
-    movie="imdb",
-    bio="bios"
-)
+domain_to_dataset = dict(restaurant="yelp", movie="imdb", bio="bios")
 
 
 async def get_cue_API(executor, request):
     rec_type = request["recType"]
-    domain = request['domain']
+    domain = request["domain"]
 
     text = request["text"]
     dataset_name = domain_to_dataset[domain]
@@ -48,17 +44,18 @@ def get_cue_random(*, dataset_name):
     return dict(cues=cues)
 
 
-def get_cue(text, *, dataset_name, num_clusters_to_cue=10, mode, num_clusters=128):
+def get_cue(text, *, dataset_name, n_clusters_to_cue=10, mode, n_clusters=128):
+    # TODO: this is still trying to use an LM to pick the next cluster. Not relevant right now.
     existing_clusters, next_cluster_scores = next_cluster_distribution(
         text, dataset_name
     )
 
     scores_by_cluster_argsort, unique_starts = cueing.cached_scores_by_cluster_argsort(
-        dataset_name=dataset_name, num_clusters=num_clusters
+        dataset_name=dataset_name, n_clusters=n_clusters
     )
 
     topic_data = cueing.cached_topic_data(
-        dataset_name=dataset_name, num_clusters=num_clusters
+        dataset_name=dataset_name, n_clusters=n_clusters
     )
     topic_labeled_sentences = topic_data["sentences"]
 
@@ -66,6 +63,7 @@ def get_cue(text, *, dataset_name, num_clusters_to_cue=10, mode, num_clusters=12
 
     cues = []
     for cluster_to_cue in clusters_to_cue:
+        cue = dict(cluster=int(cluster_to_cue))
         if mode == "cue_phrase":
             # Cue one of the phrases for this cluster.
             if cluster_to_cue not in scores_by_cluster_argsort:
@@ -74,18 +72,19 @@ def get_cue(text, *, dataset_name, num_clusters_to_cue=10, mode, num_clusters=12
 
             phrase_idx = scores_by_cluster_argsort[cluster_to_cue][0]
             phrase = " ".join(unique_starts[phrase_idx])
-            cues.append(dict(cluster=int(cluster_to_cue), phrase=phrase))
+            cue["text"] = phrase
         elif mode == "example":
             cluster_sentences = topic_labeled_sentences[
                 topic_labeled_sentences.topic == cluster_to_cue
             ]
             if len(cluster_sentences) > MIN_CLUSTER_SIZE:
-                sentence = cluster_sentences.sent.sample(n=1)
-                cues.append(dict(sentence=sentence))
+                sentence = cluster_sentences.raw_sent.sample(n=1).iloc[0]
+                cue["text"] = sentence
         else:
             assert False
 
-        if len(cues) == num_clusters_to_cue:
+        cues.append(cue)
+        if len(cues) == n_clusters_to_cue:
             break
 
     cued_clusters = [cue["cluster"] for cue in cues]
