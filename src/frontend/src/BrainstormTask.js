@@ -49,6 +49,15 @@ const experienceAndSelfEfficacyQuestions = writingType => [
   ...selfEfficacyQuestions(writingType),
 ];
 
+const introSurvey = writingType => ({
+  screen: "IntroSurvey",
+  view: surveyView({
+    title: "Opening Survey",
+    basename: "intro",
+    questions: [...experienceAndSelfEfficacyQuestions(writingType)],
+  }),
+});
+
 const closingSurvey = writingType => ({
   screen: "PostExpSurvey",
   view: surveyView({
@@ -157,15 +166,6 @@ const TASKS = {
 
       if (isDemo) return [trial];
 
-      const introSurvey = {
-        screen: "IntroSurvey",
-        view: surveyView({
-          title: "Opening Survey",
-          basename: "intro",
-          questions: [...experienceAndSelfEfficacyQuestions(writingType)],
-        }),
-      };
-
       const instructions = {
         screen: "Instructions",
         view: () => (
@@ -182,7 +182,7 @@ const TASKS = {
 
       return [
         WelcomeScreen,
-        introSurvey,
+        introSurvey(writingType),
         precommitScreen(
           <span>
             Think of a restaurant (or bar, cafe, diner, etc.) that you've been
@@ -209,15 +209,6 @@ const TASKS = {
 
       if (isDemo) return [trial];
 
-      const introSurvey = {
-        screen: "IntroSurvey",
-        view: surveyView({
-          title: "Opening Survey",
-          basename: "intro",
-          questions: [...experienceAndSelfEfficacyQuestions(writingType)],
-        }),
-      };
-
       const instructions = {
         screen: "Instructions",
         view: () => (
@@ -234,7 +225,7 @@ const TASKS = {
 
       return [
         WelcomeScreen,
-        introSurvey,
+        introSurvey(writingType),
         precommitScreen(
           <span>
             Think of a movie or TV show that you've seen recently that you{" "}
@@ -274,15 +265,6 @@ const TASKS = {
 
       if (isDemo) return [trial];
 
-      const introSurvey = {
-        screen: "IntroSurvey",
-        view: surveyView({
-          title: "Opening Survey",
-          basename: "intro",
-          questions: [...experienceAndSelfEfficacyQuestions(writingType)],
-        }),
-      };
-
       const instructions = {
         screen: "Instructions",
         view: () => (
@@ -299,7 +281,7 @@ const TASKS = {
 
       return [
         WelcomeScreen,
-        introSurvey,
+        introSurvey(writingType),
         instructions,
         trial,
         closingSurvey(writingType),
