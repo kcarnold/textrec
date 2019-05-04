@@ -58,6 +58,20 @@ const introSurvey = writingType => ({
   }),
 });
 
+const instructions = header => ({
+  screen: "Instructions",
+  view: () => (
+    <div className="Survey">
+      {header}
+      <p>
+        Once you click "Start", you can type your questions in the text box that
+        appears below. You can click Add or press Enter.
+      </p>
+      <NextBtn>Start</NextBtn>
+    </div>
+  ),
+});
+
 const closingSurvey = writingType => ({
   screen: "PostExpSurvey",
   view: surveyView({
@@ -96,6 +110,7 @@ const closingSurvey = writingType => ({
 
 const WelcomeScreen = { screen: "Welcome", view: Views.Welcome };
 const DoneScreen = { screen: "Done", view: Views.Done };
+
 const baseTrial = (header, conditionName, flags, minutes) => ({
   preEvent: setupTrialEvent(`final-0`, conditionName, flags),
   screen: "ExperimentScreen",
@@ -111,6 +126,7 @@ const baseTrial = (header, conditionName, flags, minutes) => ({
     </div>
   ),
 });
+
 const precommitScreen = lead => ({
   screen: "Precommit",
   view: () => (
@@ -166,20 +182,6 @@ const TASKS = {
 
       if (isDemo) return [trial];
 
-      const instructions = {
-        screen: "Instructions",
-        view: () => (
-          <div className="Survey">
-            {header}
-            <p>
-              Once you click "Start", you can type your questions in the text
-              box that appears below.
-            </p>
-            <NextBtn>Start</NextBtn>
-          </div>
-        ),
-      };
-
       return [
         WelcomeScreen,
         introSurvey(writingType),
@@ -189,7 +191,7 @@ const TASKS = {
             to recently that you <b>haven't written about before</b>.
           </span>
         ),
-        instructions,
+        instructions(header),
         trial,
         closingSurvey(writingType),
         DoneScreen,
@@ -209,20 +211,6 @@ const TASKS = {
 
       if (isDemo) return [trial];
 
-      const instructions = {
-        screen: "Instructions",
-        view: () => (
-          <div>
-            {header}
-            <p>
-              Once you click "Start", you can type your questions in the text
-              box that appears below. You can click Add or press Enter.
-            </p>
-            <NextBtn>Start</NextBtn>
-          </div>
-        ),
-      };
-
       return [
         WelcomeScreen,
         introSurvey(writingType),
@@ -232,7 +220,7 @@ const TASKS = {
             <b>haven't written about before</b>.
           </span>
         ),
-        instructions,
+        instructions(header),
         trial,
         closingSurvey(writingType),
         DoneScreen,
@@ -265,24 +253,10 @@ const TASKS = {
 
       if (isDemo) return [trial];
 
-      const instructions = {
-        screen: "Instructions",
-        view: () => (
-          <div>
-            {header}
-            <p>
-              Once you click "Start", you can type your questions in the text
-              box that appears below. You can click Add or press Enter.
-            </p>
-            <NextBtn>Start</NextBtn>
-          </div>
-        ),
-      };
-
       return [
         WelcomeScreen,
         introSurvey(writingType),
-        instructions,
+        instructions(header),
         trial,
         closingSurvey(writingType),
         DoneScreen,
