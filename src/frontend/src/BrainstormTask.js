@@ -86,10 +86,7 @@ const instructions = header => ({
   view: () => (
     <div className="Survey">
       {header}
-      <p>
-        Once you click "Start", you can type your questions in the text box that
-        appears below.
-      </p>
+      <p>Click "Start" to begin.</p>
       <NextBtn>Start</NextBtn>
     </div>
   ),
@@ -129,7 +126,7 @@ const closingSurvey = writingType => ({
 const WelcomeScreen = { screen: "Welcome", view: Views.Welcome };
 const DoneScreen = { screen: "Done", view: Views.Done };
 
-const baseTrial = (header, conditionName, flags, minutes) => ({
+const baseTrialPrewrite = (header, conditionName, flags, minutes) => ({
   preEvent: setupTrialEvent(`final-0`, conditionName, flags),
   screen: "ExperimentScreen",
   timer: minutes * 60,
@@ -191,127 +188,142 @@ const precommitScreen = lead => ({
   ),
 });
 
-const ReviewHeader = iobs(({ controlledInputName, state, minutes }) => (
+const ReviewHeaderPrewrite = iobs(({ controlledInputName, state, minutes }) => (
   <div>
     <h1>
       Pre-writing for your review of{" "}
       <i>{state.controlledInputs.get(controlledInputName)}</i>
     </h1>
-    <p>Before we write a review, we're going to do a pre-writing exercise.</p>
+    <p>Before we write a review, we're going to do a pre-writing exercise:</p>
     <blockquote>
-      <b>
-        Imagine someone is interviewing you about your experience. What relevant
-        questions could they ask you? Think of as many as you can in {minutes}{" "}
-        minutes.
-      </b>
+      Imagine someone is interviewing you about your experience.{" "}
+      <b>What relevant questions could they ask you?</b> Think of as many as you
+      can in {minutes} minutes.
     </blockquote>
     <p>You can click Add or press Enter to add a question.</p>
   </div>
 ));
 
+const ReviewHeaderFinal = iobs(({ controlledInputName, state, minutes }) => (
+  <div>
+    <h1>
+      Your review of <i>{state.controlledInputs.get(controlledInputName)}</i>
+    </h1>
+    <p>Now, write the review. Here are the questions you just listed.</p>
+    <SmartIdeaList initialIdeas={[]} fixed />
+    <p>
+      You'll have {minutes} minutes; when the time is up, finish your sentence
+      and click the Next button that will appear.
+    </p>
+  </div>
+));
+
+function getScreens(task, conditionName, isDemo) {
+  const {
+    prewriteHeader,
+    finalHeader,
+    flags,
+    prewriteMinutes,
+    finalMinutes,
+    writingType,
+    precommitScreen,
+  } = task;
+  let trial = baseTrialPrewrite(
+    prewriteHeader,
+    conditionName,
+    flags,
+    prewriteMinutes
+  );
+
+  if (isDemo) return [trial];
+
+  return [
+    WelcomeScreen,
+    introSurvey(writingType),
+    precommitScreen,
+    instructions(prewriteHeader),
+    trial,
+    instructions(finalHeader),
+    stage2(finalMinutes),
+    closingSurvey(writingType),
+    DoneScreen,
+  ];
+}
+
 const TASKS = {
   restaurant: {
-    getScreens(conditionName: string, isDemo): Screen[] {
-      const minutes = 4;
-      const writingType = {
-        singular: "a restaurant review",
-        plural: "restaurant reviews",
-      };
-      const header = (
-        <ReviewHeader controlledInputName="thingName" minutes={minutes} />
-      );
-      let flags = { domain: "restaurant" };
-      let trial = baseTrial(header, conditionName, flags, minutes);
+    precommitScreen: precommitScreen(
+      <span>
+        Think of a restaurant (or bar, cafe, diner, etc.) that you've been to
+        recently that you <b>haven't written about before</b>.
+      </span>
+    ),
+    prewriteMinutes: 4,
+    finalMinutes: 4,
 
-      if (isDemo) return [trial];
+    flags: { domain: "restaurant" },
 
-      return [
-        WelcomeScreen,
-        introSurvey(writingType),
-        precommitScreen(
-          <span>
-            Think of a restaurant (or bar, cafe, diner, etc.) that you've been
-            to recently that you <b>haven't written about before</b>.
-          </span>
-        ),
-        instructions(header),
-        trial,
-        stage2(minutes),
-        closingSurvey(writingType),
-        DoneScreen,
-      ];
+    writingType: {
+      singular: "a restaurant review",
+      plural: "restaurant reviews",
     },
+
+    // FIXME: this reuses the value of "minutes".
+    prewriteHeader: (
+      <ReviewHeaderPrewrite controlledInputName="thingName" minutes={4} />
+    ),
+    finalHeader: (
+      <ReviewHeaderFinal controlledInputName="thingName" minutes={4} />
+    ),
   },
 
   movie: {
-    getScreens(conditionName: string, isDemo): Screen[] {
-      const minutes = 4;
-      const writingType = {
-        singular: "a movie review",
-        plural: "movie reviews",
-      };
-      const header = (
-        <ReviewHeader controlledInputName="thingName" minutes={minutes} />
-      );
-      let flags = { domain: "movie" };
-      let trial = baseTrial(header, conditionName, flags, minutes);
+    prewriteMinutes: 4,
+    finalMinutes: 4,
+    precommitScreen: precommitScreen(
+      <span>
+        Think of a movie or TV show that you've seen recently that you{" "}
+        <b>haven't written about before</b>.
+      </span>
+    ),
+    flags: { domain: "movie" },
 
-      if (isDemo) return [trial];
-
-      return [
-        WelcomeScreen,
-        introSurvey(writingType),
-        precommitScreen(
-          <span>
-            Think of a movie or TV show that you've seen recently that you{" "}
-            <b>haven't written about before</b>.
-          </span>
-        ),
-        instructions(header),
-        trial,
-        closingSurvey(writingType),
-        DoneScreen,
-      ];
+    writingType: {
+      singular: "a movie review",
+      plural: "movie reviews",
     },
+
+    prewriteHeader: (
+      <ReviewHeaderPrewrite controlledInputName="thingName" minutes={4} />
+    ),
+    finalHeader: (
+      <ReviewHeaderFinal controlledInputName="thingName" minutes={4} />
+    ),
   },
 
   bio: {
-    getScreens(conditionName: string, isDemo): Screen[] {
-      const minutes = 4;
-      const writingType = {
-        singular: "a bio",
-        plural: "bios",
-      };
-      const header = (
-        <div>
-          <h1>Pre-writing for your bio</h1>
-          <p>
-            Before we write the bio, we're going to do a little pre-writing
-            exercise.
-          </p>
-          <blockquote>
-            <b>
-              Imagine someone is interviewing you about yourself. What relevant
-              questions could they ask you? Think of as many as you can in{" "}
-              {minutes} minutes.
-            </b>
-          </blockquote>
-        </div>
-      );
-      let flags = { domain: "bio" };
-      let trial = baseTrial(header, conditionName, flags, minutes);
-
-      if (isDemo) return [trial];
-
-      return [
-        WelcomeScreen,
-        introSurvey(writingType),
-        instructions(header),
-        trial,
-        closingSurvey(writingType),
-        DoneScreen,
-      ];
+    prewriteMinutes: 4,
+    finalMinutes: 4,
+    precommitScreen: null,
+    writingType: {
+      singular: "a bio",
+      plural: "bios",
     },
+    prewriteHeader: (
+      <div>
+        <h1>Pre-writing for your bio</h1>
+        <p>
+          Before we write the bio, we're going to do a little pre-writing
+          exercise.
+        </p>
+        <blockquote>
+          Imagine someone is interviewing you about yourself.{" "}
+          <b>What relevant questions could they ask you?</b> Think of as many as
+          you can in {4} minutes.
+        </blockquote>
+      </div>
+    ),
+    flags: { domain: "bio" },
   },
 };
 
@@ -442,7 +454,7 @@ export function createTaskState(loginEvent: {
   // Get task setup.
   let task = TASKS[prompt];
   if (!task) console.assert(`Unknown prompt ${prompt}`);
-  let screens = task.getScreens(conditions[0], isDemo);
+  let screens = getScreens(task, conditions[0], isDemo);
 
   let state = createState({
     clientId,
