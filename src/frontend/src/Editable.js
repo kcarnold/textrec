@@ -26,8 +26,11 @@ export class Editable extends React.Component {
     let node = findDOMNode(this);
     window.EDITABLE = node;
     node.value = this.props.text;
-    let { start, end } = this.props.range;
-    node.setSelectionRange(start, end);
+    let { range } = this.props;
+    if (range) {
+      let { start, end } = range;
+      node.setSelectionRange(start, end);
+    }
     node.focus();
   }
 
@@ -37,8 +40,9 @@ export class Editable extends React.Component {
     let range = { start: node.selectionStart, end: node.selectionEnd };
     if (
       text !== this.props.text ||
-      range.start !== this.props.range.start ||
-      range.end !== this.props.range.end
+      (this.props.range &&
+        (range.start !== this.props.range.start ||
+          range.end !== this.props.range.end))
     ) {
       let { top: caretTop, left: caretLeft } = getCaretCoordinates(
         node,
