@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from . import lang_model, numberbatch_vecs
 from .paths import paths
-from .util import VecPile, dump_kenlm, mem, tokenize
+from .util import VecPile, dump_kenlm, mem
 
 logger = logging.getLogger(__name__)
 
@@ -229,6 +229,53 @@ def cached_topic_data(dataset_name, n_clusters):
     )
 
 
+def get_labels_for_clusters(
+    vectorizer, cluster_centers, sentences, MIN_CLUSTER_SIZE=20
+):
+    from sklearn.metrics.pairwise import pairwise_distances_argmin
+    from textrec.numberbatch_vecs import get_cnnb
+    import re
+
+    cnnb = get_cnnb()
+    vocab = vectorizer.get_feature_names()
+    vocab_in_cnnb = [term for term in vocab if term in cnnb]
+
+    # Note that we're *NOT* dividing by word frequency here.
+
+    cnnb_mat = np.array([cnnb[term] for term in vocab_in_cnnb])
+
+    labels = [
+        vocab_in_cnnb[idx]
+        for idx in pairwise_distances_argmin(cluster_centers, cnnb_mat)
+    ]
+
+    labels_and_sents = []
+    for topic_idx, label in enumerate(labels):
+        label_re = re.compile("\\b" + re.escape(label) + "\\b", re.IGNORECASE)
+        topic_sents = sentences
+        topic_sents = topic_sents[topic_sents.topic == topic_idx].raw_sent
+        candidates = []
+        for sent in topic_sents:
+            match = label_re.search(sent)
+            if match:
+                candidates.append((sent, match.span()))
+        if len(candidates) > MIN_CLUSTER_SIZE:
+            labels_and_sents.append((label, candidates))
+    return labels_and_sents
+
+
+def get_cooccurrence_mat(sentences, n_clusters):
+    from itertools import combinations
+
+    cooccur = np.zeros((n_clusters, n_clusters))
+    for doc_id, topics in sentences.groupby("doc_id").topic:
+        for a, b in combinations(topics, 2):
+            cooccur[a, b] += 1
+    # Make order not matter.
+    cooccur = cooccur + cooccur.T
+    return cooccur
+
+
 MIN_SENTS_IN_CLUSTER = 50
 
 
@@ -309,11 +356,6 @@ def cached_scores_by_cluster(dataset_name, n_clusters, n_words=5):
     )
 
 
-#         params['omit_unks'] = np.flatnonzero([
-#             [any(model.model.vocab_index(tok) == 0 for tok in toks) for model in models]
-#             for toks in unique_starts])
-
-
 @lru_cache()
 @mem.cache
 def cached_scores_by_cluster_argsort(
@@ -381,14 +423,27 @@ def preload_models(model_names, parts):
             get_model(name, part)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('dataset_name')
-    parser.add_argument('n_clusters', type=int)
+    parser.add_argument("dataset_name")
+    parser.add_argument("n_clusters", type=int)
     opts = parser.parse_args()
 
     model = cached_topic_data(opts.dataset_name, opts.n_clusters)
+
+    # Add stuff.
+    model["labels_and_sents"] = get_labels_for_clusters(
+        vectorizer=model["vectorizer"],
+        cluster_centers=model["clusterer"].cluster_centers_,
+        sentences=model["sentences"],
+    )
+
+    model["cooccur"] = get_cooccurrence_mat(
+        model["sentences"], n_clusters=model["clusterer"].n_clusters
+    )
+
     for k, v in model.items():
         filename = model_filename(f"{opts.dataset_name}_{opts.n_clusters}", k)
         joblib.dump(v, filename)
