@@ -38,14 +38,16 @@ const demographicsSurvey = [
 ];
 
 const selfEfficacyQuestions = writingType => [
-  SurveyData.selfEfficacy(`recognizing good ${writingType}`),
-  SurveyData.selfEfficacy(`writing good ${writingType}`),
+  SurveyData.selfEfficacy(`recognizing good ${writingType.plural}`),
+  SurveyData.selfEfficacy(`writing good ${writingType.plural}`),
 ];
 
 const experienceAndSelfEfficacyQuestions = writingType => [
   SurveyData.numericResponse({
     name: "howManyReviewsWritten",
-    text: `About how many ${writingType} have you written in the past 3 months?`,
+    text: `About how many ${
+      writingType.plural
+    } have you written in the past 3 months?`,
   }),
   ...selfEfficacyQuestions(writingType),
 ];
@@ -55,7 +57,19 @@ const introSurvey = writingType => ({
   view: surveyView({
     title: "Opening Survey",
     basename: "intro",
-    questions: [...experienceAndSelfEfficacyQuestions(writingType)],
+    questions: [
+      {
+        type: "text",
+        text: (
+          <p>
+            You'll be writing {writingType.singular}. We'll walk you through the
+            process; <b>do all your work within this window</b>. First, though a
+            few background questions:
+          </p>
+        ),
+      },
+      ...experienceAndSelfEfficacyQuestions(writingType),
+    ],
   }),
 });
 
@@ -66,7 +80,7 @@ const instructions = header => ({
       {header}
       <p>
         Once you click "Start", you can type your questions in the text box that
-        appears below. You can click Add or press Enter.
+        appears below.
       </p>
       <NextBtn>Start</NextBtn>
     </div>
@@ -79,11 +93,6 @@ const closingSurvey = writingType => ({
     title: "Closing Survey",
     basename: "postExp",
     questions: [
-      {
-        type: "text",
-        text:
-          "We were actually only interested in the pre-writing. So you don't actually have to do the writing task! Just answer the following questions and we'll be done.",
-      },
       // likert("fluency", "How fluent did you feel ")
       ...selfEfficacyQuestions(writingType),
       // SurveyData.verbalized_during,
@@ -196,7 +205,10 @@ const TASKS = {
   restaurant: {
     getScreens(conditionName: string, isDemo): Screen[] {
       const minutes = 4;
-      const writingType = "restaurant reviews";
+      const writingType = {
+        singular: "a restaurant review",
+        plural: "restaurant reviews",
+      };
       const header = (
         <ReviewHeader controlledInputName="thingName" minutes={minutes} />
       );
@@ -226,7 +238,10 @@ const TASKS = {
   movie: {
     getScreens(conditionName: string, isDemo): Screen[] {
       const minutes = 4;
-      const writingType = "movie reviews";
+      const writingType = {
+        singular: "a movie review",
+        plural: "movie reviews",
+      };
       const header = (
         <ReviewHeader controlledInputName="thingName" minutes={minutes} />
       );
@@ -255,7 +270,10 @@ const TASKS = {
   bio: {
     getScreens(conditionName: string, isDemo): Screen[] {
       const minutes = 4;
-      const writingType = "bios";
+      const writingType = {
+        singular: "a bio",
+        plural: "bios",
+      };
       const header = (
         <div>
           <h1>Pre-writing for your bio</h1>
