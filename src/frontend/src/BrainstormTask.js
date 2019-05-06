@@ -28,7 +28,7 @@ const namedConditions = {
   cueSents: { recType: "cueSents" },
 };
 
-let baseConditions = ["norecs"];
+let baseConditions = ["norecs", "randomSents", "cueSents"];
 
 const demographicsSurvey = [
   SurveyData.age,
