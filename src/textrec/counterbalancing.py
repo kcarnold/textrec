@@ -54,7 +54,7 @@ def get_completion_data(batch, logdir=paths.logdir):
             continue
         if login_event.get("type") != "login":
             logger.warning(f"bad logfile {log_file}")
-                continue
+            continue
         if login_event.get("batch") != batch:
             continue
         participant_id = login_event["participant_id"]
