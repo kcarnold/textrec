@@ -2,12 +2,13 @@ import logging
 import pickle
 from functools import lru_cache
 
+import joblib
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 from scipy.special import logsumexp
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
+from tqdm import tqdm
 
 from . import lang_model, numberbatch_vecs
 from .paths import paths
@@ -363,3 +364,31 @@ def cached_topic_sequence_lm(dataset_name, n_clusters=75):
     model_name = topic_seq_model_name(dataset_name, n_clusters=n_clusters)
     dump_kenlm(model_name, topic_sequences, order=6, discount_fallback=True)
     return lang_model.Model.get_or_load_model(model_name)
+
+
+def model_filename(model_name, part):
+    return paths.models / f"cue_{model_name}_{part}.joblib"
+
+
+@lru_cache(maxsize=None)
+def get_model(model_name, part):
+    return joblib.load(model_filename(model_name, part))
+
+
+def preload_models(model_names, parts):
+    for name in model_names:
+        for part in parts:
+            get_model(name, part)
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('dataset_name')
+    parser.add_argument('n_clusters', type=int)
+    opts = parser.parse_args()
+
+    model = cached_topic_data(opts.dataset_name, opts.n_clusters)
+    for k, v in model.items():
+        filename = model_filename(f"{opts.dataset_name}_{opts.n_clusters}", k)
+        joblib.dump(v, filename)

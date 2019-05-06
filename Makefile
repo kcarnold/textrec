@@ -29,6 +29,12 @@ lint:
 # PROJECT RULES                                                                 #
 #################################################################################
 
+## Train cueing models.
+train_models:
+	poetry run python -m textrec.cueing yelp 128
+	poetry run python -m textrec.cueing imdb 128
+	#poetry run python -m textrec.cueing bios 128
+
 ## Run backend Python server.
 run_backend:
 	poetry run python -m tornado.autoreload -m textrec.runserver

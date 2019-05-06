@@ -10,6 +10,18 @@ from . import cueing
 N_CLUSTERS = 128
 MIN_CLUSTER_SIZE = 20
 
+PRELOAD_MODELS = [
+    "yelp_128",
+    "imdb_128",
+    #    'bios'
+]
+PARTS_NEEDED = [
+    "sentences",
+]
+
+
+cueing.preload_models(PRELOAD_MODELS, PARTS_NEEDED)
+
 
 async def handle_request_async(executor, request):
     method = request["method"]
@@ -21,7 +33,7 @@ async def handle_request_async(executor, request):
     return result
 
 
-domain_to_dataset = dict(restaurant="yelp", movie="imdb", bio="bios")
+domain_to_model = dict(restaurant="yelp_128", movie="imdb_128", bio="bios_128")
 
 
 async def get_cue_API(executor, request):
@@ -29,33 +41,32 @@ async def get_cue_API(executor, request):
     domain = request["domain"]
 
     text = request["text"]
-    dataset_name = domain_to_dataset[domain]
+    model_name = domain_to_model[domain]
 
     if rec_type == "randomSents":
-        return get_cue_random(dataset_name=dataset_name)
+        return get_cue_random(model_name=model_name)
     elif rec_type == "cueSents":
-        return get_cue(text, dataset_name=dataset_name, mode="example")
+        return get_cue(text, model_name=model_name, mode="example")
 
 
-def get_cue_random(*, dataset_name):
-    sentences = cueing.cached_sentences(dataset_name)
+def get_cue_random(*, model_name):
+    sentences = cueing.get_model(model_name, "sentences")
 
     cues = [dict(text=sentence) for sentence in sentences.raw_sent.sample(n=10)]
     return dict(cues=cues)
 
 
-def get_cue(text, *, dataset_name, n_clusters_to_cue=10, mode, n_clusters=128):
+def get_cue(text, *, model_name, n_clusters_to_cue=10, mode):
     existing_clusters, next_cluster_scores = next_cluster_distribution(
         text=text,
-        dataset_name=dataset_name,
-        n_clusters=n_clusters,
+        model_name=model_name,
         use_sequence_lm=False,
     )
 
     if mode == "cue_phrase":
-        scores_by_cluster_argsort, unique_starts = cueing.cached_scores_by_cluster_argsort(
-            dataset_name=dataset_name, n_clusters=n_clusters
-        )
+        # Note that current models don't save these...
+        scores_by_cluster_argsort = cueing.get_model(model_name, "scores_by_cluster_argsort")
+        unique_starts = cueing.get_model(model_name, "unique_starts")
 
         def get_cue_for_cluster(cluster_to_cue):
             # Cue one of the phrases for this cluster.
@@ -68,10 +79,7 @@ def get_cue(text, *, dataset_name, n_clusters_to_cue=10, mode, n_clusters=128):
             return dict(text=phrase)
 
     elif mode == "example":
-        topic_data = cueing.cached_topic_data(
-            dataset_name=dataset_name, n_clusters=n_clusters
-        )
-        topic_labeled_sentences = topic_data["sentences"]
+        topic_labeled_sentences = cueing.get_model(model_name, "sentences")
 
         def get_cue_for_cluster(cluster_to_cue):
             cluster_sentences = topic_labeled_sentences[
@@ -116,8 +124,8 @@ def tokenize(text):
     return "\n".join(token_spaced_sents)
 
 
-def topic_sequence_logprobs(existing_clusters, dataset_name, n_clusters):
-    seq_model = cueing.cached_topic_sequence_lm(dataset_name, n_clusters)
+def topic_sequence_logprobs(existing_clusters, model_name):
+    seq_model = cueing.get_model(model_name, "topic_sequence_model")
     state, _ = seq_model.get_state(
         " ".join(str(c) for c in existing_clusters), bos=True
     )
@@ -126,14 +134,12 @@ def topic_sequence_logprobs(existing_clusters, dataset_name, n_clusters):
     return logprobs
 
 
-def next_cluster_distribution(text, dataset_name, n_clusters, use_sequence_lm):
-    # assert dataset_name == "yelp"
-    topic_data = cueing.cached_topic_data(dataset_name, n_clusters=n_clusters)
-
+def next_cluster_distribution(text, model_name, use_sequence_lm):
     tokenized_doc = tokenize(text)
-    vectorizer = topic_data["vectorizer"]
-    projection_mat = topic_data["projection_mat"]
-    clusterer = topic_data["clusterer"]
+    vectorizer = cueing.get_model(model_name, "vectorizer")
+    projection_mat = cueing.get_model(model_name, "projection_mat")
+    clusterer = cueing.get_model(model_name, "clusterer")
+    n_clusters = clusterer.n_clusters
 
     sents = tokenized_doc.split("\n")
     vecs = vectorizer.transform(sents)
@@ -141,7 +147,7 @@ def next_cluster_distribution(text, dataset_name, n_clusters, use_sequence_lm):
     existing_clusters = clusterer.predict(projected)
 
     if use_sequence_lm:
-        logprobs = topic_sequence_logprobs(existing_clusters, dataset_name, n_clusters)
+        logprobs = topic_sequence_logprobs(existing_clusters, model_name)
     else:
         logprobs = np.zeros(n_clusters)
 
