@@ -9,9 +9,6 @@ const Consent = ({ timeEstimate, platform }) => (
       padding: "10px 10px",
     }}
   >
-    <p>Try out writing with a few different keyboard designs!</p>
-
-    <hr />
     <p>
       <b>Eligibility</b>
       <br />
