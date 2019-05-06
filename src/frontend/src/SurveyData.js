@@ -96,8 +96,8 @@ export const traitQuestion = ({ item }) => ({
   options: ["Very Inaccurate", "", "", "", "Very Accurate"],
 });
 
-export const selfEfficacy = text =>
-  likert(`efficacy-${text}`, <span>How confident are you {text}?</span>, 7, [
+export const selfEfficacy = (name, text) =>
+  likert(`efficacy-${name}`, <span>How confident are you {text}?</span>, 7, [
     "Not confident at all",
     "Very confident",
   ]);

@@ -39,11 +39,13 @@ const demographicsSurvey = [
 
 const selfEfficacyQuestions = writingType => [
   SurveyData.selfEfficacy(
+    "recognizing",
     <span>
       <b>recognizing</b> good {writingType.plural}
     </span>
   ),
   SurveyData.selfEfficacy(
+    "writing",
     <span>
       <b>writing</b> good {writingType.plural}
     </span>
@@ -445,7 +447,7 @@ export function createTaskState(loginEvent: {
     prompt = match[3];
     isDemo = true;
   } else {
-    // Between-subjects for prompt (passed as config option) and condition (passed as counterbalanced assignment).
+    // Between-subjects for prompt and condition (passed as counterbalanced assignment).
     let condition = baseConditions[loginEvent.assignment];
     conditions = [condition]; // For now, just a single task.
     prompt = loginEvent.prompt;
