@@ -7,7 +7,7 @@ import { extendObservable, observable } from "mobx";
 export const platformTracking = state => {
   extendObservable(state, {
     participantCode: null,
-    platform: null,
+    platform: "turk",
     get sonaCreditLink() {
       console.assert(this.platform === "sona");
       // participant codes look like `sonaXXX`, where XXX is the survey code.
