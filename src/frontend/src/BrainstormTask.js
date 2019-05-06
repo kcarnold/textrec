@@ -38,8 +38,16 @@ const demographicsSurvey = [
 ];
 
 const selfEfficacyQuestions = writingType => [
-  SurveyData.selfEfficacy(`recognizing good ${writingType.plural}`),
-  SurveyData.selfEfficacy(`writing good ${writingType.plural}`),
+  SurveyData.selfEfficacy(
+    <span>
+      <b>recognizing</b> good {writingType.plural}
+    </span>
+  ),
+  SurveyData.selfEfficacy(
+    <span>
+      <b>writing</b> good {writingType.plural}
+    </span>
+  ),
 ];
 
 const experienceAndSelfEfficacyQuestions = writingType => [
