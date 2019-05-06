@@ -9,6 +9,7 @@ import { observer } from "mobx-react";
 import { createState } from "./MasterState";
 import { TrialState } from "./BrainstormTrialState";
 import * as Views from "./CueViews";
+import { Editable } from "./Editable";
 import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
@@ -127,6 +128,28 @@ const baseTrial = (header, conditionName, flags, minutes) => ({
   ),
 });
 
+const WritingView = iobs(({ state, dispatch }) => (
+  <Editable
+    text={state.experimentState.curText}
+    onChange={newVals => {
+      dispatch({ type: "setText", text: newVals.text });
+    }}
+  />
+));
+
+const stage2 = minutes => ({
+  screen: "ExperimentScreen2",
+  timer: minutes * 60,
+  view: () => (
+    <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+      <h1>Final writing</h1>
+      <SmartIdeaList initialIdeas={[]} fixed />
+      <WritingView />
+      <TimedNextBtn />
+    </div>
+  ),
+});
+
 const precommitScreen = lead => ({
   screen: "Precommit",
   view: () => (
@@ -193,6 +216,7 @@ const TASKS = {
         ),
         instructions(header),
         trial,
+        stage2(minutes),
         closingSurvey(writingType),
         DoneScreen,
       ];
@@ -287,21 +311,23 @@ const IdeaList = observer(({ initialIdeas, userIdeas, addIdea }) => {
         {userIdeas.map((idea, idx) => (
           <li key={idx}>{idea}</li>
         ))}
-        <li>
-          <input
-            style={{ width: "250px" }}
-            type="text"
-            ref={newIdeaEntry}
-            onKeyPress={onKey}
-          />{" "}
-          <button onClick={_addIdea}>Add</button>
-        </li>
+        {addIdea && (
+          <li>
+            <input
+              style={{ width: "250px" }}
+              type="text"
+              ref={newIdeaEntry}
+              onKeyPress={onKey}
+            />{" "}
+            <button onClick={_addIdea}>Add</button>
+          </li>
+        )}
       </ul>
     </div>
   );
 });
 
-const SmartIdeaList = iobs(({ state, dispatch, initialIdeas }) => {
+const SmartIdeaList = iobs(({ state, dispatch, initialIdeas, fixed }) => {
   function addIdea(idea) {
     dispatch({ type: "addIdea", idea });
   }
@@ -309,7 +335,7 @@ const SmartIdeaList = iobs(({ state, dispatch, initialIdeas }) => {
     <IdeaList
       initialIdeas={initialIdeas}
       userIdeas={state.experimentState.ideas}
-      addIdea={addIdea}
+      addIdea={fixed ? null : addIdea}
     />
   );
 });

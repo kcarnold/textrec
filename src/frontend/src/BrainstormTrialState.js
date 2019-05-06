@@ -18,6 +18,7 @@ export class TrialState {
       _suggestions: [],
       suggestions: [],
       allowSubmit: false,
+      curText: "",
     });
   }
 
@@ -53,6 +54,8 @@ export class TrialState {
       this.suggestions = this._suggestions;
     } else if (event.type === "allowSubmit") {
       this.allowSubmit = true;
+    } else if (event.type === "setText") {
+      this.curText = event.text;
     }
 
     let newCueRequest = this.getCueRequest();
