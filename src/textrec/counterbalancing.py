@@ -22,6 +22,9 @@ BATCH_DATA = {
     "idea0": dict(
         n_conditions=1, config="idea"
     ), # This is piloting the brainstorming task.
+    "idea1r": dict(
+        n_conditions=3, config="idea", prompt="restaurant"
+    ), # First actual run of the cueing ideation task. With closing writing.
 }
 
 invalid = set("h52x67 3vf5fg 73qq5q ffhgxm mhh838 j39263 pqf6q5 49cm8f".split())
@@ -51,7 +54,7 @@ def get_completion_data(batch, logdir=paths.logdir):
             continue
         if login_event.get("type") != "login":
             logger.warning(f"bad logfile {log_file}")
-            continue
+                continue
         if login_event.get("batch") != batch:
             continue
         participant_id = login_event["participant_id"]
