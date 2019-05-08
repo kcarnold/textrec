@@ -3,14 +3,16 @@ import pickle
 from functools import lru_cache
 
 import joblib
+import nltk
 import numpy as np
 import pandas as pd
+import wordfreq
 from scipy.special import logsumexp
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from tqdm import tqdm
 
-from . import lang_model, numberbatch_vecs
+from . import datasets, lang_model, numberbatch_vecs
 from .paths import paths
 from .util import VecPile, dump_kenlm, mem
 
@@ -30,14 +32,34 @@ def normalize_dists(dists):
 
 
 @lru_cache()
+@mem.cache
 def load_yelp():
-    with open(paths.top_level / "preproc/yelp/train_data.pkl", "rb") as f:
-        df = pickle.load(f)["data"]
+    df = datasets.load_yelp()
 
     # Some edits...
     df = df.rename(columns={"review_id": "doc_id"})
-    # Temporary hack.
-    df["sentences"] = df["tokenized"]
+
+    return preprocess_df(df)
+
+
+def preprocess_texts(texts):
+    sentences = [
+        nltk.sent_tokenize(text) for text in tqdm(texts, desc="Splitting sentences")
+    ]
+    tokenized = [
+        "\n".join(
+            " ".join(wordfreq.tokenize(sent, "en", include_punctuation=True))
+            for sent in sents
+        )
+        for sents in tqdm(sentences, desc="Tokenizing")
+    ]
+    return sentences, tokenized
+
+
+def preprocess_df(df):
+    sentences, tokenized = preprocess_texts(df.text)
+    df["sentences"] = sentences
+    df["tokenized"] = tokenized
     return df
 
 
@@ -46,8 +68,6 @@ def load_yelp():
 def load_imdb():
     import zipfile
     import re
-    import wordfreq
-    import nltk
 
     zf = zipfile.ZipFile("/Data/Reviews/IMDB/Maas2011/aclImdb.zip")
 
@@ -63,15 +83,9 @@ def load_imdb():
             item["text"] = text = (
                 zf.read(f.filename).decode("utf-8").replace("<br />", " ")
             )
-            sents = nltk.sent_tokenize(text)
-            item["sentences"] = "\n".join(sents)
-            item["tokenized"] = "\n".join(
-                " ".join(wordfreq.tokenize(sent, "en", include_punctuation=True))
-                for sent in sents
-            )
             imdb_reviews.append(item)
 
-    return pd.DataFrame(imdb_reviews)
+    return preprocess_df(pd.DataFrame(imdb_reviews))
 
 
 @lru_cache()
