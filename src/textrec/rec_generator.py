@@ -89,6 +89,18 @@ def get_cue(text, *, model_name, n_clusters_to_cue=10, mode):
                 sentence = cluster_sentences.raw_sent.sample(n=1).iloc[0]
                 return dict(text=sentence)
 
+    elif mode == "exampleHighlighted":
+        labels_and_sents = cueing.get_model(model_name, "labels_and_sents")
+
+        def get_cue_for_cluster(cluster_to_cue):
+            if cluster_to_cue not in labels_and_sents:
+                return
+            label, candidates = labels_and_sents[cluster_to_cue]
+            candidate_idx = np.random.choice(len(candidates))
+            sentence, label_span = candidates[candidate_idx]
+            return dict(
+                text=sentence, highlight_span=label_span
+            )
     else:
         assert False
 
