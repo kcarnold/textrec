@@ -210,7 +210,8 @@ const ReviewHeaderFinal = iobs(({ controlledInputName, state, minutes }) => (
     <h1>
       Your review of <i>{state.controlledInputs.get(controlledInputName)}</i>
     </h1>
-    <p>Now, write the review. Here are the questions you just listed.</p>
+    <p>Now, write an informative review.</p>
+    <p>Here are the questions you listed. You are not obligated to use them.</p>
     <SmartIdeaList initialIdeas={[]} fixed />
     <p>
       You'll have {minutes} minutes; when the time is up, finish your sentence
