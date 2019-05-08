@@ -3,7 +3,7 @@ import logging
 
 logging.basicConfig(
     format='%(asctime)s: %(levelname)s: %(name)s: %(message)s',
-    level=logging.INFO,
+    level=logging.DEBUG,
     handlers=[
         logging.FileHandler(str(paths.logdir / "server.log")),
         logging.StreamHandler()
