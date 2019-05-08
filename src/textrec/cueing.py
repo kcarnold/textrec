@@ -80,9 +80,7 @@ def load_imdb():
         if match:
             item = {}
             item["doc_id"] = match.groups()
-            item["text"] = text = (
-                zf.read(f.filename).decode("utf-8").replace("<br />", " ")
-            )
+            item["text"] = zf.read(f.filename).decode("utf-8").replace("<br />", " ")
             imdb_reviews.append(item)
 
     return preprocess_df(pd.DataFrame(imdb_reviews))
