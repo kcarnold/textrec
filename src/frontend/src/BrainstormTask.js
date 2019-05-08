@@ -153,13 +153,12 @@ const WritingView = iobs(({ state, dispatch }) => (
   />
 ));
 
-const stage2 = minutes => ({
+const stage2 = (header, minutes) => ({
   screen: "ExperimentScreen2",
   timer: minutes * 60,
   view: () => (
     <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-      <h1>Final writing</h1>
-      <SmartIdeaList initialIdeas={[]} fixed />
+      {header}
       <WritingView />
       <TimedNextBtn />
     </div>
@@ -246,7 +245,7 @@ function getScreens(task, conditionName, isDemo) {
     instructions(prewriteHeader),
     trial,
     instructions(finalHeader),
-    stage2(finalMinutes),
+    stage2(finalHeader, finalMinutes),
     closingSurvey(writingType),
     DoneScreen,
   ];
