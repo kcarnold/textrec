@@ -91,35 +91,13 @@ def load_imdb():
 @lru_cache()
 @mem.cache
 def load_bios():
-    import wordfreq
-    import nltk
-
     with open("/Data/biosbias/BIOS.pkl", "rb") as f:
         bios = pickle.load(f)
     print(f"Loaded {len(bios)} bios")
 
     texts = [bio["raw"] for bio in bios]
-    sentences = [
-        nltk.sent_tokenize(text) for text in tqdm(texts, desc="Splitting sentences")
-    ]
-    tokenized = [
-        "\n".join(
-            " ".join(wordfreq.tokenize(sent, "en", include_punctuation=True))
-            for sent in sents
-        )
-        for sents in tqdm(sentences, desc="Tokenizing bios")
-    ]
-    return (
-        pd.DataFrame(
-            dict(
-                text=texts,
-                sentences=["\n".join(sents) for sents in sentences],
-                tokenized=tokenized,
-            )
-        )
-        .rename_axis(index="doc_id")
-        .reset_index()
-    )
+    df = pd.DataFrame(dict(text=texts)).rename_axis(index="doc_id").reset_index()
+    return preprocess_df(df)
 
 
 data_loaders = {"yelp": load_yelp, "bios": load_bios, "imdb": load_imdb}
