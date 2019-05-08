@@ -239,7 +239,7 @@ def get_labels_for_clusters(
         for idx in pairwise_distances_argmin(cluster_centers, cnnb_mat)
     ]
 
-    labels_and_sents = []
+    labels_and_sents = {}
     for topic_idx, label in enumerate(labels):
         label_re = re.compile("\\b" + re.escape(label) + "\\b", re.IGNORECASE)
         topic_sents = sentences
@@ -250,7 +250,7 @@ def get_labels_for_clusters(
             if match:
                 candidates.append((sent, match.span()))
         if len(candidates) > MIN_CLUSTER_SIZE:
-            labels_and_sents.append((label, candidates))
+            labels_and_sents[topic_idx] = (label, candidates)
     return labels_and_sents
 
 
