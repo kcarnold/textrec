@@ -45,8 +45,10 @@ export function processLogGivenState(state, log) {
     if (curTrial === null) {
       trials.push(
         (curTrial = {
+          condition: expState.flags.condition,
           events: [],
           startTime: state.screenTimes[state.screenTimes.length - 1].timestamp,
+          finalText: null,
         })
       );
     }
@@ -57,6 +59,8 @@ export function processLogGivenState(state, log) {
       curTrial.events.push(entry);
     } else if (entry.type === "inspireMe") {
       curTrial.events.push({ ...entry, ideas: expState.suggestions });
+    } else if (entry.type === "setText") {
+      curTrial.finalText = entry.text;
     }
   });
 
