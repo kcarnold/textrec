@@ -136,7 +136,7 @@ const baseTrialPrewrite = (header, conditionName, flags, minutes) => ({
     <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
       {header}
       <div style={{ display: "flex", flexFlow: "col nowrap" }}>
-        <SmartIdeaList initialIdeas={[]} />
+        <SmartIdeaList />
         <InspirationBox />
       </div>
       <TimedNextBtn />
@@ -216,7 +216,7 @@ const ReviewHeaderFinal = iobs(({ controlledInputName, state, minutes }) => (
     </h1>
     <p>Now, write an informative review.</p>
     <p>Here are the questions you listed. You are not obligated to use them.</p>
-    <SmartIdeaList initialIdeas={[]} fixed />
+    <SmartIdeaList fixed />
     <p>
       You'll have {minutes} minutes; when the time is up, finish your sentence
       and click the Next button that will appear.
@@ -334,7 +334,7 @@ const TASKS = {
 };
 
 // Hacky: this needs to be an observer because userIdeas is an observable...
-const IdeaList = observer(({ initialIdeas, userIdeas, addIdea }) => {
+const IdeaList = observer(({ userIdeas, addIdea }) => {
   let newIdeaEntry = React.createRef();
   function _addIdea() {
     addIdea(newIdeaEntry.current.value);
@@ -346,12 +346,10 @@ const IdeaList = observer(({ initialIdeas, userIdeas, addIdea }) => {
       _addIdea();
     }
   }
+
   return (
     <div style={{ flex: "1 0 auto" }}>
       <ul>
-        {initialIdeas.map(idea => (
-          <li key={idea}>{idea}</li>
-        ))}
         {userIdeas.map((idea, idx) => (
           <li key={idx}>{idea}</li>
         ))}
@@ -371,13 +369,12 @@ const IdeaList = observer(({ initialIdeas, userIdeas, addIdea }) => {
   );
 });
 
-const SmartIdeaList = iobs(({ state, dispatch, initialIdeas, fixed }) => {
+const SmartIdeaList = iobs(({ state, dispatch, fixed }) => {
   function addIdea(idea) {
     dispatch({ type: "addIdea", idea });
   }
   return (
     <IdeaList
-      initialIdeas={initialIdeas}
       userIdeas={state.experimentState.ideas}
       addIdea={fixed ? null : addIdea}
     />
