@@ -381,6 +381,18 @@ const SmartIdeaList = iobs(({ state, dispatch, fixed }) => {
   );
 });
 
+const highlightedSpan = (text, highlight) => {
+  if (!highlight) return <span>{text}</span>;
+  let [a, b] = highlight;
+  return (
+    <span>
+      {text.slice(0, a)}
+      <b>{text.slice(a, b)}</b>
+      {text.slice(b)}
+    </span>
+  );
+};
+
 const InspirationBox = iobs(({ state, dispatch }) =>
   state.experimentState.flags.recType !== null ? (
     <div style={{ padding: "10px", border: "1px solid black", width: "350px" }}>
@@ -394,7 +406,7 @@ const InspirationBox = iobs(({ state, dispatch }) =>
           <ul>
             {state.experimentState.suggestions.map((s, idx) => (
               <li key={idx} style={{ marginBottom: "5px" }}>
-                {s.text}
+                {false ? highlightedSpan(s.text, s.highlight_span) : s.text}
               </li>
             ))}
           </ul>
