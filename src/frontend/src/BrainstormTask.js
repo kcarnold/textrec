@@ -195,12 +195,16 @@ const ReviewHeaderPrewrite = iobs(({ controlledInputName, state, minutes }) => (
       Pre-writing for your review of{" "}
       <i>{state.controlledInputs.get(controlledInputName)}</i>
     </h1>
-    <p>Before we write a review, we're going to do a pre-writing exercise:</p>
+    <p>Before you write a review, let's do a little brainstorming:</p>
     <blockquote>
       Imagine someone is interviewing you about your experience.{" "}
-      <b>What relevant questions could they ask you?</b> Think of as many as you
-      can in {minutes} minutes.
+      <b>What questions could they ask you?</b>
     </blockquote>
+    <ul>
+      <li>Try to list as many as you can.</li>
+      <li>Go for quantity, not quality.</li>
+      <li>Think of as many as you can in {minutes} minutes.</li>
+    </ul>
     <p>You can click Add or press Enter to add a question.</p>
   </div>
 ));
