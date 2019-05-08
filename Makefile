@@ -31,9 +31,9 @@ lint:
 
 ## Train cueing models.
 train_models:
-	poetry run python -m textrec.cueing yelp 128
-	poetry run python -m textrec.cueing imdb 128
-	#poetry run python -m textrec.cueing bios 128
+	poetry run python scripts/train_cue_model.py yelp 128
+	poetry run python scripts/train_cue_model.py imdb 128
+	#poetry run python scripts/train_cue_model.py bios 128
 
 ## Run backend Python server.
 run_backend:
