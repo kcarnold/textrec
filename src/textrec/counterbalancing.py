@@ -25,6 +25,9 @@ BATCH_DATA = {
     "idea1r": dict(
         n_conditions=3, config="idea", prompt="restaurant"
     ), # First actual run of the cueing ideation task. With closing writing.
+    "idea2r": dict(
+        n_conditions=3, config="idea", prompt="restaurant"
+    ), # Second run. Closing writing, explicit brainstorming instructions.
 }
 
 invalid = set("h52x67 3vf5fg 73qq5q ffhgxm mhh838 j39263 pqf6q5 49cm8f".split())
