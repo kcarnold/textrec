@@ -58,7 +58,7 @@ def preprocess_texts(texts):
 
 def preprocess_df(df):
     sentences, tokenized = preprocess_texts(df.text)
-    df["sentences"] = sentences
+    df["sentences"] = ["\n".join(sents) for sents in sentences]
     df["tokenized"] = tokenized
     return df
 
