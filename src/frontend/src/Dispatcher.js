@@ -184,6 +184,8 @@ export function init(clientId, clientKind, onConnected, wsURL) {
     if (clientKind === "p") {
       setSizeDebounced();
       window.addEventListener("resize", setSizeDebounced);
+      window.addEventListener("blur", onBlur);
+      window.addEventListener("focus", onFocus);
     }
     if (state.pingTime === null || state.pingTime > MAX_PING_TIME) {
       setTimeout(
@@ -212,6 +214,13 @@ export function init(clientId, clientKind, onConnected, wsURL) {
     leading: false,
     trailing: true,
   });
+
+  function onBlur() {
+    dispatch({ type: "blur" });
+  }
+  function onFocus() {
+    dispatch({ type: "focus" });
+  }
 
   // Globals
   window.M = M;
