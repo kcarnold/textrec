@@ -136,7 +136,10 @@ const baseTrialPrewrite = (header, conditionName, flags, minutes) => ({
     <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
       {header}
       <div style={{ display: "flex", flexFlow: "col nowrap" }}>
-        <SmartIdeaList />
+        <div style={{ flex: "1 0 auto" }}>
+          <b>Questions you might get asked:</b>
+          <SmartIdeaList />
+        </div>
         <InspirationBox />
       </div>
       <TimedNextBtn />
@@ -354,8 +357,7 @@ const IdeaList = observer(({ userIdeas, addIdea }) => {
   }
 
   return (
-    <div style={{ flex: "1 0 auto" }}>
-      <b>Questions you might get asked:</b>
+    <div>
       <ul>
         {userIdeas.map((idea, idx) => (
           <li key={idx}>{idea}</li>
