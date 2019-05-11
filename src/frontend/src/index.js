@@ -79,6 +79,21 @@ const handlers = {
     let ShowRecs = require("./ShowRecs").default;
     topLevel = <ShowRecs />;
   },
+
+  idx() {
+    topLevel = (
+      <ul>
+        {[
+          "showall/c=idea&a=0&prompt=restaurant",
+          "demoidea-cueSents-restaurant-p",
+        ].map((u, i) => (
+          <li key={i}>
+            <a href={"/?" + u}>{u}</a>
+          </li>
+        ))}
+      </ul>
+    );
+  },
 };
 
 // Dispatch by initial part
