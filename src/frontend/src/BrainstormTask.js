@@ -196,10 +196,16 @@ const ReviewHeaderPrewrite = iobs(({ controlledInputName, state, minutes }) => (
       <i>{state.controlledInputs.get(controlledInputName)}</i>
     </h1>
     <p>Before you write a review, let's do a little brainstorming:</p>
-    <blockquote>
+    <p
+      style={{
+        border: "1px solid black",
+        padding: "5px",
+        fontSize: "14pt",
+      }}
+    >
       Imagine someone is interviewing you about your experience.{" "}
       <b>What questions could they ask you?</b>
-    </blockquote>
+    </p>
     <ul>
       <li>Try to list as many as you can.</li>
       <li>Go for quantity, not quality.</li>
@@ -349,6 +355,7 @@ const IdeaList = observer(({ userIdeas, addIdea }) => {
 
   return (
     <div style={{ flex: "1 0 auto" }}>
+      <b>Questions you might get asked:</b>
       <ul>
         {userIdeas.map((idea, idx) => (
           <li key={idx}>{idea}</li>
