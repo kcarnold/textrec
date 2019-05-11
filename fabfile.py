@@ -31,8 +31,8 @@ def get_git_version():
 @task
 def rsync_models(c):
     rsync(
-        c, target="~/code/textrec/models/", source="models/", delete=False
-    )  # TODO: delete=True
+        c, target="~/code/textrec/models/", source="models/", delete=True
+    )
     rsync(
         c, target="~/code/textrec/preproc/", source="preproc/", delete=True
     )
