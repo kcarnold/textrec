@@ -28,6 +28,9 @@ BATCH_DATA = {
     "idea2r": dict(
         n_conditions=3, config="idea", prompt="restaurant"
     ), # Second run. Closing writing, explicit brainstorming instructions.
+    "idea2m": dict(
+        n_conditions=3, config="idea", prompt="movie"
+    ), # Same as idea2r, but for movies.
 }
 
 invalid = set("h52x67 3vf5fg 73qq5q ffhgxm mhh838 j39263 pqf6q5 49cm8f".split())
