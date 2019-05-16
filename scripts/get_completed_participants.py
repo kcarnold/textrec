@@ -102,4 +102,5 @@ complete_by_group = {
 for config, group in complete_by_group.items():
     print()
     print(f"{len(group)} completed in {config}")
-    print(f"{config}:", " ".join(group))
+    print(f"{config}:")
+    print(" ".join(group))
