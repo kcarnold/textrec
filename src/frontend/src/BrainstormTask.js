@@ -66,8 +66,11 @@ const InspirationBox = iobs(({ state, dispatch }) =>
 const IdeaList = observer(({ userIdeas, addIdea }) => {
   let newIdeaEntry = React.createRef();
   function _addIdea() {
-    addIdea(newIdeaEntry.current.value);
+    let text = newIdeaEntry.current.value.trim();
+    if (text.length > 0) {
+      addIdea(text);
     newIdeaEntry.current.value = "";
+  }
   }
 
   function onKey(evt) {
