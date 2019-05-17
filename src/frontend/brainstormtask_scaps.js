@@ -24,27 +24,6 @@ const experienceAndSelfEfficacyQuestions = writingType => [
   ...selfEfficacyQuestions(writingType),
 ];
 
-const introSurvey = writingType => ({
-  screen: "IntroSurvey",
-  view: surveyView({
-    title: "Opening Survey",
-    basename: "intro",
-    questions: [
-      {
-        type: "text",
-        text: (
-          <p>
-            You'll be writing {writingType.singular}. We'll walk you through the
-            process; <b>do all your work within this window</b>. First, though a
-            few background questions:
-          </p>
-        ),
-      },
-      ...experienceAndSelfEfficacyQuestions(writingType),
-    ],
-  }),
-});
-
 const instructions = header => ({
   screen: "Instructions",
   view: () => (
@@ -171,10 +150,6 @@ const highlightedSpan = (text, highlight) => {
     </span>
   );
 };
-
-function surveyView(props) {
-  return () => React.createElement(Survey, props);
-}
 
 const demographicsSurvey = [
   SurveyData.age,

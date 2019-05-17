@@ -5,6 +5,8 @@
 import * as React from "react";
 import { observer } from "mobx-react";
 
+import flatMap from "lodash/flatMap";
+
 import { createState } from "./MasterState";
 import { TrialState } from "./BrainstormTrialState";
 import * as Views from "./CueViews";
@@ -139,7 +141,6 @@ function getScreens(prompts, conditionNames, isDemo) {
     WelcomeScreen,
     getIntroSurvey(tasksAndConditions),
     ...getPrewritingScreens(tasksAndConditions),
-    getPrewritingSurvey(tasksAndConditions),
     ...getFinalWritingScreens(tasksAndConditions),
     getClosingSurvey(tasksAndConditions),
     DoneScreen,
@@ -373,23 +374,63 @@ function getPrewritingScreens(tasksAndConditions) {
   let result = [];
   tasksAndConditions.forEach(({ prompt, conditionName, task }, idx) => {
     // TODO: show the study progress
-    if (task.precommitScreen) {
-      result.push(task.precommitScreen);
-    }
+    result.push(task.precommitScreen);
+  });
+
+  result.push({
+    screen: "PreSurvey",
+    view: surveyView({
+      title: "Survey Before Writing",
+      basename: "pre",
+      questions: [
+        {
+          type: "text",
+          text: (
+            <p>Here are the writing prompts you're going to work on today.</p>
+          ),
+        },
+        ...flatMap(tasksAndConditions, ({ prompt, task }, idx) => [
+          { type: "text", text: <div>Prompt: {task.writingPrompt}</div> },
+          likert(
+            `ease-${idx}`,
+            "How easy do you think it will be to come up with 20 ideas for things that you might include in this writing?",
+            7,
+            ["very easy", "very difficult"]
+          ),
+        ]),
+      ],
+    }),
+  });
+  tasksAndConditions.forEach(({ prompt, conditionName, task }, idx) => {
+    // TODO: Instructions screens?
     result.push(getPrewriteScreen(idx, task, conditionName));
   });
-  return result;
-}
 
-function getPrewritingSurvey(tasksAndConditions) {
-  return {
-    screen: "PrewritingSurvey",
+  result.push({
+    screen: "MidwaySurvey",
     view: surveyView({
-      title: "midway survey",
-      basename: "prewriting",
-      questions: [],
+      title: "Halfway survey",
+      basename: "midway",
+      questions: [
+        {
+          type: "text",
+          text: (
+            <p>Here are the writing prompts you have done brainstorming for.</p>
+          ),
+        },
+        ...flatMap(tasksAndConditions, ({ prompt, task }, idx) => [
+          { type: "text", text: <div>Prompt: {task.writingPrompt}</div> },
+          likert(
+            `ease-${idx}`,
+            "How easy was it to come up with 20 ideas for things that you might include in this writing?",
+            7,
+            ["very easy", "very difficult"]
+          ),
+        ]),
+      ],
     }),
-  };
+  });
+  return result;
 }
 
 function getFinalWritingScreens(tasksAndConditions) {
