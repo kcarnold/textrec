@@ -185,20 +185,11 @@ const demographicsSurvey = [
 
 
 
-
-
-
 const ReviewHeaderFinal = iobs(({ controlledInputName, state, minutes }) => (
   <div>
     <h1>
       Your review of <i>{state.controlledInputs.get(controlledInputName)}</i>
     </h1>
     <p>Now, write an informative review.</p>
-    <p>Here are the questions you listed. You are not obligated to use them.</p>
-    <SmartIdeaList fixed />
-    <p>
-      You'll have {minutes} minutes; when the time is up, finish your sentence
-      and click the Next button that will appear.
-    </p>
   </div>
 ));

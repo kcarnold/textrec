@@ -147,44 +147,57 @@ function getScreens(prompts, conditionNames, isDemo) {
 }
 
 const ControlledInputView = iobs(
-  ({ state, name }) => state.controlledInputs.get(name) || ""
+  ({ state, name }) => state.controlledInputs.get(name) || name
 );
+
+function brainstormHeader(writingPrompt) {
+  return (
+    <div>
+      <h1>Brainstorming</h1>
+      <p>You'll be writing on the following prompt:</p>
+      <p
+        style={{
+          border: "1px solid black",
+          padding: "5px",
+          fontSize: "14pt",
+        }}
+      >
+        {writingPrompt}
+      </p>
+      <p>
+        Before you start writing,{" "}
+        <b>brainstorm some things you might include in your writing.</b>
+      </p>
+      <ul>
+        <li>Try to list as many as you can.</li>
+        <li>Go for quantity, not quality.</li>
+        <li>You don't need complete sentences.</li>
+      </ul>
+      <p>You can click Add or press Enter to add an idea.</p>
+    </div>
+  );
+}
 
 function getTask(promptName) {
   if (promptName === "reviewRestaurant") {
     const nameField = "restaurant-name";
+    const writingPrompt = (
+      <span>
+        Write a balanced review of{" "}
+        <i>
+          <ControlledInputView name={nameField} />
+        </i>
+        . Include both positive and negative aspects.
+      </span>
+    );
     return {
       writingType: {
-        singular: "a restaurant review",
+        singular: "restaurant review",
         plural: "restaurant reviews",
       },
+      writingPrompt,
       nameField,
-      prewriteHeader: () => (
-        <div>
-          <h1>
-            Pre-writing for your review of{" "}
-            <i>
-              <ControlledInputView name={nameField} />
-            </i>
-          </h1>
-          <p>Before you write a review, let's do a little brainstorming:</p>
-          <p
-            style={{
-              border: "1px solid black",
-              padding: "5px",
-              fontSize: "14pt",
-            }}
-          >
-            Imagine someone is interviewing you about your experience.{" "}
-            <b>What questions could they ask you?</b>
-          </p>
-          <ul>
-            <li>Try to list as many as you can.</li>
-            <li>Go for quantity, not quality.</li>
-          </ul>
-          <p>You can click Add or press Enter to add a question.</p>
-        </div>
-      ),
+      prewriteHeader: () => brainstormHeader(writingPrompt),
       precommitScreen: {
         screen: "Precommit",
         view: () => (
@@ -195,7 +208,6 @@ function getTask(promptName) {
             </span>
             <div
               style={{
-                borderBottom: "1px solid black",
                 padding: "12px",
                 lineHeight: 1.5,
               }}
@@ -218,20 +230,88 @@ function getTask(promptName) {
       },
     };
   } else if (promptName === "persuadeMovie") {
+    const nameField = "movie-name";
+    const writingPrompt = (
+      <span>
+        Write an endorsement of{" "}
+        <i>
+          <ControlledInputView name={nameField} />
+        </i>{" "}
+        that would persuade someone who generally hates that genre to watch it.
+      </span>
+    );
+
     return {
       writingType: {
-        singular: "a movie endorsement",
+        singular: "movie endorsement",
         plural: "movie endorsements",
       },
-      prewriteHeader: () => <div />,
+      nameField,
+      writingPrompt,
+      prewriteHeader: () => brainstormHeader(writingPrompt),
+      precommitScreen: {
+        screen: "Precommit",
+        view: () => (
+          <div className="Survey">
+            <span>
+              What is one of your favorite movies (or TV shows, documentaries,
+              etc.)?
+            </span>
+            <div
+              style={{
+                padding: "12px",
+                lineHeight: 1.5,
+              }}
+            >
+              Name: <ControlledInput name={nameField} />
+              <br />
+              What <i>genre</i> is it? <ControlledInput name={"movie-genre"} />
+            </div>
+            <NextBtn />
+          </div>
+        ),
+      },
     };
   } else if (promptName === "informNews") {
+    const nameField = "news-headline";
+    const writingPrompt = (
+      <span>
+        Write the body of an article with the headline you imagined, <br />
+        <br />
+        &ldquo;
+        <ControlledInputView name={nameField} />
+        &rdquo;
+        <br />
+        <br /> Make up any details you need.
+      </span>
+    );
     return {
       writingType: {
-        singular: "a news article",
+        singular: "news article",
         plural: "news articles",
       },
-      prewriteHeader: () => <div />,
+      writingPrompt,
+      prewriteHeader: () => brainstormHeader(writingPrompt),
+      precommitScreen: {
+        screen: "Precommit",
+        view: () => (
+          <div className="Survey">
+            <span>
+              Imagine looking at the news and seeing a headline that really
+              makes you happy. What is that headline?
+            </span>
+            <div
+              style={{
+                padding: "12px",
+                lineHeight: 1.5,
+              }}
+            >
+              Headline: <ControlledInput name={nameField} />
+            </div>
+            <NextBtn />
+          </div>
+        ),
+      },
     };
   } else {
     console.assert("Unknown prompt", promptName);
@@ -268,11 +348,7 @@ function getIntroSurvey(tasksAndConditions) {
 
 function getPrewritingScreens(tasksAndConditions) {
   const getPrewriteScreen = (idx, task, conditionName) => ({
-    preEvent: setupTrialEvent(
-      `prewrite-${idx}`,
-      conditionName,
-      {} /*task.flags*/
-    ),
+    preEvent: setupTrialEvent(`trial-${idx}`, conditionName, {} /*task.flags*/),
     screen: "ExperimentScreen",
     timer: task.prewriteMinutes * 60,
     view: () => (
@@ -317,25 +393,34 @@ function getPrewritingSurvey(tasksAndConditions) {
 }
 
 function getFinalWritingScreens(tasksAndConditions) {
-  const getFinalWritingScreen = (header, minutes) => ({
-    preEvent: {
-      type: "switchToTrial",
-      name: `FIXME`, // FIXME: switch back to the correct named trial.
-    },
-    screen: "ExperimentScreen2",
-    timer: minutes * 60,
-    view: () => (
-      <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-        {header}
-        <WritingView />
-        <TimedNextBtn />
-      </div>
-    ),
+  return tasksAndConditions.map(({ task, prompt, conditionName }, idx) => {
+    const minutes = 4; // TODO.
+    return {
+      preEvent: {
+        type: "switchToTrial",
+        name: `trial-${idx}`,
+      },
+      screen: "ExperimentScreen2",
+      timer: minutes * 60,
+      view: () => (
+        <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+          <h1>Write your {task.writingType.singular}</h1>
+          {task.writingPrompt}
+          <p>
+            Here are the ideas you listed earlier. You are not obligated to use
+            them.
+          </p>
+          <SmartIdeaList fixed />
+          <p>
+            You'll have {minutes} minutes; when the time is up, finish your
+            sentence and click the Next button that will appear.
+          </p>
+          <WritingView />
+          <TimedNextBtn />
+        </div>
+      ),
+    };
   });
-
-  return tasksAndConditions.map(({ prompt, conditionName }) =>
-    getFinalWritingScreen(prompt, 4)
-  );
 }
 
 function getClosingSurvey(tasksAndConditions) {
@@ -411,7 +496,7 @@ export function createTaskState(loginEvent: {
     clientId,
     screens,
     createExperimentState: flags => new TrialState(flags),
-    timeEstimate: "10 minutes", // TODO: pull from Task.
+    timeEstimate: "30 minutes",
   });
   finalDataLogger(state);
 
