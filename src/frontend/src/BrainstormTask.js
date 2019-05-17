@@ -1,6 +1,5 @@
 /**
  * @format
- * @flow
  */
 
 import * as React from "react";
@@ -17,10 +16,7 @@ import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
 import Timer from "./Timer";
 
 import { finalDataLogger, iobs } from "./misc";
-
-function surveyView(props) {
-  return () => React.createElement(Survey, props);
-}
+import * as shuffle from "./shuffle";
 
 const namedConditions = {
   norecs: { recType: null },
@@ -30,317 +26,39 @@ const namedConditions = {
 
 let baseConditions = ["norecs", "randomSents", "cueSents"];
 
-const demographicsSurvey = [
-  SurveyData.age,
-  SurveyData.gender,
-  SurveyData.english_proficiency,
-  SurveyData.techDiff,
-];
-
-const selfEfficacyQuestions = writingType => [
-  SurveyData.selfEfficacy(
-    "recognizing",
-    <span>
-      <b>recognizing</b> good {writingType.plural}
-    </span>
-  ),
-  SurveyData.selfEfficacy(
-    "writing",
-    <span>
-      <b>writing</b> good {writingType.plural}
-    </span>
-  ),
-];
-
-const experienceAndSelfEfficacyQuestions = writingType => [
-  SurveyData.numericResponse({
-    name: "howManyReviewsWritten",
-    text: `About how many ${
-      writingType.plural
-    } have you written in the past 3 months?`,
-  }),
-  ...selfEfficacyQuestions(writingType),
-];
-
-const introSurvey = writingType => ({
-  screen: "IntroSurvey",
-  view: surveyView({
-    title: "Opening Survey",
-    basename: "intro",
-    questions: [
-      {
-        type: "text",
-        text: (
-          <p>
-            You'll be writing {writingType.singular}. We'll walk you through the
-            process; <b>do all your work within this window</b>. First, though a
-            few background questions:
-          </p>
-        ),
-      },
-      ...experienceAndSelfEfficacyQuestions(writingType),
-    ],
-  }),
-});
-
-const instructions = header => ({
-  screen: "Instructions",
-  view: () => (
-    <div className="Survey">
-      {header}
-      <p>Click "Start" to begin.</p>
-      <NextBtn>Start</NextBtn>
-    </div>
-  ),
-});
-
-const closingSurvey = writingType => ({
-  screen: "PostExpSurvey",
-  view: surveyView({
-    title: "Closing Survey",
-    basename: "postExp",
-    questions: [
-      // likert("fluency", "How fluent did you feel ")
-      ...selfEfficacyQuestions(writingType),
-      // SurveyData.verbalized_during,
-
-      // Not going to use demographic survey for the pilot, no need for that data.
-      // ...demographicsSurvey,
-
-      {
-        type: "options",
-        responseType: "options",
-        text: (
-          <span>
-            Is there any reason that we shouldn't use your data? If so, please
-            explain in the next question.{" "}
-            <b>There's no penalty for answering "don't use" here.</b>
-          </span>
-        ),
-        options: ["Use my data", "Don't use my data"],
-        name: "shouldExclude",
-      },
-      SurveyData.otherFinal,
-    ],
-  }),
-});
-
 const WelcomeScreen = { screen: "Welcome", view: Views.Welcome };
 const DoneScreen = { screen: "Done", view: Views.Done };
 
-const baseTrialPrewrite = (header, conditionName, flags, minutes) => ({
-  preEvent: setupTrialEvent(`final-0`, conditionName, flags),
-  screen: "ExperimentScreen",
-  timer: minutes * 60,
-  view: () => (
-    <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-      {header}
-      <div style={{ display: "flex", flexFlow: "col nowrap" }}>
-        <div style={{ flex: "1 0 auto" }}>
-          <b>Questions you might get asked:</b>
-          <SmartIdeaList />
-        </div>
-        <InspirationBox />
-      </div>
-      <TimedNextBtn />
-    </div>
-  ),
-});
-
-const WritingView = iobs(({ state, dispatch }) => (
-  <Editable
-    text={state.experimentState.curText}
-    onChange={newVals => {
-      dispatch({ type: "setText", text: newVals.text });
-    }}
-  />
-));
-
-const stage2 = (header, minutes) => ({
-  screen: "ExperimentScreen2",
-  timer: minutes * 60,
-  view: () => (
-    <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-      {header}
-      <WritingView />
-      <TimedNextBtn />
-    </div>
-  ),
-});
-
-const precommitScreen = lead => ({
-  screen: "Precommit",
-  view: () => (
-    <div className="Survey">
-      {lead}
-      <div
-        style={{
-          borderBottom: "1px solid black",
-          padding: "12px",
-          lineHeight: 1.5,
-        }}
-      >
-        Name: <ControlledInput name={"thingName"} />
-        <br />
-        About how long ago, in days?{" "}
-        <ControlledInput name={"daysAgo"} type="number" min="0" />
-        <br />
-        How would you rate it? <ControlledStarRating name={"star"} />
-      </div>
-      <NextBtn />
-    </div>
-  ),
-});
-
-const ReviewHeaderPrewrite = iobs(({ controlledInputName, state, minutes }) => (
-  <div>
-    <h1>
-      Pre-writing for your review of{" "}
-      <i>{state.controlledInputs.get(controlledInputName)}</i>
-    </h1>
-    <p>Before you write a review, let's do a little brainstorming:</p>
-    <p
-      style={{
-        border: "1px solid black",
-        padding: "5px",
-        fontSize: "14pt",
-      }}
-    >
-      Imagine someone is interviewing you about your experience.{" "}
-      <b>What questions could they ask you?</b>
-    </p>
-    <ul>
-      <li>Try to list as many as you can.</li>
-      <li>Go for quantity, not quality.</li>
-      <li>Think of as many as you can in {minutes} minutes.</li>
-    </ul>
-    <p>You can click Add or press Enter to add a question.</p>
-  </div>
-));
-
-const ReviewHeaderFinal = iobs(({ controlledInputName, state, minutes }) => (
-  <div>
-    <h1>
-      Your review of <i>{state.controlledInputs.get(controlledInputName)}</i>
-    </h1>
-    <p>Now, write an informative review.</p>
-    <p>Here are the questions you listed. You are not obligated to use them.</p>
-    <SmartIdeaList fixed />
-    <p>
-      You'll have {minutes} minutes; when the time is up, finish your sentence
-      and click the Next button that will appear.
-    </p>
-  </div>
-));
-
-function getScreens(task, conditionName, isDemo) {
-  const {
-    prewriteHeader,
-    finalHeader,
-    flags,
-    prewriteMinutes,
-    finalMinutes,
-    writingType,
-    precommitScreen,
-  } = task;
-  let trial = baseTrialPrewrite(
-    prewriteHeader,
-    conditionName,
-    flags,
-    prewriteMinutes
-  );
-
-  if (isDemo) return [trial];
-
-  return [
-    WelcomeScreen,
-    introSurvey(writingType),
-    precommitScreen,
-    instructions(prewriteHeader),
-    trial,
-    instructions(finalHeader),
-    stage2(finalHeader, finalMinutes),
-    closingSurvey(writingType),
-    DoneScreen,
-  ];
+function surveyView(props) {
+  return () => React.createElement(Survey, props);
 }
 
-const TASKS = {
-  restaurant: {
-    precommitScreen: precommitScreen(
-      <span>
-        Think of a restaurant (or bar, cafe, diner, etc.) that you've been to
-        recently that you <b>haven't written about before</b>.
-      </span>
-    ),
-    prewriteMinutes: 4,
-    finalMinutes: 4,
+/**
+ * Ideation stuff
+ */
 
-    flags: { domain: "restaurant" },
-
-    writingType: {
-      singular: "a restaurant review",
-      plural: "restaurant reviews",
-    },
-
-    // FIXME: this reuses the value of "minutes".
-    prewriteHeader: (
-      <ReviewHeaderPrewrite controlledInputName="thingName" minutes={4} />
-    ),
-    finalHeader: (
-      <ReviewHeaderFinal controlledInputName="thingName" minutes={4} />
-    ),
-  },
-
-  movie: {
-    prewriteMinutes: 4,
-    finalMinutes: 4,
-    precommitScreen: precommitScreen(
-      <span>
-        Think of a movie or TV show that you've seen recently that you{" "}
-        <b>haven't written about before</b>.
-      </span>
-    ),
-    flags: { domain: "movie" },
-
-    writingType: {
-      singular: "a movie review",
-      plural: "movie reviews",
-    },
-
-    prewriteHeader: (
-      <ReviewHeaderPrewrite controlledInputName="thingName" minutes={4} />
-    ),
-    finalHeader: (
-      <ReviewHeaderFinal controlledInputName="thingName" minutes={4} />
-    ),
-  },
-
-  bio: {
-    prewriteMinutes: 4,
-    finalMinutes: 4,
-    precommitScreen: null,
-    writingType: {
-      singular: "a bio",
-      plural: "bios",
-    },
-    prewriteHeader: (
-      <div>
-        <h1>Pre-writing for your bio</h1>
-        <p>
-          Before we write the bio, we're going to do a little pre-writing
-          exercise.
-        </p>
-        <blockquote>
-          Imagine someone is interviewing you about yourself.{" "}
-          <b>What relevant questions could they ask you?</b> Think of as many as
-          you can in {4} minutes.
-        </blockquote>
-      </div>
-    ),
-    flags: { domain: "bio" },
-  },
-};
+const InspirationBox = iobs(({ state, dispatch }) =>
+  state.experimentState.flags.recType !== null ? (
+    <div style={{ padding: "10px", border: "1px solid black", width: "350px" }}>
+      <button onClick={e => dispatch({ type: "inspireMe" })}>
+        Inspire Me!
+      </button>
+      <br />
+      {state.experimentState.suggestions.length > 0 && (
+        <div>
+          <b>Ideas</b> from other people's writing
+          <ul>
+            {state.experimentState.suggestions.map((s, idx) => (
+              <li key={idx} style={{ marginBottom: "5px" }}>
+                {s.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  ) : null
+);
 
 // Hacky: this needs to be an observer because userIdeas is an observable...
 const IdeaList = observer(({ userIdeas, addIdea }) => {
@@ -390,40 +108,14 @@ const SmartIdeaList = iobs(({ state, dispatch, fixed }) => {
   );
 });
 
-const highlightedSpan = (text, highlight) => {
-  if (!highlight) return <span>{text}</span>;
-  let [a, b] = highlight;
-  return (
-    <span>
-      {text.slice(0, a)}
-      <b>{text.slice(a, b)}</b>
-      {text.slice(b)}
-    </span>
-  );
-};
-
-const InspirationBox = iobs(({ state, dispatch }) =>
-  state.experimentState.flags.recType !== null ? (
-    <div style={{ padding: "10px", border: "1px solid black", width: "350px" }}>
-      <button onClick={e => dispatch({ type: "inspireMe" })}>
-        Inspire Me!
-      </button>
-      <br />
-      {state.experimentState.suggestions.length > 0 && (
-        <div>
-          <b>Ideas</b> from other people's writing
-          <ul>
-            {state.experimentState.suggestions.map((s, idx) => (
-              <li key={idx} style={{ marginBottom: "5px" }}>
-                {false ? highlightedSpan(s.text, s.highlight_span) : s.text}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  ) : null
-);
+const WritingView = iobs(({ state, dispatch }) => (
+  <Editable
+    text={state.experimentState.curText}
+    onChange={newVals => {
+      dispatch({ type: "setText", text: newVals.text });
+    }}
+  />
+));
 
 const TimedNextBtn = iobs(({ state, dispatch }) =>
   state.experimentState.allowSubmit ? (
@@ -432,9 +124,245 @@ const TimedNextBtn = iobs(({ state, dispatch }) =>
     <p>
       Time remaining:{" "}
       <Timer timedOut={() => dispatch({ type: "allowSubmit" })} />
+      <NextBtn disabled={true} />
     </p>
   )
 );
+
+function getScreens(prompts, conditionNames, isDemo) {
+  let tasksAndConditions = conditionNames.map((conditionName, idx) => ({
+    conditionName,
+    prompt: prompts[idx],
+    task: getTask(prompts[idx]),
+  }));
+  return [
+    WelcomeScreen,
+    getIntroSurvey(tasksAndConditions),
+    ...getPrewritingScreens(tasksAndConditions),
+    getPrewritingSurvey(tasksAndConditions),
+    ...getFinalWritingScreens(tasksAndConditions),
+    getClosingSurvey(tasksAndConditions),
+    DoneScreen,
+  ];
+}
+
+const ControlledInputView = iobs(
+  ({ state, name }) => state.controlledInputs.get(name) || ""
+);
+
+function getTask(promptName) {
+  if (promptName === "reviewRestaurant") {
+    const nameField = "restaurant-name";
+    return {
+      writingType: {
+        singular: "a restaurant review",
+        plural: "restaurant reviews",
+      },
+      nameField,
+      prewriteHeader: () => (
+        <div>
+          <h1>
+            Pre-writing for your review of{" "}
+            <i>
+              <ControlledInputView name={nameField} />
+            </i>
+          </h1>
+          <p>Before you write a review, let's do a little brainstorming:</p>
+          <p
+            style={{
+              border: "1px solid black",
+              padding: "5px",
+              fontSize: "14pt",
+            }}
+          >
+            Imagine someone is interviewing you about your experience.{" "}
+            <b>What questions could they ask you?</b>
+          </p>
+          <ul>
+            <li>Try to list as many as you can.</li>
+            <li>Go for quantity, not quality.</li>
+          </ul>
+          <p>You can click Add or press Enter to add a question.</p>
+        </div>
+      ),
+      precommitScreen: {
+        screen: "Precommit",
+        view: () => (
+          <div className="Survey">
+            <span>
+              Think of a restaurant (or bar, cafe, diner, etc.) that you've been
+              to recently that you <b>haven't written about before</b>.
+            </span>
+            <div
+              style={{
+                borderBottom: "1px solid black",
+                padding: "12px",
+                lineHeight: 1.5,
+              }}
+            >
+              Name: <ControlledInput name={nameField} />
+              <br />
+              About how long ago did you visit, in days?{" "}
+              <ControlledInput
+                name={"restaurant-daysAgo"}
+                type="number"
+                min="0"
+              />
+              <br />
+              How would you rate it?{" "}
+              <ControlledStarRating name={"restaurant-star"} />
+            </div>
+            <NextBtn />
+          </div>
+        ),
+      },
+    };
+  } else if (promptName === "persuadeMovie") {
+    return {
+      writingType: {
+        singular: "a movie endorsement",
+        plural: "movie endorsements",
+      },
+      prewriteHeader: () => <div />,
+    };
+  } else if (promptName === "informNews") {
+    return {
+      writingType: {
+        singular: "a news article",
+        plural: "news articles",
+      },
+      prewriteHeader: () => <div />,
+    };
+  } else {
+    console.assert("Unknown prompt", promptName);
+  }
+}
+
+function getIntroSurvey(tasksAndConditions) {
+  return {
+    screen: "IntroSurvey",
+    view: surveyView({
+      title: "Overview",
+      basename: "intro",
+      questions: [
+        {
+          type: "text",
+          text: (
+            <div>
+              You'll be writing {tasksAndConditions.length} types of things
+              today:
+              <ul>
+                {tasksAndConditions.map(({ prompt, task }) => (
+                  <li key={prompt}>{task.writingType.singular}</li>
+                ))}
+              </ul>
+              We'll walk you through the process;{" "}
+              <b>do all your work within this window</b>.
+            </div>
+          ),
+        },
+      ],
+    }),
+  };
+}
+
+function getPrewritingScreens(tasksAndConditions) {
+  const getPrewriteScreen = (idx, task, conditionName) => ({
+    preEvent: setupTrialEvent(
+      `prewrite-${idx}`,
+      conditionName,
+      {} /*task.flags*/
+    ),
+    screen: "ExperimentScreen",
+    timer: task.prewriteMinutes * 60,
+    view: () => (
+      <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+        {task.prewriteHeader()}
+        <div style={{ display: "flex", flexFlow: "col nowrap" }}>
+          <div style={{ flex: "1 0 auto" }}>
+            <b>Ideas</b>
+            <SmartIdeaList />
+          </div>
+          <InspirationBox />
+        </div>
+        <p>
+          Some people came up with more than 20 ideas. How many can you come up
+          with?
+        </p>
+        <NextBtn />
+      </div>
+    ),
+  });
+
+  let result = [];
+  tasksAndConditions.forEach(({ prompt, conditionName, task }, idx) => {
+    // TODO: show the study progress
+    if (task.precommitScreen) {
+      result.push(task.precommitScreen);
+    }
+    result.push(getPrewriteScreen(idx, task, conditionName));
+  });
+  return result;
+}
+
+function getPrewritingSurvey(tasksAndConditions) {
+  return {
+    screen: "PrewritingSurvey",
+    view: surveyView({
+      title: "midway survey",
+      basename: "prewriting",
+      questions: [],
+    }),
+  };
+}
+
+function getFinalWritingScreens(tasksAndConditions) {
+  const getFinalWritingScreen = (header, minutes) => ({
+    preEvent: {
+      type: "switchToTrial",
+      name: `FIXME`, // FIXME: switch back to the correct named trial.
+    },
+    screen: "ExperimentScreen2",
+    timer: minutes * 60,
+    view: () => (
+      <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+        {header}
+        <WritingView />
+        <TimedNextBtn />
+      </div>
+    ),
+  });
+
+  return tasksAndConditions.map(({ prompt, conditionName }) =>
+    getFinalWritingScreen(prompt, 4)
+  );
+}
+
+function getClosingSurvey(tasksAndConditions) {
+  return {
+    screen: "PostExpSurvey",
+    view: surveyView({
+      title: "Closing Survey",
+      basename: "postExp",
+      questions: [
+        {
+          type: "options",
+          responseType: "options",
+          text: (
+            <span>
+              Is there any reason that we shouldn't use your data? If so, please
+              explain in the next question.{" "}
+              <b>There's no penalty for answering "don't use" here.</b>
+            </span>
+          ),
+          options: ["Use my data", "Don't use my data"],
+          name: "shouldExclude",
+        },
+        SurveyData.otherFinal,
+      ],
+    }),
+  };
+}
 
 function setupTrialEvent(name: string, condition: string, flags: ?Object) {
   if (!(condition in namedConditions)) {
@@ -451,6 +379,8 @@ function setupTrialEvent(name: string, condition: string, flags: ?Object) {
   };
 }
 
+let conditionOrders = shuffle.permutator(baseConditions);
+
 export function createTaskState(loginEvent: {
   participant_id: string,
   assignment: number,
@@ -458,27 +388,24 @@ export function createTaskState(loginEvent: {
 }) {
   let clientId = loginEvent.participant_id;
 
-  let prompt,
+  let prompts,
     conditions,
     isDemo = false;
   if (clientId.slice(0, 4) === "demo") {
     // Demo URLs are formatted: `demo(config)-(condition)-(prompt)-p`
     let match = clientId.match(/^demo(\w+)-(\w+)-(\w+)$/);
     console.assert(match);
-    conditions = [match[2]];
-    prompt = match[3];
+    let condition = match[2];
+    conditions = [condition, condition, condition];
+    prompts = [match[3]];
     isDemo = true;
   } else {
-    // Between-subjects for prompt and condition (passed as counterbalanced assignment).
-    let condition = baseConditions[loginEvent.assignment];
-    conditions = [condition]; // For now, just a single task.
-    prompt = loginEvent.prompt;
+    conditions = conditionOrders[loginEvent.assignment];
+    prompts = ["reviewRestaurant", "persuadeMovie", "informNews"];
   }
 
   // Get task setup.
-  let task = TASKS[prompt];
-  if (!task) console.assert(`Unknown prompt ${prompt}`);
-  let screens = getScreens(task, conditions[0], isDemo);
+  let screens = getScreens(prompts, conditions, isDemo);
 
   let state = createState({
     clientId,
