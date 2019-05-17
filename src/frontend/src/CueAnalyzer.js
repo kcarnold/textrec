@@ -6,8 +6,24 @@ export function processLogGivenState(state, log) {
   let { participant_id } = log[0];
   let finalData = null;
 
-  let curTrial = null;
   let trials = [];
+  let byTrialName = {};
+
+  function getTrialData() {
+    let trialName = state.curExperiment;
+    if (!byTrialName[trialName]) {
+      let curTrial = {
+        trialName,
+        condition: state.experimentState.flags.condition,
+        events: [],
+        startTime: state.screenTimes[state.screenTimes.length - 1].timestamp,
+        finalText: null,
+      };
+      byTrialName[trialName] = curTrial;
+      trials.push(curTrial);
+    }
+    return byTrialName[trialName];
+  }
 
   log.forEach((entry, logIdx) => {
     if (entry.kind !== "meta") {
@@ -42,16 +58,7 @@ export function processLogGivenState(state, log) {
       return;
     }
 
-    if (curTrial === null) {
-      trials.push(
-        (curTrial = {
-          condition: expState.flags.condition,
-          events: [],
-          startTime: state.screenTimes[state.screenTimes.length - 1].timestamp,
-          finalText: null,
-        })
-      );
-    }
+    let curTrial = getTrialData();
     delete entry.kind;
     delete entry.participant_id;
     entry.sinceStart = entry.jsTimestamp - curTrial.startTime;
