@@ -37,6 +37,9 @@ domain_to_model = dict(restaurant="yelp_128", movie="imdb_128", bio="bios_128")
 
 
 async def get_cue_API(executor, request):
+    return dict(cues=[
+        dict(text="Error retrieving ideas. This error has been reported; please finish the survey anyway.")
+    ])
     rec_type = request["recType"]
     domain = request["domain"]
 
