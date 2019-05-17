@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "textrec"
+version = "0.1.0"
+description = ""
+authors = ["Kenneth C. Arnold <kcarnold@alum.mit.edu>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+scikit-learn = "^0.20.2"
+tqdm = "^4.28"
+scipy = "^1.2"
+seaborn = "^0.9.0"
+attrs = "^18.2"
+cython = "^0.29.2"
+datrie = "^0.7.1"
+pandas = "^0.24"
+cytoolz = "^0.9.0"
+joblib = "^0.13.0"
+spacy = "^2.0"
+#kenlm = { path = "vendor/kenlm" }
+tornado = "^5.1"
+patchwork = "^1.0"
+pyyaml = "^3.13"
+ua-parser = "^0.8.0"
+user-agents = "^1.1"
+wordfreq = "^2.2"
+kenlm = {git = "git@github.com:kcarnold/kenlm.git"}
+torch = "=0.3.1"
+OpenNMT-py = {path = "vendor/OpenNMT-py/"}
+torchtext = "=0.2.3"
+h5py = "^2.9"
+nltk = "=3.2.5"
+en-core-web-md = {path = "vendor/en_core_web_md-2.1.0/"}
+pyxdameraulevenshtein = "^1.5"
+lexical-diversity = "^0.1.0"
+ujson = "^1.35"
+jupytext = "^1.0"
+
+[tool.poetry.dev-dependencies]
+ipython = "^7.2"
+fabric = "^2.4"
+boto3 = "^1.9"
+jupyter = "^1.0"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
