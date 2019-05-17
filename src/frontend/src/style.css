@@ -80,6 +80,11 @@ body {
     white-space: nowrap;
 }
 
+.NextBtn:disabled {
+  color: gray;
+  border-color: gray;
+}
+
 /*** TEXT ***/
 .CurText {
   white-space: pre-wrap;

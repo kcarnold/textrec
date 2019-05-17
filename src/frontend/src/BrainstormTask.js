@@ -69,8 +69,8 @@ const IdeaList = observer(({ userIdeas, addIdea }) => {
     let text = newIdeaEntry.current.value.trim();
     if (text.length > 0) {
       addIdea(text);
-    newIdeaEntry.current.value = "";
-  }
+      newIdeaEntry.current.value = "";
+    }
   }
 
   function onKey(evt) {
@@ -154,7 +154,7 @@ const ControlledInputView = iobs(
   ({ state, name }) => state.controlledInputs.get(name) || name
 );
 
-function brainstormHeader(writingPrompt) {
+function brainstormHeader(writingPrompt, targetIdeaCount) {
   return (
     <div>
       <h1>Brainstorming</h1>
@@ -173,7 +173,7 @@ function brainstormHeader(writingPrompt) {
         <b>brainstorm some things you might include in your writing.</b>
       </p>
       <ul>
-        <li>Try to list as many as you can.</li>
+        <li>Try to list at least {targetIdeaCount} ideas.</li>
         <li>Go for quantity, not quality.</li>
         <li>You don't need complete sentences.</li>
       </ul>
@@ -201,7 +201,6 @@ function getTask(promptName) {
       },
       writingPrompt,
       nameField,
-      prewriteHeader: () => brainstormHeader(writingPrompt),
       precommitScreen: {
         screen: "Precommit",
         view: () => (
@@ -232,6 +231,7 @@ function getTask(promptName) {
           </div>
         ),
       },
+      targetIdeaCount: 10,
     };
   } else if (promptName === "persuadeMovie") {
     const nameField = "movie-name";
@@ -252,7 +252,6 @@ function getTask(promptName) {
       },
       nameField,
       writingPrompt,
-      prewriteHeader: () => brainstormHeader(writingPrompt),
       precommitScreen: {
         screen: "Precommit",
         view: () => (
@@ -275,6 +274,7 @@ function getTask(promptName) {
           </div>
         ),
       },
+      targetIdeaCount: 10,
     };
   } else if (promptName === "informNews") {
     const nameField = "news-headline";
@@ -295,7 +295,6 @@ function getTask(promptName) {
         plural: "news articles",
       },
       writingPrompt,
-      prewriteHeader: () => brainstormHeader(writingPrompt),
       precommitScreen: {
         screen: "Precommit",
         view: () => (
@@ -310,12 +309,15 @@ function getTask(promptName) {
                 lineHeight: 1.5,
               }}
             >
-              Headline: <ControlledInput name={nameField} />
+              Headline:
+              <br />
+              <ControlledInput name={nameField} style={{ width: "300px" }} />
             </div>
             <NextBtn />
           </div>
         ),
       },
+      targetIdeaCount: 10,
     };
   } else {
     console.assert("Unknown prompt", promptName);
@@ -333,11 +335,10 @@ function getIntroSurvey(tasksAndConditions) {
           type: "text",
           text: (
             <div>
-              You'll be writing {tasksAndConditions.length} types of things
-              today:
+              You'll be writing {tasksAndConditions.length} things today:
               <ul>
                 {tasksAndConditions.map(({ prompt, task }) => (
-                  <li key={prompt}>{task.writingType.singular}</li>
+                  <li key={prompt}>a {task.writingType.singular}</li>
                 ))}
               </ul>
               We'll walk you through the process;{" "}
@@ -354,24 +355,29 @@ function getPrewritingScreens(tasksAndConditions) {
   const getPrewriteScreen = (idx, task, conditionName) => ({
     preEvent: setupTrialEvent(`trial-${idx}`, conditionName, {} /*task.flags*/),
     screen: "ExperimentScreen",
-    timer: task.prewriteMinutes * 60,
-    view: () => (
-      <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-        {task.prewriteHeader()}
-        <div style={{ display: "flex", flexFlow: "col nowrap" }}>
-          <div style={{ flex: "1 0 auto" }}>
-            <b>Ideas</b>
-            <SmartIdeaList />
+    view: iobs(({ state }) => {
+      const numIdeas = state.experimentState.ideas.length;
+      const { targetIdeaCount } = task;
+      return (
+        <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+          {brainstormHeader(task.writingPrompt, targetIdeaCount)}
+          <div style={{ display: "flex", flexFlow: "col nowrap" }}>
+            <div style={{ flex: "1 0 auto" }}>
+              <b>Ideas</b>
+              <SmartIdeaList />
+            </div>
+            <InspirationBox />
           </div>
-          <InspirationBox />
+          <p>
+            You're at {numIdeas} ideas
+            {numIdeas < targetIdeaCount
+              ? `; try to get to ${targetIdeaCount}`
+              : "."}
+          </p>
+          <NextBtn disabled={numIdeas < targetIdeaCount} />
         </div>
-        <p>
-          Some people came up with more than 20 ideas. How many can you come up
-          with?
-        </p>
-        <NextBtn />
-      </div>
-    ),
+      );
+    }),
   });
 
   let result = [];
@@ -396,9 +402,11 @@ function getPrewritingScreens(tasksAndConditions) {
           { type: "text", text: <div>Prompt: {task.writingPrompt}</div> },
           likert(
             `ease-${idx}`,
-            "How easy do you think it will be to come up with 20 ideas for things that you might include in this writing?",
+            `How easy do you think it will be to come up with ${
+              task.targetIdeaCount
+            } ideas for things that you might include in this writing?`,
             7,
-            ["very easy", "very difficult"]
+            ["very difficult", "very easy"]
           ),
         ]),
       ],
@@ -425,9 +433,11 @@ function getPrewritingScreens(tasksAndConditions) {
           { type: "text", text: <div>Prompt: {task.writingPrompt}</div> },
           likert(
             `ease-${idx}`,
-            "How easy was it to come up with 20 ideas for things that you might include in this writing?",
+            `How easy was it to come up with ${
+              task.targetIdeaCount
+            } ideas for things that you might include in this writing?`,
             7,
-            ["very easy", "very difficult"]
+            ["very difficult", "very easy"]
           ),
         ]),
       ],
@@ -437,33 +447,58 @@ function getPrewritingScreens(tasksAndConditions) {
 }
 
 function getFinalWritingScreens(tasksAndConditions) {
-  return tasksAndConditions.map(({ task, prompt, conditionName }, idx) => {
+  return flatMap(tasksAndConditions, ({ task, prompt, conditionName }, idx) => {
     const minutes = 4; // TODO.
-    return {
-      preEvent: {
-        type: "switchToTrial",
-        name: `trial-${idx}`,
-      },
-      screen: "ExperimentScreen2",
-      timer: minutes * 60,
-      view: () => (
-        <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-          <h1>Write your {task.writingType.singular}</h1>
+    const header = (
+      <div>
+        <h1>Write your {task.writingType.singular}</h1>
+        <p
+          style={{
+            border: "1px solid black",
+            padding: "5px",
+            fontSize: "14pt",
+          }}
+        >
           {task.writingPrompt}
-          <p>
-            Here are the ideas you listed earlier. You are not obligated to use
-            them.
-          </p>
-          <SmartIdeaList fixed />
-          <p>
-            You'll have {minutes} minutes; when the time is up, finish your
-            sentence and click the Next button that will appear.
-          </p>
-          <WritingView />
-          <TimedNextBtn />
-        </div>
-      ),
-    };
+        </p>
+        <p>
+          Here are the ideas you listed earlier. You are not obligated to use
+          them.
+        </p>
+        <SmartIdeaList fixed />
+        <p>
+          You'll have {minutes} minutes; when the time is up, finish your
+          sentence and click the Next button that will appear.
+        </p>
+      </div>
+    );
+    return [
+      {
+        preEvent: {
+          type: "switchToTrial",
+          name: `trial-${idx}`,
+        },
+        screen: "Instructions",
+        view: () => (
+          <div className="Survey">
+            {header}
+            <p>Click "Start" to begin.</p>
+            <NextBtn>Start</NextBtn>
+          </div>
+        ),
+      },
+      {
+        screen: "ExperimentScreen2",
+        timer: minutes * 60,
+        view: () => (
+          <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+            {header}
+            <WritingView />
+            <TimedNextBtn />
+          </div>
+        ),
+      },
+    ];
   });
 }
 
