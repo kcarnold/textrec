@@ -231,7 +231,7 @@ function getTask(promptName) {
           </div>
         ),
       },
-      targetIdeaCount: 10,
+      targetIdeaCount: 20,
     };
   } else if (promptName === "persuadeMovie") {
     const nameField = "movie-name";
@@ -274,7 +274,7 @@ function getTask(promptName) {
           </div>
         ),
       },
-      targetIdeaCount: 10,
+      targetIdeaCount: 20,
     };
   } else if (promptName === "informNews") {
     const nameField = "news-headline";
@@ -317,7 +317,7 @@ function getTask(promptName) {
           </div>
         ),
       },
-      targetIdeaCount: 10,
+      targetIdeaCount: 20,
     };
   } else {
     console.assert("Unknown prompt", promptName);
