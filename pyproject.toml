@@ -23,7 +23,7 @@ nltk = "^3.4"
 ujson = "^1.35"
 torch = "^1.1"
 pytorch-pretrained-bert = "^0.6.2"
-#kenlm = {git = "git@github.com:kcarnold/kenlm.git"}
+kenlm = {git = "git@github.com:kcarnold/kenlm.git"}
 en-core-web-md = {path = "vendor/en_core_web_md-2.1.0/"}
 [tool.poetry.dev-dependencies]
 ipython = "^7.5"
