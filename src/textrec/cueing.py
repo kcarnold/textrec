@@ -131,6 +131,7 @@ def cached_sentences(dataset_name):
         untokenized_sents = row.sentences.split("\n")
         sents = row.tokenized.split("\n")
         doc_n_sents = len(sents)
+        assert len(untokenized_sents) == len(sents)
         for sent_idx, (raw_sent, sent) in enumerate(zip(untokenized_sents, sents)):
             sentences.append((doc_id, doc_n_sents, sent_idx, raw_sent, sent))
 
