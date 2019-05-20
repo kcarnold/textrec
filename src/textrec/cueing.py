@@ -1,6 +1,7 @@
 import logging
 import pickle
 from functools import lru_cache
+import re
 
 import joblib
 import nltk
@@ -43,8 +44,11 @@ def load_yelp():
 
 
 def preprocess_texts(texts):
+    space_re = re.compile("\\s+")
+
     sentences = [
-        nltk.sent_tokenize(text) for text in tqdm(texts, desc="Splitting sentences")
+        nltk.sent_tokenize(space_re.sub(" ", text))
+        for text in tqdm(texts, desc="Splitting sentences")
     ]
     tokenized = [
         "\n".join(
