@@ -165,7 +165,7 @@ def next_cluster_distribution(text, model_name, use_sequence_lm):
         logprobs = topic_sequence_logprobs(existing_clusters, model_name)
     else:
         co_occur = cueing.get_model(model_name, "cooccur")
-        doc_topic_vec = np.zeros(n_clusters)
+        doc_topic_vec = np.zeros(n_clusters) + 1e-6
         for c in existing_clusters:
             doc_topic_vec[c] = 1
         logprobs = co_occur @ doc_topic_vec
