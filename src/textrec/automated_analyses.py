@@ -6,7 +6,6 @@ import wordfreq
 
 from textrec.paths import paths
 
-from . import onmt_model_2
 from .util import mem
 
 # Computed by compute_gating_threshold. See also GatedCapTask.js
@@ -47,13 +46,17 @@ def total_rarity(text):
 
 @mem.cache
 def eval_logprobs_conditional(image_id, text):
-    wrapper = onmt_model_2.models['coco_cap']
+    from . import onmt_model_2
+
+    wrapper = ont_model_2.models['coco_cap']
     tokens = onmt_model_2.tokenize(text)
     logprobs = wrapper.eval_logprobs(str(image_id), tokens, use_eos=True)
     return np.mean(logprobs)
 
 @mem.cache
 def eval_logprobs_unconditional(text):
+    from . import onmt_model_2
+
     wrapper = onmt_model_2.models['coco_lm']
     tokens = onmt_model_2.tokenize(text)
     logprobs = wrapper.eval_logprobs('.', tokens, use_eos=True)
@@ -61,6 +64,8 @@ def eval_logprobs_unconditional(text):
 
 @mem.cache
 def taps_to_type(stimulus, txt, threshold=None):
+    from . import onmt_model_2
+
     if stimulus is None:
         def rec_gen(context, prefix=None):
             return onmt_model_2.get_recs('coco_lm', '.', context, prefix=prefix)
