@@ -15,7 +15,8 @@ if __name__ == "__main__":
     parser.add_argument("n_clusters", type=int)
     opts = parser.parse_args()
 
-    model = cached_topic_data(opts.dataset_name, opts.n_clusters)
+    dataset_name = opts.dataset_name + ":train"
+    model = cached_topic_data(dataset_name, opts.n_clusters)
 
     # Add stuff.
     model["labels_and_sents"] = get_labels_for_clusters(

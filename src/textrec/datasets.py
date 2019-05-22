@@ -1,8 +1,14 @@
 import gzip
+import json
 import os
+import pickle
+import re
+import zipfile
 
-import numpy as np
 import pandas as pd
+import tqdm
+
+import ftfy
 
 from .util import ujson
 
@@ -59,28 +65,47 @@ def join_yelp(data):
     return result
 
 
-def load_yelp(
-    path="~/Data/Yelp/yelp_academic_dataset.json.gz",
-    seed=0,
-    valid_frac=0.05,
-    test_frac=0.05,
-):
+def load_yelp(*, path="~/Data/Yelp/yelp_academic_dataset.json.gz"):
     data = join_yelp(load_yelp_raw(path=path))
+    return data.rename(columns={"review_id": "doc_id"})
 
-    train_frac = 1 - valid_frac - test_frac
-    num_docs = len(data)
-    random_state = np.random.RandomState(seed)
-    indices = random_state.permutation(num_docs)
-    splits = (np.cumsum([train_frac, valid_frac]) * num_docs).astype(int)
-    segment_indices = np.split(indices, splits)
-    names = ["train", "valid", "test"]
-    print(
-        ", ".join(
-            "{}: {}".format(name, len(indices))
-            for name, indices in zip(names, segment_indices)
+
+def load_imdb():
+    zf = zipfile.ZipFile("/Data/Reviews/IMDB/Maas2011/aclImdb.zip")
+
+    imdb_reviews = []
+    for f in zf.filelist:
+        match = re.match(
+            r"^aclImdb/(?P<subset>train|test)/(?P<group>pos|neg|unsup)/(?P<review_id>\d+)_(?P<rating>\d+)\.txt",
+            f.filename,
         )
-    )
-    train_indices = segment_indices[0]
+        if match:
+            item = {}
+            item["doc_id"] = match.groups()
+            item["text"] = zf.read(f.filename).decode("utf-8").replace("<br />", " ")
+            imdb_reviews.append(item)
 
-    train_data = data.iloc[train_indices].reset_index(drop=True)
-    return train_data
+    return pd.DataFrame(imdb_reviews)
+
+
+def load_bios():
+    with open("/Data/biosbias/BIOS.pkl", "rb") as f:
+        bios = pickle.load(f)
+    print(f"Loaded {len(bios)} bios")
+
+    texts = [bio["raw"] for bio in bios]
+    return pd.DataFrame(dict(text=texts)).rename_axis(index="doc_id").reset_index()
+
+
+def load_newsroom():
+    path = "/Data/Newsroom-Dataset/train.jsonl.gz"
+    data = []
+
+    columns = ("title", "url", "text", "summary")
+
+    with gzip.open(path) as f:
+        for ln in tqdm.tqdm(f, desc="Loading"):
+            obj = json.loads(ln)
+            data.append([ftfy.ftfy(obj[k]) for k in columns])
+
+    return pd.DataFrame(data, columns=columns)

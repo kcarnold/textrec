@@ -1,7 +1,6 @@
 import logging
-import pickle
-from functools import lru_cache
 import re
+from functools import lru_cache
 
 import joblib
 import nltk
@@ -11,6 +10,7 @@ import wordfreq
 from scipy.special import logsumexp
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.utils import check_random_state
 from tqdm import tqdm
 
 from . import datasets, lang_model, numberbatch_vecs
@@ -30,17 +30,6 @@ def summarize_clusters(doc_texts, cluster_dists):
 
 def normalize_dists(dists):
     return dists / np.sum(dists, axis=1, keepdims=True)
-
-
-@lru_cache()
-@mem.cache
-def load_yelp():
-    df = datasets.load_yelp()
-
-    # Some edits...
-    df = df.rename(columns={"review_id": "doc_id"})
-
-    return preprocess_df(df)
 
 
 def preprocess_texts(texts):
@@ -67,44 +56,37 @@ def preprocess_df(df):
     return df
 
 
+data_loaders = {
+    "yelp": datasets.load_yelp,
+    "bios": datasets.load_bios,
+    "imdb": datasets.load_imdb,
+    "newsroom": datasets.load_newsroom,
+}
+
+
+@mem.cache
+def cached_full_dataset(dataset_name):
+    if dataset_name not in data_loaders:
+        raise NameError("Unknown dataset " + dataset_name)
+    return data_loaders[dataset_name]()
+
+
+def train_test_split(data, *, valid_frac=0.05, test_frac=0.05, seed=0):
+    train_frac = 1 - valid_frac - test_frac
+    num_docs = len(data)
+    random_state = check_random_state(seed)
+    indices = random_state.permutation(num_docs)
+    splits = (np.cumsum([train_frac, valid_frac]) * num_docs).astype(int)
+    segment_indices = np.split(indices, splits)
+    names = ["train", "valid", "test"]
+    return {
+        name: data.iloc[indices].reset_index(drop=True)
+        for name, indices in zip(names, segment_indices)
+    }
+
+
 @lru_cache()
 @mem.cache
-def load_imdb():
-    import zipfile
-    import re
-
-    zf = zipfile.ZipFile("/Data/Reviews/IMDB/Maas2011/aclImdb.zip")
-
-    imdb_reviews = []
-    for f in zf.filelist:
-        match = re.match(
-            r"^aclImdb/train/(?P<group>pos|neg|unsup)/(?P<review_id>\d+)_(?P<rating>\d+)\.txt",
-            f.filename,
-        )
-        if match:
-            item = {}
-            item["doc_id"] = match.groups()
-            item["text"] = zf.read(f.filename).decode("utf-8").replace("<br />", " ")
-            imdb_reviews.append(item)
-
-    return preprocess_df(pd.DataFrame(imdb_reviews))
-
-
-@lru_cache()
-@mem.cache
-def load_bios():
-    with open("/Data/biosbias/BIOS.pkl", "rb") as f:
-        bios = pickle.load(f)
-    print(f"Loaded {len(bios)} bios")
-
-    texts = [bio["raw"] for bio in bios]
-    df = pd.DataFrame(dict(text=texts)).rename_axis(index="doc_id").reset_index()
-    return preprocess_df(df)
-
-
-data_loaders = {"yelp": load_yelp, "bios": load_bios, "imdb": load_imdb}
-
-
 def cached_dataset(dataset_name):
     """Datasets have the following form:
 
@@ -115,9 +97,11 @@ def cached_dataset(dataset_name):
 
     They may also have other columns of metadata.
     """
-    if dataset_name in data_loaders:
-        return data_loaders[dataset_name]()
-    raise NameError("Unknown dataset " + dataset_name)
+    dataset_name, subset = dataset_name.split(":")
+    data = cached_full_dataset(dataset_name)
+    subsets = train_test_split(data)
+    df = subsets[subset]
+    return preprocess_df(df)
 
 
 @lru_cache()

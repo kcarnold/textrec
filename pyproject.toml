@@ -27,6 +27,8 @@ kenlm = {git = "git@github.com:kcarnold/kenlm.git"}
 en-core-web-md = {path = "vendor/en_core_web_md-2.1.0/"}
 statsmodels = "^0.9.0"
 patsy = "^0.5.1"
+umap-learn = "^0.3.8"
+ftfy = "^5.5"
 [tool.poetry.dev-dependencies]
 ipython = "^7.5"
 fabric = "^2.4"
