@@ -104,8 +104,8 @@ def load_newsroom():
     columns = ("title", "url", "text", "summary")
 
     with gzip.open(path) as f:
-        for ln in tqdm.tqdm(f, desc="Loading"):
+        for ln in tqdm.tqdm(f, desc="Loading", total=1_300_000):
             obj = json.loads(ln)
-            data.append([ftfy.ftfy(obj[k]) for k in columns])
+            data.append([obj[k] for k in columns])
 
     return pd.DataFrame(data, columns=columns)
