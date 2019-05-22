@@ -15,9 +15,7 @@ PRELOAD_MODELS = [
     "imdb_128",
     #    'bios'
 ]
-PARTS_NEEDED = [
-    "sentences",
-]
+PARTS_NEEDED = ["sentences"]
 
 
 cueing.preload_models(PRELOAD_MODELS, PARTS_NEEDED)
@@ -37,9 +35,13 @@ domain_to_model = dict(restaurant="yelp_128", movie="imdb_128", bio="bios_128")
 
 
 async def get_cue_API(executor, request):
-    return dict(cues=[
-        dict(text="Error retrieving ideas. This error has been reported; please finish the survey anyway.")
-    ])
+    return dict(
+        cues=[
+            dict(
+                text="Error retrieving ideas. This error has been reported; please finish the survey anyway."
+            )
+        ]
+    )
     rec_type = request["recType"]
     domain = request["domain"]
 
@@ -61,14 +63,14 @@ def get_cue_random(*, model_name):
 
 def get_cue(text, *, model_name, n_clusters_to_cue=10, mode):
     existing_clusters, next_cluster_scores = next_cluster_distribution(
-        text=text,
-        model_name=model_name,
-        use_sequence_lm=False,
+        text=text, model_name=model_name, use_sequence_lm=False
     )
 
     if mode == "cue_phrase":
         # Note that current models don't save these...
-        scores_by_cluster_argsort = cueing.get_model(model_name, "scores_by_cluster_argsort")
+        scores_by_cluster_argsort = cueing.get_model(
+            model_name, "scores_by_cluster_argsort"
+        )
         unique_starts = cueing.get_model(model_name, "unique_starts")
 
         def get_cue_for_cluster(cluster_to_cue):
@@ -101,9 +103,8 @@ def get_cue(text, *, model_name, n_clusters_to_cue=10, mode):
             label, candidates = labels_and_sents[cluster_to_cue]
             candidate_idx = np.random.choice(len(candidates))
             sentence, label_span = candidates[candidate_idx]
-            return dict(
-                text=sentence, highlight_span=label_span
-            )
+            return dict(text=sentence, highlight_span=label_span)
+
     else:
         assert False
 
