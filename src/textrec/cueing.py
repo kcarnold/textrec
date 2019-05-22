@@ -86,7 +86,6 @@ def train_test_split(data, *, valid_frac=0.05, test_frac=0.05, seed=0):
 
 
 @lru_cache()
-@mem.cache
 def cached_dataset(dataset_name):
     """Datasets have the following form:
 
