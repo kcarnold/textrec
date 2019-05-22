@@ -97,15 +97,20 @@ def load_bios():
     return pd.DataFrame(dict(text=texts)).rename_axis(index="doc_id").reset_index()
 
 
-def load_newsroom():
+def load_newsroom(frac=0.1, random_state=0):
     path = "/Data/Newsroom-Dataset/train.jsonl.gz"
     data = []
 
     columns = ("title", "url", "text", "summary")
 
     with gzip.open(path) as f:
-        for ln in tqdm.tqdm(f, desc="Loading", total=1_300_000):
+        for ln in tqdm.tqdm(f, desc="Loading", total=1_000_000):
             obj = json.loads(ln)
             data.append([obj[k] for k in columns])
 
-    return pd.DataFrame(data, columns=columns)
+    return (
+        pd.DataFrame(data, columns=columns)
+        .sample(frac=frac, random_state=random_state)
+        .rename_axis(index="doc_id")
+        .reset_index()
+    )
