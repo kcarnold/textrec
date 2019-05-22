@@ -15,7 +15,6 @@ import { NextBtn } from "./BaseViews";
 import { Survey, likert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
-import Timer from "./Timer";
 
 import { finalDataLogger, iobs } from "./misc";
 import * as shuffle from "./shuffle";
@@ -122,18 +121,6 @@ const WritingView = iobs(({ state, dispatch }) => (
   />
 ));
 
-const TimedNextBtn = iobs(({ state, dispatch }) =>
-  state.experimentState.allowSubmit ? (
-    <NextBtn>Submit</NextBtn>
-  ) : (
-    <p>
-      Time remaining:{" "}
-      <Timer timedOut={() => dispatch({ type: "allowSubmit" })} />
-      <NextBtn disabled={true} />
-    </p>
-  )
-);
-
 function getScreens(prompts, conditionNames, isDemo) {
   let tasksAndConditions = conditionNames.map((conditionName, idx) => ({
     conditionName,
@@ -232,6 +219,7 @@ function getTask(promptName) {
         ),
       },
       targetIdeaCount: 20,
+      wordCountTarget: 120,
     };
   } else if (promptName === "persuadeMovie") {
     const nameField = "movie-name";
@@ -275,6 +263,7 @@ function getTask(promptName) {
         ),
       },
       targetIdeaCount: 20,
+      wordCountTarget: 120,
     };
   } else if (promptName === "informNews") {
     const nameField = "news-headline";
@@ -318,6 +307,7 @@ function getTask(promptName) {
         ),
       },
       targetIdeaCount: 20,
+      wordCountTarget: 120,
     };
   } else {
     console.assert("Unknown prompt", promptName);
@@ -446,9 +436,26 @@ function getPrewritingScreens(tasksAndConditions) {
   return result;
 }
 
+const WordCountTargetAdvance = iobs(({ state, targetWords }) => {
+  let { wordCount } = state.experimentState;
+  let allowAdvance = wordCount >= targetWords;
+  return (
+    <div>
+      <p>
+        Word count: {state.experimentState.wordCount} (target: {targetWords})
+        <br />
+        <NextBtn disabled={state.experimentState.wordCount < targetWords}>
+          {allowAdvance
+            ? "Submit"
+            : `Please write ${targetWords - wordCount} more words.`}
+        </NextBtn>
+      </p>
+    </div>
+  );
+});
+
 function getFinalWritingScreens(tasksAndConditions) {
   return flatMap(tasksAndConditions, ({ task, prompt, conditionName }, idx) => {
-    const minutes = 4; // TODO.
     const header = (
       <div>
         <h1>Write your {task.writingType.singular}</h1>
@@ -466,10 +473,7 @@ function getFinalWritingScreens(tasksAndConditions) {
           them.
         </p>
         <SmartIdeaList fixed />
-        <p>
-          You'll have {minutes} minutes; when the time is up, finish your
-          sentence and click the Next button that will appear.
-        </p>
+        <p>Aim for about {task.wordCountTarget} words.</p>
       </div>
     );
     return [
@@ -489,12 +493,11 @@ function getFinalWritingScreens(tasksAndConditions) {
       },
       {
         screen: "ExperimentScreen2",
-        timer: minutes * 60,
         view: () => (
           <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
             {header}
             <WritingView />
-            <TimedNextBtn />
+            <WordCountTargetAdvance targetWords={task.wordCountTarget} />
           </div>
         ),
       },

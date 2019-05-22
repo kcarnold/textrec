@@ -1,6 +1,7 @@
 /** @format */
 import { extendObservable, decorate, action } from "mobx";
 import isEqual from "lodash/isEqual";
+import countWords from "./CountWords";
 
 const rpc = (method, params) => ({
   type: "rpc",
@@ -19,6 +20,9 @@ export class TrialState {
       suggestions: [],
       allowSubmit: false,
       curText: "",
+      get wordCount() {
+        return countWords(this.curText);
+      },
     });
   }
 
