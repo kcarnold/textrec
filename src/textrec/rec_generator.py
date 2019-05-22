@@ -62,7 +62,7 @@ def get_cue_random(*, model_name):
 
 
 def get_cue(text, *, model_name, n_clusters_to_cue=10, mode):
-    existing_clusters, next_cluster_scores = next_cluster_distribution(
+    existing_clusters, next_cluster_probs = next_cluster_distribution(
         text=text, model_name=model_name, use_sequence_lm=False
     )
 
@@ -108,7 +108,12 @@ def get_cue(text, *, model_name, n_clusters_to_cue=10, mode):
     else:
         assert False
 
-    clusters_to_cue = np.argsort(next_cluster_scores)[::-1]
+    clusters_to_cue = np.random.choice(
+        len(next_cluster_probs),
+        size=len(next_cluster_probs),
+        replace=False,
+        p=next_cluster_probs,
+    )
 
     cues = []
     for cluster_to_cue in clusters_to_cue:
