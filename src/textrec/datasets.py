@@ -1,3 +1,4 @@
+import bz2
 import gzip
 import json
 import os
@@ -8,9 +9,17 @@ import zipfile
 import pandas as pd
 import tqdm
 
-import ftfy
-
 from .util import ujson
+
+YELP_PATH = "~/Data/Yelp/yelp_academic_dataset.json.gz"
+IMDB_PATH = "/Data/Reviews/IMDB/Maas2011/aclImdb.zip"
+BIOS_PATH = "/Data/biosbias/BIOS.pkl"
+NEWSROOM_PATH = "/Data/Newsroom-Dataset/train.jsonl.gz"
+WIKIVOYAGE_PATH = "/Data/WikiVoyage/wikivoyage-pages.xml.bz2"
+
+
+def add_useless_doc_id(df):
+    return df.rename_axis(index="doc_id").reset_index()
 
 
 def flatten_dict(x, prefix=""):
@@ -65,13 +74,13 @@ def join_yelp(data):
     return result
 
 
-def load_yelp(*, path="~/Data/Yelp/yelp_academic_dataset.json.gz"):
+def load_yelp(*, path=YELP_PATH):
     data = join_yelp(load_yelp_raw(path=path))
     return data.rename(columns={"review_id": "doc_id"})
 
 
-def load_imdb():
-    zf = zipfile.ZipFile("/Data/Reviews/IMDB/Maas2011/aclImdb.zip")
+def load_imdb(path=IMDB_PATH):
+    zf = zipfile.ZipFile(path)
 
     imdb_reviews = []
     for f in zf.filelist:
@@ -88,17 +97,16 @@ def load_imdb():
     return pd.DataFrame(imdb_reviews)
 
 
-def load_bios():
-    with open("/Data/biosbias/BIOS.pkl", "rb") as f:
+def load_bios(path=BIOS_PATH):
+    with open(path, "rb") as f:
         bios = pickle.load(f)
     print(f"Loaded {len(bios)} bios")
 
     texts = [bio["raw"] for bio in bios]
-    return pd.DataFrame(dict(text=texts)).rename_axis(index="doc_id").reset_index()
+    return add_useless_doc_id(pd.DataFrame(dict(text=texts)))
 
 
-def load_newsroom(frac=0.1, random_state=0):
-    path = "/Data/Newsroom-Dataset/train.jsonl.gz"
+def load_newsroom(path=NEWSROOM_PATH, frac=0.1, random_state=0):
     data = []
 
     columns = ("title", "url", "text", "summary")
@@ -108,9 +116,36 @@ def load_newsroom(frac=0.1, random_state=0):
             obj = json.loads(ln)
             data.append([obj[k] for k in columns])
 
-    return (
-        pd.DataFrame(data, columns=columns)
-        .sample(frac=frac, random_state=random_state)
-        .rename_axis(index="doc_id")
-        .reset_index()
+    return add_useless_doc_id(
+        pd.DataFrame(data, columns=columns).sample(frac=frac, random_state=random_state)
     )
+
+
+def load_wikivoyage(path=WIKIVOYAGE_PATH):
+    import gensim.corpora.wikicorpus
+
+    filename = os.path.expanduser(path)
+
+    filter_namespaces = ("0",)
+    pages = gensim.corpora.wikicorpus.extract_pages(
+        bz2.BZ2File(filename), filter_namespaces
+    )
+    pages = [
+        (title, text, pageid)
+        for title, text, pageid in tqdm.tqdm(pages, desc="Read file")
+        if len(text.split()) > 50
+    ]
+    pages = [
+        (title, gensim.corpora.wikicorpus.filter_wiki(text), pageid)
+        for title, text, pageid in tqdm.tqdm(pages, desc="Filter Wikitext")
+    ]
+
+    is_title = re.compile(r"^[=]+.+[=]+$", re.MULTILINE)
+
+    data = []
+
+    for title, text, pageid in pages:
+        text = is_title.sub("", text)
+        data.append([title, text])
+
+    return add_useless_doc_id(pd.DataFrame(data, columns=["title", "text"]))
