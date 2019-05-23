@@ -122,11 +122,12 @@ const WritingView = iobs(({ state, dispatch }) => (
 ));
 
 function getScreens(prompts, conditionNames, isDemo) {
-  let tasksAndConditions = conditionNames.map((conditionName, idx) => ({
-    conditionName,
+  let tasksAndConditions = prompts.map((conditionName, idx) => ({
+    conditionName: conditionNames[idx],
     prompt: prompts[idx],
     task: getTask(prompts[idx]),
   }));
+  if (isDemo) return getPrewritingScreens(tasksAndConditions);
   return [
     WelcomeScreen,
     getIntroSurvey(tasksAndConditions),
