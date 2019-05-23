@@ -159,35 +159,32 @@ def cached_topic_data(dataset_name, n_clusters):
 
     length_filtered.projected_vecs = length_filtered.raw_vecs.dot(projection_mat)
 
-    # Let's skip norm filtering, since it didn't do much.
-    norm_filtered = length_filtered
-
     # Cluster
     random_state = 0
     clusterer = MiniBatchKMeans(
         init="k-means++", n_clusters=n_clusters, n_init=10, random_state=random_state
     )
-    clusterer.fit(norm_filtered.projected_vecs)
-    norm_filtered.dists_to_centers = clusterer.transform(norm_filtered.projected_vecs)
+    clusterer.fit(length_filtered.projected_vecs)
+    length_filtered.dists_to_centers = clusterer.transform(length_filtered.projected_vecs)
 
     # Hard-assign topics, filter to those close enough.
 
-    norm_filtered.sentences["topic"] = np.argmin(norm_filtered.dists_to_centers, axis=1)
-    norm_filtered.dist_to_closest_cluster = np.min(
-        norm_filtered.dists_to_centers, axis=1
+    length_filtered.sentences["topic"] = np.argmin(length_filtered.dists_to_centers, axis=1)
+    length_filtered.dist_to_closest_cluster = np.min(
+        length_filtered.dists_to_centers, axis=1
     )
-    norm_filtered.is_close = norm_filtered.dist_to_closest_cluster < np.median(
-        norm_filtered.dist_to_closest_cluster
+    length_filtered.is_close = length_filtered.dist_to_closest_cluster < np.median(
+        length_filtered.dist_to_closest_cluster
     )
 
     distance_filtered = VecPile(
-        indices=np.flatnonzero(norm_filtered.is_close),
-        sentences=norm_filtered.sentences.iloc[norm_filtered.is_close].copy(),
-        projected_vecs=norm_filtered.projected_vecs[norm_filtered.is_close],
+        indices=np.flatnonzero(length_filtered.is_close),
+        sentences=length_filtered.sentences.iloc[length_filtered.is_close].copy(),
+        projected_vecs=length_filtered.projected_vecs[length_filtered.is_close],
     )
     print("{:,} close enough to cluster center".format(len(distance_filtered)))
 
-    distance_filtered.raw_vecs = norm_filtered.raw_vecs[distance_filtered.indices]
+    distance_filtered.raw_vecs = length_filtered.raw_vecs[distance_filtered.indices]
 
     # For each topic, how many different docs does it occur in?
     pervasiveness_by_topic = (
@@ -198,7 +195,7 @@ def cached_topic_data(dataset_name, n_clusters):
     )
 
     return dict(
-        vars(norm_filtered),
+        vars(length_filtered),
         vectorizer=vectorizer,
         projection_mat=projection_mat,
         clusterer=clusterer,
