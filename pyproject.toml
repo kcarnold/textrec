@@ -29,6 +29,7 @@ statsmodels = "^0.9.0"
 patsy = "^0.5.1"
 umap-learn = "^0.3.8"
 ftfy = "^5.5"
+gensim = "^3.7"
 [tool.poetry.dev-dependencies]
 ipython = "^7.5"
 fabric = "^2.4"
