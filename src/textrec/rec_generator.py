@@ -12,11 +12,12 @@ MIN_CLUSTER_SIZE = 20
 
 PRELOAD_MODELS = [
     "yelp_128",
-    "imdb_128",
+    # "imdb_128",
     "newsroom_128",
+    "wikivoyage_128",
     #    'bios'
 ]
-PARTS_NEEDED = ["sentences"]
+PARTS_NEEDED = ["sentences", "is_close"]
 
 
 cueing.preload_models(PRELOAD_MODELS, PARTS_NEEDED)
@@ -33,7 +34,11 @@ async def handle_request_async(executor, request):
 
 
 domain_to_model = dict(
-    restaurant="yelp_128", movie="imdb_128", bio="bios_128", news="newsroom_128"
+    restaurant="yelp_128",
+    movie="imdb_128",
+    bio="bios_128",
+    news="newsroom_128",
+    wikivoyage="wikivoyage_128",
 )
 
 

@@ -273,6 +273,53 @@ function getTask(promptName) {
       targetIdeaCount: 20,
       wordCountTarget: 120,
     };
+  } else if (promptName === "travelGuide") {
+    const nameField = "destination-name";
+    const writingPrompt = (
+      <span>
+        Write a brief overview of{" "}
+        <i>
+          <ControlledInputView name={nameField} />
+        </i>{" "}
+        that would be useful and interesting for a couple with a teenage child
+        who might visit.
+      </span>
+    );
+
+    return {
+      flags: {
+        domain: "wikivoyage",
+      },
+      writingType: {
+        singular: "travel guide",
+        plural: "travel guides",
+      },
+      nameField,
+      writingPrompt,
+      precommitScreen: {
+        screen: "Precommit",
+        view: () => (
+          <div className="Survey">
+            <span>
+              You'll be writing a brief overview of a destination (city, region,
+              national park, etc.) of your choice for a family who might want to
+              visit.
+            </span>
+            <div
+              style={{
+                padding: "12px",
+                lineHeight: 1.5,
+              }}
+            >
+              Destination Name: <ControlledInput name={nameField} />
+            </div>
+            <NextBtn />
+          </div>
+        ),
+      },
+      targetIdeaCount: 20,
+      wordCountTarget: 120,
+    };
   } else if (promptName === "informNews") {
     const nameField = "news-headline";
     const writingPrompt = (
@@ -579,7 +626,7 @@ export function createTaskState(loginEvent: {
     isDemo = true;
   } else {
     conditions = conditionOrders[loginEvent.assignment];
-    prompts = ["reviewRestaurant", "persuadeMovie", "informNews"];
+    prompts = ["reviewRestaurant", "travelGuide", "informNews"];
   }
 
   // Get task setup.

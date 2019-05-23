@@ -61,6 +61,7 @@ data_loaders = {
     "bios": datasets.load_bios,
     "imdb": datasets.load_imdb,
     "newsroom": datasets.load_newsroom,
+    "wikivoyage": datasets.load_wikivoyage,
 }
 
 
