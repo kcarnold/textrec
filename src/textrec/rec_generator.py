@@ -32,30 +32,34 @@ async def handle_request_async(executor, request):
     return result
 
 
-domain_to_model = dict(restaurant="yelp_128", movie="imdb_128", bio="bios_128", news="newsroom_128")
+domain_to_model = dict(
+    restaurant="yelp_128", movie="imdb_128", bio="bios_128", news="newsroom_128"
+)
 
 
 async def get_cue_API(executor, request):
     rec_type = request["recType"]
     domain = request["domain"]
+    n_cues = request.get("n_cues", 5)
 
     text = request["text"]
     model_name = domain_to_model[domain]
 
     if rec_type == "randomSents":
-        return get_cue_random(model_name=model_name)
+        return get_cue_random(model_name=model_name, n_cues=n_cues)
     elif rec_type == "cueSents":
-        return get_cue(text, model_name=model_name, mode="example")
+        return get_cue(text, model_name=model_name, n_cues=n_cues, mode="example")
 
 
-def get_cue_random(*, model_name):
+def get_cue_random(*, model_name, n_cues):
     sentences = cueing.get_model(model_name, "sentences")
 
-    cues = [dict(text=sentence) for sentence in sentences.raw_sent.sample(n=10)]
+    cues = [dict(text=sentence) for sentence in sentences.raw_sent.sample(n=n_cues)]
     return dict(cues=cues)
 
 
-def get_cue(text, *, model_name, n_clusters_to_cue=10, mode):
+def get_cue(text, *, model_name, n_cues, mode):
+    n_clusters_to_cue = n_cues
     existing_clusters, next_cluster_probs = next_cluster_distribution(
         text=text, model_name=model_name, use_sequence_lm=False
     )
