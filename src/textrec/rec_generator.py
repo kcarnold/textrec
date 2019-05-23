@@ -13,6 +13,7 @@ MIN_CLUSTER_SIZE = 20
 PRELOAD_MODELS = [
     "yelp_128",
     "imdb_128",
+    "newsroom_128",
     #    'bios'
 ]
 PARTS_NEEDED = ["sentences"]
@@ -31,17 +32,10 @@ async def handle_request_async(executor, request):
     return result
 
 
-domain_to_model = dict(restaurant="yelp_128", movie="imdb_128", bio="bios_128")
+domain_to_model = dict(restaurant="yelp_128", movie="imdb_128", bio="bios_128", news="newsroom_128")
 
 
 async def get_cue_API(executor, request):
-    return dict(
-        cues=[
-            dict(
-                text="Error retrieving ideas. This error has been reported; please finish the survey anyway."
-            )
-        ]
-    )
     rec_type = request["recType"]
     domain = request["domain"]
 
