@@ -31,11 +31,12 @@ def get_git_version():
 @task
 def rsync_models(c):
     rsync(
-        c, target="~/code/textrec/models/", source="models/", delete=True
+        c, target="~/code/textrec/models/", source="models/", delete=True,
+        exclude=['*projected_vecs.joblib']
     )
-    rsync(
-        c, target="~/code/textrec/preproc/", source="preproc/", delete=True
-    )
+    # rsync(
+    #     c, target="~/code/textrec/preproc/", source="preproc/", delete=True
+    # )
 
 
 @task
