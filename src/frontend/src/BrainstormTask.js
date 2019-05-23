@@ -183,6 +183,9 @@ function getTask(promptName) {
       </span>
     );
     return {
+      flags: {
+        domain: "restaurant",
+      },
       writingType: {
         singular: "restaurant review",
         plural: "restaurant reviews",
@@ -235,6 +238,9 @@ function getTask(promptName) {
     );
 
     return {
+      flags: {
+        domain: "movie",
+      },
       writingType: {
         singular: "movie endorsement",
         plural: "movie endorsements",
@@ -280,6 +286,9 @@ function getTask(promptName) {
       </span>
     );
     return {
+      flags: {
+        domain: "news",
+      },
       writingType: {
         singular: "news article",
         plural: "news articles",
@@ -344,7 +353,7 @@ function getIntroSurvey(tasksAndConditions) {
 
 function getPrewritingScreens(tasksAndConditions) {
   const getPrewriteScreen = (idx, task, conditionName) => ({
-    preEvent: setupTrialEvent(`trial-${idx}`, conditionName, {} /*task.flags*/),
+    preEvent: setupTrialEvent(`trial-${idx}`, conditionName, task.flags),
     screen: "ExperimentScreen",
     view: iobs(({ state }) => {
       const numIdeas = state.experimentState.ideas.length;
