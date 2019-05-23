@@ -83,14 +83,21 @@ def get_cue(text, *, model_name, n_cues, mode):
 
     elif mode == "example":
         topic_labeled_sentences = cueing.get_model(model_name, "sentences")
+        is_close = cueing.get_model(model_name, "is_close")
+        # topic_labeled_sentences["close_to_cluster_center"] = is_close
+        topic_labeled_sentences = topic_labeled_sentences[is_close]
 
         def get_cue_for_cluster(cluster_to_cue):
             cluster_sentences = topic_labeled_sentences[
                 topic_labeled_sentences.topic == cluster_to_cue
             ]
             if len(cluster_sentences) > MIN_CLUSTER_SIZE:
-                sentence = cluster_sentences.raw_sent.sample(n=1).iloc[0]
-                return dict(text=sentence)
+                idx = np.random.choice(len(cluster_sentences))
+                sentence = cluster_sentences.raw_sent.iloc[idx]
+                return dict(
+                    text=sentence,
+                    # is_close=cluster_sentences.close_to_cluster_center.iloc[idx].item(),
+                )
 
     elif mode == "exampleHighlighted":
         labels_and_sents = cueing.get_model(model_name, "labels_and_sents")
