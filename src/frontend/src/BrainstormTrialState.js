@@ -41,12 +41,11 @@ export class TrialState {
 
   handleEvent(event) {
     let prevCueRequest = this.getCueRequest();
-
+    let forceNewRequest = false;
     let sideEffects = [];
     if (event.type === "addIdea") {
       this.ideas.push(event.idea);
     } else if (event.type === "backendReply") {
-      // TODO: ignore other backend replies.
       if (event.msg.result) {
         if (event.msg.result.cues) {
           this._suggestions = event.msg.result.cues.map(cue => ({
@@ -56,6 +55,7 @@ export class TrialState {
       }
     } else if (event.type === "inspireMe") {
       this.suggestions = this._suggestions;
+      forceNewRequest = true;
     } else if (event.type === "allowSubmit") {
       this.allowSubmit = true;
     } else if (event.type === "setText") {
@@ -63,7 +63,10 @@ export class TrialState {
     }
 
     let newCueRequest = this.getCueRequest();
-    if (newCueRequest && !isEqual(prevCueRequest, newCueRequest)) {
+    if (
+      newCueRequest &&
+      (forceNewRequest || !isEqual(prevCueRequest, newCueRequest))
+    ) {
       sideEffects.push(newCueRequest);
     }
 
