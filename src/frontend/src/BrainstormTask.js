@@ -163,6 +163,7 @@ function brainstormHeader(writingPrompt, targetIdeaCount) {
       <ul>
         <li>Try to list at least {targetIdeaCount} ideas.</li>
         <li>Go for quantity, not quality.</li>
+        <li>The order of ideas doesn't matter.</li>
         <li>You don't need complete sentences.</li>
       </ul>
       <p>You can click Add or press Enter to add an idea.</p>
