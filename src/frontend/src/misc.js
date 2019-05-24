@@ -13,7 +13,7 @@ export const gatingSuggestionFilter = (suggestions, experimentState) => {
   return suggestions;
 };
 
-export const MAX_PING_TIME = 200;
+export const MAX_PING_TIME = 400;
 
 export function getDemoConditionName(clientId: string): ?string {
   let match = clientId.match(/^demo(\w+)-(\w+)$/);
