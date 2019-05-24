@@ -38,7 +38,7 @@ function surveyView(props) {
  * Ideation stuff
  */
 
-const InspirationBox = iobs(({ state, dispatch }) =>
+const InspirationBox = iobs(({ state, dispatch, ideaSource }) =>
   state.experimentState.flags.recType !== null ? (
     <div style={{ padding: "10px", border: "1px solid black", width: "350px" }}>
       <button onClick={e => dispatch({ type: "inspireMe" })}>
@@ -55,6 +55,7 @@ const InspirationBox = iobs(({ state, dispatch }) =>
               </li>
             ))}
           </ul>
+          <p style={{ fontSize: "8pt" }}>Source: {ideaSource}</p>
         </div>
       )}
     </div>
@@ -225,6 +226,14 @@ function getTask(promptName) {
       },
       targetIdeaCount: 20,
       wordCountTarget: 120,
+      ideaSource: (
+        <span>
+          Resaurant reviews from the{" "}
+          <a target="_blank" href="https://www.yelp.com/dataset">
+            Yelp Open Dataset
+          </a>
+        </span>
+      ),
     };
   } else if (promptName === "persuadeMovie") {
     const nameField = "movie-name";
@@ -272,6 +281,7 @@ function getTask(promptName) {
       },
       targetIdeaCount: 20,
       wordCountTarget: 120,
+      ideaSource: <span>Movie reviews from IMDB</span>,
     };
   } else if (promptName === "travelGuide") {
     const nameField = "destination-name";
@@ -319,6 +329,22 @@ function getTask(promptName) {
       },
       targetIdeaCount: 20,
       wordCountTarget: 120,
+      ideaSource: (
+        <span>
+          Articles from{" "}
+          <a href="https://en.wikivoyage.org/wiki/Main_Page" target="_blank">
+            WikiVoyage
+          </a>
+          , available under the{" "}
+          <a
+            href="http://creativecommons.org/licenses/by-sa/3.0/"
+            target="_blank"
+          >
+            Creative Commons Attribution-ShareAlike 3.0 licence
+          </a>
+          .
+        </span>
+      ),
     };
   } else if (promptName === "informNews") {
     const nameField = "news-headline";
@@ -366,6 +392,15 @@ function getTask(promptName) {
       },
       targetIdeaCount: 20,
       wordCountTarget: 120,
+      ideaSource: (
+        <span>
+          Articles from various sources, compiled by the{" "}
+          <a href="https://summari.es/download/" target="_blank">
+            Cornell Newsroom Summaries Team
+          </a>
+          .
+        </span>
+      ),
     };
   } else {
     console.assert("Unknown prompt", promptName);
@@ -414,7 +449,7 @@ function getPrewritingScreens(tasksAndConditions) {
               <b>Ideas</b>
               <SmartIdeaList />
             </div>
-            <InspirationBox />
+            <InspirationBox ideaSource={task.ideaSource} />
           </div>
           <p>
             You're at {numIdeas} ideas
