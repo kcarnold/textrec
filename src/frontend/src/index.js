@@ -83,14 +83,13 @@ const handlers = {
   idx() {
     topLevel = (
       <ul>
-        {[
-          "showall/c=idea&a=0&prompt=restaurant",
-          "demoidea-cueSents-restaurant-p",
-        ].map((u, i) => (
-          <li key={i}>
-            <a href={"/?" + u}>{u}</a>
-          </li>
-        ))}
+        {["showall/c=idea&a=0", "demoidea-cueSents-reviewRestaurant-p"].map(
+          (u, i) => (
+            <li key={i}>
+              <a href={"/?" + u}>{u}</a>
+            </li>
+          )
+        )}
       </ul>
     );
   },
