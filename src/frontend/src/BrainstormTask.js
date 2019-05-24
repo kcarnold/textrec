@@ -229,7 +229,11 @@ function getTask(promptName) {
       ideaSource: (
         <span>
           Resaurant reviews from the{" "}
-          <a target="_blank" href="https://www.yelp.com/dataset">
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://www.yelp.com/dataset"
+          >
             Yelp Open Dataset
           </a>
         </span>
@@ -332,13 +336,18 @@ function getTask(promptName) {
       ideaSource: (
         <span>
           Articles from{" "}
-          <a href="https://en.wikivoyage.org/wiki/Main_Page" target="_blank">
+          <a
+            href="https://en.wikivoyage.org/wiki/Main_Page"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             WikiVoyage
           </a>
           , available under the{" "}
           <a
             href="http://creativecommons.org/licenses/by-sa/3.0/"
             target="_blank"
+            rel="noopener noreferrer"
           >
             Creative Commons Attribution-ShareAlike 3.0 licence
           </a>
@@ -395,7 +404,11 @@ function getTask(promptName) {
       ideaSource: (
         <span>
           Articles from various sources, compiled by the{" "}
-          <a href="https://summari.es/download/" target="_blank">
+          <a
+            href="https://summari.es/download/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Cornell Newsroom Summaries Team
           </a>
           .
