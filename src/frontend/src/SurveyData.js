@@ -2,7 +2,7 @@
 
 import React from "react";
 
-import { likert } from "./SurveyViews";
+import { likert, agreeLikert } from "./SurveyViews";
 
 export const otherMid = {
   text:
@@ -151,3 +151,18 @@ export const otherFinal = {
   name: "other",
   flags: { multiline: true, placeholder: "optional" },
 };
+
+export const shortNFC = [
+  ["I would prefer complex to simple problems", true],
+  [
+    "I like to have the responsibility of handling a situation that requires a lot of thinking",
+    true,
+  ],
+  ["Thinking is not my idea of fun", false],
+  [
+    "I would rather do something that requires little thought than something that is sure to challenge my thinking abilities",
+    false,
+  ],
+].map(([text, normalCoded], idx) =>
+  agreeLikert(`nfc${idx}_${normalCoded ? "norm" : "rev"}`, text)
+);

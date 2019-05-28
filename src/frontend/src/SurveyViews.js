@@ -21,6 +21,9 @@ export function likert(name, text, degrees, labels) {
   };
 }
 
+export const agreeLikert = (name, prompt, n = 7) =>
+  likert(name, prompt, n, ["Strongly disagree", "Strongly agree"]);
+
 function TextResponse({ name, question }) {
   return <ControlledInput name={name} {...question.flags || {}} />;
 }

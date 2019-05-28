@@ -618,6 +618,7 @@ function getClosingSurvey(tasksAndConditions) {
       title: "Closing Survey",
       basename: "postExp",
       questions: [
+        ...SurveyData.shortNFC,
         {
           type: "options",
           responseType: "options",
