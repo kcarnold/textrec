@@ -12,7 +12,7 @@ import { TrialState } from "./BrainstormTrialState";
 import * as Views from "./CueViews";
 import { Editable } from "./Editable";
 import { NextBtn } from "./BaseViews";
-import { Survey, likert } from "./SurveyViews";
+import { Survey, likert, agreeLikert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
 
@@ -510,7 +510,39 @@ function getPrewritingScreens(tasksAndConditions) {
   });
   tasksAndConditions.forEach(({ prompt, conditionName, task }, idx) => {
     // TODO: Instructions screens?
+    let surveyQuestions = [
+      agreeLikert("fluent", "I felt like I could come up with ideas easily."),
+      agreeLikert(
+        "stuck",
+        "I sometimes felt stuck thinking about what to write."
+      ),
+    ];
+    if (conditionName !== "norecs") {
+      surveyQuestions = [
+        ...surveyQuestions,
+        agreeLikert("sysRelevant", "The inspirations were relevant."),
+        agreeLikert("sysGaveIdeas", "The inspirations gave me new ideas."),
+        agreeLikert(
+          "usedInspirations",
+          "I used the inspirations that were given."
+        ),
+        // "The inspirations discussed some of the same ideas"
+      ];
+    }
+    surveyQuestions = [
+      ...surveyQuestions,
+      agreeLikert("distracting", "The system was distracting."),
+      agreeLikert("system-helped", "The system was helpful overall."),
+    ];
     result.push(getPrewriteScreen(idx, task, conditionName));
+    result.push({
+      screen: "PostTaskSurvey",
+      view: surveyView({
+        title: `Survey after Brainstorming ${idx + 1}`,
+        basename: `postBrainstorm-${idx}`,
+        questions: surveyQuestions,
+      }),
+    });
   });
 
   result.push({
