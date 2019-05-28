@@ -156,6 +156,8 @@ def tokenize(text):
 
 
 def topic_sequence_logprobs(existing_clusters, model_name):
+    clusterer = cueing.get_model(model_name, "clusterer")
+    n_clusters = clusterer.n_clusters
     seq_model = cueing.get_model(model_name, "topic_sequence_model")
     state, _ = seq_model.get_state(
         " ".join(str(c) for c in existing_clusters), bos=True
