@@ -11,7 +11,7 @@ import tqdm
 
 from .util import ujson
 
-YELP_PATH = "~/Data/Yelp/yelp_academic_dataset.json.gz"
+YELP_PATH = "/Data/Yelp/yelp_academic_dataset.json.gz"
 IMDB_PATH = "/Data/Reviews/IMDB/Maas2011/aclImdb.zip"
 BIOS_PATH = "/Data/biosbias/BIOS.pkl"
 NEWSROOM_PATH = "/Data/Newsroom-Dataset/train.jsonl.gz"
