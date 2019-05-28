@@ -167,7 +167,33 @@ def topic_sequence_logprobs(existing_clusters, model_name):
     return logprobs
 
 
-def next_cluster_distribution(text, model_name, use_sequence_lm):
+def next_cluster_distribution_given_context_clusters(
+    *,
+    model_name,
+    existing_clusters,
+    n_clusters,
+    existing_clusters_weight=1e-6,
+    use_sequence_lm=False,
+):
+    if use_sequence_lm:
+        logprobs = topic_sequence_logprobs(existing_clusters, model_name)
+        cluster_probs = np.exp(logprobs)
+    else:
+        co_occur = cueing.get_model(model_name, "cooccur")
+        doc_topic_vec = np.zeros(n_clusters) + 1e-6
+        for c in existing_clusters:
+            doc_topic_vec[c] = 1
+        cluster_probs = co_occur @ doc_topic_vec
+
+    # Avoid already-discussed clusters.
+    cluster_probs[existing_clusters] *= existing_clusters_weight
+    cluster_probs /= cluster_probs.sum()
+    return cluster_probs
+
+
+def next_cluster_distribution(
+    text, model_name, use_sequence_lm, existing_clusters_weight=1e-6
+):
     tokenized_doc = tokenize(text)
     vectorizer = cueing.get_model(model_name, "vectorizer")
     projection_mat = cueing.get_model(model_name, "projection_mat")
@@ -179,20 +205,13 @@ def next_cluster_distribution(text, model_name, use_sequence_lm):
     projected = vecs.dot(projection_mat)
     existing_clusters = clusterer.predict(projected)
 
-    if use_sequence_lm:
-        logprobs = topic_sequence_logprobs(existing_clusters, model_name)
-        cluster_probs = np.exp(logprobs)
-    else:
-        co_occur = cueing.get_model(model_name, "cooccur")
-        doc_topic_vec = np.zeros(n_clusters) + 1e-6
-        for c in existing_clusters:
-            doc_topic_vec[c] = 1
-
-        cluster_probs = co_occur @ doc_topic_vec
-
-    # Avoid already-discussed clusters.
-    cluster_probs[existing_clusters] *= 1e-6
-    cluster_probs /= cluster_probs.sum()
+    cluster_probs = next_cluster_distribution_given_context_clusters(
+        model_name=model_name,
+        existing_clusters=existing_clusters,
+        n_clusters=n_clusters,
+        existing_clusters_weight=existing_clusters_weight,
+        use_sequence_lm=use_sequence_lm,
+    )
 
     return existing_clusters, cluster_probs
 
