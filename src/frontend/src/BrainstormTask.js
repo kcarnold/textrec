@@ -497,12 +497,12 @@ function getPrewritingScreens(tasksAndConditions) {
         ...flatMap(tasksAndConditions, ({ prompt, task }, idx) => [
           { type: "text", text: <div>Prompt: {task.writingPrompt}</div> },
           likert(
-            `ease-${idx}`,
-            `How easy do you think it will be to come up with ${
+            `taskEfficacy-${idx}`,
+            `I am confident that I can come up with at least ${
               task.targetIdeaCount
-            } ideas for things that you might include in this writing?`,
+            } ideas for what to write about for this prompt.`,
             7,
-            ["very difficult", "very easy"]
+            ["strongly disagree", "strongly agree"]
           ),
         ]),
       ],
@@ -528,12 +528,12 @@ function getPrewritingScreens(tasksAndConditions) {
         ...flatMap(tasksAndConditions, ({ prompt, task }, idx) => [
           { type: "text", text: <div>Prompt: {task.writingPrompt}</div> },
           likert(
-            `ease-${idx}`,
-            `How easy was it to come up with ${
+            `taskEfficacyPost-${idx}`,
+            `I am confident that I can come up with at least ${
               task.targetIdeaCount
-            } ideas for things that you might include in this writing?`,
+            } ideas for writing about a similar prompt in the future.`,
             7,
-            ["very difficult", "very easy"]
+            ["strongly disagree", "strongly agree"]
           ),
         ]),
       ],
