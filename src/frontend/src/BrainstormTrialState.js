@@ -35,7 +35,7 @@ export class TrialState {
     return rpc("get_cue", {
       domain,
       recType,
-      text: this.ideas.map(x => x + ".").join("\n"),
+      text: this.ideas.map(x => x),
     });
   }
 
