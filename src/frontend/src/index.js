@@ -81,15 +81,24 @@ const handlers = {
   },
 
   idx() {
+    let tasks = [
+      "reviewRestaurant",
+      "persuadeMovie",
+      "travelGuide",
+      "informNews",
+    ];
+
     topLevel = (
       <ul>
-        {["showall/c=idea&a=0", "demoidea-cueSents-reviewRestaurant-p"].map(
-          (u, i) => (
-            <li key={i}>
-              <a href={"/?" + u}>{u}</a>
-            </li>
-          )
-        )}
+        {[
+          "showall/c=idea&a=0",
+          ...tasks.map(prompt => `demoidea-cueSents-${prompt}-p`),
+          ...tasks.map(prompt => `demoidea-randomSents-${prompt}-p`),
+        ].map((u, i) => (
+          <li key={i}>
+            <a href={"/?" + u}>{u}</a>
+          </li>
+        ))}
       </ul>
     );
   },
