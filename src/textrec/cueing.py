@@ -7,6 +7,7 @@ import nltk
 import numpy as np
 import pandas as pd
 import wordfreq
+from gensim.models import Word2Vec
 from scipy.special import logsumexp
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -387,6 +388,27 @@ def cached_topic_sequence_lm(dataset_name, n_clusters=75):
     model_name = topic_seq_model_name(dataset_name, n_clusters=n_clusters)
     dump_kenlm(model_name, topic_sequences, order=6, discount_fallback=True)
     return lang_model.Model.get_or_load_model(model_name)
+
+
+def train_topic_w2v(sentences, embedding_size, seed=1):
+    topic_seqs = [
+        group.to_list() for doc_id, group in sentences.groupby("doc_id").topic
+    ]
+    topic_seq_strs = [[str(idx) for idx in seq] for seq in topic_seqs if len(seq) >= 2]
+    return Word2Vec(
+        topic_seq_strs, size=embedding_size, window=10, min_count=1, seed=seed
+    )
+
+
+def predict_missing_topics_w2v(model, existing_clusters, n_clusters):
+    raw_cluster_probs = model.predict_output_word(
+        [str(idx) for idx in existing_clusters], topn=2000
+    )
+    cluster_probs = np.zeros(n_clusters)
+    for cluster_str, prob in raw_cluster_probs:
+        cluster_probs[int(cluster_str)] = prob
+    assert 0.999 < cluster_probs.sum() < 1.001
+    return cluster_probs
 
 
 def model_filename(model_name, part):

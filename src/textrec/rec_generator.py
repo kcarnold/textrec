@@ -63,10 +63,10 @@ def get_cue_random(*, model_name, n_cues):
     return dict(cues=cues)
 
 
-def get_cue(text, *, model_name, n_cues, mode):
+def get_cue(text, *, model_name, n_cues, mode, method="w2v"):
     n_clusters_to_cue = n_cues
     existing_clusters, next_cluster_probs = next_cluster_distribution(
-        text=text, model_name=model_name, use_sequence_lm=False
+        text=text, model_name=model_name, method=method
     )
 
     if mode == "cue_phrase":
@@ -168,22 +168,22 @@ def topic_sequence_logprobs(existing_clusters, model_name):
 
 
 def next_cluster_distribution_given_context_clusters(
-    *,
-    model_name,
-    existing_clusters,
-    n_clusters,
-    existing_clusters_weight=1e-6,
-    use_sequence_lm=False,
+    *, model_name, existing_clusters, n_clusters, existing_clusters_weight=1e-6, method
 ):
-    if use_sequence_lm:
+    if method == "topic_lm":
         logprobs = topic_sequence_logprobs(existing_clusters, model_name)
         cluster_probs = np.exp(logprobs)
-    else:
+    elif len(existing_clusters) == 0 or method == "cooccur_dot":
         co_occur = cueing.get_model(model_name, "cooccur")
         doc_topic_vec = np.zeros(n_clusters) + 1e-6
         for c in existing_clusters:
             doc_topic_vec[c] = 1
         cluster_probs = co_occur @ doc_topic_vec
+    elif method == "w2v":
+        model = cueing.get_model(model_name, "topic_w2v")
+        cluster_probs = cueing.predict_missing_topics_w2v(
+            model, existing_clusters=existing_clusters, n_clusters=n_clusters
+        )
 
     # Avoid already-discussed clusters.
     cluster_probs[existing_clusters] *= existing_clusters_weight
@@ -192,25 +192,28 @@ def next_cluster_distribution_given_context_clusters(
 
 
 def next_cluster_distribution(
-    text, model_name, use_sequence_lm, existing_clusters_weight=1e-6
+    text, model_name, method, existing_clusters_weight=1e-6
 ):
-    tokenized_doc = tokenize(text)
+    sents = tokenize(text)
     vectorizer = cueing.get_model(model_name, "vectorizer")
     projection_mat = cueing.get_model(model_name, "projection_mat")
     clusterer = cueing.get_model(model_name, "clusterer")
     n_clusters = clusterer.n_clusters
 
-    sents = tokenized_doc.split("\n")
+    if len(sents):
     vecs = vectorizer.transform(sents)
     projected = vecs.dot(projection_mat)
     existing_clusters = clusterer.predict(projected)
+    else:
+        existing_clusters = np.array([], dtype=int)
+    ic(sents, existing_clusters)
 
     cluster_probs = next_cluster_distribution_given_context_clusters(
         model_name=model_name,
         existing_clusters=existing_clusters,
         n_clusters=n_clusters,
         existing_clusters_weight=existing_clusters_weight,
-        use_sequence_lm=use_sequence_lm,
+        method=method,
     )
 
     return existing_clusters, cluster_probs
