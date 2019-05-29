@@ -94,6 +94,8 @@ const handlers = {
           "showall/c=idea&a=0",
           ...tasks.map(prompt => `demoidea-cueSents-${prompt}-p`),
           ...tasks.map(prompt => `demoidea-randomSents-${prompt}-p`),
+          ...tasks.map(prompt => `demoidea-cueWords-${prompt}-p`),
+          ...tasks.map(prompt => `demoidea-randomWords-${prompt}-p`),
         ].map((u, i) => (
           <li key={i}>
             <a href={"/?" + u}>{u}</a>

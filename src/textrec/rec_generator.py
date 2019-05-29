@@ -58,13 +58,33 @@ async def get_cue_API(executor, request):
     if rec_type == "randomSents":
         return get_cue_random(model_name=model_name, n_cues=n_cues)
     elif rec_type == "cueSents":
+        return get_cue(text, model_name=model_name, n_cues=n_cues, mode="example")
+    elif rec_type == "cueWords":
         return get_cue(text, model_name=model_name, n_cues=n_cues, mode="label3")
+    elif rec_type == "randomWords":
+        return get_cue_random_words(model_name=model_name, n_cues=n_cues)
 
 
 def get_cue_random(*, model_name, n_cues):
     sentences = cueing.get_model(model_name, "sentences")
 
     cues = [dict(text=sentence) for sentence in sentences.raw_sent.sample(n=n_cues)]
+    return dict(cues=cues)
+
+
+def get_cue_random_words(*, model_name, n_cues):
+    sentences = cueing.get_model(model_name, "sentences")
+    selected_sentences = sentences.sent.sample(n=n_cues * 2)
+    cues = []
+    for sentence in selected_sentences:
+        tokens = sentence.split()
+        if len(tokens) < 4:
+            continue
+        tok_idx = np.random.choice(len(tokens) - 3)
+        phrase = ' '.join(tokens[tok_idx:tok_idx + 3])
+        cues.append(dict(text=phrase))
+        if len(cues) == n_cues:
+            break
     return dict(cues=cues)
 
 

@@ -23,9 +23,12 @@ const namedConditions = {
   norecs: { recType: null },
   randomSents: { recType: "randomSents" },
   cueSents: { recType: "cueSents" },
+  cueWords: { recType: "cueWords" },
+  randomWords: { recType: "randomWords" },
 };
 
-let baseConditions = ["norecs", "randomSents", "cueSents"];
+// let baseConditions = ["norecs", "randomSents", "cueSents"];
+let baseConditions = ["norecs", "randomWords", "cueWords"];
 
 const WelcomeScreen = { screen: "Welcome", view: Views.Welcome };
 const DoneScreen = { screen: "Done", view: Views.Done };
