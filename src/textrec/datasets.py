@@ -106,7 +106,7 @@ def load_bios(path=BIOS_PATH):
     return add_useless_doc_id(pd.DataFrame(dict(text=texts)))
 
 
-def load_newsroom(path=NEWSROOM_PATH, frac=0.1, random_state=0):
+def load_newsroom(path=NEWSROOM_PATH, frac=0.05, random_state=0):
     data = []
 
     columns = ("title", "url", "text", "summary")
