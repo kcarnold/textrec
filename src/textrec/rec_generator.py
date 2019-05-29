@@ -7,6 +7,11 @@ import wordfreq
 
 from . import cueing
 
+try:
+    from icecream import ic
+except ImportError:  # Graceful fallback if IceCream isn't installed.
+    ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
+
 N_CLUSTERS = 128
 MIN_CLUSTER_SIZE = 20
 
