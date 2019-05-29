@@ -167,11 +167,15 @@ def cached_topic_data(dataset_name, n_clusters):
         init="k-means++", n_clusters=n_clusters, n_init=10, random_state=random_state
     )
     clusterer.fit(length_filtered.projected_vecs)
-    length_filtered.dists_to_centers = clusterer.transform(length_filtered.projected_vecs)
+    length_filtered.dists_to_centers = clusterer.transform(
+        length_filtered.projected_vecs
+    )
 
     # Hard-assign topics, filter to those close enough.
 
-    length_filtered.sentences["topic"] = np.argmin(length_filtered.dists_to_centers, axis=1)
+    length_filtered.sentences["topic"] = np.argmin(
+        length_filtered.dists_to_centers, axis=1
+    )
     length_filtered.dist_to_closest_cluster = np.min(
         length_filtered.dists_to_centers, axis=1
     )
