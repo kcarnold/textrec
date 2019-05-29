@@ -58,7 +58,7 @@ async def get_cue_API(executor, request):
     if rec_type == "randomSents":
         return get_cue_random(model_name=model_name, n_cues=n_cues)
     elif rec_type == "cueSents":
-        return get_cue(text, model_name=model_name, n_cues=n_cues, mode="example")
+        return get_cue(text, model_name=model_name, n_cues=n_cues, mode="label3")
 
 
 def get_cue_random(*, model_name, n_cues):
@@ -73,6 +73,11 @@ def get_cue(text, *, model_name, n_cues, mode, method="w2v"):
     existing_clusters, next_cluster_probs = next_cluster_distribution(
         text=text, model_name=model_name, method=method
     )
+
+    cluster_labels = cueing.get_model(model_name, "labels")
+
+    def get_label_for_cluster(cluster_idx):
+        return ' / '.join(cluster_labels[cluster_idx])
 
     if mode == "cue_phrase":
         # Note that current models don't save these...
@@ -94,6 +99,7 @@ def get_cue(text, *, model_name, n_cues, mode, method="w2v"):
     elif mode == "example":
         topic_labeled_sentences = cueing.get_model(model_name, "sentences")
         is_close = cueing.get_model(model_name, "is_close")
+
         # topic_labeled_sentences["close_to_cluster_center"] = is_close
         topic_labeled_sentences = topic_labeled_sentences[is_close]
 
@@ -106,19 +112,13 @@ def get_cue(text, *, model_name, n_cues, mode, method="w2v"):
                 sentence = cluster_sentences.raw_sent.iloc[idx]
                 return dict(
                     text=sentence,
+                    label=get_label_for_cluster(cluster_to_cue),
                     # is_close=cluster_sentences.close_to_cluster_center.iloc[idx].item(),
                 )
 
-    elif mode == "exampleHighlighted":
-        labels_and_sents = cueing.get_model(model_name, "labels_and_sents")
-
+    elif mode == "label3":
         def get_cue_for_cluster(cluster_to_cue):
-            if cluster_to_cue not in labels_and_sents:
-                return
-            label, candidates = labels_and_sents[cluster_to_cue]
-            candidate_idx = np.random.choice(len(candidates))
-            sentence, label_span = candidates[candidate_idx]
-            return dict(text=sentence, highlight_span=label_span)
+            return dict(text=get_label_for_cluster(cluster_to_cue))
 
     else:
         assert False
@@ -144,7 +144,11 @@ def get_cue(text, *, model_name, n_cues, mode, method="w2v"):
     cued_clusters = [cue["cluster"] for cue in cues]
     print("Cueing", cued_clusters)
 
-    return dict(cues=cues, existing_clusters=existing_clusters.tolist())
+    existing_clusters_labeled = [
+        (idx, get_label_for_cluster(idx))
+        for idx in existing_clusters.tolist()
+    ]
+    return dict(cues=cues, existing_clusters=existing_clusters_labeled)
 
 
 # Cribbed from preprocess_yelp.py
@@ -206,9 +210,9 @@ def next_cluster_distribution(
     n_clusters = clusterer.n_clusters
 
     if len(sents):
-    vecs = vectorizer.transform(sents)
-    projected = vecs.dot(projection_mat)
-    existing_clusters = clusterer.predict(projected)
+        vecs = vectorizer.transform(sents)
+        projected = vecs.dot(projection_mat)
+        existing_clusters = clusterer.predict(projected)
     else:
         existing_clusters = np.array([], dtype=int)
     ic(sents, existing_clusters)

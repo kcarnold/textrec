@@ -214,9 +214,9 @@ def cached_topic_data(dataset_name, n_clusters):
 def get_labels_for_clusters(
     vectorizer, cluster_centers, sentences, MIN_CLUSTER_SIZE=20
 ):
-    from sklearn.metrics.pairwise import pairwise_distances_argmin
+    from sklearn.metrics.pairwise import pairwise_distances
     from textrec.numberbatch_vecs import get_cnnb
-    import re
+    from textrec import automated_analyses
 
     cnnb = get_cnnb()
     vocab = vectorizer.get_feature_names()
@@ -226,24 +226,44 @@ def get_labels_for_clusters(
 
     cnnb_mat = np.array([cnnb[term] for term in vocab_in_cnnb])
 
-    labels = [
-        vocab_in_cnnb[idx]
-        for idx in pairwise_distances_argmin(cluster_centers, cnnb_mat)
-    ]
+    word_vec_dists_to_centers = pairwise_distances(
+        cluster_centers, cnnb_mat, metric="cosine"
+    )
 
-    labels_and_sents = {}
-    for topic_idx, label in enumerate(labels):
-        label_re = re.compile("\\b" + re.escape(label) + "\\b", re.IGNORECASE)
-        topic_sents = sentences
-        topic_sents = topic_sents[topic_sents.topic == topic_idx].raw_sent
-        candidates = []
-        for sent in topic_sents:
-            match = label_re.search(sent)
-            if match:
-                candidates.append((sent, match.span()))
-        if len(candidates) > MIN_CLUSTER_SIZE:
-            labels_and_sents[topic_idx] = (label, candidates)
-    return labels_and_sents
+    BAD_WORDS = {
+        "ve",
+        "ll",
+        "doesn",
+        "isn",
+        "does",
+        "wouldn",
+        "aren",
+        "wasn",
+        "shouldn",
+        "didn",
+        "hasn",
+        "couldn",
+        "dont",
+    }
+
+    def pick_labels(word_vec_dists):
+        used_lemmas = []
+        used_words = []
+        for idx in np.argsort(word_vec_dists):
+            word = vocab_in_cnnb[idx]
+            if word in BAD_WORDS:
+                continue
+            tok = automated_analyses.nlp(word)[0]
+            lemma = tok.lemma_
+            if lemma in used_lemmas:
+                continue
+            used_lemmas.append(lemma)
+            used_words.append(word)
+            if len(used_lemmas) == 3:
+                break
+        return used_words
+
+    return [pick_labels(dists) for dists in word_vec_dists_to_centers]
 
 
 def get_cooccurrence_mat(sentences, n_clusters):

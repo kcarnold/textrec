@@ -21,7 +21,7 @@ if __name__ == "__main__":
     model = cached_topic_data(dataset_name, opts.n_clusters)
 
     # Add stuff.
-    model["labels_and_sents"] = get_labels_for_clusters(
+    model["labels"] = get_labels_for_clusters(
         vectorizer=model["vectorizer"],
         cluster_centers=model["clusterer"].cluster_centers_,
         sentences=model["sentences"],
