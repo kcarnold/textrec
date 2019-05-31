@@ -538,7 +538,7 @@ function getPrewritingScreens(tasksAndConditions) {
           {brainstormHeader(task.topicName, targetIdeaCount)}
           <div style={{ display: "flex", flexFlow: "col nowrap" }}>
             <div style={{ flex: "1 0 auto" }}>
-              <b>Questions the interviewer might ask you!</b>
+              <b>Questions the interviewer might ask you:</b>
               <SmartIdeaList />
             </div>
             <InspirationBox ideaSource={task.ideaSource} />
@@ -609,25 +609,20 @@ function getPrewritingScreens(tasksAndConditions) {
           "I used the inspirations that were given."
         ),
         // "The inspirations discussed some of the same ideas"
+        {
+          text: "When did you request inspiration?",
+          responseType: "text",
+          name: "whenRequest",
+          flags: { multiline: true },
+        },
       ];
     }
     surveyQuestions = [
       ...surveyQuestions,
       agreeLikert("distracting", "The system was distracting."),
       agreeLikert("system-helped", "The system was helpful overall."),
-      {
-        text: "When did you request inspiration?",
-        responseType: "text",
-        name: "whenRequest",
-        flags: { multiline: true },
-      },
-      {
-        text:
-          "Did you experience any technical difficulties that you haven't reported already?",
-        responseType: "text",
-        name: "techDiff",
-        flags: { multiline: true, placeholder: "optional" },
-      },
+      SurveyData.techDiff,
+      SurveyData.otherMid,
     ];
     result.push(getPrewriteScreen(idx, task, conditionName));
     result.push({
