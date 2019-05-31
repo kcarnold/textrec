@@ -28,7 +28,7 @@ const namedConditions = {
 };
 
 // let baseConditions = ["norecs", "randomSents", "cueSents"];
-let baseConditions = ["norecs", "randomWords", "cueWords"];
+let baseConditions = ["norecs", "randomSents", "cueWords"];
 
 const WelcomeScreen = { screen: "Welcome", view: Views.Welcome };
 const DoneScreen = { screen: "Done", view: Views.Done };
@@ -43,14 +43,35 @@ function surveyView(props) {
 
 const InspirationBox = iobs(({ state, dispatch, ideaSource }) =>
   state.experimentState.flags.recType !== null ? (
-    <div style={{ padding: "10px", border: "1px solid black", width: "350px" }}>
-      <button onClick={e => dispatch({ type: "inspireMe" })}>
-        Inspire Me!
+    <div
+      style={{
+        padding: "10px",
+        borderLeft: "1px solid black",
+        width: "350px",
+        margin: "5px",
+      }}
+    >
+      <h1 style={{ paddingTop: "0", marginTop: "0" }}>For inspiration...</h1>
+      <button
+        onClick={e => dispatch({ type: "inspireMe" })}
+        style={{
+          fontSize: "16px",
+          background: "green",
+          color: "white",
+          padding: "10px",
+          borderRadius: "10px",
+        }}
+      >
+        <img
+          src="/static/capicon-refresh.png"
+          alt=""
+          style={{ width: "25px", paddingRight: "5px" }}
+        />
+        Get fresh inspirations!
       </button>
       <br />
       {state.experimentState.suggestions.length > 0 && (
         <div>
-          <b>Ideas</b> from other people's writing
           <ul>
             {state.experimentState.suggestions.map((s, idx) => (
               <li key={idx} style={{ marginBottom: "5px" }}>
@@ -84,7 +105,7 @@ const IdeaList = observer(({ userIdeas, addIdea }) => {
 
   return (
     <div>
-      <ul>
+      <ol>
         {userIdeas.map((idea, idx) => (
           <li key={idx}>{idea}</li>
         ))}
@@ -95,11 +116,12 @@ const IdeaList = observer(({ userIdeas, addIdea }) => {
               type="text"
               ref={newIdeaEntry}
               onKeyPress={onKey}
+              placeholder="Is this a question?"
             />{" "}
-            <button onClick={_addIdea}>Add</button>
+            <span style={{ color: "#777" }}>Press Enter to add a question</span>
           </li>
         )}
-      </ul>
+      </ol>
     </div>
   );
 });
@@ -134,7 +156,11 @@ function getScreens(prompts, conditionNames, isDemo) {
   if (isDemo) return getPrewritingScreens(tasksAndConditions);
   return [
     WelcomeScreen,
-    getIntroSurvey(tasksAndConditions),
+    // getIntroSurvey(tasksAndConditions),
+    getPrecommitScreen(tasksAndConditions),
+    // getTutorialScreen(),
+    // getPracticeScreen(),
+    getTaskDescriptionScreen(),
     ...getPrewritingScreens(tasksAndConditions),
     ...getFinalWritingScreens(tasksAndConditions),
     getClosingSurvey(tasksAndConditions),
@@ -142,35 +168,59 @@ function getScreens(prompts, conditionNames, isDemo) {
   ];
 }
 
+const getTutorialScreen = () => ({
+  screen: "Tutorial",
+  view: () => (
+    <div>
+      <NextBtn />
+    </div>
+  ),
+});
+const getPracticeScreen = () => ({
+  screen: "Practice",
+  view: () => (
+    <div>
+      <NextBtn />
+    </div>
+  ),
+});
+const getTaskDescriptionScreen = () => ({
+  screen: "TaskDescription",
+  view: () => (
+    <div>
+      <p>
+        Imagine you're about to get interviewed on live TV. The interviewer
+        might ask you detailed questions about any of the topics you listed
+        earlier. <b>Don't get caught unprepared!</b> In the next few screens,
+        you'll try to come up with ideas about what questions you might get
+        asked.
+      </p>
+      <NextBtn />
+    </div>
+  ),
+});
+
 const ControlledInputView = iobs(
   ({ state, name }) => state.controlledInputs.get(name) || name
 );
 
-function brainstormHeader(writingPrompt, targetIdeaCount) {
+function brainstormHeader(topicName, targetIdeaCount) {
   return (
     <div>
-      <h1>Brainstorming</h1>
-      <p>You'll be writing on the following prompt:</p>
-      <p
-        style={{
-          border: "1px solid black",
-          padding: "5px",
-          fontSize: "14pt",
-        }}
-      >
-        {writingPrompt}
-      </p>
+      <h1>Interview Prep!</h1>
       <p>
-        Before you start writing,{" "}
-        <b>brainstorm some things you might include in your writing.</b>
+        You're going to get interviewed on live TV about{" "}
+        <span style={{ color: "orange" }}>{topicName}</span>.{" "}
+        <b>Don't get caught unprepared!</b> Try to anticipate what questions the
+        interviewer might ask you.
       </p>
+
       <ul>
-        <li>Try to list at least {targetIdeaCount} ideas.</li>
-        <li>Go for quantity, not quality.</li>
-        <li>The order of ideas doesn't matter.</li>
-        <li>You don't need complete sentences.</li>
+        <li>Goal: at least {targetIdeaCount} questions</li>
+        <li>Quantity, not quality.</li>
+        <li>Order doesn't matter.</li>
+        <li>Complete sentences unneeded.</li>
       </ul>
-      <p>You can click Add or press Enter to add an idea.</p>
     </div>
   );
 }
@@ -197,36 +247,33 @@ function getTask(promptName) {
       },
       writingPrompt,
       nameField,
-      precommitScreen: {
-        screen: "Precommit",
-        view: () => (
-          <div className="Survey">
-            <span>
-              Think of a restaurant (or bar, cafe, diner, etc.) that you've been
-              to recently that you <b>haven't written about before</b>.
-            </span>
-            <div
-              style={{
-                padding: "12px",
-                lineHeight: 1.5,
-              }}
-            >
-              Name: <ControlledInput name={nameField} />
-              <br />
-              About how long ago did you visit, in days?{" "}
-              <ControlledInput
-                name={"restaurant-daysAgo"}
-                type="number"
-                min="0"
-              />
-              <br />
-              How would you rate it?{" "}
-              <ControlledStarRating name={"restaurant-star"} />
-            </div>
-            <NextBtn />
+      topicName: <ControlledInputView name={nameField} />,
+      precommitView: () => (
+        <div>
+          <span>
+            Think of a restaurant (or bar, cafe, diner, etc.) that you've been
+            to recently that you <b>haven't written about before</b>.
+          </span>
+          <div
+            style={{
+              padding: "12px",
+              lineHeight: 1.5,
+            }}
+          >
+            Name: <ControlledInput name={nameField} />
+            <br />
+            About how long ago did you visit, in days?{" "}
+            <ControlledInput
+              name={"restaurant-daysAgo"}
+              type="number"
+              min="0"
+            />
+            <br />
+            How would you rate it?{" "}
+            <ControlledStarRating name={"restaurant-star"} />
           </div>
-        ),
-      },
+        </div>
+      ),
       targetIdeaCount: 20,
       wordCountTarget: 120,
       ideaSource: (
@@ -264,28 +311,25 @@ function getTask(promptName) {
       },
       nameField,
       writingPrompt,
-      precommitScreen: {
-        screen: "Precommit",
-        view: () => (
-          <div className="Survey">
-            <span>
-              What is one of your favorite movies (or TV shows, documentaries,
-              etc.)?
-            </span>
-            <div
-              style={{
-                padding: "12px",
-                lineHeight: 1.5,
-              }}
-            >
-              Name: <ControlledInput name={nameField} />
-              <br />
-              What <i>genre</i> is it? <ControlledInput name={"movie-genre"} />
-            </div>
-            <NextBtn />
+      topicName: <ControlledInputView name={nameField} />,
+      precommitView: () => (
+        <div className="Survey">
+          <span>
+            What is one of your favorite movies (or TV shows, documentaries,
+            etc.)?
+          </span>
+          <div
+            style={{
+              padding: "12px",
+              lineHeight: 1.5,
+            }}
+          >
+            Name: <ControlledInput name={nameField} />
+            <br />
+            What <i>genre</i> is it? <ControlledInput name={"movie-genre"} />
           </div>
-        ),
-      },
+        </div>
+      ),
       targetIdeaCount: 20,
       wordCountTarget: 120,
       ideaSource: <span>Movie reviews from IMDB</span>,
@@ -313,27 +357,24 @@ function getTask(promptName) {
       },
       nameField,
       writingPrompt,
-      precommitScreen: {
-        screen: "Precommit",
-        view: () => (
-          <div className="Survey">
-            <span>
-              You'll be writing a brief overview of a destination (city, region,
-              national park, etc.) of your choice for a family who might want to
-              visit.
-            </span>
-            <div
-              style={{
-                padding: "12px",
-                lineHeight: 1.5,
-              }}
-            >
-              Destination Name: <ControlledInput name={nameField} />
-            </div>
-            <NextBtn />
+      topicName: <ControlledInputView name={nameField} />,
+      precommitView: () => (
+        <div className="Survey">
+          <span>
+            What is a travel destination (city, region, national park, etc.)
+            that you're familiar with?
+          </span>
+          <div
+            style={{
+              padding: "12px",
+              lineHeight: 1.5,
+            }}
+          >
+            Destination Name: <ControlledInput name={nameField} />
           </div>
-        ),
-      },
+        </div>
+      ),
+
       targetIdeaCount: 20,
       wordCountTarget: 120,
       ideaSource: (
@@ -380,28 +421,26 @@ function getTask(promptName) {
         plural: "news articles",
       },
       writingPrompt,
-      precommitScreen: {
-        screen: "Precommit",
-        view: () => (
-          <div className="Survey">
-            <span>
-              Imagine looking at the news and seeing a headline that really
-              makes you happy. What is that headline?
-            </span>
-            <div
-              style={{
-                padding: "12px",
-                lineHeight: 1.5,
-              }}
-            >
-              Headline:
-              <br />
-              <ControlledInput name={nameField} style={{ width: "300px" }} />
-            </div>
-            <NextBtn />
+      topicName: <ControlledInputView name={nameField} />,
+      precommitView: () => (
+        <div className="Survey">
+          <span>
+            Imagine looking at the news and seeing a headline that really makes
+            you happy. What is that headline?
+          </span>
+          <div
+            style={{
+              padding: "12px",
+              lineHeight: 1.5,
+            }}
+          >
+            Headline:
+            <br />
+            <ControlledInput name={nameField} style={{ width: "300px" }} />
           </div>
-        ),
-      },
+        </div>
+      ),
+
       targetIdeaCount: 20,
       wordCountTarget: 120,
       ideaSource: (
@@ -450,6 +489,20 @@ function getIntroSurvey(tasksAndConditions) {
   };
 }
 
+const getPrecommitScreen = tasksAndConditions => ({
+  screen: "Precommit",
+  view: () => (
+    <div className="Survey">
+      {tasksAndConditions.map(({ task }, idx) => (
+        <div key={idx} style={{ borderBottom: "1px solid black" }}>
+          {task.precommitView()}
+        </div>
+      ))}
+      <NextBtn />
+    </div>
+  ),
+});
+
 function getPrewritingScreens(tasksAndConditions) {
   const getPrewriteScreen = (idx, task, conditionName) => ({
     preEvent: setupTrialEvent(`trial-${idx}`, conditionName, task.flags),
@@ -459,19 +512,18 @@ function getPrewritingScreens(tasksAndConditions) {
       const { targetIdeaCount } = task;
       return (
         <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-          {brainstormHeader(task.writingPrompt, targetIdeaCount)}
+          {brainstormHeader(task.topicName, targetIdeaCount)}
           <div style={{ display: "flex", flexFlow: "col nowrap" }}>
             <div style={{ flex: "1 0 auto" }}>
-              <b>Ideas</b>
+              <b>Questions the interviewer might ask you!</b>
               <SmartIdeaList />
             </div>
             <InspirationBox ideaSource={task.ideaSource} />
           </div>
           <p>
-            You're at {numIdeas} ideas
             {numIdeas < targetIdeaCount
-              ? `; try to get to ${targetIdeaCount}`
-              : "."}
+              ? `Try to get to ${targetIdeaCount} questions.`
+              : null}
           </p>
           <NextBtn disabled={numIdeas < targetIdeaCount} />
         </div>
@@ -480,30 +532,22 @@ function getPrewritingScreens(tasksAndConditions) {
   });
 
   let result = [];
-  tasksAndConditions.forEach(({ prompt, conditionName, task }, idx) => {
-    // TODO: show the study progress
-    result.push(task.precommitScreen);
-  });
 
   result.push({
     screen: "PreSurvey",
     view: surveyView({
-      title: "Survey Before Writing",
+      title: "Confidence Survey",
       basename: "pre",
       questions: [
-        {
-          type: "text",
-          text: (
-            <p>Here are the writing prompts you're going to work on today.</p>
-          ),
-        },
         ...flatMap(tasksAndConditions, ({ prompt, task }, idx) => [
-          { type: "text", text: <div>Prompt: {task.writingPrompt}</div> },
           likert(
             `taskEfficacy-${idx}`,
-            `I am confident that I can come up with at least ${
-              task.targetIdeaCount
-            } ideas for what to write about for this prompt.`,
+            <span>
+              {`I am confident that I can come up with at least ${
+                task.targetIdeaCount
+              } questions that someone might ask me about `}
+              <b>{task.topicName}</b>
+            </span>,
             7,
             ["strongly disagree", "strongly agree"]
           ),
