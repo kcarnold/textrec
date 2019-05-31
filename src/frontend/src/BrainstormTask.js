@@ -191,10 +191,20 @@ const getPracticeScreen = () => ({
     const targetIdeaCount = 20;
     return (
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+        <h1>Practice Round</h1>
         <p>
-          Try to list 20 words in the English dictionary with "q" as the second
-          letter.
+          As part of this survey, you'll be using a system that offers
+          inspiration while you're brainstorming. Let's practice using it.
         </p>
+        <p>
+          <b>Practice Task:</b> Try to list 20 English words with "q" as the
+          second letter.
+        </p>
+        <p>
+          For this practice task, the inspiration box will show word prefixes
+          that you haven't used yet.
+        </p>
+
         <div style={{ display: "flex", flexFlow: "col nowrap" }}>
           <div style={{ flex: "1 0 auto" }}>
             <b>Words</b>

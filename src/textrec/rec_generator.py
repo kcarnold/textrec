@@ -344,11 +344,29 @@ WORDS_WITH_Q_AS_SECOND_LETTER = "aqaba aqua aquacultural aquaculture aquae aqual
 def get_cue_practice_q(already_got, n_cues):
     assert isinstance(already_got, list)
     already_got = set(already_got)
+    already_got_prefixes = {
+        word[:i]
+        for word in already_got
+        for i in range(1, len(word))
+    }
 
-    candidates = []
-    for word in WORDS_WITH_Q_AS_SECOND_LETTER:
-        if word not in already_got:
-            candidates.append(word)
-
-    np.random.shuffle(candidates)
+    if False:
+        candidates = []
+        for word in WORDS_WITH_Q_AS_SECOND_LETTER:
+            if word not in already_got:
+                candidates.append(word)
+        np.random.shuffle(candidates)
+    else:
+        candidates = set()
+        for word in WORDS_WITH_Q_AS_SECOND_LETTER:
+            if word in already_got_prefixes:
+                continue
+            for i in range(1, len(word)):
+                prefix = word[:i]
+                if prefix not in already_got_prefixes:
+                    candidates.add(prefix + ("..." if i < len(word) else ""))
+                    break
+        candidates = list(candidates)
+        np.random.shuffle(candidates)
+        candidates.sort(key=len)
     return candidates[:n_cues]
