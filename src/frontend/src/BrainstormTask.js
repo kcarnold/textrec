@@ -70,7 +70,7 @@ const InspirationBox = iobs(({ state, dispatch, ideaSource }) =>
         Get fresh inspirations!
       </button>
       <br />
-      {state.experimentState.suggestions.length > 0 && (
+      {state.experimentState.suggestions.length > 0 ? (
         <div>
           <ul>
             {state.experimentState.suggestions.map((s, idx) => (
@@ -80,6 +80,10 @@ const InspirationBox = iobs(({ state, dispatch, ideaSource }) =>
             ))}
           </ul>
           <p style={{ fontSize: "8pt" }}>Source: {ideaSource}</p>
+        </div>
+      ) : (
+        <div style={{ color: "#777" }}>
+          Click the button above if you're feeling stuck.
         </div>
       )}
     </div>
