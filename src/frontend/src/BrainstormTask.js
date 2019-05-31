@@ -12,7 +12,7 @@ import { TrialState } from "./BrainstormTrialState";
 import * as Views from "./CueViews";
 import { Editable } from "./Editable";
 import { NextBtn } from "./BaseViews";
-import { Survey, likert, agreeLikert } from "./SurveyViews";
+import { Survey, likert, agreeLikert, surveyBody } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
 
@@ -167,7 +167,6 @@ function getScreens(prompts, conditionNames, isDemo) {
     getPrecommitScreen(tasksAndConditions),
     // getTutorialScreen(),
     getPracticeScreen(),
-    getTaskDescriptionScreen(),
     ...getPrewritingScreens(tasksAndConditions),
     ...getFinalWritingScreens(tasksAndConditions),
     getClosingSurvey(tasksAndConditions),
@@ -183,6 +182,7 @@ const getTutorialScreen = () => ({
     </div>
   ),
 });
+
 const getPracticeScreen = () => ({
   preEvent: setupTrialEvent(`practice`, "practice", { domain: "_q" }),
   screen: "Practice",
@@ -221,22 +221,6 @@ const getPracticeScreen = () => ({
       </div>
     );
   }),
-});
-
-const getTaskDescriptionScreen = () => ({
-  screen: "TaskDescription",
-  view: () => (
-    <div>
-      <p>
-        Imagine you're about to get interviewed on live TV. The interviewer
-        might ask you detailed questions about any of the topics you listed
-        earlier. <b>Don't get caught unprepared!</b> In the next few screens,
-        you'll try to come up with ideas about what questions you might get
-        asked.
-      </p>
-      <NextBtn />
-    </div>
-  ),
 });
 
 const ControlledInputView = iobs(
@@ -574,26 +558,38 @@ function getPrewritingScreens(tasksAndConditions) {
 
   result.push({
     screen: "PreSurvey",
-    view: surveyView({
-      title: "Confidence Survey",
-      basename: "pre",
-      questions: [
-        ...flatMap(tasksAndConditions, ({ prompt, task }, idx) => [
-          likert(
-            `taskEfficacy-${idx}`,
-            <span>
-              {`I am confident that I can come up with at least ${
-                task.targetIdeaCount
-              } questions that someone might ask me about `}
-              <b>{task.topicName}</b>
-            </span>,
-            7,
-            ["strongly disagree", "strongly agree"]
-          ),
-        ]),
-      ],
-    }),
+    view: () => (
+      <div className="Survey">
+        <h1>Today's Task</h1>
+        <p>
+          Imagine you're about to get interviewed on live TV. The interviewer
+          might ask you detailed questions about any of the topics you listed
+          earlier. <b>Don't get caught unprepared!</b> In the next few screens,
+          you'll try to come up with ideas about what questions you might get
+          asked.
+        </p>
+        {surveyBody(
+          "pre",
+          flatMap(tasksAndConditions, ({ prompt, task }, idx) => [
+            likert(
+              `taskEfficacy-${idx}`,
+              <span>
+                {`I am confident that I can come up with at least ${
+                  task.targetIdeaCount
+                } questions that someone might ask me about `}
+                <b>{task.topicName}</b>
+              </span>,
+              7,
+              ["strongly disagree", "strongly agree"]
+            ),
+          ])
+        )}
+
+        <NextBtn />
+      </div>
+    ),
   });
+
   tasksAndConditions.forEach(({ prompt, conditionName, task }, idx) => {
     // TODO: Instructions screens?
     let surveyQuestions = [
@@ -619,6 +615,19 @@ function getPrewritingScreens(tasksAndConditions) {
       ...surveyQuestions,
       agreeLikert("distracting", "The system was distracting."),
       agreeLikert("system-helped", "The system was helpful overall."),
+      {
+        text: "When did you request inspiration?",
+        responseType: "text",
+        name: "whenRequest",
+        flags: { multiline: true },
+      },
+      {
+        text:
+          "Did you experience any technical difficulties that you haven't reported already?",
+        responseType: "text",
+        name: "techDiff",
+        flags: { multiline: true, placeholder: "optional" },
+      },
     ];
     result.push(getPrewriteScreen(idx, task, conditionName));
     result.push({
@@ -631,32 +640,32 @@ function getPrewritingScreens(tasksAndConditions) {
     });
   });
 
-  result.push({
-    screen: "MidwaySurvey",
-    view: surveyView({
-      title: "Halfway survey",
-      basename: "midway",
-      questions: [
-        {
-          type: "text",
-          text: (
-            <p>Here are the writing prompts you have done brainstorming for.</p>
-          ),
-        },
-        ...flatMap(tasksAndConditions, ({ prompt, task }, idx) => [
-          { type: "text", text: <div>Prompt: {task.writingPrompt}</div> },
-          likert(
-            `taskEfficacyPost-${idx}`,
-            `I am confident that I can come up with at least ${
-              task.targetIdeaCount
-            } ideas for writing about a similar prompt in the future.`,
-            7,
-            ["strongly disagree", "strongly agree"]
-          ),
-        ]),
-      ],
-    }),
-  });
+  // result.push({
+  //   screen: "MidwaySurvey",
+  //   view: surveyView({
+  //     title: "Halfway survey",
+  //     basename: "midway",
+  //     questions: [
+  //       {
+  //         type: "text",
+  //         text: (
+  //           <p>Here are the writing prompts you have done brainstorming for.</p>
+  //         ),
+  //       },
+  //       ...flatMap(tasksAndConditions, ({ prompt, task }, idx) => [
+  //         { type: "text", text: <div>Prompt: {task.writingPrompt}</div> },
+  //         likert(
+  //           `taskEfficacyPost-${idx}`,
+  //           `I am confident that I can come up with at least ${
+  //             task.targetIdeaCount
+  //           } ideas for writing about a similar prompt in the future.`,
+  //           7,
+  //           ["strongly disagree", "strongly agree"]
+  //         ),
+  //       ]),
+  //     ],
+  //   }),
+  // });
   return result;
 }
 
@@ -750,6 +759,7 @@ function getClosingSurvey(tasksAndConditions) {
           options: ["Use my data", "Don't use my data"],
           name: "shouldExclude",
         },
+        SurveyData.techDiff,
         SurveyData.otherFinal,
       ],
     }),

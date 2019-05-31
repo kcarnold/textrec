@@ -149,19 +149,22 @@ const Question = inject("state")(
   })
 );
 
+export const surveyBody = (basename, questions) =>
+  questions.map((question, idx) => {
+    return (
+      <Question
+        key={question.name || idx}
+        basename={basename}
+        question={question}
+      />
+    );
+  });
+
 export const Survey = ({ title, basename, questions }) => (
   <div className="Survey">
     <h1>{title}</h1>
 
-    {questions.map((question, idx) => {
-      return (
-        <Question
-          key={question.name || idx}
-          basename={basename}
-          question={question}
-        />
-      );
-    })}
+    {surveyBody(basename, questions)}
 
     <NextBtn />
   </div>
