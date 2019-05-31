@@ -53,8 +53,13 @@ async def get_cue_API(executor, request):
     n_cues = request.get("n_cues", 5)
 
     text = request["text"]
-    model_name = domain_to_model[domain]
 
+    if rec_type == "practice":
+        assert domain == "_q"
+        candidates = get_cue_practice_q(text, n_cues=n_cues)
+        return dict(cues=[dict(text=candidate) for candidate in candidates])
+
+    model_name = domain_to_model[domain]
     if rec_type == "randomSents":
         return get_cue_random(model_name=model_name, n_cues=n_cues)
     elif rec_type == "cueSents":
@@ -81,7 +86,7 @@ def get_cue_random_words(*, model_name, n_cues):
         if len(tokens) < 4:
             continue
         tok_idx = np.random.choice(len(tokens) - 3)
-        phrase = ' '.join(tokens[tok_idx:tok_idx + 3])
+        phrase = " ".join(tokens[tok_idx : tok_idx + 3])
         cues.append(dict(text=phrase))
         if len(cues) == n_cues:
             break
@@ -97,7 +102,7 @@ def get_cue(text, *, model_name, n_cues, mode, method="w2v"):
     cluster_labels = cueing.get_model(model_name, "labels")
 
     def get_label_for_cluster(cluster_idx):
-        return ' / '.join(cluster_labels[cluster_idx])
+        return " / ".join(cluster_labels[cluster_idx])
 
     if mode == "cue_phrase":
         # Note that current models don't save these...
@@ -137,6 +142,7 @@ def get_cue(text, *, model_name, n_cues, mode, method="w2v"):
                 )
 
     elif mode == "label3":
+
         def get_cue_for_cluster(cluster_to_cue):
             return dict(text=get_label_for_cluster(cluster_to_cue))
 
@@ -165,8 +171,7 @@ def get_cue(text, *, model_name, n_cues, mode, method="w2v"):
     print("Cueing", cued_clusters)
 
     existing_clusters_labeled = [
-        (idx, get_label_for_cluster(idx))
-        for idx in existing_clusters.tolist()
+        (idx, get_label_for_cluster(idx)) for idx in existing_clusters.tolist()
     ]
     return dict(cues=cues, existing_clusters=existing_clusters_labeled)
 
@@ -220,9 +225,7 @@ def next_cluster_distribution_given_context_clusters(
     return cluster_probs
 
 
-def next_cluster_distribution(
-    text, model_name, method, existing_clusters_weight=1e-6
-):
+def next_cluster_distribution(text, model_name, method, existing_clusters_weight=1e-6):
     sents = tokenize(text)
     vectorizer = cueing.get_model(model_name, "vectorizer")
     projection_mat = cueing.get_model(model_name, "projection_mat")
@@ -316,3 +319,36 @@ async def get_keystroke_rec_onmt(executor, request):
             max(prob for word, prob in recs if prob is not None) > flags["threshold"]
         )
     return result
+
+
+def get_q_wordlist():
+    import wordfreq
+
+    freq_dict = wordfreq.get_frequency_dict("en")
+    from nltk.corpus import wordnet
+
+    results = (
+        word
+        for word, freq in freq_dict.items()
+        if len(word) > 3 and word[1] == "q" and freq > 1e-8
+    )
+    results = [word for word in results if len(wordnet.synsets(word)) > 0]
+    results.sort()
+    # results = sorted({wordnet.morphy(word) for word in results})
+    return results
+
+
+WORDS_WITH_Q_AS_SECOND_LETTER = "aqaba aqua aquacultural aquaculture aquae aqualung aquamarine aquamarines aquanaut aquanauts aquaplaning aquaria aquarium aquariums aquarius aquas aquatic aquatics aquatint aquatinted aquatints aquavit aqueduct aqueducts aqueous aquifer aquifers aquila aquilegia aquiline aquinas aquitaine aquitania equable equal equaled equaling equalisation equalise equalised equaliser equalisers equalises equalising equalitarian equalities equality equalization equalize equalized equalizer equalizers equalizes equalizing equalled equalling equally equals equanimity equanimous equate equated equates equating equation equations equator equatorial equerries equerry equestrian equestrians equiangular equidae equidistant equids equilateral equilibrate equilibrated equilibrates equilibrating equilibration equilibria equilibrium equilibriums equine equines equinoctial equinox equinoxes equip equipage equiped equipes equipment equipments equipoise equipped equipping equips equipt equisetum equitable equitably equitation equities equity equivalence equivalences equivalent equivalents equivocal equivocally equivocate equivocated equivocates equivocating equivocation equivocations equus squab squabble squabbled squabbles squabbling squabs squad squadron squadrons squads squalid squall squalling squalls squally squalor squalus squama squamata squander squandered squandering squanders square squared squarely squareness squarer squares squaring squarish squash squashed squashes squashing squashy squat squating squats squatted squatter squatters squatting squatty squaw squawk squawked squawking squawks squaws squeak squeaked squeaker squeakers squeaking squeaks squeaky squeal squealed squealer squealers squealing squeals squeamish squeamishness squeegee squeegees squeezable squeeze squeezed squeezer squeezers squeezes squeezing squelch squelched squelches squelching squib squibs squid squids squiffy squiggle squiggles squiggly squill squilla squinch squinches squint squinted squinting squints squinty squire squired squires squiring squirm squirmed squirming squirms squirrel squirrels squirt squirted squirter squirters squirting squirts squish squished squishes squishing squishy".split()
+
+
+def get_cue_practice_q(already_got, n_cues):
+    assert isinstance(already_got, list)
+    already_got = set(already_got)
+
+    candidates = []
+    for word in WORDS_WITH_Q_AS_SECOND_LETTER:
+        if word not in already_got:
+            candidates.append(word)
+
+    np.random.shuffle(candidates)
+    return candidates[:n_cues]

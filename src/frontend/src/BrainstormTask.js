@@ -21,6 +21,7 @@ import * as shuffle from "./shuffle";
 
 const namedConditions = {
   norecs: { recType: null },
+  practice: { recType: "practice" },
   randomSents: { recType: "randomSents" },
   cueSents: { recType: "cueSents" },
   cueWords: { recType: "cueWords" },
@@ -91,8 +92,9 @@ const InspirationBox = iobs(({ state, dispatch, ideaSource }) =>
 );
 
 // Hacky: this needs to be an observer because userIdeas is an observable...
-const IdeaList = observer(({ userIdeas, addIdea }) => {
+const IdeaList = observer(({ userIdeas, addIdea, placeholder }) => {
   let newIdeaEntry = React.createRef();
+  if (!placeholder) placeholder = "Is this a question?";
   function _addIdea() {
     let text = newIdeaEntry.current.value.trim();
     if (text.length > 0) {
@@ -120,9 +122,9 @@ const IdeaList = observer(({ userIdeas, addIdea }) => {
               type="text"
               ref={newIdeaEntry}
               onKeyPress={onKey}
-              placeholder="Is this a question?"
+              placeholder={placeholder}
             />{" "}
-            <span style={{ color: "#777" }}>Press Enter to add a question</span>
+            <span style={{ color: "#777" }}>Press Enter to add</span>
           </li>
         )}
       </ol>
@@ -130,7 +132,7 @@ const IdeaList = observer(({ userIdeas, addIdea }) => {
   );
 });
 
-const SmartIdeaList = iobs(({ state, dispatch, fixed }) => {
+const SmartIdeaList = iobs(({ state, dispatch, fixed, placeholder }) => {
   function addIdea(idea) {
     dispatch({ type: "addIdea", idea });
   }
@@ -138,6 +140,7 @@ const SmartIdeaList = iobs(({ state, dispatch, fixed }) => {
     <IdeaList
       userIdeas={state.experimentState.ideas}
       addIdea={fixed ? null : addIdea}
+      placeholder={placeholder}
     />
   );
 });
@@ -163,7 +166,7 @@ function getScreens(prompts, conditionNames, isDemo) {
     // getIntroSurvey(tasksAndConditions),
     getPrecommitScreen(tasksAndConditions),
     // getTutorialScreen(),
-    // getPracticeScreen(),
+    getPracticeScreen(),
     getTaskDescriptionScreen(),
     ...getPrewritingScreens(tasksAndConditions),
     ...getFinalWritingScreens(tasksAndConditions),
@@ -181,13 +184,35 @@ const getTutorialScreen = () => ({
   ),
 });
 const getPracticeScreen = () => ({
+  preEvent: setupTrialEvent(`practice`, "practice", { domain: "_q" }),
   screen: "Practice",
-  view: () => (
-    <div>
-      <NextBtn />
-    </div>
-  ),
+  view: iobs(({ state }) => {
+    const numIdeas = state.experimentState.ideas.length;
+    const targetIdeaCount = 20;
+    return (
+      <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+        <p>
+          Try to list 20 words in the English dictionary with "q" as the second
+          letter.
+        </p>
+        <div style={{ display: "flex", flexFlow: "col nowrap" }}>
+          <div style={{ flex: "1 0 auto" }}>
+            <b>Words</b>
+            <SmartIdeaList placeholder="_q__" />
+          </div>
+          <InspirationBox ideaSource={"the Wordfreq Python package"} />
+        </div>
+        <p>
+          {numIdeas < targetIdeaCount
+            ? `Try to get to ${targetIdeaCount} words.`
+            : null}
+        </p>
+        <NextBtn disabled={numIdeas < targetIdeaCount} />
+      </div>
+    );
+  }),
 });
+
 const getTaskDescriptionScreen = () => ({
   screen: "TaskDescription",
   view: () => (
