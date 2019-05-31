@@ -82,7 +82,7 @@ const ShowAllScreens = observer(
                 <div
                   style={{
                     overflow: "auto",
-                    width: 360,
+                    width: 1000,
                     height: 599,
                     border: "1px solid black",
                   }}
