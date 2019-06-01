@@ -11,7 +11,7 @@ import tqdm
 import mwparserfromhell
 
 data_path = "/Data/Wiki/enwiki-20190520-pages-articles-multistream.xml.bz2"
-
+total_n_pages = 19_414_056
 out_path = pathlib.Path("/Data/Wiki/by_infobox")
 
 filter_namespaces = ("0",)
@@ -21,7 +21,9 @@ pages = gensim.corpora.wikicorpus.extract_pages(
 
 
 def get_infobox_membership(pages):
-    for name, content, pageid in pages:
+    for name, content, pageid in tqdm.tqdm(pages, total=total_n_pages):
+        if "Infobox " not in content:
+            continue
         wiki = mwparserfromhell.parse(content)
         infoboxes = wiki.filter_templates(matches="Infobox ")
         if len(infoboxes) > 0:
@@ -37,7 +39,7 @@ def sanitize_name(name):
     return name.replace("/", "_")
 
 
-for cat_name, name, content in tqdm.tqdm(get_infobox_membership(pages)):
+for cat_name, name, content in get_infobox_membership(pages):
     path = out_path / sanitize_name(cat_name)
     path.mkdir(parents=True, exist_ok=True)
     (path / (sanitize_name(name) + ".bz2")).write_bytes(
