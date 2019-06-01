@@ -6,8 +6,12 @@ import numpy as np
 
 from .paths import paths
 
-CNNB_JOBLIB = str(paths.models / "conceptnet-numberbatch-201609-en.joblib")
-CNNB_H5 = "/Data/ConceptNetNumberBatch/conceptnet-numberbatch-mini-1706.h5"
+CNNB_RELEASE = "1706"
+CNNB_JOBLIB = str(paths.models / f"conceptnet-numberbatch-{CNNB_RELEASE}-en.joblib")
+CNNB_H5 = (
+    paths.dataset_root
+    / f"ConceptNetNumberBatch/conceptnet-numberbatch-mini-{CNNB_RELEASE}.h5"
+)
 
 
 @attr.s
@@ -72,18 +76,14 @@ def get_projection_mat(vocab, normalize_by_wordfreq=True):
         except KeyError:
             return np.zeros(cnnb.ndim)
 
-    cnnb_vecs_for_vocab = np.array(
-        [get_or_zero(word) for word in vocab]
-    )
+    cnnb_vecs_for_vocab = np.array([get_or_zero(word) for word in vocab])
 
     if normalize_by_wordfreq:
         import wordfreq
+
         wordfreqs = [
-            wordfreq.word_frequency(word, "en", "large", minimum=1e-9)
-            for word in vocab
+            wordfreq.word_frequency(word, "en", "large", minimum=1e-9) for word in vocab
         ]
-        return (
-            -np.log(wordfreqs)[:, None] * cnnb_vecs_for_vocab
-        )
+        return -np.log(wordfreqs)[:, None] * cnnb_vecs_for_vocab
     else:
         return cnnb_vecs_for_vocab
