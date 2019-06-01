@@ -1,5 +1,7 @@
 # Evaluating Example Sets
 
+import json
+
 import nltk
 import numpy as np
 import tqdm
@@ -64,17 +66,16 @@ def get_scores_w2v(
     return np.array(y_true), np.array(y_score)
 
 
-base_cluster_param_grid = {"n_clusters": [50, 128, 250], "normalize": [True, False]}
-
-
 def collect_eval_data(
     model_basename,
-    random_state,
+    random_state=0,
     n_relevance_samples=1000,
-    clustering_param_grid=base_cluster_param_grid,
+    n_clusters_=[50, 128, 250],
     n_w2v_samples=5,
     w2v_embedding_size=50,
 ):
+
+    clustering_param_grid = {"n_clusters": n_clusters_, "normalize": [True, False]}
 
     train_dataset_name = model_basename + ":train"
     valid_dataset_name = model_basename + ":valid"
@@ -170,3 +171,29 @@ def collect_eval_data(
                 )
 
     return results
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("dataset_name")
+    parser.add_argument("n_clusters", type=str)
+    parser.add_argument("n_relevance_samples", type=int, default=1000)
+    parser.add_argument("--w2v_embedding_size", type=int, default=50)
+    parser.add_argument("--output", type=str, default="relevance_eval_results.json")
+    opts = parser.parse_args()
+
+    n_clusters_ = [int(x) for x in opts.n_clusters.split(",")]
+
+    results = collect_eval_data(
+        model_basename=opts.dataset_name,
+        random_state=0,
+        n_relevance_samples=opts.n_relevance_samples,
+        n_clusters_=n_clusters_,
+        n_w2v_samples=5,
+        w2v_embedding_size=opts.w2v_embedding_size,
+    )
+
+    with open(opts.output, "w") as f:
+        json.dump(results, f)
