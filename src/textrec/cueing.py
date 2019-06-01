@@ -128,7 +128,7 @@ def cached_sentences(dataset_name):
 
 
 @mem.cache
-def cached_vectorized_dataset(dataset_name):
+def cached_vectorized_dataset(dataset_name, normalize_by_wordfreq=True):
     sentences = cached_sentences(dataset_name)
     print("{:,} sentences".format(len(sentences)))
 
@@ -152,7 +152,9 @@ def cached_vectorized_dataset(dataset_name):
     length_filtered.raw_vecs = vectorizer.fit_transform(length_filtered.sentences.sent)
 
     vocab = vectorizer.get_feature_names()
-    projection_mat = numberbatch_vecs.get_projection_mat(vocab)
+    projection_mat = numberbatch_vecs.get_projection_mat(
+        vocab, normalize_by_wordfreq=normalize_by_wordfreq
+    )
 
     length_filtered.projected_vecs = length_filtered.raw_vecs.dot(projection_mat)
     return dict(
@@ -432,7 +434,11 @@ def train_topic_w2v(sentences, embedding_size, seed=1):
     )
 
 
-def predict_missing_topics_w2v(model, existing_clusters, n_clusters):
+def predict_missing_topics_w2v(
+    model, existing_clusters, n_clusters, overall_topic_distribution
+):
+    if len(existing_clusters) == 0:
+        return overall_topic_distribution.copy()
     raw_cluster_probs = model.predict_output_word(
         [str(idx) for idx in existing_clusters], topn=2000
     )

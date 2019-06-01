@@ -1,6 +1,7 @@
 # Evaluating Example Sets
 
 import json
+from functools import lru_cache
 
 import nltk
 import numpy as np
@@ -35,35 +36,43 @@ def collect_relevance_dataset(n_samples, validation_docs, validation_sents):
     return relevance_data
 
 
-def get_scores_w2v(
-    *,
-    model,
-    novel_only=False,
-    context_existing_clusters,
-    target_clusters,
-    random_clusters,
+def get_scores(
+    *, context_existing_clusters, cluster_probs, target_clusters, random_clusters
 ):
     y_true = []
     y_score = []
+    is_novels = []
     for i in range(len(context_existing_clusters)):
         existing_clusters = context_existing_clusters[i]
         target_cluster = target_clusters[i]
-        if len(existing_clusters) == 0:
-            # w2v gets to cheat and not predict here.
-            continue
-        if novel_only and target_cluster in existing_clusters:
-            continue
-        cluster_probs = model.predict_output_word(
-            [str(idx) for idx in existing_clusters], topn=2000
-        )
-        cluster_probs = dict(cluster_probs)
-        assert 0.999 < sum(cluster_probs.values()) < 1.001
+        probs = cluster_probs[i]
+
+        is_novel = target_cluster not in existing_clusters
 
         for true_label, clust in enumerate([random_clusters[i], target_clusters[i]]):
             y_true.append(true_label)
-            y_score.append(cluster_probs[str(clust)])
+            y_score.append(probs[clust])
+            is_novels.append(is_novel)
 
-    return np.array(y_true), np.array(y_score)
+    return np.array(y_true), np.array(y_score), np.array(is_novels)
+
+
+@lru_cache(maxsize=10)
+def get_vectorized_dataset(
+    *, dataset_name, normalize_by_wordfreq, normalize_projected_vecs
+):
+    vectorized = cueing.cached_vectorized_dataset(
+        dataset_name, normalize_by_wordfreq=normalize_by_wordfreq
+    )
+    length_filtered = vectorized["length_filtered"]
+    vectorizer = vectorized["vectorizer"]
+    projection_mat = vectorized["projection_mat"]
+    projected_vecs = length_filtered.projected_vecs
+
+    if normalize_projected_vecs:
+        projected_vecs = preprocessing.normalize(projected_vecs)
+
+    return length_filtered.sentences, vectorizer, projection_mat, projected_vecs
 
 
 def collect_eval_data(
@@ -75,7 +84,11 @@ def collect_eval_data(
     w2v_embedding_size=50,
 ):
 
-    clustering_param_grid = {"n_clusters": n_clusters_, "normalize": [True, False]}
+    clustering_param_grid = {
+        "n_clusters": n_clusters_,
+        "normalize_by_wordfreq": [True, False],
+        "normalize_projected_vecs": [True, False],
+    }
 
     train_dataset_name = model_basename + ":train"
     valid_dataset_name = model_basename + ":valid"
@@ -92,22 +105,13 @@ def collect_eval_data(
 
     results = []
 
-    vectorized = cueing.cached_vectorized_dataset(train_dataset_name)
-    length_filtered = vectorized["length_filtered"]
-    vectorizer = vectorized["vectorizer"]
-    projection_mat = vectorized["projection_mat"]
-
-    projected_vecs_unnorm = length_filtered.projected_vecs
-    projected_vecs_norm = preprocessing.normalize(projected_vecs_unnorm)
-
-    for clustering_params in ParameterGrid(clustering_param_grid):
-        ic(clustering_params)
-
+    for clustering_params in tqdm.tqdm(ParameterGrid(clustering_param_grid), desc="Clustering options"):
         n_clusters = clustering_params["n_clusters"]
-        if clustering_params["normalize"]:
-            projected_vecs = projected_vecs_norm
-        else:
-            projected_vecs = projected_vecs_unnorm
+        training_sentences, vectorizer, projection_mat, projected_vecs = get_vectorized_dataset(
+            dataset_name=train_dataset_name,
+            normalize_by_wordfreq=clustering_params["normalize_by_wordfreq"],
+            normalize_projected_vecs=clustering_params["normalize_projected_vecs"],
+        )
 
         # Cluster
         clusterer = MiniBatchKMeans(
@@ -120,8 +124,16 @@ def collect_eval_data(
         dists_to_centers = clusterer.transform(projected_vecs)
 
         # Hard-assign topics, filter to those close enough.
-        training_topic_labeled_sents = length_filtered.sentences
-        training_topic_labeled_sents["topic"] = np.argmin(dists_to_centers, axis=1)
+        training_sentences["topic"] = np.argmin(dists_to_centers, axis=1)
+
+        overall_topic_distribution = np.bincount(
+            training_sentences.topic, minlength=n_clusters
+        ).astype(float)
+        overall_topic_distribution /= overall_topic_distribution.sum()
+
+        topic_is_common = overall_topic_distribution > np.median(
+            overall_topic_distribution
+        )
 
         def texts_to_clusters(texts):
             if len(texts) == 0:
@@ -130,9 +142,7 @@ def collect_eval_data(
 
         context_existing_clusters = [
             texts_to_clusters(context)
-            for context, target_sent, random_sent in tqdm.tqdm(
-                relevance_data, desc="Getting clusters for contexts"
-            )
+            for context, target_sent, random_sent in relevance_data
         ]
 
         target_clusters = texts_to_clusters(
@@ -142,29 +152,59 @@ def collect_eval_data(
             [random_sent for context, target_sent, random_sent in relevance_data]
         )
 
-        for w2v_seed in range(n_w2v_samples):
+        target_is_common = topic_is_common[target_clusters].repeat(2)
+
+        for w2v_seed in tqdm.trange(n_w2v_samples, desc="w2v samples"):
             ic("Train w2v")
             w2v_model = cueing.train_topic_w2v(
-                training_topic_labeled_sents,
-                embedding_size=w2v_embedding_size,
-                seed=w2v_seed,
+                training_sentences, embedding_size=w2v_embedding_size, seed=w2v_seed
             )
 
-            for novel_only in [False, True]:
-                ic("Score w2v")
-                y_true, y_score = get_scores_w2v(
-                    model=w2v_model,
-                    novel_only=novel_only,
-                    context_existing_clusters=context_existing_clusters,
-                    target_clusters=target_clusters,
-                    random_clusters=random_clusters,
+            predicted_probs = [
+                cueing.predict_missing_topics_w2v(
+                    w2v_model, existing_clusters, n_clusters, overall_topic_distribution
                 )
+                for existing_clusters in context_existing_clusters
+            ]
 
-                relevance_auc = roc_auc_score(y_true, y_score)
+            y_true, y_score, is_novel = get_scores(
+                context_existing_clusters=context_existing_clusters,
+                cluster_probs=predicted_probs,
+                target_clusters=target_clusters,
+                random_clusters=random_clusters,
+            )
+
+            for eval_params in tqdm.tqdm(
+                ParameterGrid(
+                    {
+                        "novel": ["all", "novel", "repeat"],
+                        "topic_frequency": ["all", "common", "rare"],
+                    }
+                ),
+                desc="evaling",
+            ):
+                if eval_params["novel"] == "all":
+                    mask = np.zeros_like(is_novel) == 0
+                elif eval_params["novel"] == "novel":
+                    mask = is_novel
+                else:
+                    assert eval_params["novel"] == "repeat"
+                    mask = ~is_novel
+
+                if eval_params["topic_frequency"] == "common":
+                    mask = mask & target_is_common
+                elif eval_params["topic_frequency"] == "rare":
+                    mask = mask & ~target_is_common
+                else:
+                    assert eval_params["topic_frequency"] == "all"
+
+                num_counted = len(np.flatnonzero(mask))
+                relevance_auc = roc_auc_score(y_true[mask], y_score[mask])
                 results.append(
                     dict(
                         **clustering_params,
-                        novel_only=novel_only,
+                        **eval_params,
+                        num_counted=num_counted,
                         w2v_seed=w2v_seed,
                         relevance_auc=relevance_auc,
                     )
