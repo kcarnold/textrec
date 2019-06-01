@@ -3,8 +3,10 @@
 import nltk
 import numpy as np
 import tqdm
-from sklearn.metrics import roc_auc_score
+from sklearn import preprocessing
 from sklearn.cluster import MiniBatchKMeans
+from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import ParameterGrid
 
 from icecream import ic
 from textrec import cueing
@@ -62,7 +64,18 @@ def get_scores_w2v(
     return np.array(y_true), np.array(y_score)
 
 
-def collect_eval_data(model_basename, random_state, n_relevance_samples=1000):
+base_cluster_param_grid = {"n_clusters": [50, 128, 250], "normalize": [True, False]}
+
+
+def collect_eval_data(
+    model_basename,
+    random_state,
+    n_relevance_samples=1000,
+    clustering_param_grid=base_cluster_param_grid,
+    n_w2v_samples=5,
+    w2v_embedding_size=50,
+):
+
     train_dataset_name = model_basename + ":train"
     valid_dataset_name = model_basename + ":valid"
 
@@ -83,9 +96,18 @@ def collect_eval_data(model_basename, random_state, n_relevance_samples=1000):
     vectorizer = vectorized["vectorizer"]
     projection_mat = vectorized["projection_mat"]
 
-    w2v_embedding_size = 50
-    for n_clusters in [50, 128, 250]:
-        ic(n_clusters)
+    projected_vecs_unnorm = length_filtered.projected_vecs
+    projected_vecs_norm = preprocessing.normalize(projected_vecs_unnorm)
+
+    for clustering_params in ParameterGrid(clustering_param_grid):
+        ic(clustering_params)
+
+        n_clusters = clustering_params["n_clusters"]
+        if clustering_params["normalize"]:
+            projected_vecs = projected_vecs_norm
+        else:
+            projected_vecs = projected_vecs_unnorm
+
         # Cluster
         clusterer = MiniBatchKMeans(
             init="k-means++",
@@ -93,16 +115,12 @@ def collect_eval_data(model_basename, random_state, n_relevance_samples=1000):
             n_init=10,
             random_state=random_state,
         )
-        clusterer.fit(length_filtered.projected_vecs)
-        length_filtered.dists_to_centers = clusterer.transform(
-            length_filtered.projected_vecs
-        )
+        clusterer.fit(projected_vecs)
+        dists_to_centers = clusterer.transform(projected_vecs)
 
         # Hard-assign topics, filter to those close enough.
         training_topic_labeled_sents = length_filtered.sentences
-        training_topic_labeled_sents["topic"] = np.argmin(
-            length_filtered.dists_to_centers, axis=1
-        )
+        training_topic_labeled_sents["topic"] = np.argmin(dists_to_centers, axis=1)
 
         def texts_to_clusters(texts):
             if len(texts) == 0:
@@ -123,7 +141,7 @@ def collect_eval_data(model_basename, random_state, n_relevance_samples=1000):
             [random_sent for context, target_sent, random_sent in relevance_data]
         )
 
-        for w2v_seed in range(5):
+        for w2v_seed in range(n_w2v_samples):
             ic("Train w2v")
             w2v_model = cueing.train_topic_w2v(
                 training_topic_labeled_sents,
@@ -144,7 +162,7 @@ def collect_eval_data(model_basename, random_state, n_relevance_samples=1000):
                 relevance_auc = roc_auc_score(y_true, y_score)
                 results.append(
                     dict(
-                        n_clusters=n_clusters,
+                        **clustering_params,
                         novel_only=novel_only,
                         w2v_seed=w2v_seed,
                         relevance_auc=relevance_auc,
