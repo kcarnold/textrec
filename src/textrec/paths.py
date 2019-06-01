@@ -25,3 +25,6 @@ class paths:
 
     vendor = top_level.parent / 'vendor'
     kenlm_bin = vendor / 'kenlm' / 'build' / 'bin'
+
+    dataset_root = '/Data'
+    

@@ -10,12 +10,19 @@ import pandas as pd
 import tqdm
 
 from .util import ujson
+from .paths import paths
 
-YELP_PATH = "/Data/Yelp/yelp_academic_dataset.json.gz"
-IMDB_PATH = "/Data/Reviews/IMDB/Maas2011/aclImdb.zip"
-BIOS_PATH = "/Data/biosbias/BIOS.pkl"
-NEWSROOM_PATH = "/Data/Newsroom-Dataset/train.jsonl.gz"
-WIKIVOYAGE_PATH = "/Data/WikiVoyage/wikivoyage-pages.xml.bz2"
+paths_by_name = dict(
+    yelp="Yelp/yelp_academic_dataset.json.gz",
+    imdb="Reviews/IMDB/Maas2011/aclImdb.zip",
+    bios="biosbias/BIOS.pkl",
+    newsroom="Newsroom-Dataset/train.jsonl.gz",
+    wikivoyage="WikiVoyage/wikivoyage-pages.xml.bz2",
+)
+
+
+def get_path(name, data_root=paths.dataset_root):
+    return data_root / paths_by_name[name]
 
 
 def add_useless_doc_id(df):
@@ -74,12 +81,17 @@ def join_yelp(data):
     return result
 
 
-def load_yelp(*, path=YELP_PATH):
+def load_yelp(path=None):
+    if path is None:
+        path = get_path("yelp")
     data = join_yelp(load_yelp_raw(path=path))
     return data.rename(columns={"review_id": "doc_id"})
 
 
-def load_imdb(path=IMDB_PATH):
+def load_imdb(path=None):
+    if path is None:
+        path = get_path("imdb")
+
     zf = zipfile.ZipFile(path)
 
     imdb_reviews = []
@@ -97,7 +109,9 @@ def load_imdb(path=IMDB_PATH):
     return pd.DataFrame(imdb_reviews)
 
 
-def load_bios(path=BIOS_PATH):
+def load_bios(path=None):
+    if path is None:
+        path = get_path("bios")
     with open(path, "rb") as f:
         bios = pickle.load(f)
     print(f"Loaded {len(bios)} bios")
@@ -106,7 +120,9 @@ def load_bios(path=BIOS_PATH):
     return add_useless_doc_id(pd.DataFrame(dict(text=texts)))
 
 
-def load_newsroom(path=NEWSROOM_PATH, frac=0.05, random_state=0):
+def load_newsroom(*, path=None, frac=0.05, random_state=0):
+    if path is None:
+        path = get_path("newsroom")
     data = []
 
     columns = ("title", "url", "text", "summary")
@@ -121,7 +137,9 @@ def load_newsroom(path=NEWSROOM_PATH, frac=0.05, random_state=0):
     )
 
 
-def load_wikivoyage(path=WIKIVOYAGE_PATH):
+def load_wikivoyage(path=None):
+    if path is None:
+        path = get_path("wikivoyage")
     import gensim.corpora.wikicorpus
 
     filename = os.path.expanduser(path)
