@@ -157,7 +157,6 @@ def collect_eval_data(
         target_is_common = topic_is_common[target_clusters].repeat(2)
 
         for w2v_seed in tqdm.trange(n_w2v_samples, desc="w2v samples"):
-            ic("Train w2v")
             w2v_model = cueing.train_topic_w2v(
                 training_sentences, embedding_size=w2v_embedding_size, seed=w2v_seed
             )
@@ -176,14 +175,11 @@ def collect_eval_data(
                 random_clusters=random_clusters,
             )
 
-            for eval_params in tqdm.tqdm(
-                ParameterGrid(
-                    {
-                        "novel": ["all", "novel", "repeat"],
-                        "topic_frequency": ["all", "common", "rare"],
-                    }
-                ),
-                desc="evaling",
+            for eval_params in ParameterGrid(
+                {
+                    "novel": ["all", "novel", "repeat"],
+                    "topic_frequency": ["all", "common", "rare"],
+                }
             ):
                 if eval_params["novel"] == "all":
                     mask = np.zeros_like(is_novel) == 0
