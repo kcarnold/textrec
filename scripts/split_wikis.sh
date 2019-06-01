@@ -10,10 +10,13 @@
 
 PYTHON=~/.cache/pypoetry/virtualenvs/textrec-py3.6/bin/python
 
-target=~/Wikipedia/stream${SLURM_ARRAY_TASK_ID}.jsonl
-rm -f "$target"
-
-for page in ~/Wikipedia/enwiki-*multistream${SLURM_ARRAY_TASK_ID}.xml*.bz2; do
-    echo $page
-    bzcat "$page" | "${PYTHON}" scripts/split_wikis.py >> "$target"
+counter=0
+for page in ~/Wikipedia/enwiki-*multistream"${SLURM_ARRAY_TASK_ID}".xml*.bz2; do
+    ((counter++))
+    >&2 echo "$page"
+    (
+        bzcat "$page" |
+        "${PYTHON}" scripts/split_wikis.py |
+        gzip
+    ) > ~/Wikipedia/stream"${SLURM_ARRAY_TASK_ID}-${counter}.jsonl.gz"
 done
