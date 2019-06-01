@@ -127,14 +127,8 @@ def cached_sentences(dataset_name):
     return sentences
 
 
-@lru_cache()
 @mem.cache
-def cached_topic_data(dataset_name, n_clusters):
-    # Load dataset
-    df_full = cached_dataset(dataset_name)
-
-    # flag_best_reviews(df_full)
-
+def cached_vectorized_dataset(dataset_name):
     sentences = cached_sentences(dataset_name)
     print("{:,} sentences".format(len(sentences)))
 
@@ -161,9 +155,23 @@ def cached_topic_data(dataset_name, n_clusters):
     projection_mat = numberbatch_vecs.get_projection_mat(vocab)
 
     length_filtered.projected_vecs = length_filtered.raw_vecs.dot(projection_mat)
+    return dict(
+        length_filtered=length_filtered,
+        vectorizer=vectorizer,
+        projection_mat=projection_mat,
+    )
+
+
+@lru_cache()
+@mem.cache
+def cached_topic_data(dataset_name, n_clusters, random_state=0):
+    # Load dataset
+    df_full = cached_dataset(dataset_name)
+
+    vectorized = cached_vectorized_dataset(dataset_name)
+    length_filtered = vectorized["length_filtered"]
 
     # Cluster
-    random_state = 0
     clusterer = MiniBatchKMeans(
         init="k-means++", n_clusters=n_clusters, n_init=10, random_state=random_state
     )
@@ -174,9 +182,8 @@ def cached_topic_data(dataset_name, n_clusters):
 
     # Hard-assign topics, filter to those close enough.
 
-    length_filtered.sentences["topic"] = np.argmin(
-        length_filtered.dists_to_centers, axis=1
-    )
+    lf_sentences = length_filtered.sentences
+    lf_sentences["topic"] = np.argmin(length_filtered.dists_to_centers, axis=1)
     length_filtered.dist_to_closest_cluster = np.min(
         length_filtered.dists_to_centers, axis=1
     )
@@ -203,8 +210,8 @@ def cached_topic_data(dataset_name, n_clusters):
 
     return dict(
         vars(length_filtered),
-        vectorizer=vectorizer,
-        projection_mat=projection_mat,
+        vectorizer=vectorized["vectorizer"],
+        projection_mat=vectorized["projection_mat"],
         clusterer=clusterer,
         pervasiveness_by_topic=pervasiveness_by_topic,
         total_num_docs=len(df_full),
@@ -376,19 +383,6 @@ def cached_scores_by_cluster_argsort(
     return dict(zip(cluster_indices, argsorts)), sbc_data["unique_starts"]
 
 
-def get_topic_sequences(tokenized_docs, vectorizer, projection_mat, clusterer):
-    """For each document, label the sentences in it by topic."""
-
-    def label_topics(tokenized_doc):
-        sents = tokenized_doc.split("\n")
-        vecs = vectorizer.transform(sents)
-        projected = vecs.dot(projection_mat)
-        clusters = clusterer.predict(projected)
-        return " ".join(str(cluster) for cluster in clusters)
-
-    return [label_topics(tokenized) for tokenized in tqdm(tokenized_docs)]
-
-
 def topic_seq_model_name(dataset_name, n_clusters):
     return f"{dataset_name}_{n_clusters}_topic_seq"
 
@@ -399,21 +393,38 @@ def cached_topic_sequence_lm(dataset_name, n_clusters=75):
     # TODO: should we use UNK or something for a rare topic?
     df_full = cached_dataset(dataset_name)
     topic_data = cached_topic_data(dataset_name, n_clusters=n_clusters)
-    topic_sequences = get_topic_sequences(
-        df_full.tokenized,
-        vectorizer=topic_data["vectorizer"],
-        projection_mat=topic_data["projection_mat"],
-        clusterer=topic_data["clusterer"],
-    )
+    vectorizer = topic_data["vectorizer"]
+    projection_mat = topic_data["projection_mat"]
+    clusterer = topic_data["clusterer"]
+
+    def label_topics(tokenized_doc):
+        sents = tokenized_doc.split("\n")
+        vecs = vectorizer.transform(sents)
+        projected = vecs.dot(projection_mat)
+        clusters = clusterer.predict(projected)
+        return " ".join(str(cluster) for cluster in clusters)
+
+    topic_sequences = [label_topics(tokenized) for tokenized in tqdm(df_full.tokenized)]
     model_name = topic_seq_model_name(dataset_name, n_clusters=n_clusters)
     dump_kenlm(model_name, topic_sequences, order=6, discount_fallback=True)
     return lang_model.Model.get_or_load_model(model_name)
 
 
+def get_topic_sequences(sentences):
+    last_doc = None
+    seqs = []
+    cur_seq = None
+    for doc_id, topic in zip(sentences.doc_id, sentences.topic):
+        if doc_id != last_doc:
+            cur_seq = []
+            seqs.append(cur_seq)
+            last_doc = doc_id
+        cur_seq.append(topic)
+    return seqs
+
+
 def train_topic_w2v(sentences, embedding_size, seed=1):
-    topic_seqs = [
-        group.to_list() for doc_id, group in sentences.groupby("doc_id").topic
-    ]
+    topic_seqs = get_topic_sequences(sentences)
     topic_seq_strs = [[str(idx) for idx in seq] for seq in topic_seqs if len(seq) >= 2]
     return Word2Vec(
         topic_seq_strs, size=embedding_size, window=10, min_count=1, seed=seed

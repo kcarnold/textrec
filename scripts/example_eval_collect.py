@@ -2,12 +2,12 @@
 
 import nltk
 import numpy as np
-import pandas as pd
 import tqdm
-from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.metrics import roc_auc_score
+from sklearn.cluster import MiniBatchKMeans
 
 from icecream import ic
-from textrec import automated_analyses, cueing, datasets, rec_generator
+from textrec import cueing
 
 
 def collect_relevance_dataset(n_samples, validation_docs, validation_sents):
@@ -62,7 +62,7 @@ def get_scores_w2v(
     return np.array(y_true), np.array(y_score)
 
 
-def collect_eval_data(model_basename, random_state, n_relevance_samples=10000):
+def collect_eval_data(model_basename, random_state, n_relevance_samples=1000):
     train_dataset_name = model_basename + ":train"
     valid_dataset_name = model_basename + ":valid"
 
@@ -77,14 +77,32 @@ def collect_eval_data(model_basename, random_state, n_relevance_samples=10000):
     )
 
     results = []
+
+    vectorized = cueing.cached_vectorized_dataset(train_dataset_name)
+    length_filtered = vectorized["length_filtered"]
+    vectorizer = vectorized["vectorizer"]
+    projection_mat = vectorized["projection_mat"]
+
     w2v_embedding_size = 50
     for n_clusters in [50, 128, 250]:
-        topic_data = cueing.cached_topic_data(train_dataset_name, n_clusters)
+        ic(n_clusters)
+        # Cluster
+        clusterer = MiniBatchKMeans(
+            init="k-means++",
+            n_clusters=n_clusters,
+            n_init=10,
+            random_state=random_state,
+        )
+        clusterer.fit(length_filtered.projected_vecs)
+        length_filtered.dists_to_centers = clusterer.transform(
+            length_filtered.projected_vecs
+        )
 
-        clusterer = topic_data["clusterer"]
-        projection_mat = topic_data["projection_mat"]
-        vectorizer = topic_data["vectorizer"]
-        training_topic_labeled_sents = topic_data["sentences"]
+        # Hard-assign topics, filter to those close enough.
+        training_topic_labeled_sents = length_filtered.sentences
+        training_topic_labeled_sents["topic"] = np.argmin(
+            length_filtered.dists_to_centers, axis=1
+        )
 
         def texts_to_clusters(texts):
             if len(texts) == 0:
