@@ -179,7 +179,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("dataset_name")
     parser.add_argument("n_clusters", type=str)
-    parser.add_argument("n_relevance_samples", type=int, default=1000)
+    parser.add_argument("--n_relevance_samples", type=int, default=1000)
     parser.add_argument("--w2v_embedding_size", type=int, default=50)
     parser.add_argument("--output", type=str, default="relevance_eval_results.json")
     opts = parser.parse_args()
