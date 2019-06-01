@@ -249,6 +249,7 @@ def get_labels_for_clusters(
         "shouldn",
         "didn",
         "hasn",
+        "hadn",
         "couldn",
         "dont",
     }
