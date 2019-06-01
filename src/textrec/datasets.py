@@ -21,7 +21,9 @@ paths_by_name = dict(
 )
 
 
-def get_path(name, data_root=paths.dataset_root):
+def get_path(name, data_root=None):
+    if data_root is None:
+        data_root = paths.dataset_root
     return data_root / paths_by_name[name]
 
 
