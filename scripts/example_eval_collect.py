@@ -105,7 +105,9 @@ def collect_eval_data(
 
     results = []
 
-    for clustering_params in tqdm.tqdm(ParameterGrid(clustering_param_grid), desc="Clustering options"):
+    for clustering_params in tqdm.tqdm(
+        ParameterGrid(clustering_param_grid), desc="Clustering options"
+    ):
         n_clusters = clustering_params["n_clusters"]
         training_sentences, vectorizer, projection_mat, projected_vecs = get_vectorized_dataset(
             dataset_name=train_dataset_name,
@@ -224,7 +226,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, default="relevance_eval_results.json")
     opts = parser.parse_args()
 
-    n_clusters_ = [int(x) for x in opts.n_clusters.split(",")]
+    n_clusters_ = range(*[int(x) for x in opts.n_clusters.split(":")])
 
     results = collect_eval_data(
         model_basename=opts.dataset_name,
