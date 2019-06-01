@@ -47,7 +47,7 @@ const InspirationBox = iobs(({ state, dispatch, ideaSource }) =>
     <div
       style={{
         padding: "10px",
-        borderLeft: "1px solid black",
+        borderRight: "1px solid black",
         width: "350px",
         margin: "5px",
       }}
@@ -206,11 +206,11 @@ const getPracticeScreen = () => ({
         </p>
 
         <div style={{ display: "flex", flexFlow: "col nowrap" }}>
+          <InspirationBox ideaSource={"the Wordfreq Python package"} />
           <div style={{ flex: "1 0 auto" }}>
             <b>Words</b>
             <SmartIdeaList placeholder="_q__" />
           </div>
-          <InspirationBox ideaSource={"the Wordfreq Python package"} />
         </div>
         <p>
           {numIdeas < targetIdeaCount
@@ -537,11 +537,11 @@ function getPrewritingScreens(tasksAndConditions) {
         <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
           {brainstormHeader(task.topicName, targetIdeaCount)}
           <div style={{ display: "flex", flexFlow: "col nowrap" }}>
+            <InspirationBox ideaSource={task.ideaSource} />
             <div style={{ flex: "1 0 auto" }}>
               <b>Questions the interviewer might ask you:</b>
               <SmartIdeaList />
             </div>
-            <InspirationBox ideaSource={task.ideaSource} />
           </div>
           <p>
             {numIdeas < targetIdeaCount
