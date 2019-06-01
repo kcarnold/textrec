@@ -7,9 +7,10 @@ import pathlib
 
 import gensim.corpora.wikicorpus
 import tqdm
+import re
 
-import mwparserfromhell
-
+# infobox_re = re.compile('{{Infobox (.+)\\n')
+infobox_re = re.compile("{{Infobox ([^<|}\n]+)")
 data_path = "/Data/Wiki/enwiki-20190520-pages-articles-multistream.xml.bz2"
 total_n_pages = 19_414_056
 out_path = pathlib.Path("/Data/Wiki/by_infobox")
@@ -24,15 +25,9 @@ def get_infobox_membership(pages):
     for name, content, pageid in tqdm.tqdm(pages, total=total_n_pages):
         if "Infobox " not in content:
             continue
-        wiki = mwparserfromhell.parse(content)
-        infoboxes = wiki.filter_templates(matches="Infobox ")
-        if len(infoboxes) > 0:
-            for box in infoboxes:
-                cat_name = box.name.strip_code().strip()
-                if not cat_name.startswith("Infobox "):
-                    continue
-                cat_name = cat_name[8:]
-                yield cat_name, name, content
+        for cat_name in infobox_re.findall(content):
+            cat_name = cat_name.strip()
+            yield cat_name, name, content
 
 
 def sanitize_name(name):
