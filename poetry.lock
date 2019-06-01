@@ -909,6 +909,14 @@ six = ">=1.5"
 
 [[package]]
 category = "main"
+description = "Add .env support to your django/flask apps in development and deployments"
+name = "python-dotenv"
+optional = false
+python-versions = "*"
+version = "0.10.2"
+
+[[package]]
+category = "main"
 description = "PyTorch version of Google AI BERT model with script to load Google pre-trained models"
 name = "pytorch-pretrained-bert"
 optional = false
@@ -1296,7 +1304,7 @@ msgpack = "*"
 regex = ">=2017.07.11,<=2018.02.21"
 
 [metadata]
-content-hash = "c8bd053b4faec0fccc1e1bdf9e7f798a5c63aec32f1d488ac30567012a2c63be"
+content-hash = "01f589eec85a97f00211d35c3a37290dc5393e3e949c7a5245ec8bf984b56626"
 python-versions = "^3.6"
 
 [metadata.hashes]
@@ -1383,6 +1391,7 @@ pynacl = ["05c26f93964373fc0abe332676cb6735f0ecad27711035b9472751faa8521255", "0
 pyparsing = ["1873c03321fc118f4e9746baf201ff990ceb915f433f23b395f5580d1840cb2a", "9b6323ef4ab914af344ba97510e966d64ba91055d6b9afa6b30799340e89cc03"]
 pyrsistent = ["16692ee739d42cf5e39cef8d27649a8c1fdb7aa99887098f1460057c5eb75c3a"]
 python-dateutil = ["7e6584c74aeed623791615e26efd690f29817a27c73085b78e4bad02493df2fb", "c89805f6f4d64db21ed966fda138f8a5ed7a4fdbc1a8ee329ce1b74e3c74da9e"]
+python-dotenv = ["156f218846bd90e0d537915545cde4a987947c2cecc628b50f9955fdde72534a", "6640acd76e6cab84648e4fec16c9d19de6700971f9d91d045e7120622167bfda"]
 pytorch-pretrained-bert = ["9cf7c6221e854071b9844f2a9a581e05a24777351618c010493d9c76601c6747", "ddd86f2f4ca595a2ad05d48c35d4f5c1c5f150bef79d56e3159701840a574d06", "edf4f9c2e64ef4e3cc68a335c88938fa45c17f18300952c64ba59fa66580f2f4"]
 pytz = ["303879e36b721603cc54604edcac9d20401bdbe31e1e4fdee5b9f98d5d31dfda", "d747dd3d23d77ef44c6a3526e274af6efeb0a6f1afd5a69ba4d5be4098c8e141"]
 pywinpty = ["0e01321e53a230233358a6d608a1a8bc86c3882cf82769ba3c62ca387dc9cc51", "333e0bc5fca8ad9e9a1516ebedb2a65da38dc1f399f8b2ea57d6cccec1ff2cc8", "3ca3123aa6340ab31bbf9bd012b92e72f9ec905e4c9ee152cc997403e1778cd3", "44a6dddcf2abf402e22f87e2c9a341f7d0b296afbec3d28184c8de4d7f514ee4", "53d94d574c3d4da2df5b1c3ae728b8d90e4d33502b0388576bbd4ddeb4de0f77", "c3955f162c53dde968f3fc11361658f1d83b683bfe601d4b6f94bb01ea4300bc", "cec9894ecb34de3d7b1ca121dd98433035b9f8949b5095e84b103b349231509c", "dcd45912e2fe2e6f72cee997a4da6ed1ad2056165a277ce5ec7f7ac98dcdf667", "f2bcdd9a2ffd8b223752a971b3d377fb7bfed85f140ec9710f1218d760f2ccb7"]
