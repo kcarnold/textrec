@@ -14,6 +14,6 @@ target=~/Wikipedia/stream${SLURM_ARRAY_TASK_ID}.jsonl
 rm -f "$target"
 
 for page in ~/Wikipedia/enwiki-*multistream${SLURM_ARRAY_TASK_ID}.xml*.bz2; do
-    echo $path
+    echo $page
     bzcat "$page" | "${PYTHON}" scripts/split_wikis.py >> "$target"
 done
