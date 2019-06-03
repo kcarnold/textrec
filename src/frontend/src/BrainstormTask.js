@@ -230,12 +230,12 @@ const ControlledInputView = iobs(
 function brainstormHeader(topicName, targetIdeaCount) {
   return (
     <div>
-      <h1>Interview Prep!</h1>
+      <h1>Preparing to Write an Encyclopedia Article</h1>
       <p>
-        You're going to get interviewed on live TV about{" "}
-        <span style={{ color: "orange" }}>{topicName}</span>.{" "}
-        <b>Don't get caught unprepared!</b> Try to anticipate what questions the
-        interviewer might ask you.
+        You're going to write a factual article about{" "}
+        <span style={{ color: "orange" }}>{topicName}</span>. Think about the
+        person who will read the article.
+        <b>What factual questions might the reader have?</b>
       </p>
 
       <ul>
@@ -253,11 +253,12 @@ function getTask(promptName) {
     const nameField = "restaurant-name";
     const writingPrompt = (
       <span>
-        Write a balanced review of{" "}
+        Write a brief encyclopedia article about
         <i>
           <ControlledInputView name={nameField} />
-        </i>
-        . Include both positive and negative aspects.
+        </i>{" "}
+        that would be useful and interesting for a potential visitor.
+        <br /> Make up any details you need.
       </span>
     );
     return {
@@ -265,8 +266,8 @@ function getTask(promptName) {
         domain: "restaurant",
       },
       writingType: {
-        singular: "restaurant review",
-        plural: "restaurant reviews",
+        singular: "restaurant description article",
+        plural: "restaurant description articles",
       },
       writingPrompt,
       nameField,
@@ -361,12 +362,12 @@ function getTask(promptName) {
     const nameField = "destination-name";
     const writingPrompt = (
       <span>
-        Write a brief overview of{" "}
+        Write a brief encyclopedia article about{" "}
         <i>
           <ControlledInputView name={nameField} />
         </i>{" "}
-        that would be useful and interesting for a couple with a teenage child
-        who might visit.
+        that would be useful and interesting for a potential visitor.
+        <br /> Make up any details you need.
       </span>
     );
 
@@ -426,12 +427,11 @@ function getTask(promptName) {
     const nameField = "news-headline";
     const writingPrompt = (
       <span>
-        Write the body of an article with the headline you imagined, <br />
-        <br />
-        &ldquo;
-        <ControlledInputView name={nameField} />
-        &rdquo;
-        <br />
+        Write a brief encyclopedia article about the event,{" "}
+        <i>
+          <ControlledInputView name={nameField} />
+        </i>{" "}
+        that would be useful and interesting for a potential reader.
         <br /> Make up any details you need.
       </span>
     );
@@ -539,7 +539,7 @@ function getPrewritingScreens(tasksAndConditions) {
           <div style={{ display: "flex", flexFlow: "col nowrap" }}>
             <InspirationBox ideaSource={task.ideaSource} />
             <div style={{ flex: "1 0 auto" }}>
-              <b>Questions the interviewer might ask you:</b>
+              <b>Questions the reader might have:</b>
               <SmartIdeaList />
             </div>
           </div>
@@ -560,14 +560,18 @@ function getPrewritingScreens(tasksAndConditions) {
     screen: "PreSurvey",
     view: () => (
       <div className="Survey">
-        <h1>Today's Task</h1>
+        <h1>Writing factual articles</h1>
         <p>
-          Imagine you're about to get interviewed on live TV. The interviewer
-          might ask you detailed questions about any of the topics you listed
-          earlier. <b>Don't get caught unprepared!</b> In the next few screens,
-          you'll try to come up with ideas about what questions you might get
-          asked.
+          You are going to be writing brief factual (encyclopedia-like) articles
+          on the topics that you listed earlier.
         </p>
+        <p>Thinking about the reader will help make you a better writer.</p>
+        <p>
+          In the next few screens, you'll try to come up with ideas about what
+          questions someone might have about the topic before they read your
+          article.
+        </p>
+
         {surveyBody(
           "pre",
           flatMap(tasksAndConditions, ({ prompt, task }, idx) => [
