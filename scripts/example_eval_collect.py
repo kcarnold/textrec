@@ -220,9 +220,21 @@ if __name__ == "__main__":
     parser.add_argument("--n_relevance_samples", type=int, default=1000)
     parser.add_argument("--w2v_embedding_size", type=int, default=50)
     parser.add_argument("--output", type=str, default="relevance_eval_results.json")
+    parser.add_argument("--subset", type=str)
     opts = parser.parse_args()
 
-    n_clusters_ = range(*[int(x) for x in opts.n_clusters.split(":")])
+    n_clusters_ = list(range(*[int(x) for x in opts.n_clusters.split(":")]))
+
+    if opts.subset:
+        batch, total = opt.subset.split('/')
+        batch = int(batch)
+        total = int(total)
+        import toolz
+        batches = list(toolz.partition_all(total, n_clusters_))
+        n_clusters_ = batches[batch]
+        output = opts.output + f'-{batch}_of_{total}'
+    else:
+        output = opts.output
 
     results = collect_eval_data(
         model_basename=opts.dataset_name,
@@ -233,5 +245,5 @@ if __name__ == "__main__":
         w2v_embedding_size=opts.w2v_embedding_size,
     )
 
-    with open(opts.output, "w") as f:
+    with open(output, "w") as f:
         json.dump(results, f)
