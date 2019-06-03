@@ -226,7 +226,7 @@ if __name__ == "__main__":
     n_clusters_ = list(range(*[int(x) for x in opts.n_clusters.split(":")]))
 
     if opts.subset:
-        batch, total = opt.subset.split('/')
+        batch, total = opts.subset.split('/')
         batch = int(batch)
         total = int(total)
         import toolz
