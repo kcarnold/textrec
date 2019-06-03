@@ -78,8 +78,8 @@ def get_vectorized_dataset(
 def collect_eval_data(
     model_basename,
     random_state=0,
-    n_relevance_samples=1000,
-    n_clusters_=[50, 128, 250],
+    n_relevance_samples,
+    n_clusters_,
     n_w2v_samples=5,
     w2v_embedding_size=50,
 ):
@@ -224,7 +224,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("dataset_name")
     parser.add_argument("n_clusters", type=str)
-    parser.add_argument("--n_relevance_samples", type=int, default=1000)
+    parser.add_argument("--n_relevance_samples", type=int, default=10000)
     parser.add_argument("--w2v_embedding_size", type=int, default=50)
     parser.add_argument("--output", type=str, default="relevance_eval_results.json")
     parser.add_argument("--subset", type=str)
