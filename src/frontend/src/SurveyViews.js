@@ -134,7 +134,7 @@ const Question = inject("state")(
         className={classNames("Question", responseClass)}
         style={{
           margin: "5px",
-          borderTop: "3px solid #aaa",
+          borderTop: "1px solid #aaa",
           padding: "5px",
         }}
       >
