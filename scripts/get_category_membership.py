@@ -18,4 +18,4 @@ for article in results:
     for category_name in article["infoboxes"]:
         category_memberships.append((article["name"], category_name))
 
-category_memberships = pd.DataFrame(category_memberships)
+category_memberships = pd.DataFrame(category_memberships, columns=["name", "category"])
