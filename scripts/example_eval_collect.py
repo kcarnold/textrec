@@ -18,7 +18,7 @@ from textrec import cueing
 def collect_relevance_dataset(n_samples, validation_docs, validation_sents):
     rs = np.random.RandomState(0)
     relevance_data = []
-    for i in tqdm.trange(n_samples, desc="Collect relevance dataset"):
+    for i in tqdm.trange(n_samples, desc="Collect relevance dataset", mininterval=1.):
         text = validation_docs.text.sample(n=1, random_state=rs).item()
         sents = nltk.sent_tokenize(text)
         if len(sents) == 0:
@@ -106,7 +106,7 @@ def collect_eval_data(
     results = []
 
     for clustering_params in tqdm.tqdm(
-        ParameterGrid(clustering_param_grid), desc="Clustering options"
+        ParameterGrid(clustering_param_grid), desc="Clustering options",
     ):
         n_clusters = clustering_params["n_clusters"]
         training_sentences, vectorizer, projection_mat, projected_vecs = get_vectorized_dataset(
