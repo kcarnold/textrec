@@ -11,14 +11,13 @@ from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import ParameterGrid
 
-from icecream import ic
 from textrec import cueing
 
 
 def collect_relevance_dataset(n_samples, validation_docs, validation_sents):
     rs = np.random.RandomState(0)
     relevance_data = []
-    for i in tqdm.trange(n_samples, desc="Collect relevance dataset", mininterval=1.):
+    for i in tqdm.trange(n_samples, desc="Collect relevance dataset", mininterval=1.0):
         text = validation_docs.text.sample(n=1, random_state=rs).item()
         sents = nltk.sent_tokenize(text)
         if len(sents) == 0:
@@ -76,6 +75,7 @@ def get_vectorized_dataset(
 
 
 def collect_eval_data(
+    *,
     model_basename,
     random_state=0,
     n_relevance_samples,
@@ -106,7 +106,7 @@ def collect_eval_data(
     results = []
 
     for clustering_params in tqdm.tqdm(
-        ParameterGrid(clustering_param_grid), desc="Clustering options",
+        ParameterGrid(clustering_param_grid), desc="Clustering options"
     ):
         n_clusters = clustering_params["n_clusters"]
         training_sentences, vectorizer, projection_mat, projected_vecs = get_vectorized_dataset(
@@ -209,13 +209,6 @@ def collect_eval_data(
                 )
 
     return results
-
-
-def chunks(l, n):
-    """Yield successive n-sized chunks from l."""
-    # https://stackoverflow.com/a/312464/69707
-    for i in range(0, len(l), n):
-        yield l[i : i + n]
 
 
 if __name__ == "__main__":
