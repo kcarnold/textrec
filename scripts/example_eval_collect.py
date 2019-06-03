@@ -211,6 +211,13 @@ def collect_eval_data(
     return results
 
 
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    # https://stackoverflow.com/a/312464/69707
+    for i in range(0, len(l), n):
+        yield l[i : i + n]
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -226,13 +233,13 @@ if __name__ == "__main__":
     n_clusters_ = list(range(*[int(x) for x in opts.n_clusters.split(":")]))
 
     if opts.subset:
-        batch, total = opts.subset.split('/')
+        batch, total = opts.subset.split("/")
         batch = int(batch)
         total = int(total)
-        import toolz
-        batches = list(toolz.partition_all(total, n_clusters_))
-        n_clusters_ = batches[batch]
-        output = opts.output + f'-{batch}_of_{total}'
+        this_n_clusters = [x for i, x in enumerate(n_clusters_) if i % total == batch]
+        n_clusters_ = this_n_clusters
+        output = opts.output + f"-{batch}_of_{total}"
+        print(f"{batch} / {total} : n_clusters = {n_clusters_}")
     else:
         output = opts.output
 
