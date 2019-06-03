@@ -197,7 +197,11 @@ def collect_eval_data(
                     assert eval_params["topic_frequency"] == "all"
 
                 num_counted = len(np.flatnonzero(mask))
-                relevance_auc = roc_auc_score(y_true[mask], y_score[mask])
+                if num_counted > 0:
+                    relevance_auc = roc_auc_score(y_true[mask], y_score[mask])
+                else:
+                    # Maybe the filters intersected with no results.
+                    relevance_auc = None
                 results.append(
                     dict(
                         **clustering_params,
