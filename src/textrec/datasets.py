@@ -18,7 +18,10 @@ paths_by_name = dict(
     bios="biosbias/BIOS.pkl",
     newsroom="Newsroom-Dataset/train.jsonl.gz",
     wikivoyage="WikiVoyage/wikivoyage-pages.xml.bz2",
+    wikipedia_category="Wikipedia/by_category",
 )
+
+WIKITEXT_TITLE_RE = re.compile(r"^[=]+.+[=]+$", re.MULTILINE)
 
 
 def get_path(name, data_root=None):
@@ -139,6 +142,13 @@ def load_newsroom(*, path=None, frac=0.05, random_state=0):
     )
 
 
+def clean_wikitext(text):
+    import gensim.corpora.wikicorpus
+
+    text = gensim.corpora.wikicorpus.filter_wiki(text)
+    return WIKITEXT_TITLE_RE.sub("", text)
+
+
 def load_wikivoyage(path=None):
     if path is None:
         path = get_path("wikivoyage")
@@ -156,16 +166,29 @@ def load_wikivoyage(path=None):
         if len(text.split()) > 50
     ]
     pages = [
-        (title, gensim.corpora.wikicorpus.filter_wiki(text), pageid)
+        (title, clean_wikitext(text), pageid)
         for title, text, pageid in tqdm.tqdm(pages, desc="Filter Wikitext")
     ]
 
-    is_title = re.compile(r"^[=]+.+[=]+$", re.MULTILINE)
-
-    data = []
-
-    for title, text, pageid in pages:
-        text = is_title.sub("", text)
-        data.append([title, text])
+    data = [[title, text] for title, text, pageid in pages]
 
     return add_useless_doc_id(pd.DataFrame(data, columns=["title", "text"]))
+
+
+def get_wikipedia_category_loader(category):
+    def load_wikipedia_category(path=None):
+        if path is None:
+            path = get_path("wikipedia_category")
+
+        fname = path / f"{category}.jsonl.gz"
+
+        with gzip.open(str(fname)) as f:
+            data = []
+            for line in tqdm.tqdm(f, mininterval=5, desc="Read file"):
+                article = json.loads(line)
+                text = clean_wikitext(article["content"])
+                data.append((article["name"], text))
+
+        return add_useless_doc_id(pd.DataFrame(data, columns=["title", "text"]))
+   
+    return load_wikipedia_category

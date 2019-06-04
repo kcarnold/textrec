@@ -63,6 +63,10 @@ data_loaders = {
     "imdb": datasets.load_imdb,
     "newsroom": datasets.load_newsroom,
     "wikivoyage": datasets.load_wikivoyage,
+    "wiki-book": datasets.get_wikipedia_category_loader("book"),
+    "wiki-film": datasets.get_wikipedia_category_loader("film"),
+    "wiki-musician": datasets.get_wikipedia_category_loader("musical artistt"),
+    "wiki-television": datasets.get_wikipedia_category_loader("television"),
 }
 
 
@@ -217,6 +221,37 @@ def cached_topic_data(dataset_name, n_clusters, random_state=0):
         clusterer=clusterer,
         pervasiveness_by_topic=pervasiveness_by_topic,
         total_num_docs=len(df_full),
+    )
+
+
+def subset_mbkmeans(clusterer, clusters_to_keep):
+    import copy
+
+    clusterer = copy.copy(clusterer)
+    clusterer.cluster_centers_ = clusterer.cluster_centers_[clusters_to_keep]
+    del clusterer.labels_
+    del clusterer.counts_
+    return clusterer
+
+
+def filter_topic_data(topic_data, min_pervasiveness_frac):
+    min_pervasiveness = min_pervasiveness_frac * topic_data["total_num_docs"]
+
+    clusters_to_keep = np.flatnonzero(
+        topic_data["pervasiveness_by_topic"] > min_pervasiveness
+    )
+
+    return dict(
+        topic_data, clusterer=subset_mbkmeans(topic_data["clusterer"], clusters_to_keep)
+    )
+
+
+def cached_filtered_topic_data(
+    dataset_name, n_clusters, random_state=0, min_pervasiveness_frac=0.01
+):
+    return filter_topic_data(
+        cached_topic_data(dataset_name, n_clusters, random_state),
+        min_pervasiveness_frac,
     )
 
 
