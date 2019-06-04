@@ -168,6 +168,20 @@ function getScreens(prompts, conditionNames, isDemo) {
     // getTutorialScreen(),
     getPracticeScreen(),
     ...getPrewritingScreens(tasksAndConditions),
+    {
+      screen: "MidwaySurvey",
+      view: surveyView({
+        title: "A quick break",
+        basename: "mid",
+        questions: [
+          {
+            type: "text",
+            text: "A few questions for a quick break...",
+          },
+          ...SurveyData.shortNFC,
+        ],
+      }),
+    },
     ...getFinalWritingScreens(tasksAndConditions),
     getClosingSurvey(tasksAndConditions),
     DoneScreen,
@@ -744,7 +758,6 @@ function getClosingSurvey(tasksAndConditions) {
       title: "Closing Survey",
       basename: "postExp",
       questions: [
-        ...SurveyData.shortNFC,
         {
           type: "options",
           responseType: "options",
