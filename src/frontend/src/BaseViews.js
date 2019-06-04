@@ -1,12 +1,20 @@
+/** @format */
 import React from "react";
 import { observer, inject } from "mobx-react";
+import { iobs } from "./misc";
 
 function advance(state, dispatch) {
   dispatch({ type: "next" });
 }
 
-export const NextBtn = inject("dispatch", "state")(
-  observer(props => (
+export const NextBtn = iobs(props => {
+  let enabled;
+  if (props.enabledFn) {
+    enabled = props.enabledFn(props.state);
+  } else {
+    enabled = !props.disabled;
+  }
+  return (
     <button
       className="NextBtn"
       onClick={() => {
@@ -14,9 +22,9 @@ export const NextBtn = inject("dispatch", "state")(
           advance(props.state, props.dispatch);
         }
       }}
-      disabled={props.disabled}
+      disabled={!enabled}
     >
-      {props.children || "Next"}
+      {props.children || (enabled ? "Next" : "Please answer all prompts above")}
     </button>
-  ))
-);
+  );
+});

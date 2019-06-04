@@ -286,7 +286,7 @@ function getTask(promptName) {
       writingPrompt,
       nameField,
       topicName: <ControlledInputView name={nameField} />,
-      precommitView: () => (
+      precommitView: withValidation([nameField], () => (
         <div>
           <span>
             Think of a restaurant (or bar, cafe, diner, etc.) that you've been
@@ -311,7 +311,7 @@ function getTask(promptName) {
             <ControlledStarRating name={"restaurant-star"} />
           </div>
         </div>
-      ),
+      )),
       targetIdeaCount: 20,
       wordCountTarget: 120,
       ideaSource: (
@@ -350,7 +350,7 @@ function getTask(promptName) {
       nameField,
       writingPrompt,
       topicName: <ControlledInputView name={nameField} />,
-      precommitView: () => (
+      precommitView: withValidation([nameField], () => (
         <div className="Survey">
           <span>
             What is one of your favorite movies (or TV shows, documentaries,
@@ -367,7 +367,7 @@ function getTask(promptName) {
             What <i>genre</i> is it? <ControlledInput name={"movie-genre"} />
           </div>
         </div>
-      ),
+      )),
       targetIdeaCount: 20,
       wordCountTarget: 120,
       ideaSource: <span>Movie reviews from IMDB</span>,
@@ -396,7 +396,7 @@ function getTask(promptName) {
       nameField,
       writingPrompt,
       topicName: <ControlledInputView name={nameField} />,
-      precommitView: () => (
+      precommitView: withValidation([nameField], () => (
         <div className="Survey">
           <span>
             What is a travel destination (city, region, national park, etc.)
@@ -411,7 +411,7 @@ function getTask(promptName) {
             Destination Name: <ControlledInput name={nameField} />
           </div>
         </div>
-      ),
+      )),
 
       targetIdeaCount: 20,
       wordCountTarget: 120,
@@ -459,7 +459,7 @@ function getTask(promptName) {
       },
       writingPrompt,
       topicName: <ControlledInputView name={nameField} />,
-      precommitView: () => (
+      precommitView: withValidation([nameField], () => (
         <div className="Survey">
           <span>
             Imagine looking at the news and seeing a headline that really makes
@@ -476,7 +476,7 @@ function getTask(promptName) {
             <ControlledInput name={nameField} style={{ width: "300px" }} />
           </div>
         </div>
-      ),
+      )),
 
       targetIdeaCount: 20,
       wordCountTarget: 120,
@@ -526,16 +526,35 @@ function getIntroSurvey(tasksAndConditions) {
   };
 }
 
+const withValidation = (requiredInputs, view) => {
+  return {
+    view,
+    complete: state => {
+      for (let i = 0; i < requiredInputs.length; i++) {
+        let curVal = state.controlledInputs.get(requiredInputs[i]) || "";
+        if (curVal.trim().length === 0) return false;
+      }
+      return true;
+    },
+  };
+};
+
 const getPrecommitScreen = tasksAndConditions => ({
   screen: "Precommit",
   view: () => (
     <div className="Survey">
       {tasksAndConditions.map(({ task }, idx) => (
         <div key={idx} style={{ borderBottom: "1px solid black" }}>
-          {task.precommitView()}
+          {task.precommitView.view()}
         </div>
       ))}
-      <NextBtn />
+      <NextBtn
+        enabledFn={state =>
+          tasksAndConditions.every(({ task }) =>
+            task.precommitView.complete(state)
+          )
+        }
+      />
     </div>
   ),
 });
