@@ -38,12 +38,7 @@ function surveyView(props) {
   return () => React.createElement(Survey, props);
 }
 
-/**
- * Ideation stuff
- */
-
-const InspirationBox = iobs(({ state, dispatch, ideaSource }) =>
-  state.experimentState.flags.recType !== null ? (
+const InspirationBox = iobs(({ state, dispatch, ideaSource }) => (
     <div
       style={{
         padding: "10px",
@@ -82,14 +77,15 @@ const InspirationBox = iobs(({ state, dispatch, ideaSource }) =>
           </ul>
           <p style={{ fontSize: "8pt" }}>Source: {ideaSource}</p>
         </div>
+    ) : state.experimentState.numInspirationRequests > 0 ? (
+      <div>Sorry, inspirations are not available this time.</div>
       ) : (
         <div style={{ color: "#777" }}>
-          Click the button above if you're feeling stuck.
+        Click the button to get the first inspirations
         </div>
       )}
     </div>
-  ) : null
-);
+));
 
 // Hacky: this needs to be an observer because userIdeas is an observable...
 const IdeaList = observer(({ userIdeas, addIdea, placeholder }) => {
