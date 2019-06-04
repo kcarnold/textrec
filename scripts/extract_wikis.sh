@@ -11,4 +11,4 @@
 source activate textrec
 PYTHON=~/.cache/pypoetry/virtualenvs/textrec-py3.6/bin/python
 
-"${PYTHON}" scripts/extract_wikipedia_texts.py --stream_glob="/n/home10/kcarnold/scratch/Wikipedia-proc/stream\*.jsonl.gz" --outdir by_infobox --desired_categories="settlement,musical artist,company,film,book,television"
+"${PYTHON}" scripts/extract_wikipedia_texts.py --stream_glob="/n/home10/kcarnold/scratch/Wikipedia-proc/stream*.jsonl.gz" --outdir by_infobox --desired_categories="settlement,musical artist,company,film,book,television"
