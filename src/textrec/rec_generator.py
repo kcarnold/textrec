@@ -17,9 +17,10 @@ MIN_CLUSTER_SIZE = 20
 
 PRELOAD_MODELS = [
     "yelp_128",
+    "wiki-book_128",
     # "imdb_128",
-    "newsroom_128",
-    "wikivoyage_128",
+    # "newsroom_128",
+    # "wikivoyage_128",
     #    'bios'
 ]
 PARTS_NEEDED = ["sentences", "is_close"]
@@ -215,8 +216,10 @@ def next_cluster_distribution_given_context_clusters(
         cluster_probs = co_occur @ doc_topic_vec
     elif method == "w2v":
         model = cueing.get_model(model_name, "topic_w2v")
+        overall_topic_distribution = cueing.get_model(model_name, "overall_topic_distribution")
         cluster_probs = cueing.predict_missing_topics_w2v(
-            model, existing_clusters=existing_clusters, n_clusters=n_clusters
+            model, existing_clusters=existing_clusters, n_clusters=n_clusters,
+            overall_topic_distribution=overall_topic_distribution
         )
 
     # Avoid already-discussed clusters.
