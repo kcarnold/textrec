@@ -170,7 +170,9 @@ def cached_vectorized_dataset(dataset_name, normalize_by_wordfreq=True):
 
 @lru_cache()
 @mem.cache
-def cached_topic_data(dataset_name, n_clusters, random_state=0):
+def cached_topic_data(
+    dataset_name, n_clusters, random_state=0, min_pervasiveness_frac=0.01
+):
     # Load dataset
     df_full = cached_dataset(dataset_name)
 
@@ -197,28 +199,44 @@ def cached_topic_data(dataset_name, n_clusters, random_state=0):
         length_filtered.dist_to_closest_cluster
     )
 
-    distance_filtered = VecPile(
-        indices=np.flatnonzero(length_filtered.is_close),
-        sentences=length_filtered.sentences.iloc[length_filtered.is_close].copy(),
-        projected_vecs=length_filtered.projected_vecs[length_filtered.is_close],
-    )
-    print("{:,} close enough to cluster center".format(len(distance_filtered)))
+    # distance_filtered = VecPile(
+    #     indices=np.flatnonzero(length_filtered.is_close),
+    #     sentences=length_filtered.sentences.iloc[length_filtered.is_close].copy(),
+    #     projected_vecs=length_filtered.projected_vecs[length_filtered.is_close],
+    # )
+    # print("{:,} close enough to cluster center".format(len(distance_filtered)))
 
-    distance_filtered.raw_vecs = length_filtered.raw_vecs[distance_filtered.indices]
+    # distance_filtered.raw_vecs = length_filtered.raw_vecs[distance_filtered.indices]
 
     # For each topic, how many different docs does it occur in?
     pervasiveness_by_topic = (
-        distance_filtered.sentences[["doc_id", "topic"]]
-        .drop_duplicates()
-        .groupby("topic")
-        .size()
+        lf_sentences[["doc_id", "topic"]].drop_duplicates().groupby("topic").size()
+    )
+
+    total_num_docs = len(df_full)
+    min_pervasiveness = min_pervasiveness_frac * total_num_docs
+
+    clusters_to_keep = np.flatnonzero(pervasiveness_by_topic > min_pervasiveness)
+
+    n_clusters = len(clusters_to_keep)
+
+    # Re-label topics in sentences.
+    cluster_old2new = {old_idx: idx for idx, old_idx in enumerate(clusters_to_keep)}
+    lf_sentences["topic"] = lf_sentences.topic.map(cluster_old2new)
+    lf_sentences.dropna(inplace=True, subset=["topic"])
+    # Grr, that "map" upcasted 'topic' to float.
+    lf_sentences["topic"] = lf_sentences.topic.astype(int)
+
+    overall_topic_distribution = normalized_bincount(
+        lf_sentences.topic, minlength=n_clusters
     )
 
     return dict(
         vars(length_filtered),
         vectorizer=vectorized["vectorizer"],
         projection_mat=vectorized["projection_mat"],
-        clusterer=clusterer,
+        clusterer=subset_mbkmeans(clusterer, clusters_to_keep),
+        overall_topic_distribution=overall_topic_distribution,
         pervasiveness_by_topic=pervasiveness_by_topic,
         total_num_docs=len(df_full),
     )
@@ -231,28 +249,14 @@ def subset_mbkmeans(clusterer, clusters_to_keep):
     clusterer.cluster_centers_ = clusterer.cluster_centers_[clusters_to_keep]
     del clusterer.labels_
     del clusterer.counts_
+    clusterer.n_clusters = len(clusters_to_keep)
     return clusterer
 
 
-def filter_topic_data(topic_data, min_pervasiveness_frac):
-    min_pervasiveness = min_pervasiveness_frac * topic_data["total_num_docs"]
-
-    clusters_to_keep = np.flatnonzero(
-        topic_data["pervasiveness_by_topic"] > min_pervasiveness
-    )
-
-    return dict(
-        topic_data, clusterer=subset_mbkmeans(topic_data["clusterer"], clusters_to_keep)
-    )
-
-
-def cached_filtered_topic_data(
-    dataset_name, n_clusters, random_state=0, min_pervasiveness_frac=0.01
-):
-    return filter_topic_data(
-        cached_topic_data(dataset_name, n_clusters, random_state),
-        min_pervasiveness_frac,
-    )
+def normalized_bincount(x, minlength):
+    result = np.bincount(x, minlength=minlength).astype(float)
+    result /= result.sum()
+    return result
 
 
 def get_labels_for_clusters(
@@ -330,7 +334,9 @@ MIN_SENTS_IN_CLUSTER = 50
 @mem.cache
 def cached_lms_per_cluster(dataset_name, n_clusters, min_pervasiveness_frac=0.01):
     # Get data.
-    topic_data = cached_topic_data(dataset_name, n_clusters=n_clusters)
+    topic_data = cached_topic_data(
+        dataset_name, n_clusters=n_clusters, min_pervasiveness_frac=0.01
+    )
     clusterer = topic_data["clusterer"]
     texts = topic_data["sentences"].sent
     projected_vecs = topic_data["projected_vecs"]
@@ -340,19 +346,7 @@ def cached_lms_per_cluster(dataset_name, n_clusters, min_pervasiveness_frac=0.01
     for text, cluster_idx in zip(texts, clusterer.predict(projected_vecs)):
         sentences_in_cluster[cluster_idx].append(text)
 
-    # Filter to include only topics that occur in more than 1% of documents.
-    min_pervasiveness = min_pervasiveness_frac * topic_data["total_num_docs"]
-    clusters_to_use = []
-    for topic, num_documents_with_topic in topic_data[
-        "pervasiveness_by_topic"
-    ].iteritems():
-        if (
-            num_documents_with_topic >= min_pervasiveness
-            and len(sentences_in_cluster) >= MIN_SENTS_IN_CLUSTER
-        ):
-            clusters_to_use.append(topic)
-
-    print(f"Using {len(clusters_to_use)} out of {clusterer.n_clusters} clusters.")
+    clusters_to_use = list(range(clusterer.n_clusters))
 
     # Train models (shells out to KenLM)
     model_basename = f"{dataset_name}_{n_clusters}"
