@@ -20,6 +20,7 @@ export class TrialState {
       suggestions: [],
       allowSubmit: false,
       curText: "",
+      numInspirationRequests: 0,
       get wordCount() {
         return countWords(this.curText);
       },
@@ -55,6 +56,7 @@ export class TrialState {
       }
     } else if (event.type === "inspireMe") {
       this.suggestions = this._suggestions;
+      this.numInspirationRequests++;
       forceNewRequest = true;
     } else if (event.type === "allowSubmit") {
       this.allowSubmit = true;
