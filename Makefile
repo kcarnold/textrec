@@ -14,7 +14,7 @@ PROJECT_NAME = textrec
 ## Install Python Dependencies
 requirements:
 	poetry install
-	python -c "import nltk; nltk.download('punkt'); nltk.download('perluniprops'); nltk.download('nonbreaking_prefixes')"
+	poetry run python -c "import nltk; nltk.download('punkt'); nltk.download('perluniprops'); nltk.download('nonbreaking_prefixes')"
 
 ## Delete all compiled Python files
 clean:
