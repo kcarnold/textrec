@@ -9,6 +9,7 @@ export const otherMid = {
     "Any other comments? (There will be more surveys before the end of the experiment.)",
   responseType: "text",
   name: "other",
+  optional: true,
   flags: { multiline: true },
 };
 
@@ -141,6 +142,7 @@ export const techDiff = {
     "Did you experience any technical difficulties that you haven't reported already?",
   responseType: "text",
   name: "techDiff",
+  optional: true,
   flags: { multiline: true, placeholder: "optional" },
 };
 
@@ -149,6 +151,7 @@ export const otherFinal = {
     "Aaaand... we're done! Any feedback or ideas for us? What went well? What could have been better? You may leave this blank.",
   responseType: "text",
   name: "other",
+  optional: true,
   flags: { multiline: true, placeholder: "optional" },
 };
 

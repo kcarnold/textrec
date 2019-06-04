@@ -166,6 +166,15 @@ export const Survey = ({ title, basename, questions }) => (
 
     {surveyBody(basename, questions)}
 
-    <NextBtn />
+    <NextBtn
+      enabledFn={state =>
+        questions.every(
+          question =>
+            question.type === "text" ||
+            question.optional ||
+            state.controlledInputs.get(basename + "-" + question.name)
+        )
+      }
+    />
   </div>
 );

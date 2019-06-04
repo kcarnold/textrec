@@ -39,52 +39,52 @@ function surveyView(props) {
 }
 
 const InspirationBox = iobs(({ state, dispatch, ideaSource }) => (
-    <div
+  <div
+    style={{
+      padding: "10px",
+      borderRight: "1px solid black",
+      width: "350px",
+      margin: "5px",
+    }}
+  >
+    <h1 style={{ paddingTop: "0", marginTop: "0" }}>For inspiration...</h1>
+    <button
+      onClick={e => dispatch({ type: "inspireMe" })}
       style={{
+        fontSize: "16px",
+        background: "green",
+        color: "white",
         padding: "10px",
-        borderRight: "1px solid black",
-        width: "350px",
-        margin: "5px",
+        borderRadius: "10px",
       }}
     >
-      <h1 style={{ paddingTop: "0", marginTop: "0" }}>For inspiration...</h1>
-      <button
-        onClick={e => dispatch({ type: "inspireMe" })}
-        style={{
-          fontSize: "16px",
-          background: "green",
-          color: "white",
-          padding: "10px",
-          borderRadius: "10px",
-        }}
-      >
-        <img
-          src="/static/capicon-refresh.png"
-          alt=""
-          style={{ width: "25px", paddingRight: "5px" }}
-        />
-        Get fresh inspirations!
-      </button>
-      <br />
-      {state.experimentState.suggestions.length > 0 ? (
-        <div>
-          <ul>
-            {state.experimentState.suggestions.map((s, idx) => (
-              <li key={idx} style={{ marginBottom: "5px" }}>
-                {s.text}
-              </li>
-            ))}
-          </ul>
-          <p style={{ fontSize: "8pt" }}>Source: {ideaSource}</p>
-        </div>
+      <img
+        src="/static/capicon-refresh.png"
+        alt=""
+        style={{ width: "25px", paddingRight: "5px" }}
+      />
+      Get fresh inspirations!
+    </button>
+    <br />
+    {state.experimentState.suggestions.length > 0 ? (
+      <div>
+        <ul>
+          {state.experimentState.suggestions.map((s, idx) => (
+            <li key={idx} style={{ marginBottom: "5px" }}>
+              {s.text}
+            </li>
+          ))}
+        </ul>
+        <p style={{ fontSize: "8pt" }}>Source: {ideaSource}</p>
+      </div>
     ) : state.experimentState.numInspirationRequests > 0 ? (
       <div>Sorry, inspirations are not available this time.</div>
-      ) : (
-        <div style={{ color: "#777" }}>
+    ) : (
+      <div style={{ color: "#777" }}>
         Click the button to get the first inspirations
-        </div>
-      )}
-    </div>
+      </div>
+    )}
+  </div>
 ));
 
 // Hacky: this needs to be an observer because userIdeas is an observable...
@@ -128,18 +128,28 @@ const IdeaList = observer(({ userIdeas, addIdea, placeholder }) => {
   );
 });
 
-const SmartIdeaList = iobs(({ state, dispatch, fixed, placeholder }) => {
-  function addIdea(idea) {
-    dispatch({ type: "addIdea", idea });
+const SmartIdeaList = iobs(
+  ({ state, dispatch, fixed, placeholder, validation }) => {
+    function addIdea(idea) {
+      idea = idea.trim();
+      if (validation) {
+        let validationErr = validation(idea);
+        if (validationErr) {
+          alert(validationErr);
+          return;
+        }
+      }
+      dispatch({ type: "addIdea", idea });
+    }
+    return (
+      <IdeaList
+        userIdeas={state.experimentState.ideas}
+        addIdea={fixed ? null : addIdea}
+        placeholder={placeholder}
+      />
+    );
   }
-  return (
-    <IdeaList
-      userIdeas={state.experimentState.ideas}
-      addIdea={fixed ? null : addIdea}
-      placeholder={placeholder}
-    />
-  );
-});
+);
 
 const WritingView = iobs(({ state, dispatch }) => (
   <Editable
@@ -193,33 +203,55 @@ const getTutorialScreen = () => ({
   ),
 });
 
+const VALID_WORDS = "aqua aquacultural aquaculture aquae aqualung aquamarine aquamarines aquanaut aquanauts aquaplaning aquaria aquarium aquariums aquarius aquas aquatic aquatics aquatint aquatinted aquatints aquavit aqueduct aqueducts aqueous aquifer aquifers aquila aquilegia aquiline aquinas aquitaine aquitania equable equal equaled equaling equalisation equalise equalised equaliser equalisers equalises equalising equalitarian equalities equality equalization equalize equalized equalizer equalizers equalizes equalizing equalled equalling equally equals equanimity equanimous equate equated equates equating equation equations equator equatorial equerries equerry equestrian equestrians equiangular equidae equidistant equids equilateral equilibrate equilibrated equilibrates equilibrating equilibration equilibria equilibrium equilibriums equine equines equinoctial equinox equinoxes equip equipage equiped equipes equipment equipments equipoise equipped equipping equips equipt equisetum equitable equitably equitation equities equity equivalence equivalences equivalent equivalents equivocal equivocally equivocate equivocated equivocates equivocating equivocation equivocations squab squabble squabbled squabbles squabbling squabs squad squadron squadrons squads squalid squall squalling squalls squally squalor squalus squama squamata squander squandered squandering squanders square squared squarely squareness squarer squares squaring squarish squash squashed squashes squashing squashy squat squating squats squatted squatter squatters squatting squatty squaw squawk squawked squawking squawks squaws squeak squeaked squeaker squeakers squeaking squeaks squeaky squeal squealed squealer squealers squealing squeals squeamish squeamishness squeegee squeegees squeezable squeeze squeezed squeezer squeezers squeezes squeezing squelch squelched squelches squelching squib squibs squid squids squiffy squiggle squiggles squiggly squill squilla squinch squinches squint squinted squinting squints squinty squire squired squires squiring squirm squirmed squirming squirms squirrel squirrels squirt squirted squirter squirters squirting squirts squish squished squishes squishing squishy".split(
+  /\s/
+);
+
 const getPracticeScreen = () => ({
   preEvent: setupTrialEvent(`practice`, "practice", { domain: "_q" }),
   screen: "Practice",
   view: iobs(({ state }) => {
-    const numIdeas = state.experimentState.ideas.length;
+    const existingIdeas = state.experimentState.ideas;
+    const numIdeas = existingIdeas.length;
     const targetIdeaCount = 20;
+    const validation = idea => {
+      if (idea.length < 2 || idea[1] !== "q") {
+        return "Is the second letter 'q'?";
+      }
+      if (VALID_WORDS.indexOf(idea) === -1) {
+        return "Is that an English word?";
+      }
+      if (existingIdeas.indexOf(idea) !== -1) {
+        return "Didn't we already use that one?";
+      }
+    };
     return (
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-        <h1>Practice Round</h1>
+        <h1>Practice</h1>
         <p>
           As part of this survey, you'll be using a system that offers
           inspiration while you're brainstorming. Let's practice using it.
         </p>
+
         <p>
-          <b>Practice Task:</b> Try to list 20 English words with "q" as the
-          second letter.
+          In the area below, notice a box on the left, labeled "For
+          Inspiration". Clicking the button will show various kinds of
+          inspirations. In this practice task, the inspirations will be helpful
+          (try it!), but that may change between tasks.
         </p>
         <p>
-          For this practice task, the inspiration box will show word prefixes
-          that you haven't used yet.
+          <b>Task:</b> Try to list 20 English words with "q" as the second
+          letter.
+        </p>
+        <p>
+          <b>Remember to try out the inspiration box!</b>
         </p>
 
         <div style={{ display: "flex", flexFlow: "col nowrap" }}>
           <InspirationBox ideaSource={"the Wordfreq Python package"} />
           <div style={{ flex: "1 0 auto" }}>
-            <b>Words</b>
-            <SmartIdeaList placeholder="_q__" />
+            <h1>Words</h1>
+            <SmartIdeaList placeholder="_q__" validation={validation} />
           </div>
         </div>
         <p>
@@ -244,7 +276,7 @@ function brainstormHeader(topicName, targetIdeaCount) {
       <p>
         You're going to write a factual article about{" "}
         <span style={{ color: "orange" }}>{topicName}</span>. Think about the
-        person who will read the article.
+        person who will read the article.{" "}
         <b>What factual questions might the reader have?</b>
       </p>
 
@@ -522,16 +554,15 @@ function getIntroSurvey(tasksAndConditions) {
   };
 }
 
+const stringIsNontrivial = x => (x || "").trim().length > 0;
+
 const withValidation = (requiredInputs, view) => {
   return {
     view,
-    complete: state => {
-      for (let i = 0; i < requiredInputs.length; i++) {
-        let curVal = state.controlledInputs.get(requiredInputs[i]) || "";
-        if (curVal.trim().length === 0) return false;
-      }
-      return true;
-    },
+    complete: state =>
+      requiredInputs.every(name =>
+        stringIsNontrivial(state.controlledInputs.get(name))
+      ),
   };
 };
 
@@ -568,7 +599,7 @@ function getPrewritingScreens(tasksAndConditions) {
           <div style={{ display: "flex", flexFlow: "col nowrap" }}>
             <InspirationBox ideaSource={task.ideaSource} />
             <div style={{ flex: "1 0 auto" }}>
-              <b>Questions the reader might have:</b>
+              <h1>Questions the reader might have:</h1>
               <SmartIdeaList />
             </div>
           </div>
@@ -596,9 +627,8 @@ function getPrewritingScreens(tasksAndConditions) {
         </p>
         <p>Thinking about the reader will help make you a better writer.</p>
         <p>
-          In the next few screens, you'll try to come up with ideas about what
-          questions someone might have about the topic before they read your
-          article.
+          In the next few screens, you'll try to list some questions that
+          someone might have about the topic before they read your article.
         </p>
 
         {surveyBody(
@@ -609,8 +639,8 @@ function getPrewritingScreens(tasksAndConditions) {
               <span>
                 {`I am confident that I can come up with at least ${
                   task.targetIdeaCount
-                } questions that someone might ask me about `}
-                <b>{task.topicName}</b>
+                } questions that someone might want to know about `}
+                <b>{task.topicName}</b> without relying on outside resources.
               </span>,
               7,
               ["strongly disagree", "strongly agree"]
@@ -621,7 +651,7 @@ function getPrewritingScreens(tasksAndConditions) {
         <NextBtn />
       </div>
     ),
-  });
+  }); // TODO: Validate that all inputs are present
 
   tasksAndConditions.forEach(({ prompt, conditionName, task }, idx) => {
     // TODO: Instructions screens?
