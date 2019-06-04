@@ -23,14 +23,21 @@ def sanitize_name(name):
 
 desired_categories = set(opts.desired_categories.split(","))
 
+category_filehandles = {
+    category_name: open(out_path / f"{category_name}.jsonl", "w")
+    for category_name in desired_categories
+}
+
+
 for path in tqdm.tqdm(glob.glob(opts.stream_glob)):
     with gzip.open(path) as f:
         for line in tqdm.tqdm(f, mininterval=5):
             article = json.loads(line)
             for category_name in article["infoboxes"]:
                 if category_name in desired_categories:
-                    path = out_path / category_name
-                    path.mkdir(parents=True, exist_ok=True)
-                    (path / sanitize_name(article["name"])).write_text(
-                        article["content"]
+                    category_filehandles[category_name].write(
+                        json.dumps(article) + "\n"
                     )
+
+for fh in category_filehandles.values():
+    fh.close()
