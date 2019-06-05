@@ -33,10 +33,10 @@ lint:
 train_models:
 	poetry run python scripts/train_cue_model.py wiki-book 128
 	poetry run python scripts/train_cue_model.py wiki-film 128
-	poetry run python scripts/train_cue_model.py wiki-musician 128
+	# poetry run python scripts/train_cue_model.py wiki-musician 128
 	poetry run python scripts/train_cue_model.py wikivoyage 128
 	# poetry run python scripts/train_cue_model.py newsroom 128
-	poetry run python scripts/train_cue_model.py yelp 128
+	# poetry run python scripts/train_cue_model.py yelp 128
 	# poetry run python scripts/train_cue_model.py imdb 128
 	#poetry run python scripts/train_cue_model.py bios 128
 
