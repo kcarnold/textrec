@@ -54,6 +54,7 @@ def preprocess_df(df):
     sentences, tokenized = preprocess_texts(df.text)
     df["sentences"] = ["\n".join(sents) for sents in sentences]
     df["tokenized"] = tokenized
+    df["num_sents"] = [len(sents) for sents in sentences]
     return df
 
 
@@ -104,7 +105,7 @@ def cached_dataset(dataset_name):
     """
     dataset_name, subset = dataset_name.split(":")
     data = cached_full_dataset(dataset_name)
-    if subset != 'all':
+    if subset != "all":
         subsets = train_test_split(data)
         data = subsets[subset]
     return data
@@ -112,41 +113,66 @@ def cached_dataset(dataset_name):
 
 @lru_cache()
 @mem.cache
-def cached_sentences(dataset_name):
+def cached_sentences(
+    dataset_name,
+    min_sentences_per_doc=5,
+    max_sentences_per_doc=50,
+    max_sentences_total=1_250_000,
+    random_state=0,
+):
     """Split sentences."""
     df_full = cached_dataset(dataset_name)
+    df_full = df_full.sample(frac=1, random_state=random_state)
     sentences = []
+    total_num_docs = 0
+    dupes = 0
+    seen_texts = set()
     for row in df_full.itertuples():
         doc_id = row.doc_id
         untokenized_sents = row.sentences.split("\n")
         sents = row.tokenized.split("\n")
-        doc_n_sents = len(sents)
         assert len(untokenized_sents) == len(sents)
+        doc_n_sents = len(sents)
+        if doc_n_sents < min_sentences_per_doc:
+            continue
+        total_num_docs += 1
         for sent_idx, (raw_sent, sent) in enumerate(zip(untokenized_sents, sents)):
-            sentences.append((doc_id, doc_n_sents, sent_idx, raw_sent, sent))
+            if sent_idx == max_sentences_per_doc:
+                break
+            if sent in seen_texts:
+                dupes += 1
+            else:
+                seen_texts.add(sent)
+                sentences.append((doc_id, doc_n_sents, sent_idx, raw_sent, sent))
+        if len(sentences) >= max_sentences_total:
+            break
 
+    total_possible_sents = df_full.num_sents.sum()
+    print(f"Using {total_num_docs:,} out of {len(df_full):,} docs")
+    print(f"Using {len(sentences):,} out of {total_possible_sents:,} possible sents")
+    print(f"{dupes:,} dupe sents")
     sentences = pd.DataFrame(
         sentences, columns="doc_id doc_n_sents sent_idx raw_sent sent".split()
     )
-    return sentences
+    return sentences, dict(total_num_docs=total_num_docs, n_dupes=dupes)
 
 
 @mem.cache
 def cached_vectorized_dataset(dataset_name, normalize_by_wordfreq=True):
-    sentences = cached_sentences(dataset_name)
-    print("{:,} sentences".format(len(sentences)))
+    all_sentences, sentences_meta = cached_sentences(dataset_name)
+    print("{:,} sentences".format(len(all_sentences)))
 
     # Filter 1: length
-    sentences["sent_length"] = [len(sent.split()) for sent in sentences.sent]
+    all_sentences["sent_length"] = [len(sent.split()) for sent in all_sentences.sent]
 
     min_percentile = 25
     max_percentile = 75
     min_sent_len, max_sent_len = np.percentile(
-        sentences.sent_length, [min_percentile, max_percentile]
+        all_sentences.sent_length, [min_percentile, max_percentile]
     )
     length_filtered = VecPile(
-        sentences=sentences[
-            sentences.sent_length.between(min_sent_len, max_sent_len)
+        sentences=all_sentences[
+            all_sentences.sent_length.between(min_sent_len, max_sent_len)
         ].copy()
     )
     print("{:,} length-filtered sentences".format(len(length_filtered)))
@@ -161,10 +187,23 @@ def cached_vectorized_dataset(dataset_name, normalize_by_wordfreq=True):
     )
 
     length_filtered.projected_vecs = length_filtered.raw_vecs.dot(projection_mat)
+
+    # Filter out sentences that have no data in the vector space.
+    # Sentences may not if they have only words that are unknown.
+    row_norms = np.linalg.norm(length_filtered.projected_vecs, axis=1)
+    has_sufficient_norm = np.flatnonzero(row_norms > 1e-6)
+
+    norm_filtered = VecPile(
+        sentences=length_filtered.sentences.iloc[has_sufficient_norm].copy(),
+        projected_vecs=length_filtered.projected_vecs[has_sufficient_norm],
+    )
+
     return dict(
         length_filtered=length_filtered,
+        norm_filtered=norm_filtered,
         vectorizer=vectorizer,
         projection_mat=projection_mat,
+        sentences_meta=sentences_meta,
     )
 
 
@@ -173,72 +212,85 @@ def cached_vectorized_dataset(dataset_name, normalize_by_wordfreq=True):
 def cached_topic_data(
     dataset_name, n_clusters, random_state=0, min_pervasiveness_frac=0.01
 ):
-    # Load dataset
-    df_full = cached_dataset(dataset_name)
 
     vectorized = cached_vectorized_dataset(dataset_name)
-    length_filtered = vectorized["length_filtered"]
+    norm_filtered = vectorized["norm_filtered"]
 
     # Cluster
     clusterer = MiniBatchKMeans(
         init="k-means++", n_clusters=n_clusters, n_init=10, random_state=random_state
     )
-    clusterer.fit(length_filtered.projected_vecs)
-    length_filtered.dists_to_centers = clusterer.transform(
-        length_filtered.projected_vecs
-    )
+    clusterer.fit(norm_filtered.projected_vecs)
+    norm_filtered.dists_to_centers = clusterer.transform(norm_filtered.projected_vecs)
 
     # Hard-assign topics, filter to those close enough.
 
-    lf_sentences = length_filtered.sentences
-    lf_sentences["topic"] = np.argmin(length_filtered.dists_to_centers, axis=1)
-    length_filtered.dist_to_closest_cluster = np.min(
-        length_filtered.dists_to_centers, axis=1
+    nf_sentences = norm_filtered.sentences
+    nf_sentences["topic"] = np.argmin(norm_filtered.dists_to_centers, axis=1)
+    norm_filtered.dist_to_closest_cluster = np.min(
+        norm_filtered.dists_to_centers, axis=1
     )
-    length_filtered.is_close = length_filtered.dist_to_closest_cluster < np.median(
-        length_filtered.dist_to_closest_cluster
+    norm_filtered.is_close = norm_filtered.dist_to_closest_cluster < np.median(
+        norm_filtered.dist_to_closest_cluster
     )
 
     # distance_filtered = VecPile(
-    #     indices=np.flatnonzero(length_filtered.is_close),
-    #     sentences=length_filtered.sentences.iloc[length_filtered.is_close].copy(),
-    #     projected_vecs=length_filtered.projected_vecs[length_filtered.is_close],
+    #     indices=np.flatnonzero(norm_filtered.is_close),
+    #     sentences=norm_filtered.sentences.iloc[norm_filtered.is_close].copy(),
+    #     projected_vecs=norm_filtered.projected_vecs[norm_filtered.is_close],
     # )
     # print("{:,} close enough to cluster center".format(len(distance_filtered)))
 
-    # distance_filtered.raw_vecs = length_filtered.raw_vecs[distance_filtered.indices]
+    # distance_filtered.raw_vecs = norm_filtered.raw_vecs[distance_filtered.indices]
 
     # For each topic, how many different docs does it occur in?
     pervasiveness_by_topic = (
-        lf_sentences[["doc_id", "topic"]].drop_duplicates().groupby("topic").size()
+        nf_sentences[["doc_id", "topic"]].drop_duplicates().groupby("topic").size()
     )
 
-    total_num_docs = len(df_full)
+    total_num_docs = vectorized["sentences_meta"]["total_num_docs"]
     min_pervasiveness = min_pervasiveness_frac * total_num_docs
 
     clusters_to_keep = np.flatnonzero(pervasiveness_by_topic > min_pervasiveness)
 
     n_clusters = len(clusters_to_keep)
 
+    print(
+        n_clusters,
+        "of",
+        len(pervasiveness_by_topic),
+        "clusters are sufficiently pervasive",
+    )
+
     # Re-label topics in sentences.
     cluster_old2new = {old_idx: idx for idx, old_idx in enumerate(clusters_to_keep)}
-    lf_sentences["topic"] = lf_sentences.topic.map(cluster_old2new)
-    lf_sentences.dropna(inplace=True, subset=["topic"])
-    # Grr, that "map" upcasted 'topic' to float.
-    lf_sentences["topic"] = lf_sentences.topic.astype(int)
+    nf_sentences["topic"] = nf_sentences.topic.map(cluster_old2new)
+
+    sentences_to_keep = np.flatnonzero(~nf_sentences.topic.isna())
+
+    topic_filtered = VecPile(
+        sentences=nf_sentences.iloc[sentences_to_keep].copy(),
+        projected_vecs=norm_filtered.projected_vecs[sentences_to_keep],
+        dists_to_centers=norm_filtered.dists_to_centers[sentences_to_keep][
+            :, clusters_to_keep
+        ],
+    )
+    assert not np.any(topic_filtered.sentences.topic.isna())
+    # Grr, "map" above upcasted 'topic' to float.
+    topic_filtered.sentences["topic"] = topic_filtered.sentences.topic.astype(int)
 
     overall_topic_distribution = normalized_bincount(
-        lf_sentences.topic, minlength=n_clusters
+        topic_filtered.sentences.topic, minlength=n_clusters
     )
 
     return dict(
-        vars(length_filtered),
+        vars(topic_filtered),
         vectorizer=vectorized["vectorizer"],
         projection_mat=vectorized["projection_mat"],
         clusterer=subset_mbkmeans(clusterer, clusters_to_keep),
         overall_topic_distribution=overall_topic_distribution,
         pervasiveness_by_topic=pervasiveness_by_topic,
-        total_num_docs=len(df_full),
+        total_num_docs=total_num_docs,
     )
 
 
