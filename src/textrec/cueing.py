@@ -74,7 +74,7 @@ data_loaders = {
 def cached_full_dataset(dataset_name):
     if dataset_name not in data_loaders:
         raise NameError("Unknown dataset " + dataset_name)
-    return data_loaders[dataset_name]()
+    return preprocess_df(data_loaders[dataset_name]())
 
 
 def train_test_split(data, *, valid_frac=0.05, test_frac=0.05, seed=0):
@@ -92,7 +92,6 @@ def train_test_split(data, *, valid_frac=0.05, test_frac=0.05, seed=0):
 
 
 @lru_cache()
-@mem.cache
 def cached_dataset(dataset_name):
     """Datasets have the following form:
 
@@ -105,9 +104,10 @@ def cached_dataset(dataset_name):
     """
     dataset_name, subset = dataset_name.split(":")
     data = cached_full_dataset(dataset_name)
-    subsets = train_test_split(data)
-    df = subsets[subset]
-    return preprocess_df(df)
+    if subset != 'all':
+        subsets = train_test_split(data)
+        data = subsets[subset]
+    return data
 
 
 @lru_cache()
