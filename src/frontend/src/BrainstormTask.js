@@ -522,6 +522,73 @@ function getTask(promptName) {
         </span>
       ),
     };
+  } else if (promptName.startsWith("wiki")) {
+    let topicNameCode = promptName.slice(5);
+    const nameField = `${topicNameCode}-name`;
+    const visibleNameMap = {
+      book: "book",
+      film: "film",
+      musician: "musician",
+      television: "TV show",
+    };
+    console.assert(topicNameCode in visibleNameMap);
+    const visibleName = visibleNameMap[topicNameCode];
+    const writingPrompt = (
+      <span>
+        Write a brief but informative encyclopedia article about{" "}
+        <i>
+          <ControlledInputView name={nameField} />
+        </i>
+        .
+        <br /> Make up any details you need.
+      </span>
+    );
+
+    return {
+      flags: {
+        domain: promptName,
+      },
+      writingType: {
+        singular: "encyclopedia article",
+        plural: "encyclopedia articles",
+      },
+      nameField,
+      writingPrompt,
+      topicName: <ControlledInputView name={nameField} />,
+      precommitView: withValidation([nameField], () => (
+        <div className="Survey">
+          <span>
+            What is a <b>{visibleName}</b> that you know well enough to be able
+            to write a brief encyclopedia-style article about it without
+            external resources?
+          </span>
+          <div
+            style={{
+              padding: "12px",
+              lineHeight: 1.5,
+            }}
+          >
+            Name of {visibleName}: <ControlledInput name={nameField} />
+          </div>
+        </div>
+      )),
+
+      targetIdeaCount: 20,
+      wordCountTarget: 120,
+      ideaSource: (
+        <span>
+          Wikipedia articles, available under the{" "}
+          <a
+            href="http://creativecommons.org/licenses/by-sa/3.0/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Creative Commons Attribution-ShareAlike 3.0 licence
+          </a>
+          .
+        </span>
+      ),
+    };
   } else {
     console.assert("Unknown prompt", promptName);
   }
@@ -860,7 +927,8 @@ export function createTaskState(loginEvent: {
     isDemo = true;
   } else {
     conditions = conditionOrders[loginEvent.assignment];
-    prompts = ["reviewRestaurant", "travelGuide", "informNews"];
+    // prompts = ["reviewRestaurant", "travelGuide", "informNews"];
+    prompts = ["wiki-book", "reviewRestaurant", "travelGuide"];
   }
 
   // Get task setup.
