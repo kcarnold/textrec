@@ -279,8 +279,16 @@ def cached_topic_data(
     # Grr, "map" above upcasted 'topic' to float.
     topic_filtered.sentences["topic"] = topic_filtered.sentences.topic.astype(int)
 
-    overall_topic_distribution = normalized_bincount(
-        topic_filtered.sentences.topic, minlength=n_clusters
+    # Update topic pervasiveness to filtered topics.
+    pervasiveness_by_topic = (
+        topic_filtered.sentences[["doc_id", "topic"]]
+        .drop_duplicates()
+        .groupby("topic")
+        .size()
+    )
+
+    overall_topic_distribution = (
+        pervasiveness_by_topic.values / pervasiveness_by_topic.sum()
     )
 
     return dict(
