@@ -928,7 +928,7 @@ export function createTaskState(loginEvent: {
   } else {
     conditions = conditionOrders[loginEvent.assignment];
     // prompts = ["reviewRestaurant", "travelGuide", "informNews"];
-    prompts = ["wiki-book", "reviewRestaurant", "travelGuide"];
+    prompts = ["wiki-book", "wiki-film", "travelGuide"];
   }
 
   // Get task setup.
