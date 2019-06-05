@@ -149,6 +149,18 @@ def clean_wikitext(text):
     return WIKITEXT_TITLE_RE.sub("", text)
 
 
+def dedupe_dataset(df):
+    """
+    Sometimes it seems that the wikipedia dump dumps the same article several times.
+
+    In the cases I've noticed, the titles are identical.
+    """
+    df_dedup = df.drop_duplicates(subset="title")
+    n_dupes = len(df) - len(df_dedup)
+    print(f"{len(df_dedup)} docs after removing {n_dupes} dupes")
+    return df_dedup
+
+
 def load_wikivoyage(path=None):
     if path is None:
         path = get_path("wikivoyage")
@@ -172,7 +184,8 @@ def load_wikivoyage(path=None):
 
     data = [[title, text] for title, text, pageid in pages]
 
-    return add_useless_doc_id(pd.DataFrame(data, columns=["title", "text"]))
+    df = pd.DataFrame(data, columns=["title", "text"])
+    return add_useless_doc_id(dedupe_dataset(df))
 
 
 def get_wikipedia_category_loader(category):
@@ -189,6 +202,8 @@ def get_wikipedia_category_loader(category):
                 text = clean_wikitext(article["content"])
                 data.append((article["name"], text))
 
-        return add_useless_doc_id(pd.DataFrame(data, columns=["title", "text"]))
-   
+        return add_useless_doc_id(
+            dedupe_dataset(pd.DataFrame(data, columns=["title", "text"]))
+        )
+
     return load_wikipedia_category
