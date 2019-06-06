@@ -85,7 +85,7 @@ const InspirationBox = iobs(({ state, dispatch, ideaSource }) => (
       <div>
         <ul>
           {state.experimentState.suggestions.map((s, idx) => (
-            <li key={idx} style={{ marginBottom: "5px" }}>
+            <li key={idx} style={{ marginBottom: "5px", fontSize: "85%" }}>
               {highlightedSpan(s.text, s.highlightSpan)}
             </li>
           ))}
