@@ -2,9 +2,9 @@ import joblib
 
 from textrec.cueing import (
     cached_topic_data,
-    get_cooccurrence_mat,
     train_topic_w2v,
     get_labels_for_clusters,
+    get_representative_sents,
     model_filename,
 )
 
@@ -21,16 +21,22 @@ if __name__ == "__main__":
     model = cached_topic_data(dataset_name, opts.n_clusters)
 
     # Add stuff.
+    print("Pick labels")
     model["labels"] = get_labels_for_clusters(
         vectorizer=model["vectorizer"],
         cluster_centers=model["clusterer"].cluster_centers_,
         sentences=model["sentences"],
     )
 
-    model["cooccur"] = get_cooccurrence_mat(
-        model["sentences"], n_clusters=model["clusterer"].n_clusters
+    print("Find labeled sentences")
+    model["labels_and_sents"] = get_representative_sents(
+        cluster_centers=model["clusterer"].cluster_centers_,
+        projected_vecs=model["projected_vecs"],
+        sentences=model["sentences"],
+        labels=model["labels"],
     )
 
+    print("Train w2v")
     model["topic_w2v"] = train_topic_w2v(model["sentences"], opts.w2v_embedding_size)
 
     for k, v in model.items():

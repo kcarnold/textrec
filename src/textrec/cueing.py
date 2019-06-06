@@ -319,9 +319,7 @@ def normalized_bincount(x, minlength):
     return result
 
 
-def get_labels_for_clusters(
-    vectorizer, cluster_centers, sentences, MIN_CLUSTER_SIZE=20
-):
+def get_labels_for_clusters(vectorizer, cluster_centers, sentences):
     from sklearn.metrics.pairwise import pairwise_distances
     from textrec.numberbatch_vecs import get_cnnb
     from textrec import automated_analyses
@@ -375,6 +373,37 @@ def get_labels_for_clusters(
     return [pick_labels(dists) for dists in word_vec_dists_to_centers]
 
 
+def get_representative_sents(
+    cluster_centers, projected_vecs, sentences, labels, num_examples_to_collect=20
+):
+    from sklearn.metrics import pairwise
+
+    pdists = pairwise.pairwise_distances(
+        cluster_centers, projected_vecs, metric="cosine"
+    )
+
+    by_distance_to_center = np.argsort(pdists, axis=1)
+
+    labels_and_sents = {}
+    for topic_idx, label_words in enumerate(labels):
+        label_re = re.compile(
+            "\\b" + "|".join(re.escape(label) for label in label_words) + "\\b",
+            re.IGNORECASE,
+        )
+
+        candidates = []
+        for idx in by_distance_to_center[topic_idx]:
+            sent = sentences.raw_sent.iloc[idx]
+            match = label_re.search(sent)
+            if match:
+                candidates.append((sent, match.span()))
+            if len(candidates) == num_examples_to_collect:
+                break
+        if len(candidates) > 2:
+            labels_and_sents[topic_idx] = (label_words, candidates)
+    return labels_and_sents
+
+
 def get_cooccurrence_mat(sentences, n_clusters):
     from itertools import combinations
 
@@ -385,9 +414,6 @@ def get_cooccurrence_mat(sentences, n_clusters):
     # Make order not matter.
     cooccur = cooccur + cooccur.T
     return cooccur
-
-
-MIN_SENTS_IN_CLUSTER = 50
 
 
 @lru_cache()

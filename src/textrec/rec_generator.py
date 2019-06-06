@@ -70,6 +70,10 @@ async def get_cue_API(executor, request):
         return get_cue(text, model_name=model_name, n_cues=n_cues, mode="example")
     elif rec_type == "cueWords":
         return get_cue(text, model_name=model_name, n_cues=n_cues, mode="label3")
+    elif rec_type == "highlightedSents":
+        return get_cue(
+            text, model_name=model_name, n_cues=n_cues, mode="exampleHighlighted"
+        )
     elif rec_type == "randomWords":
         return get_cue_random_words(model_name=model_name, n_cues=n_cues)
 
@@ -145,6 +149,21 @@ def get_cue(text, *, model_name, n_cues, mode, method="w2v"):
                     # is_close=cluster_sentences.close_to_cluster_center.iloc[idx].item(),
                 )
 
+    elif mode == "exampleHighlighted":
+        labels_and_sents = cueing.get_model(model_name, "labels_and_sents")
+
+        def get_cue_for_cluster(cluster_to_cue):
+            if cluster_to_cue not in labels_and_sents:
+                return
+            label, candidates = labels_and_sents[cluster_to_cue]
+            candidate_idx = np.random.choice(len(candidates))
+            sentence, label_span = candidates[candidate_idx]
+            return dict(
+                text=sentence,
+                highlightSpan=label_span,
+                label=get_label_for_cluster(cluster_to_cue),
+            )
+
     elif mode == "label3":
 
         def get_cue_for_cluster(cluster_to_cue):
@@ -219,10 +238,14 @@ def next_cluster_distribution_given_context_clusters(
         cluster_probs = co_occur @ doc_topic_vec
     elif method == "w2v":
         model = cueing.get_model(model_name, "topic_w2v")
-        overall_topic_distribution = cueing.get_model(model_name, "overall_topic_distribution")
+        overall_topic_distribution = cueing.get_model(
+            model_name, "overall_topic_distribution"
+        )
         cluster_probs = cueing.predict_missing_topics_w2v(
-            model, existing_clusters=existing_clusters, n_clusters=n_clusters,
-            overall_topic_distribution=overall_topic_distribution
+            model,
+            existing_clusters=existing_clusters,
+            n_clusters=n_clusters,
+            overall_topic_distribution=overall_topic_distribution,
         )
 
     # Avoid already-discussed clusters.
@@ -359,7 +382,7 @@ def get_cue_practice_q(already_got, n_cues):
         if letter_to_blank > 0:
             # Never blank the second letter (the q)
             letter_to_blank += 1
-        hint = word[:letter_to_blank] + "_" + word[letter_to_blank+1:]
+        hint = word[:letter_to_blank] + "_" + word[letter_to_blank + 1 :]
         candidates.append(hint)
     np.random.shuffle(candidates)
     return candidates[:n_cues]

@@ -25,11 +25,11 @@ const namedConditions = {
   randomSents: { recType: "randomSents", n_cues: 10 },
   cueSents: { recType: "cueSents", n_cues: 10 },
   cueWords: { recType: "cueWords", n_cues: 10 },
+  highlightedSents: { recType: "highlightedSents", n_cues: 10 },
   randomWords: { recType: "randomWords", n_cues: 10 },
 };
 
-// let baseConditions = ["norecs", "randomSents", "cueSents"];
-let baseConditions = ["norecs", "randomSents", "cueWords"];
+let baseConditions = ["norecs", "randomSents", "highlightedSents"];
 
 const WelcomeScreen = { screen: "Welcome", view: Views.Welcome };
 const DoneScreen = { screen: "Done", view: Views.Done };
@@ -37,6 +37,20 @@ const DoneScreen = { screen: "Done", view: Views.Done };
 function surveyView(props) {
   return () => React.createElement(Survey, props);
 }
+
+const highlightedSpan = (text, highlight) => {
+  if (!highlight) return <span>{text}</span>;
+  let [a, b] = highlight;
+  const deEmph = x => <span style={{ color: "#888" }}>{x}</span>;
+
+  return (
+    <span>
+      {deEmph(text.slice(0, a))}
+      <b>{text.slice(a, b)}</b>
+      {deEmph(text.slice(b))}
+    </span>
+  );
+};
 
 const InspirationBox = iobs(({ state, dispatch, ideaSource }) => (
   <div
@@ -72,7 +86,7 @@ const InspirationBox = iobs(({ state, dispatch, ideaSource }) => (
         <ul>
           {state.experimentState.suggestions.map((s, idx) => (
             <li key={idx} style={{ marginBottom: "5px" }}>
-              {s.text}
+              {highlightedSpan(s.text, s.highlightSpan)}
             </li>
           ))}
         </ul>
@@ -727,31 +741,20 @@ function getPrewritingScreens(tasksAndConditions) {
     let surveyQuestions = [
       agreeLikert("fluent", "I felt like I could come up with ideas easily."),
       agreeLikert("stuck", "I sometimes felt stuck."),
-    ];
-    if (conditionName !== "norecs") {
-      surveyQuestions = [
-        ...surveyQuestions,
-        agreeLikert("sysRelevant", "The inspirations were relevant."),
-        agreeLikert("sysGaveIdeas", "The inspirations gave me new ideas."),
-        agreeLikert(
-          "usedInspirations",
-          "I used the inspirations that were given."
-        ),
-        // "The inspirations discussed some of the same ideas"
-        {
-          text: "In what situations did you request inspiration?",
-          responseType: "text",
-          name: "whenRequest",
-          flags: { multiline: true },
-        },
-      ];
-    }
-    surveyQuestions = [
-      ...surveyQuestions,
+      agreeLikert("sysRelevant", "The inspirations were relevant."),
+      agreeLikert("sysGaveIdeas", "The inspirations gave me new ideas."),
       agreeLikert(
-        "system-helped",
-        "Doing it like this, on the computer, was helpful overall."
+        "usedInspirations",
+        "I used the inspirations that were given."
       ),
+      // "The inspirations discussed some of the same ideas"
+      {
+        text: "In what situations did you request inspirations?",
+        responseType: "text",
+        name: "whenRequest",
+        flags: { multiline: true },
+      },
+      agreeLikert("system-helped", "The system was helpful overall."),
       agreeLikert("distracting", "I would have done better using paper."),
       {
         text: "I used outside resources for this task.",
