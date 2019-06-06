@@ -187,7 +187,7 @@ function getScreens(prompts, conditionNames, isDemo) {
     // getIntroSurvey(tasksAndConditions),
     getPrecommitScreen(tasksAndConditions),
     // getTutorialScreen(),
-    getPracticeScreen(),
+    ...getPracticeScreens(),
     ...getPrewritingScreens(tasksAndConditions),
     {
       screen: "MidwaySurvey",
@@ -223,63 +223,76 @@ const VALID_WORDS = "aqua aquacultural aquaculture aquae aqualung aquamarine aqu
   /\s/
 );
 
-const getPracticeScreen = () => ({
-  preEvent: setupTrialEvent(`practice`, "practice", { domain: "_q" }),
-  screen: "Practice",
-  view: iobs(({ state }) => {
-    const existingIdeas = state.experimentState.ideas;
-    const numIdeas = existingIdeas.length;
-    const targetIdeaCount = 20;
-    const validation = idea => {
-      if (idea.length < 2 || idea[1] !== "q") {
-        return "Is the second letter 'q'?";
-      }
-      if (VALID_WORDS.indexOf(idea) === -1) {
-        return "Is that an English word?";
-      }
-      if (existingIdeas.indexOf(idea) !== -1) {
-        return "Didn't we already use that one?";
-      }
-    };
-    return (
-      <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-        <h1>Practice</h1>
-        <p>
-          As part of this survey, you'll be using a system that offers
-          inspiration while you're brainstorming. Let's practice using it.
-        </p>
+const getPracticeScreens = () => [
+  {
+    preEvent: setupTrialEvent(`practice`, "practice", { domain: "_q" }),
+    screen: "Practice",
+    view: iobs(({ state }) => {
+      const existingIdeas = state.experimentState.ideas;
+      const numIdeas = existingIdeas.length;
+      const targetIdeaCount = 20;
+      const validation = idea => {
+        if (idea.length < 2 || idea[1] !== "q") {
+          return "Is the second letter 'q'?";
+        }
+        if (VALID_WORDS.indexOf(idea) === -1) {
+          return "Is that an English word?";
+        }
+        if (existingIdeas.indexOf(idea) !== -1) {
+          return "Didn't we already use that one?";
+        }
+      };
+      return (
+        <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+          <h1>Practice</h1>
+          <p>
+            As part of this survey, you'll be using a system that offers
+            inspirations. Let's practice using it.
+          </p>
 
-        <p>
-          In the area below, notice a box on the left, labeled "For
-          Inspiration". Clicking the button will show various kinds of
-          inspirations. In this practice task, the inspirations will be helpful
-          (try it!), but that may change between tasks.
-        </p>
-        <p>
-          <b>Task:</b> Try to list 20 English words with "q" as the second
-          letter.
-        </p>
-        <p>
-          <b>Remember to try out the inspiration box!</b>
-        </p>
+          <p>
+            In the area below, notice a box on the left, labeled "For
+            Inspiration". Clicking the button will show various kinds of
+            inspirations. In this practice task, the inspirations will be
+            helpful (try it!), but that may change between tasks.
+          </p>
+          <p>
+            <b>Task:</b> Try to list 20 English words with "q" as the second
+            letter.
+          </p>
+          <p>
+            <b>Remember to try out the inspiration box!</b>
+          </p>
 
-        <div style={{ display: "flex", flexFlow: "col nowrap" }}>
-          <InspirationBox ideaSource={"the Wordfreq Python package"} />
-          <div style={{ flex: "1 0 auto" }}>
-            <h2>Words</h2>
-            <SmartIdeaList placeholder="_q__" validation={validation} />
+          <div style={{ display: "flex", flexFlow: "col nowrap" }}>
+            <InspirationBox ideaSource={"the Wordfreq Python package"} />
+            <div style={{ flex: "1 0 auto" }}>
+              <h2>Words</h2>
+              <SmartIdeaList placeholder="_q__" validation={validation} />
+            </div>
           </div>
+          <p>
+            {numIdeas < targetIdeaCount
+              ? `Try to get to ${targetIdeaCount} words.`
+              : null}
+          </p>
+          <NextBtn disabled={numIdeas < targetIdeaCount} />
         </div>
-        <p>
-          {numIdeas < targetIdeaCount
-            ? `Try to get to ${targetIdeaCount} words.`
-            : null}
-        </p>
-        <NextBtn disabled={numIdeas < targetIdeaCount} />
-      </div>
-    );
-  }),
-});
+      );
+    }),
+  },
+  {
+    screen: "PostTaskSurvey",
+    view: surveyView({
+      title: `Survey after Practice Round`,
+      basename: `postBrainstorm-practice`,
+      questions: [
+        { text: "This is an example of survey you'll get after each task." },
+        ...postIdeateSurveyQuestions,
+      ],
+    }),
+  },
+];
 
 const ControlledInputView = iobs(
   ({ state, name }) => state.controlledInputs.get(name) || name
@@ -669,6 +682,31 @@ const getPrecommitScreen = tasksAndConditions => ({
   ),
 });
 
+let postIdeateSurveyQuestions = [
+  agreeLikert("fluent", "I felt like I could come up with ideas easily."),
+  agreeLikert("stuck", "I sometimes felt stuck."),
+  agreeLikert("sysRelevant", "The inspirations were relevant."),
+  agreeLikert("sysGaveIdeas", "The inspirations gave me new ideas."),
+  agreeLikert("usedInspirations", "I used the inspirations that were given."),
+  {
+    text: "In what situations did you request inspirations?",
+    responseType: "text",
+    name: "whenRequest",
+    flags: { multiline: true },
+  },
+  agreeLikert("system-helped", "The system was helpful overall."),
+  agreeLikert("distracting", "I would have done better using paper."),
+  {
+    text:
+      "I used outside resources for this task (we'd prefer you didn't, but better to be honest).",
+    name: "used-external",
+    responseType: "options",
+    options: ["Yes", "No"],
+  },
+  SurveyData.techDiff,
+  SurveyData.otherMid,
+];
+
 function getPrewritingScreens(tasksAndConditions) {
   const getPrewriteScreen = (idx, task, conditionName) => ({
     preEvent: setupTrialEvent(`trial-${idx}`, conditionName, task.flags),
@@ -738,70 +776,18 @@ function getPrewritingScreens(tasksAndConditions) {
 
   tasksAndConditions.forEach(({ prompt, conditionName, task }, idx) => {
     // TODO: Instructions screens?
-    let surveyQuestions = [
-      agreeLikert("fluent", "I felt like I could come up with ideas easily."),
-      agreeLikert("stuck", "I sometimes felt stuck."),
-      agreeLikert("sysRelevant", "The inspirations were relevant."),
-      agreeLikert("sysGaveIdeas", "The inspirations gave me new ideas."),
-      agreeLikert(
-        "usedInspirations",
-        "I used the inspirations that were given."
-      ),
-      // "The inspirations discussed some of the same ideas"
-      {
-        text: "In what situations did you request inspirations?",
-        responseType: "text",
-        name: "whenRequest",
-        flags: { multiline: true },
-      },
-      agreeLikert("system-helped", "The system was helpful overall."),
-      agreeLikert("distracting", "I would have done better using paper."),
-      {
-        text: "I used outside resources for this task.",
-        name: "used-external",
-        responseType: "options",
-        options: ["Yes", "No"],
-      },
-      SurveyData.techDiff,
-      SurveyData.otherMid,
-    ];
+
     result.push(getPrewriteScreen(idx, task, conditionName));
     result.push({
       screen: "PostTaskSurvey",
       view: surveyView({
-        title: `Survey after Brainstorming ${idx + 1}`,
+        title: `Survey after Pre-writing ${idx + 1}`,
         basename: `postBrainstorm-${idx}`,
-        questions: surveyQuestions,
+        questions: postIdeateSurveyQuestions,
       }),
     });
   });
 
-  // result.push({
-  //   screen: "MidwaySurvey",
-  //   view: surveyView({
-  //     title: "Halfway survey",
-  //     basename: "midway",
-  //     questions: [
-  //       {
-  //         type: "text",
-  //         text: (
-  //           <p>Here are the writing prompts you have done brainstorming for.</p>
-  //         ),
-  //       },
-  //       ...flatMap(tasksAndConditions, ({ prompt, task }, idx) => [
-  //         { type: "text", text: <div>Prompt: {task.writingPrompt}</div> },
-  //         likert(
-  //           `taskEfficacyPost-${idx}`,
-  //           `I am confident that I can come up with at least ${
-  //             task.targetIdeaCount
-  //           } ideas for writing about a similar prompt in the future.`,
-  //           7,
-  //           ["strongly disagree", "strongly agree"]
-  //         ),
-  //       ]),
-  //     ],
-  //   }),
-  // });
   return result;
 }
 
@@ -825,7 +811,9 @@ function getFinalWritingScreens(tasksAndConditions) {
   return flatMap(tasksAndConditions, ({ task, prompt, conditionName }, idx) => {
     const header = (
       <div>
-        <h1>Write your {task.writingType.singular}</h1>
+        <h1>
+          Writing {idx + 1} of {tasksAndConditions.length}
+        </h1>
         <p
           style={{
             border: "1px solid black",
@@ -836,8 +824,8 @@ function getFinalWritingScreens(tasksAndConditions) {
           {task.writingPrompt}
         </p>
         <p>
-          Here are the ideas you listed earlier. You are not obligated to use
-          them.
+          Here are the questions you listed earlier. You are not obligated to
+          use them.
         </p>
         <div style={{ fontSize: "10pt", columnCount: "2" }}>
           <SmartIdeaList fixed />
