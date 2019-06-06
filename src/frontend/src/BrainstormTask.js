@@ -930,7 +930,7 @@ export function createTaskState(loginEvent: {
     isDemo = false;
   if (clientId.slice(0, 4) === "demo") {
     // Demo URLs are formatted: `demo(config)-(condition)-(prompt)-p`
-    let match = clientId.match(/^demo(\w+)-(\w+)-(\w+)$/);
+    let match = clientId.match(/^demo(\w+)-(\w+)-([-\w]+)$/);
     console.assert(match);
     let condition = match[2];
     conditions = [condition, condition, condition];
