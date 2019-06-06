@@ -22,10 +22,10 @@ import * as shuffle from "./shuffle";
 const namedConditions = {
   norecs: { recType: null },
   practice: { recType: "practice" },
-  randomSents: { recType: "randomSents" },
-  cueSents: { recType: "cueSents" },
-  cueWords: { recType: "cueWords" },
-  randomWords: { recType: "randomWords" },
+  randomSents: { recType: "randomSents", n_cues: 10 },
+  cueSents: { recType: "cueSents", n_cues: 10 },
+  cueWords: { recType: "cueWords", n_cues: 10 },
+  randomWords: { recType: "randomWords", n_cues: 10 },
 };
 
 // let baseConditions = ["norecs", "randomSents", "cueSents"];
