@@ -81,12 +81,7 @@ const handlers = {
   },
 
   idx() {
-    let tasks = [
-      "reviewRestaurant",
-      "persuadeMovie",
-      "travelGuide",
-      "informNews",
-    ];
+    let tasks = ["reviewRestaurant", "wiki-book", "wiki-film", "travelGuide"];
 
     topLevel = (
       <ul>
