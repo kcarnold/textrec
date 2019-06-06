@@ -41,13 +41,14 @@ function surveyView(props) {
 const InspirationBox = iobs(({ state, dispatch, ideaSource }) => (
   <div
     style={{
-      padding: "10px",
-      borderRight: "1px solid black",
+      padding: "5px",
+      margin: "10px",
+      border: "1px solid #ccc",
+      borderRadius: "5px",
       width: "350px",
-      margin: "5px",
     }}
   >
-    <h1 style={{ paddingTop: "0", marginTop: "0" }}>For inspiration...</h1>
+    <h2 style={{ paddingTop: "0", marginTop: "0" }}>For inspiration...</h2>
     <button
       onClick={e => dispatch({ type: "inspireMe" })}
       style={{
@@ -666,7 +667,7 @@ function getPrewritingScreens(tasksAndConditions) {
           <div style={{ display: "flex", flexFlow: "col nowrap" }}>
             <InspirationBox ideaSource={task.ideaSource} />
             <div style={{ flex: "1 0 auto" }}>
-              <h1>Questions the reader might have:</h1>
+              <h2>Questions the reader might have:</h2>
               <SmartIdeaList />
             </div>
           </div>
@@ -803,9 +804,7 @@ const WordCountTargetAdvance = iobs(({ state, targetWords }) => {
         Word count: {state.experimentState.wordCount} (target: {targetWords})
         <br />
         <NextBtn disabled={state.experimentState.wordCount < targetWords}>
-          {allowAdvance
-            ? "Submit"
-            : `Please write ${targetWords - wordCount} more words.`}
+          {allowAdvance ? "Submit" : `Please write some more.`}
         </NextBtn>
       </p>
     </div>
@@ -830,7 +829,9 @@ function getFinalWritingScreens(tasksAndConditions) {
           Here are the ideas you listed earlier. You are not obligated to use
           them.
         </p>
+        <div style={{ fontSize: "10pt", columnCount: "2" }}>
         <SmartIdeaList fixed />
+        </div>
         <p>Aim for about {task.wordCountTarget} words.</p>
       </div>
     );
@@ -844,7 +845,10 @@ function getFinalWritingScreens(tasksAndConditions) {
         view: () => (
           <div className="Survey">
             {header}
-            <p>Click "Start" to begin.</p>
+            <p>
+              Click "Start" to begin. (All of the above will still be available
+              on the next page.)
+            </p>
             <NextBtn>Start</NextBtn>
           </div>
         ),
