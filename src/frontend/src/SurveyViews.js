@@ -172,7 +172,8 @@ export const Survey = ({ title, basename, questions }) => (
           question =>
             question.type === "text" ||
             question.optional ||
-            state.controlledInputs.get(basename + "-" + question.name)
+            state.controlledInputs.get(basename + "-" + question.name) !==
+              undefined
         )
       }
     />
