@@ -183,7 +183,8 @@ function getScreens(prompts, conditionNames, isDemo) {
         questions: [
           {
             type: "text",
-            text: "A few questions for a quick break...",
+            text:
+              "We're going to actually write those short articles in a moment. Don't worry, since you already did some work, the rest will be easier. But first, a few questions for a quick break:",
           },
           ...SurveyData.shortNFC,
         ],
@@ -251,7 +252,7 @@ const getPracticeScreen = () => ({
         <div style={{ display: "flex", flexFlow: "col nowrap" }}>
           <InspirationBox ideaSource={"the Wordfreq Python package"} />
           <div style={{ flex: "1 0 auto" }}>
-            <h1>Words</h1>
+            <h2>Words</h2>
             <SmartIdeaList placeholder="_q__" validation={validation} />
           </div>
         </div>
