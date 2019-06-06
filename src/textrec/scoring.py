@@ -1,10 +1,16 @@
 from textrec import automated_analyses
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
 open_class_POS_tags = set("ADJ ADV INTJ NOUN PROPN VERB".split())
 
 
 def get_openclass_words(doc):
-    return [token for token in doc if token.pos_ in open_class_POS_tags]
+    return [
+        token.lemma_.lower()
+        for token in doc
+        if token.pos_ in open_class_POS_tags
+        and token.lemma_.lower() not in ENGLISH_STOP_WORDS
+    ]
 
 
 def word_vec_stats(text):
