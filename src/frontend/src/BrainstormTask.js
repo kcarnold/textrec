@@ -726,10 +726,7 @@ function getPrewritingScreens(tasksAndConditions) {
     // TODO: Instructions screens?
     let surveyQuestions = [
       agreeLikert("fluent", "I felt like I could come up with ideas easily."),
-      agreeLikert(
-        "stuck",
-        "I sometimes felt stuck thinking about what to write."
-      ),
+      agreeLikert("stuck", "I sometimes felt stuck."),
     ];
     if (conditionName !== "norecs") {
       surveyQuestions = [
@@ -742,7 +739,7 @@ function getPrewritingScreens(tasksAndConditions) {
         ),
         // "The inspirations discussed some of the same ideas"
         {
-          text: "When did you request inspiration?",
+          text: "In what situations did you request inspiration?",
           responseType: "text",
           name: "whenRequest",
           flags: { multiline: true },
@@ -751,8 +748,17 @@ function getPrewritingScreens(tasksAndConditions) {
     }
     surveyQuestions = [
       ...surveyQuestions,
-      agreeLikert("distracting", "The system was distracting."),
-      agreeLikert("system-helped", "The system was helpful overall."),
+      agreeLikert(
+        "system-helped",
+        "Doing it like this, on the computer, was helpful overall."
+      ),
+      agreeLikert("distracting", "I would have done better using paper."),
+      {
+        text: "I used outside resources for this task.",
+        name: "used-external",
+        responseType: "options",
+        options: ["Yes", "No"],
+      },
       SurveyData.techDiff,
       SurveyData.otherMid,
     ];
@@ -831,7 +837,7 @@ function getFinalWritingScreens(tasksAndConditions) {
           them.
         </p>
         <div style={{ fontSize: "10pt", columnCount: "2" }}>
-        <SmartIdeaList fixed />
+          <SmartIdeaList fixed />
         </div>
         <p>Aim for about {task.wordCountTarget} words.</p>
       </div>
