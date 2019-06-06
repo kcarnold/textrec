@@ -16,11 +16,12 @@ N_CLUSTERS = 128
 MIN_CLUSTER_SIZE = 20
 
 PRELOAD_MODELS = [
-    "yelp_128",
+    # "yelp_128",
     "wiki-book_128",
+    "wiki-film_128",
     # "imdb_128",
     # "newsroom_128",
-    # "wikivoyage_128",
+    "wikivoyage_128",
     #    'bios'
 ]
 PARTS_NEEDED = ["sentences", "is_close"]
@@ -46,6 +47,8 @@ domain_to_model = dict(
     news="newsroom_128",
     wikivoyage="wikivoyage_128",
 )
+domain_to_model["wiki-book"] = "wiki-book_128"
+domain_to_model["wiki-film"] = "wiki-film_128"
 
 
 async def get_cue_API(executor, request):
