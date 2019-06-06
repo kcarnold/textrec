@@ -40,6 +40,9 @@ BATCH_DATA = {
     "idea3r2": dict(
         n_conditions=3, config="idea"
     ), # Word cues!
+    "idea3r3": dict(
+        n_conditions=3, config="idea"
+    ), # Wikipedia tasks.
 }
 
 invalid = set("h52x67 3vf5fg 73qq5q ffhgxm mhh838 j39263 pqf6q5 49cm8f".split())
