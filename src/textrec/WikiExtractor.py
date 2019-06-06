@@ -1763,15 +1763,15 @@ from math import floor, ceil, pi, e, trunc, exp, log as ln, sin, cos, tan, asin,
 
 def sharp_expr(extr, expr):
     """Tries converting a lua expr into a Python expr."""
-    try:
-        expr = extr.expand(expr)
-        expr = re.sub('(?<![!<>])=', '==', expr) # negative lookbehind
-        expr = re.sub('mod', '%', expr)          # no \b here
-        expr = re.sub('\bdiv\b', '/', expr)
-        expr = re.sub('\bround\b', '|ROUND|', expr)
-        return text_type(eval(expr))
-    except:
-        return '<span class="error">%s</span>' % expr
+    # try:
+    #     expr = extr.expand(expr)
+    #     expr = re.sub('(?<![!<>])=', '==', expr) # negative lookbehind
+    #     expr = re.sub('mod', '%', expr)          # no \b here
+    #     expr = re.sub('\bdiv\b', '/', expr)
+    #     expr = re.sub('\bround\b', '|ROUND|', expr)
+    #     return text_type(eval(expr))
+    # except:
+    return '<span class="error">%s</span>' % expr
 
 
 def sharp_if(extr, testValue, valueIfTrue, valueIfFalse=None, *args):
