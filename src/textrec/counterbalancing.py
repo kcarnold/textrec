@@ -43,6 +43,9 @@ BATCH_DATA = {
     "idea3r3": dict(
         n_conditions=3, config="idea"
     ), # Wikipedia tasks.
+    "idea3r4": dict(
+        n_conditions=3, config="idea"
+    ), # With post-writing surveys.
 }
 
 invalid = set("h52x67 3vf5fg 73qq5q ffhgxm mhh838 j39263 pqf6q5 49cm8f".split())
