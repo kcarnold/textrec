@@ -167,5 +167,5 @@ export const shortNFC = [
     false,
   ],
 ].map(([text, normalCoded], idx) =>
-  agreeLikert(`nfc${idx}_${normalCoded ? "norm" : "rev"}`, text)
+  agreeLikert(`nfc${idx}_${normalCoded ? "norm" : "rev"}`, text, 5)
 );
