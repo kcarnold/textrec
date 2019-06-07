@@ -25,7 +25,8 @@ titles = {
     "Try typing with different mobile-phone keyboards": "write",
     "Write a restaurant review": "write",
     "Write a movie review": "write",
-    "Find images that people not in a certain group would misunderstand": "exploratory"
+    "Find images that people not in a certain group would misunderstand": "exploratory",
+    "Write about 3 different topics [~30m]": "ideawrite",
 }
 
 relevant_hits = [hit for hit in hits if hit["Title"] in titles.keys()]
@@ -36,6 +37,7 @@ if irrelevant_hits:
     print("\n".join(irrelevant_hits))
     print()
 id2hit = {hit["HITId"]: hit for hit in hits}
+
 
 def lookup_type(hit_id):
     hit_title = id2hit[hit_id]["Title"]
@@ -51,8 +53,8 @@ assignments = [
 
 # Summarize workers by subgroup.
 assignments_df = pd.DataFrame(assignments)
-assignments_df["SubmitTime"] = pd.to_datetime(assignments_df['SubmitTime'])
-print(assignments_df.groupby('hit_type').WorkerId.nunique())
+assignments_df["SubmitTime"] = pd.to_datetime(assignments_df["SubmitTime"])
+print(assignments_df.groupby("hit_type").WorkerId.nunique())
 
 
 def find_invalid_workers():
@@ -74,7 +76,7 @@ def find_invalid_workers():
                 if not all(typ == "anno" for typ, hit in prev_hits):
                     print("Anno after writing:", worker_id)
                     break
-            
+
             elif hit_type == "exploratory":
                 pass
 
@@ -83,13 +85,24 @@ def find_invalid_workers():
             prev_hits.append((hit_type, assignment))
 
 
-def add_qualification(client):
-    client.qualify_workers(
-        client.get_qualification_id("did-captioning"), assignments_by_worker.keys()
+def add_qualification(client, qualification_name, hit_type):
+    workers = sorted(
+        {
+            assignment["WorkerId"]
+            for assignment in assignments
+            if assignment["hit_type"] == hit_type
+        }
     )
+    if len(workers) == 0:
+        print("No workers did", hit_type)
+        return
+    print("Giving qualification", qualification_name, "to", len(workers), "workers:")
+    print(" ".join(workers))
+    client.qualify_workers(client.get_qualification_id("did-captioning"), workers)
 
 
 if __name__ == "__main__":
     from mturk import MTurkClient
+
     client = MTurkClient(profile_name="iismturk", region_name="us-east-1")
-    # add_qualification(client)
+    add_qualification(client, "did-articles", "ideawrite")
