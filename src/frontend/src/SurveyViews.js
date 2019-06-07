@@ -171,7 +171,7 @@ export const Survey = ({ title, basename, questions }) => (
         questions.every(
           question =>
             question.type === "text" ||
-            question.text ||
+            !question.responseType ||
             question.optional ||
             state.controlledInputs.get(basename + "-" + question.name) !==
               undefined
