@@ -555,7 +555,7 @@ def train_topic_w2v(sentences, embedding_size, seed=1):
     topic_seqs = get_topic_sequences(sentences)
     topic_seq_strs = [[str(idx) for idx in seq] for seq in topic_seqs if len(seq) >= 2]
     return Word2Vec(
-        topic_seq_strs, size=embedding_size, window=10, min_count=1, seed=seed
+        topic_seq_strs, size=embedding_size, window=50, min_count=1, seed=seed
     )
 
 
