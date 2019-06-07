@@ -22,6 +22,11 @@ paths_by_name = dict(
 )
 
 WIKITEXT_TITLE_RE = re.compile(r"^[=]+.+[=]+$", re.MULTILINE)
+bold_italic = re.compile(r"'''''(.*?)'''''")
+bold = re.compile(r"'''(.*?)'''")
+italic_quote = re.compile(r"''\"([^\"]*?)\"''")
+italic = re.compile(r"''(.*?)''")
+quote_quote = re.compile(r'""([^"]*?)""')
 
 
 def get_path(name, data_root=None):
@@ -146,7 +151,14 @@ def clean_wikitext(text):
     import gensim.corpora.wikicorpus
 
     text = gensim.corpora.wikicorpus.filter_wiki(text)
-    return WIKITEXT_TITLE_RE.sub("", text)
+    text = WIKITEXT_TITLE_RE.sub("", text)
+
+    text = bold_italic.sub(r"\1", text)
+    text = bold.sub(r"\1", text)
+    text = italic_quote.sub(r'"\1"', text)
+    text = italic.sub(r'"\1"', text)
+    text = quote_quote.sub(r'"\1"', text)
+    return text
 
 
 def dedupe_dataset(df):
