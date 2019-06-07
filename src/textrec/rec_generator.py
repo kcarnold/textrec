@@ -24,7 +24,7 @@ PRELOAD_MODELS = [
     "wikivoyage_128",
     #    'bios'
 ]
-PARTS_NEEDED = ["sentences", "is_close"]
+PARTS_NEEDED = ["sentences", "labels_and_sents", "labels"]
 
 
 cueing.preload_models(PRELOAD_MODELS, PARTS_NEEDED)
@@ -230,12 +230,6 @@ def next_cluster_distribution_given_context_clusters(
     if method == "topic_lm":
         logprobs = topic_sequence_logprobs(existing_clusters, model_name)
         cluster_probs = np.exp(logprobs)
-    elif method == "cooccur_dot":
-        co_occur = cueing.get_model(model_name, "cooccur")
-        doc_topic_vec = np.zeros(n_clusters) + 1e-6
-        for c in existing_clusters:
-            doc_topic_vec[c] = 1
-        cluster_probs = co_occur @ doc_topic_vec
     elif method == "w2v":
         model = cueing.get_model(model_name, "topic_w2v")
         overall_topic_distribution = cueing.get_model(
