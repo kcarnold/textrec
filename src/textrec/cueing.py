@@ -212,9 +212,25 @@ def cached_vectorized_dataset(dataset_name, normalize_by_wordfreq=True):
 def cached_topic_data(
     dataset_name, n_clusters, random_state=0, min_pervasiveness_frac=0.01
 ):
-
     vectorized = cached_vectorized_dataset(dataset_name)
     norm_filtered = vectorized["norm_filtered"]
+    total_num_docs = vectorized["sentences_meta"]["total_num_docs"]
+    min_pervasiveness = min_pervasiveness_frac * total_num_docs
+    topic_data = compute_topic_data(
+        norm_filtered=norm_filtered,
+        n_clusters=n_clusters,
+        random_state=random_state,
+        min_pervasiveness=min_pervasiveness,
+    )
+    return dict(
+        topic_data,
+        vectorizer=vectorized["vectorizer"],
+        projection_mat=vectorized["projection_mat"],
+        total_num_docs=total_num_docs,
+    )
+
+
+def compute_topic_data(*, norm_filtered, n_clusters, random_state=0, min_pervasiveness):
 
     # Cluster
     clusterer = MiniBatchKMeans(
@@ -247,9 +263,6 @@ def cached_topic_data(
     pervasiveness_by_topic = (
         nf_sentences[["doc_id", "topic"]].drop_duplicates().groupby("topic").size()
     )
-
-    total_num_docs = vectorized["sentences_meta"]["total_num_docs"]
-    min_pervasiveness = min_pervasiveness_frac * total_num_docs
 
     clusters_to_keep = np.flatnonzero(pervasiveness_by_topic > min_pervasiveness)
 
@@ -293,12 +306,9 @@ def cached_topic_data(
 
     return dict(
         vars(topic_filtered),
-        vectorizer=vectorized["vectorizer"],
-        projection_mat=vectorized["projection_mat"],
         clusterer=subset_mbkmeans(clusterer, clusters_to_keep),
         overall_topic_distribution=overall_topic_distribution,
         pervasiveness_by_topic=pervasiveness_by_topic,
-        total_num_docs=total_num_docs,
     )
 
 
