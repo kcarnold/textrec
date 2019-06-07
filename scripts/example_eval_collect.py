@@ -7,7 +7,6 @@ import nltk
 import numpy as np
 import tqdm
 from sklearn import preprocessing
-from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import ParameterGrid
 from sklearn.utils import check_random_state
 
@@ -25,27 +24,6 @@ def collect_relevance_dataset(n_samples, validation_docs):
 
         relevance_data.append(sents)
     return relevance_data
-
-
-def get_scores(
-    *, context_existing_clusters, cluster_probs, target_clusters, random_clusters
-):
-    y_true = []
-    y_score = []
-    is_novels = []
-    for i in range(len(context_existing_clusters)):
-        existing_clusters = context_existing_clusters[i]
-        target_cluster = target_clusters[i]
-        probs = cluster_probs[i]
-
-        is_novel = target_cluster not in existing_clusters
-
-        for true_label, clust in enumerate([random_clusters[i], target_clusters[i]]):
-            y_true.append(true_label)
-            y_score.append(probs[clust])
-            is_novels.append(is_novel)
-
-    return np.array(y_true), np.array(y_score), np.array(is_novels)
 
 
 def get_precision(
@@ -120,8 +98,7 @@ def collect_eval_data(
     valid_dataset = cueing.cached_dataset(valid_dataset_name)
 
     relevance_data = collect_relevance_dataset(
-        n_samples=n_relevance_samples,
-        validation_docs=valid_dataset,
+        n_samples=n_relevance_samples, validation_docs=valid_dataset
     )
 
     results = []
