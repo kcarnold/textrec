@@ -230,7 +230,7 @@ def next_cluster_distribution_given_context_clusters(
     if method == "topic_lm":
         logprobs = topic_sequence_logprobs(existing_clusters, model_name)
         cluster_probs = np.exp(logprobs)
-    elif len(existing_clusters) == 0 or method == "cooccur_dot":
+    elif method == "cooccur_dot":
         co_occur = cueing.get_model(model_name, "cooccur")
         doc_topic_vec = np.zeros(n_clusters) + 1e-6
         for c in existing_clusters:
