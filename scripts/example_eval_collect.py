@@ -37,24 +37,31 @@ def get_precision(
 ):
     n_sents = len(sent_clusters)
     all_indices = np.arange(n_sents)
-    if n_context == -1:
-        n_context = n_sents - 1
-    context_indices = random_state.choice(n_sents, size=n_context, replace=False)
-    query_indices = np.setdiff1d(all_indices, context_indices)
+    if n_context < 0:
+        n_context = n_sents + n_context
+
+    visible_sentences_indices = random_state.choice(
+        n_sents, size=n_context, replace=False
+    )
+    invisible_sentence_indices = np.setdiff1d(all_indices, visible_sentences_indices)
+    assert len(visible_sentences_indices) + len(invisible_sentence_indices) == n_sents
 
     predicted_probs = cueing.predict_missing_topics_w2v(
         w2v_model,
-        sent_clusters[context_indices],
+        sent_clusters[visible_sentences_indices],
         n_clusters,
         overall_topic_distribution,
     )
-    top_topics = np.argsort(predicted_probs)[::-1]
-    existing_topics = {sent_clusters[ctx] for ctx in context_indices}
-    novel_topics = [topic for topic in top_topics if topic not in existing_topics]
-    actual_topics = set(sent_clusters[query_indices])
 
-    hits = [topic in actual_topics for topic in novel_topics]
-    precision_at_5 = sum(hits[:5]) / 5.0
+    most_likely_topics = np.argsort(predicted_probs)[::-1]
+    already_covered_topics = {sent_clusters[ctx] for ctx in visible_sentences_indices}
+    predicted_novel_topics = [
+        topic for topic in most_likely_topics if topic not in already_covered_topics
+    ]
+    actual_topics = set(sent_clusters[invisible_sentence_indices])
+
+    hits = [topic in actual_topics for topic in predicted_novel_topics]
+    precision_at_5 = sum(hits[:5])
     return precision_at_5
 
 
