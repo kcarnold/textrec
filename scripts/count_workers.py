@@ -98,7 +98,7 @@ def add_qualification(client, qualification_name, hit_type):
         return
     print("Giving qualification", qualification_name, "to", len(workers), "workers:")
     print(" ".join(workers))
-    client.qualify_workers(client.get_qualification_id("did-captioning"), workers)
+    client.qualify_workers(client.get_qualification_id(qualification_name), workers)
 
 
 if __name__ == "__main__":
