@@ -861,6 +861,41 @@ function getFinalWritingScreens(tasksAndConditions) {
           </div>
         ),
       },
+      {
+        screen: "PostWritingSurvey",
+        view: surveyView({
+          title: `Survey after Writing ${idx + 1} of ${
+            tasksAndConditions.length
+          }`,
+          basenam: "postWriting",
+          questions: [
+            likert("thinkVsType", "I spent my time...", 7, [
+              "Thinking",
+              "Typing",
+            ]),
+            {
+              text: "Describe how you chose what to say.",
+              responseType: "text",
+              name: "whatToSay",
+              flags: { multiline: true },
+            },
+            {
+              text: "Describe how you chose how to say it.",
+              responseType: "text",
+              name: "howToSayIt",
+              flags: { multiline: true },
+            },
+            {
+              text: "Other comments?",
+              responseType: "text",
+              name: "other",
+              optional: true,
+              placeholder: "(optional)",
+              flags: { multiline: true },
+            },
+          ],
+        }),
+      },
     ];
   });
 }
