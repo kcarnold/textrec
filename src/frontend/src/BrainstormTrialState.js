@@ -32,7 +32,6 @@ export class TrialState {
   }
 
   getCueRequest() {
-    let { recType, domain } = this.flags;
     return rpc("get_cue", {
       ...this.flags,
       text: this.ideas.map(x => x),

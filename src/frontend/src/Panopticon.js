@@ -5,8 +5,6 @@ import { decorate, observable, action, toJS } from "mobx";
 import { parse, differenceInMinutes, format } from "date-fns";
 import { observer } from "mobx-react";
 import WSClient from "./wsclient";
-import map from "lodash/map";
-import filter from "lodash/filter";
 import { getOldCode } from "./TouchAnalyzer";
 
 function commonPrefixLength(x, y) {
@@ -161,63 +159,63 @@ const ScreenTimesTable = ({ screenTimes }) => {
   );
 };
 
-const ShowRecs = ({ recs, action }) => (
-  <div style={{ display: "flex", flexFlow: "column nowrap" }}>
-    <div
-      style={{
-        display: "flex",
-        flexFlow: "row nowrap",
-        justifyContent: "space-between",
-      }}
-    >
-      {recs.synonyms.map(({ words }, i) => (
-        <div
-          key={i}
-          style={{
-            padding: "5px",
-            fontWeight: action.slot === i ? "bold" : null,
-          }}
-        >
-          {words.join(" ")}
-        </div>
-      ))}
-    </div>
-  </div>
-);
+// const ShowRecs = ({ recs, action }) => (
+//   <div style={{ display: "flex", flexFlow: "column nowrap" }}>
+//     <div
+//       style={{
+//         display: "flex",
+//         flexFlow: "row nowrap",
+//         justifyContent: "space-between",
+//       }}
+//     >
+//       {recs.synonyms.map(({ words }, i) => (
+//         <div
+//           key={i}
+//           style={{
+//             padding: "5px",
+//             fontWeight: action.slot === i ? "bold" : null,
+//           }}
+//         >
+//           {words.join(" ")}
+//         </div>
+//       ))}
+//     </div>
+//   </div>
+// );
 
-function getStyle(chunk) {
-  let { actionClass, action, chars } = chunk;
-  let { sugInserted } = action;
-  if (actionClass === "tapKey") return {};
-  let style = {};
-  // let curWord = (action.curText.match(/\w+$/) || [''])[0];
-  // console.assert(actionClass.match(/^tapSugg/));
-  if (sugInserted !== chars.trim()) {
-    style["background"] = "red";
-    console.log(
-      'mismatch "%s" vs "%s", context "%s" sug "%s"',
-      sugInserted,
-      chars,
-      action.curText.slice(-15),
-      action.visibleSuggestions[action.which]
-    );
-  } else if (actionClass === "tapSugg_part") {
-    style["outline"] = "1px solid red";
-  } else {
-    style["background"] = "green";
-  }
-  return style;
-}
+// function getStyle(chunk) {
+//   let { actionClass, action, chars } = chunk;
+//   let { sugInserted } = action;
+//   if (actionClass === "tapKey") return {};
+//   let style = {};
+//   // let curWord = (action.curText.match(/\w+$/) || [''])[0];
+//   // console.assert(actionClass.match(/^tapSugg/));
+//   if (sugInserted !== chars.trim()) {
+//     style["background"] = "red";
+//     console.log(
+//       'mismatch "%s" vs "%s", context "%s" sug "%s"',
+//       sugInserted,
+//       chars,
+//       action.curText.slice(-15),
+//       action.visibleSuggestions[action.which]
+//     );
+//   } else if (actionClass === "tapSugg_part") {
+//     style["outline"] = "1px solid red";
+//   } else {
+//     style["background"] = "green";
+//   }
+//   return style;
+// }
 
-const Chunk = ({ chunk }) => <span style={getStyle(chunk)}>{chunk.chars}</span>;
+// const Chunk = ({ chunk }) => <span style={getStyle(chunk)}>{chunk.chars}</span>;
 
-const AnnotatedFinalText = ({ chunks }) => (
-  <div className="AnnotatedFinalText">
-    {chunks.map((chunk, i) => (
-      <Chunk key={i} chunk={chunk} />
-    ))}
-  </div>
-);
+// const AnnotatedFinalText = ({ chunks }) => (
+//   <div className="AnnotatedFinalText">
+//     {chunks.map((chunk, i) => (
+//       <Chunk key={i} chunk={chunk} />
+//     ))}
+//   </div>
+// );
 
 const TextHistoryView = observer(({ history }) => {
   if (history.length === 0) return <div />;

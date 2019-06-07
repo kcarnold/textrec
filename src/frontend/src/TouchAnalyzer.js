@@ -30,7 +30,7 @@ export function processLogGivenState(state, log) {
     return byExpPage[page];
   }
 
-  let lastReply = null;
+  // let lastReply = null;
   let finalData = null;
 
   log.forEach((entry, logIdx) => {
@@ -42,7 +42,7 @@ export function processLogGivenState(state, log) {
 
     // Track requests
     if (entry.type === "backendReply") {
-      lastReply = { msg: _.clone(entry.msg), timestamp: entry.jsTimestamp };
+      // lastReply = { msg: _.clone(entry.msg), timestamp: entry.jsTimestamp };
     }
 
     /** STATE UPDATE **/

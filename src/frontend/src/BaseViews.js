@@ -1,6 +1,5 @@
 /** @format */
 import React from "react";
-import { observer, inject } from "mobx-react";
 import { iobs } from "./misc";
 
 function advance(state, dispatch) {

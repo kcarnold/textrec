@@ -7,7 +7,7 @@ import { iobs } from "./misc";
 const TAB_KEYCODE = 9;
 
 export const WriterView = iobs(({ state, dispatch }) => {
-  let { curText, range, caret, suggestions } = state.experimentState;
+  let { curText, range, suggestions } = state.experimentState;
 
   const onKeyDown = evt => {
     if (evt.which === TAB_KEYCODE) {
@@ -17,7 +17,7 @@ export const WriterView = iobs(({ state, dispatch }) => {
       dispatch({ type: "insertSugWord" });
     }
   };
-  let { top, left } = caret || { top: 0, left: 0 };
+  // let { top, left } = caret || { top: 0, left: 0 };
   return (
     <div>
       <div style={{ position: "relative" }}>

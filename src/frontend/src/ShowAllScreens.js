@@ -4,8 +4,6 @@ import React, { Component } from "react";
 import forEach from "lodash/forEach";
 import { observer } from "mobx-react";
 
-const showController = false;
-
 let states = [];
 let MasterView = null;
 
