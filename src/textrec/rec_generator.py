@@ -248,7 +248,7 @@ def next_cluster_distribution_given_context_clusters(
     return cluster_probs
 
 
-def next_cluster_distribution(text, model_name, method, existing_clusters_weight=1e-6):
+def get_clusters_for_existing_doc(text, model_name):
     sents = tokenize(text)
     vectorizer = cueing.get_model(model_name, "vectorizer")
     projection_mat = cueing.get_model(model_name, "projection_mat")
@@ -262,6 +262,13 @@ def next_cluster_distribution(text, model_name, method, existing_clusters_weight
     else:
         existing_clusters = np.array([], dtype=int)
     ic(sents, existing_clusters)
+    return existing_clusters, n_clusters
+
+
+def next_cluster_distribution(text, model_name, method, existing_clusters_weight=1e-6):
+    existing_clusters, n_clusters = get_clusters_for_existing_doc(
+        text=text, model_name=model_name
+    )
 
     cluster_probs = next_cluster_distribution_given_context_clusters(
         model_name=model_name,
