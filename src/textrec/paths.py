@@ -14,7 +14,8 @@ class paths:
 
     figures = top_level / "reports" / "figures"
 
-    cache = top_level / "cache"
+    cache = pathlib.Path.home() / ".cache" / "textrec"
+
     models = top_level / "models"
     scripts = top_level / "scripts"
 
