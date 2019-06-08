@@ -35,8 +35,7 @@ BATCH_DATA = {
     "idea3r1": dict(n_groups=3, config="idea"),  # Actually enable cues.
     "idea3r2": dict(n_groups=3, config="idea"),  # Word cues!
     "idea3r3": dict(n_groups=3, config="idea"),  # Wikipedia tasks.
-    "idea3r4": dict(n_groups=3, config="idea"),  # With post-writing surveys.
-    "idea3r5": dict(n_groups=6, config="idea"),  # With correct randomization...
+    "idea3r4": dict(n_groups=6, config="idea"),  # With post-writing surveys.
 }
 
 invalid = set("h52x67 3vf5fg 73qq5q ffhgxm mhh838 j39263 pqf6q5 49cm8f".split())
