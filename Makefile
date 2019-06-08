@@ -61,19 +61,9 @@ get-data:
 get-completed-participants:
 	poetry run python scripts/get_completed_participants.py
 
-data/analyzed/trial_cue%.csv: data/participants.txt src/textrec/logs_to_csv_cue.py
-	poetry run python -m textrec.logs_to_csv_cue cue$*
+data/analyzed/idea/%/step1.pkl: data/participants.txt src/textrec/analysis_step1.py
+	poetry run python -m textrec.analysis_step1 $*
 
-# This rule needs to go first or else the logs_to_csv rule will match a 'withmanual' :(
-data/analyzed/trial_withmanual_%.csv: src/textrec/gruntwork.py data/analyzed/trial_%.csv data/gruntwork
-	poetry run python -m textrec.gruntwork $*
-
-data/analyzed/trial_%.csv: data/participants.txt src/textrec/logs_to_csv.py
-	poetry run python -m textrec.logs_to_csv $*
-
-# === Build this rule for the full analysis! ===
-data/analyzed/combined_data.csv: data/analyzed/trial_withmanual_gc1.csv data/analyzed/trial_withmanual_spec1.csv data/analyzed/trial_withmanual_spec2.csv
-	poetry run python scripts/combined_analysis.py
 
 
 

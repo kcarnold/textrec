@@ -1,8 +1,7 @@
 import pandas as pd
 from . import analysis_util
 from .paths import paths
-
-from typing import List, Any
+import pickle
 
 condition_name_map = dict(
     norecs="norecs",
@@ -103,26 +102,61 @@ def get_participants_by_batch():
     return participants_by_batch
 
 
-def get_trial_data(participants, analyses) -> List[Any]:
+def analyze_trial(trial):
+    def fluency(trial):
+        ideas = [evt for evt in trial["events"] if evt["type"] == "addIdea"]
+        times = [evt["sinceStart"] / 1000 for evt in ideas]
+        return [
+            sum(1 for time in times if time < minutes * 60)
+            for minutes in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 99999]
+        ]
+
+    texts = [evt["idea"] for evt in trial["events"] if evt["type"] == "addIdea"]
+    inspiration_requests = [
+        evt["ideas"] for evt in trial["events"] if evt["type"] == "inspireMe"
+    ]
+    process_summary = []
+    for evt in trial["events"]:
+        if evt["type"] == "addIdea":
+            process_summary.append(evt["idea"])
+        elif evt["type"] == "inspireMe":
+            process_summary.append("---")
+
+    return dict(
+        condition=trial["condition"],
+        fluency=fluency(trial),
+        # num_distinct_words=len(get_openclass_words(texts)),
+        # mean_pairwise_dists=mean_pairwise_dists(texts),
+        num_inspiration_requests=len(inspiration_requests),
+        ideas_given=inspiration_requests,
+        texts=texts,
+        finalText=trial["finalText"],
+        process_summary=process_summary,
+    )
+
+
+def get_trial_level_data(participants, analyses):
     results = []
 
     for participant_id in participants:
-        analyzed = analyses[participant_id]
+        analysis = analyses[participant_id]
 
-        controlledInputsDict = dict(analyzed["allControlledInputs"])
+        controlledInputsDict = dict(analysis["allControlledInputs"])
         if controlledInputsDict.get("postExp-shouldExclude") != "Use my data":
             print(controlledInputsDict)
             print("****** EXCLUDE! **********", participant_id)
             assert False
 
-        assert len(analyzed["texts"]) == 1
-        text = analyzed["texts"][0]
-        data = {}
-        data['participant'] = participant_id
-        
-        data["condition"] = text["condition"]
-        data["text"] = text["text"]
-        results.append(data)
+        # Skip the practice round. Analyze the rest.
+        for idx, trial in enumerate(analysis["trials"][1:]):
+            results.append(
+                dict(
+                    analyze_trial(trial),
+                    participant=participant_id,
+                    block=idx
+                    # , titleÁ=dict(analysis['allControlledInputs'])[CINAME[idx]])
+                )
+            )
 
     return results
 
@@ -149,8 +183,8 @@ def get_survey_data(participants, analyses):
         experiment_level.append((participant_id, "total_time", total_time))
 
         for k, v in analyzed["allControlledInputs"]:
-            if "-" in k:
-                segment, k = k.split("-", 1)
+            # if "-" in k:
+            #     segment, k = k.split("-", 1)
             experiment_level.append((participant_id, k, v))
 
     return pd.DataFrame(experiment_level, columns="participant name value".split())
@@ -171,10 +205,15 @@ def clean_merge(*a, must_match=[], combine_cols=[], **kw):
 def analyze_all(participants):
     expected_columns = columns.copy()
 
-    analyses = analysis_util.get_log_analysis_many(participants)
+    analyses = analysis_util.get_log_analysis_many(participants, analyzer="CueAnalyzer")
 
-    trial_level = get_trial_data(participants, analyses)
+    trial_level = get_trial_level_data(participants, analyses)
     trial_level = pd.DataFrame(trial_level)
+
+    trial_level['fluency_1'] = trial_level.fluency.apply(lambda x: x[0])
+    trial_level['fluency_2'] = trial_level.fluency.apply(lambda x: x[1])
+    trial_level['fluency_5'] = trial_level.fluency.apply(lambda x: x[4])
+
 
     # Get survey data
     _experiment_level = get_survey_data(participants, analyses)
@@ -183,17 +222,21 @@ def analyze_all(participants):
     assert "participant" in experiment_level, experiment_level.info()
     assert "participant" in trial_level
 
-    trial_level = pd.merge(
-        experiment_level, trial_level, on="participant", validate="1:1"
-    )
+    # trial_level = pd.merge(
+    #     experiment_level, trial_level, on="participant", validate="1:1"
+    # )
 
-    return coerce_columns(trial_level, expected_columns)
+    # return coerce_columns(trial_level, expected_columns)
+    return trial_level
 
 
 def main(batch):
     participants = get_participants_by_batch()[batch]
     analyses = analyze_all(participants)
-    analyses.to_csv(paths.data / "analyzed" / f"{batch}.csv", index=False)
+    out_path = paths.data / "analyzed" / "idea" / batch
+    with open(out_path / "step1.pkl", "wb") as f:
+        pickle.dump(analyses, f)
+    analyses.to_csv(out_path / "step1.csv", index=False)
 
 
 if __name__ == "__main__":

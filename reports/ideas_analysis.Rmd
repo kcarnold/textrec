@@ -1,0 +1,63 @@
+---
+title: "Untitled"
+author: "Kenneth C. Arnold"
+date: "6/8/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("readr")
+library("tidyverse")
+library("ggbeeswarm")
+library("afex")
+afex::set_sum_contrasts()
+```
+
+## Ideas Analysis
+
+```{r read, include=FALSE}
+allData <- read_csv(
+  "../data/analyzed/idea/idea3r4/step1.csv",
+  col_types = cols(
+    block=col_factor(c("0", "1", "2"))
+  )
+);
+stop_for_problems(allData)
+
+data <- allData;
+```
+
+```{r checkRandomization}
+data %>% group_by(block, condition) %>% summarise(n=n_distinct(participant))
+```
+
+```{r numRequests}
+data %>% group_by(condition) %>% summarise_at(c("num_inspiration_requests"), mean)
+```
+
+```{r requests}
+data %>% 
+  ggplot(aes(x=condition, y=num_inspiration_requests)) +
+    geom_beeswarm() +
+    facet_wrap("block")
+```
+
+```{r fluency}
+labeledBar <- list(
+  stat_summary(geom="bar", fun.y=mean, position="dodge"),
+    stat_summary(geom="errorbar", fun.data=mean_se, position=position_dodge(width=.9), width=.4),
+    scale_y_continuous(expand=expand_scale(mult=c(0,.05))), # remove the extra spacing at 0
+    stat_summary(geom="text", fun.y=mean,
+                 aes(label=sprintf("%1.2f", ..y..)),
+                 position=position_dodge(width=.9),
+                 hjust="middle", vjust="bottom"))
+
+data %>% ggplot(aes(x=condition, y=fluency_2)) + labeledBar + facet_wrap("block")
+```
+
+```{r fluency_analysis}
+mixed(fluency_5 ~ condition * block + (1|participant), data = data)
+```
+
+For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
