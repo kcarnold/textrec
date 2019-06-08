@@ -24,7 +24,13 @@ PRELOAD_MODELS = [
     "wikivoyage_128",
     #    'bios'
 ]
-PARTS_NEEDED = ["sentences", "labels_and_sents", "labels"]
+PARTS_NEEDED = [
+    "sentences",
+    "labels_and_sents",
+    "labels",
+    "vectorizer",
+    "projection_mat",
+]
 
 
 cueing.preload_models(PRELOAD_MODELS, PARTS_NEEDED)
