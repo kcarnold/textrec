@@ -926,6 +926,12 @@ export function createTaskState(loginEvent: {
     prompts = [match[3]];
     isDemo = true;
   } else {
+    if ("n_groups" in loginEvent) {
+      console.assert(loginEvent.n_groups === conditionOrders.length);
+    } else {
+      // showall doesn't provide n_groups because it doesn't talk with the backend.
+      console.assert(window.location.search.includes("showall"));
+    }
     conditions = conditionOrders[loginEvent.assignment];
     // prompts = ["reviewRestaurant", "travelGuide", "informNews"];
     prompts = ["wiki-book", "wiki-film", "travelGuide"];
