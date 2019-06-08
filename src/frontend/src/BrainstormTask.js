@@ -671,33 +671,6 @@ let postIdeateSurveyQuestions = [
 ];
 
 function getPrewritingScreens(tasksAndConditions) {
-  const getPrewriteScreen = (idx, task, conditionName) => ({
-    preEvent: setupTrialEvent(`trial-${idx}`, conditionName, task.flags),
-    screen: "ExperimentScreen",
-    view: iobs(({ state }) => {
-      const numIdeas = state.experimentState.ideas.length;
-      const { targetIdeaCount } = task;
-      return (
-        <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-          {brainstormHeader(task.topicName, targetIdeaCount)}
-          <div style={{ display: "flex", flexFlow: "col nowrap" }}>
-            <InspirationBox ideaSource={task.ideaSource} />
-            <div style={{ flex: "1 0 auto" }}>
-              <h2>Questions the reader might have:</h2>
-              <SmartIdeaList />
-            </div>
-          </div>
-          <p>
-            {numIdeas < targetIdeaCount
-              ? `Try to get to ${targetIdeaCount} questions.`
-              : null}
-          </p>
-          <NextBtn disabled={numIdeas < targetIdeaCount} />
-        </div>
-      );
-    }),
-  });
-
   let result = [];
 
   result.push({
@@ -738,9 +711,50 @@ function getPrewritingScreens(tasksAndConditions) {
   }); // TODO: Validate that all inputs are present
 
   tasksAndConditions.forEach(({ prompt, conditionName, task }, idx) => {
-    // TODO: Instructions screens?
-
-    result.push(getPrewriteScreen(idx, task, conditionName));
+    const { targetIdeaCount } = task;
+    result.push({
+      preEvent: setupTrialEvent(`trial-${idx}`, conditionName, task.flags),
+      screen: "PreBrainstormInstructions",
+      view: () => (
+        <div className="Survey">
+          {brainstormHeader(task.topicName, targetIdeaCount)}
+          <p>
+            An "Inspiration Box" will be available on the next page. The
+            inspirations it gives <b>will be different</b> from last time. They
+            may be much better or much worse; you'll have to try it to see!
+          </p>
+          <p>
+            Click "Start" when you're ready to start thinking of questions. (All
+            of the above will still be available on the next page.)
+          </p>
+          <NextBtn>Start</NextBtn>
+        </div>
+      ),
+    });
+    result.push({
+      screen: "ExperimentScreen",
+      view: iobs(({ state }) => {
+        const numIdeas = state.experimentState.ideas.length;
+        return (
+          <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+            {brainstormHeader(task.topicName, targetIdeaCount)}
+            <div style={{ display: "flex", flexFlow: "col nowrap" }}>
+              <InspirationBox ideaSource={task.ideaSource} />
+              <div style={{ flex: "1 0 auto" }}>
+                <h2>Questions the reader might have:</h2>
+                <SmartIdeaList />
+              </div>
+            </div>
+            <p>
+              {numIdeas < targetIdeaCount
+                ? `Try to get to ${targetIdeaCount} questions.`
+                : null}
+            </p>
+            <NextBtn disabled={numIdeas < targetIdeaCount} />
+          </div>
+        );
+      }),
+    });
     result.push({
       screen: "PostTaskSurvey",
       view: surveyView({
