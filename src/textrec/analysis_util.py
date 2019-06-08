@@ -56,7 +56,7 @@ def get_raw_analysis_cheating(participant, logfile_size, git_rev, analysis_files
     return cheating_analysis_results.get(participant, None)
 
 
-def get_log_analysis_many(participants, analyzer="TouchAnalyzer"):
+def get_log_analysis_many(participants, analyzer):
     cheating_analysis_results.clear()
 
     analyzer_js = f"src/{analyzer}.js"
