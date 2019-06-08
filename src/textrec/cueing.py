@@ -567,6 +567,7 @@ def predict_missing_topics_w2v(
     raw_cluster_probs = model.predict_output_word(
         [str(idx) for idx in existing_clusters], topn=2000
     )
+    assert n_clusters == len(overall_topic_distribution)
     cluster_probs = np.zeros(n_clusters)
     for cluster_str, prob in raw_cluster_probs:
         cluster_probs[int(cluster_str)] = prob
