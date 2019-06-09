@@ -884,6 +884,9 @@ function getClosingSurvey(tasksAndConditions) {
       title: "Closing Survey",
       basename: "postExp",
       questions: [
+        SurveyData.age,
+        SurveyData.gender,
+        SurveyData.english_proficiency,
         {
           type: "options",
           responseType: "options",
