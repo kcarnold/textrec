@@ -1,7 +1,10 @@
+import pathlib
+import pickle
+
 import pandas as pd
+
 from . import analysis_util
 from .paths import paths
-import pickle
 
 condition_name_map = dict(
     norecs="norecs",
@@ -185,6 +188,8 @@ def get_survey_data(participants, analyses):
         for k, v in analyzed["allControlledInputs"]:
             # if "-" in k:
             #     segment, k = k.split("-", 1)
+            # else:
+            #     segment = None
             experiment_level.append((participant_id, k, v))
 
     return pd.DataFrame(experiment_level, columns="participant name value".split())
@@ -203,17 +208,15 @@ def clean_merge(*a, must_match=[], combine_cols=[], **kw):
 
 
 def analyze_all(participants):
-    expected_columns = columns.copy()
 
     analyses = analysis_util.get_log_analysis_many(participants, analyzer="CueAnalyzer")
 
     trial_level = get_trial_level_data(participants, analyses)
     trial_level = pd.DataFrame(trial_level)
 
-    trial_level['fluency_1'] = trial_level.fluency.apply(lambda x: x[0])
-    trial_level['fluency_2'] = trial_level.fluency.apply(lambda x: x[1])
-    trial_level['fluency_5'] = trial_level.fluency.apply(lambda x: x[4])
-
+    trial_level["fluency_1"] = trial_level.fluency.apply(lambda x: x[0])
+    trial_level["fluency_2"] = trial_level.fluency.apply(lambda x: x[1])
+    trial_level["fluency_5"] = trial_level.fluency.apply(lambda x: x[4])
 
     # Get survey data
     _experiment_level = get_survey_data(participants, analyses)
@@ -222,21 +225,29 @@ def analyze_all(participants):
     assert "participant" in experiment_level, experiment_level.info()
     assert "participant" in trial_level
 
+    assert len(set(trial_level["participant"])) == len(
+        set(experiment_level["participant"])
+    )
+
     # trial_level = pd.merge(
-    #     experiment_level, trial_level, on="participant", validate="1:1"
+    #     experiment_level, trial_level, on="participant", validate="1:m"
     # )
 
-    # return coerce_columns(trial_level, expected_columns)
-    return trial_level
+    return dict(experiment_level=experiment_level, trial_level=trial_level)
 
 
 def main(batch):
     participants = get_participants_by_batch()[batch]
     analyses = analyze_all(participants)
-    out_path = paths.data / "analyzed" / "idea" / batch
+    out_path: pathlib.Path = paths.data / "analyzed" / "idea" / batch
+    out_path.mkdir(parents=True, exist_ok=True)
     with open(out_path / "step1.pkl", "wb") as f:
         pickle.dump(analyses, f)
-    analyses.to_csv(out_path / "step1.csv", index=False)
+
+    for name, data in analyses.items():
+        if name.endswith("_level"):
+            name = name[: -len("_level")]
+        data.to_csv(out_path / f"{name}.csv", index=False)
 
 
 if __name__ == "__main__":
