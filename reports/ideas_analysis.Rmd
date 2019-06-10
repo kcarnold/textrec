@@ -17,8 +17,10 @@ afex::set_sum_contrasts()
 ## Ideas Analysis
 
 ```{r read, include=FALSE}
+BATCH <- "idea3r5"
+DATA_PATH <- paste0("../data/analyzed/idea/", BATCH, "/")
 allData <- read_csv(
-  "../data/analyzed/idea/idea3r4/trial.csv",
+  paste0(DATA_PATH, "trial.csv"),
   col_types = cols(
     block=col_factor(c("0", "1", "2"))
   )
@@ -26,6 +28,16 @@ allData <- read_csv(
 stop_for_problems(allData)
 
 data <- allData;
+
+expLevel <- read_csv(
+  paste0(DATA_PATH, "experiment.csv"),
+);
+stop_for_problems(allData)
+
+```
+
+```{r totalTime}
+ggplot(expLevel, aes(x=total_time)) + geom_histogram()
 ```
 
 ```{r checkRandomization}
