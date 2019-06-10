@@ -75,18 +75,7 @@ mixed(fluency_5 ~ condition * block + (1|participant), data = data)
 
 ```{r subjective}
 #data %>% ggplot(aes(x=condition, y=brainstorm_sysRelevant)) + labeledBar + facet_wrap("block")
-measures.to.vis <-
-  c(
-    "brainstorm_distracting",
-    "brainstorm_fluent",
-    "brainstorm_stuck"       ,
-    "brainstorm_sysGaveIdeas",
-    "brainstorm_sysRelevant",
-    "brainstorm_system_helped",
-    "brainstorm_usedInspirations"
-    #"brainstorm_used_external"
-  )
-
+multiBar <- function(measures.to.vis) {
 data %>%
     select(participant, condition, block, !!!measures.to.vis) %>%
     gather(measure, value, !!!measures.to.vis) %>%
@@ -100,7 +89,25 @@ data %>%
         panel.spacing.y = unit(2, "lines"),
         axis.line.x = element_blank(),
         legend.position = "bottom")
+}
 
+multiBar(c(    "brainstorm_distracting",
+    "brainstorm_system_helped"))
+```
+
+```{r process}
+multiBar(c(
+    "brainstorm_fluent",
+    "brainstorm_stuck"
+));
+```
+
+```{r system}
+multiBar(c(
+    "brainstorm_sysGaveIdeas",
+    "brainstorm_sysRelevant",
+    "brainstorm_usedInspirations"
+  ));
 ```
 
 For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
