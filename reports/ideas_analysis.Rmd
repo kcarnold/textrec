@@ -19,21 +19,17 @@ afex::set_sum_contrasts()
 ```{r read, include=FALSE}
 BATCH <- "idea3r5"
 DATA_PATH <- paste0("../data/analyzed/idea/", BATCH, "/")
-allData <- read_csv(
-  paste0(DATA_PATH, "trial.csv"),
-  col_types = cols(
-    block=col_factor(c("0", "1", "2"))
-  )
-);
-stop_for_problems(allData)
+do_read_csv <- function(filename, ...) {
+  data <- read_csv(paste0(DATA_PATH, filename), ...);
+  stop_for_problems(data);
+  data;
+}
 
-data <- allData;
+allData <- do_read_csv("trial.csv",col_types = cols(block = col_factor(c("0", "1", "2"))));
+data <- allData %>% subset(should_exclude==FALSE);
 
-expLevel <- read_csv(
-  paste0(DATA_PATH, "experiment.csv"),
-);
-stop_for_problems(allData)
-
+expLevel <- do_read_csv("experiment.csv");
+ideas <- do_read_csv("ideas.csv");
 ```
 
 ```{r totalTime}
@@ -41,7 +37,12 @@ ggplot(expLevel, aes(x=total_time)) + geom_histogram()
 ```
 
 ```{r checkRandomization}
-data %>% group_by(block, condition) %>% summarise(n=n_distinct(participant))
+#data %>% group_by(block, condition) %>% summarise(n=n_distinct(participant))
+expLevel %>% group_by(condition_order) %>% summarize(n=n())
+```
+
+```{r systemFailures}
+data %>% group_by(condition, any_requests_returned_empty) %>% summarise(n())
 ```
 
 ```{r numRequests}
@@ -76,11 +77,17 @@ labeledBar <- list(
                  position=position_dodge(width=.9),
                  hjust="middle", vjust="bottom"))
 
-data %>% ggplot(aes(x=condition, y=fluency_2)) + labeledBar + facet_wrap("block")
+data %>% ggplot(aes(x=condition, y=fluency_5)) + labeledBar# + facet_wrap("block")
 ```
 
 ```{r fluency_analysis}
-mixed(fluency_5 ~ condition * block + (1|participant), data = data)
+mixed(fluency_2 ~ condition * block + (1|participant), data = data)
+```
+
+```{r}
+#ideas %>% group_by(participant, block) %>% mutate(nth=row_number(), frac_less_than=cume_dist(since_start)) #%>% 
+ideas %>% groupby(condition) %>% mutate(num_ideas_by_time=)
+  #ggplot(aes(x=since_start, y=nth, color=condition))
 ```
 
 # Subjective Opinions
@@ -120,6 +127,10 @@ multiBar(c(
     "brainstorm_sysRelevant",
     "brainstorm_usedInspirations"
   ));
+```
+
+```{r}
+colnames(data)
 ```
 
 For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
