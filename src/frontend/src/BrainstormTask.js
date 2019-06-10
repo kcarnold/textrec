@@ -287,10 +287,12 @@ const ControlledInputView = iobs(
   ({ state, name }) => state.controlledInputs.get(name) || name
 );
 
-function brainstormHeader(topicName, targetIdeaCount) {
+function brainstormHeader(topicName, targetIdeaCount, idx, total) {
   return (
     <div>
-      <h1>Preparing to Write an Encyclopedia Article</h1>
+      <h1>
+        Preparing to Write an Encyclopedia-Style Article ({idx + 1} of {total})
+      </h1>
       <p>
         You're going to write a factual, encyclopedia-style article about{" "}
         <span style={{ color: "orange" }}>{topicName}</span>. Imagine someone
@@ -627,6 +629,17 @@ const getPrecommitScreen = tasksAndConditions => ({
   screen: "Precommit",
   view: () => (
     <div className="Survey">
+      <h1>Pick what to write about</h1>
+      <p>
+        You're going to be writing <b>brief</b> (~120 words) but{" "}
+        <b>informative</b> <b>encyclopedia-style</b> articles on 3 specific
+        topics of your choice, <b>without using external resources</b>.
+      </p>
+      <p>
+        First, pick your topics. They should be topics you know reasonably well,
+        but don't worry if you don't remember all the facts; you'll be able to
+        make up details.
+      </p>
       {tasksAndConditions.map(({ task }, idx) => (
         <div key={idx} style={{ borderBottom: "1px solid black" }}>
           {task.precommitView.view()}
@@ -714,7 +727,12 @@ function getPrewritingScreens(tasksAndConditions) {
       screen: "PreBrainstormInstructions",
       view: () => (
         <div className="Survey">
-          {brainstormHeader(task.topicName, targetIdeaCount)}
+          {brainstormHeader(
+            task.topicName,
+            targetIdeaCount,
+            idx,
+            tasksAndConditions.length
+          )}
           <p>
             An "Inspiration Box" will be available on the next page. The
             inspirations it gives <b>will be different</b> from last time. They
@@ -734,7 +752,12 @@ function getPrewritingScreens(tasksAndConditions) {
         const numIdeas = state.experimentState.ideas.length;
         return (
           <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
-            {brainstormHeader(task.topicName, targetIdeaCount)}
+            {brainstormHeader(
+              task.topicName,
+              targetIdeaCount,
+              idx,
+              tasksAndConditions.length
+            )}
             <div style={{ display: "flex", flexFlow: "col nowrap" }}>
               <InspirationBox ideaSource={task.ideaSource} />
               <div style={{ flex: "1 0 auto" }}>
@@ -755,7 +778,9 @@ function getPrewritingScreens(tasksAndConditions) {
     result.push({
       screen: "PostTaskSurvey",
       view: surveyView({
-        title: `Survey after Pre-writing ${idx + 1}`,
+        title: `Survey after Pre-writing ${idx + 1} of ${
+          tasksAndConditions.length
+        }`,
         basename: `postBrainstorm-${idx}`,
         questions: postIdeateSurveyQuestions,
       }),
