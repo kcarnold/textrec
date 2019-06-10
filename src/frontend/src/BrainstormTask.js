@@ -844,7 +844,7 @@ function getFinalWritingScreens(tasksAndConditions) {
           title: `Survey after Writing ${idx + 1} of ${
             tasksAndConditions.length
           }`,
-          basenam: "postWriting",
+          basename: `postWriting-${idx}`,
           questions: [
             likert("thinkVsType", "I spent my time...", 7, [
               "Thinking",
