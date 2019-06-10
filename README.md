@@ -13,9 +13,7 @@ Workflows
 ### See what tasks look like:
 
 Demos:
-* http://mbp-zt.megacomplete.net:3000/?democue-norecs-restaurant-p
-* http://mbp-zt.megacomplete.net:3000/?democue-staticSentences-restaurant-p
-* http://mbp-zt.megacomplete.net:3000/?democue-staticPhrases-restaurant-p
+* http://mbp-zt.megacomplete.net:3000/?idx
 
 ### Post writing task
 
@@ -32,7 +30,7 @@ Demos:
 ### Qualify workers who completed the writing task
 
 1. Download MTurk metadata: `scripts/backup_mturk.py`.
-2. Run script on downloaded data: `scripts/find_invalid_workers.py`.
+2. Run script on downloaded data: `scripts/assign_qualification_to_workers.py`.
 
 TODO: update this for the cue writing tasks.
 
@@ -42,8 +40,8 @@ TODO: update this for the cue writing tasks.
    `git branch tmp $frontend_commit`
 2. Make the hotfix there (perhaps by cherry-picking or copying from master).
 3. Note the current hash.
-4. Checkout master, edit analysis_util.py to add an entry mapping frontend
-   commit to the hash just recorded in #3.
+4. Checkout master, edit analysis_util.py to add an entry to `rev_overrides`
+   mapping frontend commit to the hash just recorded in #3.
 5. Incorporate the hotfix commit into the git history: `git merge -s ours tmp`.
 
 You can use a worktree to make this easier;
