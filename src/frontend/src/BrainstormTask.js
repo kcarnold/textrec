@@ -200,6 +200,13 @@ function getScreens(prompts, conditionNames, isDemo) {
               "We're going to actually write those short articles in a moment. Don't worry, since you already did some work, the rest will be easier. But first, a few questions for a quick break:",
           },
           ...SurveyData.shortNFC,
+          {
+            type: "text",
+            text: "",
+          },
+          ...flatMap(tasksAndConditions, ({ prompt, task }, idx) =>
+            selfEfficacyQuestions(idx, task.topicName)
+          ),
         ],
       }),
     },
@@ -442,6 +449,7 @@ function getTask(promptName) {
         singular: "travel guide",
         plural: "travel guides",
       },
+      visibleName: "travel destination",
       nameField,
       writingPrompt,
       topicName: <ControlledInputView name={nameField} />,
@@ -569,9 +577,10 @@ function getTask(promptName) {
       flags: {
         domain: promptName,
       },
+      visibleName,
       writingType: {
-        singular: "encyclopedia article",
-        plural: "encyclopedia articles",
+        singular: `an encyclopedia-style article about a ${visibleName}`,
+        plural: `encyclopedia-style articles`,
       },
       nameField,
       writingPrompt,
@@ -681,6 +690,27 @@ let postIdeateSurveyQuestions = [
   SurveyData.otherMid,
 ];
 
+const selfEfficacyQuestions = (idx, topicName) => [
+  likert(
+    `selfEfficacyWhatToSay-${idx}`,
+    <span>
+      I am confident that I can <b>think of relevant things to say</b> about{" "}
+      <b>{topicName}</b> without relying on outside resources.
+    </span>,
+    7,
+    ["strongly disagree", "strongly agree"]
+  ),
+  likert(
+    `selfEfficacyHowToSay-${idx}`,
+    <span>
+      I am confident that I can <b>express what I want to say</b> about{" "}
+      <b>{topicName}</b> without relying on outside resources.
+    </span>,
+    7,
+    ["strongly disagree", "strongly agree"]
+  ),
+];
+
 function getPrewritingScreens(tasksAndConditions) {
   let result = [];
 
@@ -700,19 +730,9 @@ function getPrewritingScreens(tasksAndConditions) {
 
         {surveyBody(
           "pre",
-          flatMap(tasksAndConditions, ({ prompt, task }, idx) => [
-            likert(
-              `taskEfficacy-${idx}`,
-              <span>
-                {`I am confident that I can come up with at least ${
-                  task.targetIdeaCount
-                } questions that someone might want to know about `}
-                <b>{task.topicName}</b> without relying on outside resources.
-              </span>,
-              7,
-              ["strongly disagree", "strongly agree"]
-            ),
-          ])
+          flatMap(tasksAndConditions, ({ prompt, task }, idx) =>
+            selfEfficacyQuestions(idx, task.topicName)
+          )
         )}
 
         <NextBtn />
@@ -909,6 +929,15 @@ function getClosingSurvey(tasksAndConditions) {
         SurveyData.age,
         SurveyData.gender,
         SurveyData.english_proficiency,
+        ...flatMap(tasksAndConditions, ({ prompt, task }, idx) =>
+          selfEfficacyQuestions(
+            idx,
+            <span>
+              a {task.visibleName} other than {task.topicName}
+            </span>
+          )
+        ),
+
         {
           type: "options",
           responseType: "options",
