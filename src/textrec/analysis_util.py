@@ -8,11 +8,13 @@ import ujson
 from .paths import paths
 from .util import mem
 
+# These are cases where we made a hotfix to the code that was actually run.
 rev_overrides = {
     "8b70b51": "4d07df8",
     "024ef59": "3f52c04",
     "3761b2d": "66b19ec",
     "4740cdc": "ae035cf",
+    "2edfaa9": "09b5a4c",
 }
 
 
@@ -61,9 +63,7 @@ def get_log_analysis_many(participants, analyzer):
 
     analyzer_js = f"src/{analyzer}.js"
 
-    analysis_files = {
-        name: sha1_file(paths.frontend / name) for name in [analyzer_js]
-    }
+    analysis_files = {name: sha1_file(paths.frontend / name) for name in [analyzer_js]}
 
     analyses = {}
     todo = []
