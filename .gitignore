@@ -98,3 +98,4 @@ textrec.code-workspace
 tmpnotebook.py
 
 .mypy_cache
+reports/ideas_analysis.html
