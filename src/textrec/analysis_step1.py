@@ -3,6 +3,7 @@ import pickle
 
 import pandas as pd
 
+from collections import OrderedDict as odict
 from . import analysis_util
 from .paths import paths
 
@@ -125,7 +126,7 @@ def analyze_trial(trial):
         elif evt["type"] == "inspireMe":
             process_summary.append("---")
 
-    return dict(
+    return odict(
         condition=trial["condition"],
         fluency=fluency(trial),
         # num_distinct_words=len(get_openclass_words(texts)),
@@ -138,30 +139,70 @@ def analyze_trial(trial):
     )
 
 
-def get_trial_level_data(participants, analyses):
-    results = []
+def get_behavioral_data(participants, analyses):
+    trial_level_data = []
+    inspiration_requests = []
+    ideas = []
 
     for participant_id in participants:
         analysis = analyses[participant_id]
 
-        controlledInputsDict = dict(analysis["allControlledInputs"])
+        controlledInputsDict = odict(analysis["allControlledInputs"])
         if controlledInputsDict.get("postExp-shouldExclude") != "Use my data":
             print(controlledInputsDict)
             print("****** EXCLUDE! **********", participant_id)
             assert False
 
         # Skip the practice round. Analyze the rest.
-        for idx, trial in enumerate(analysis["trials"][1:]):
-            results.append(
-                dict(
-                    analyze_trial(trial),
+        for trial_idx, trial in enumerate(analysis["trials"][1:]):
+            trial_analysis = analyze_trial(trial)
+            num_blur = 0
+            for evt_seq, evt in enumerate(trial["events"]):
+                any_requests_returned_empty = False
+
+                BASE = odict(
                     participant=participant_id,
-                    block=idx
+                    block=trial_idx,
+                    condition=trial_analysis["condition"],
+                    trial_evt_seq=evt_seq,
+                    since_start=evt["sinceStart"] / 1000,
+                )
+
+                if evt["type"] == "addIdea":
+                    ideas.append(odict(BASE, text=evt["idea"]))
+                elif evt["type"] == "inspireMe":
+                    inspirations = evt["ideas"]
+                    inspiration_requests.append(
+                        odict(
+                            BASE,
+                            inspirations=inspirations,
+                            num_inspirations=len(inspirations),
+                        )
+                    )
+                    if len(inspirations) == 0:
+                        any_requests_returned_empty = True
+                elif evt["type"] == "blur":
+                    num_blur += 1
+
+            trial_level_data.append(
+                odict(
+                    trial_analysis,
+                    participant=participant_id,
+                    block=trial_idx,
+                    any_requests_returned_empty=any_requests_returned_empty,
+                    num_blur=num_blur
                     # , titleÁ=dict(analysis['allControlledInputs'])[CINAME[idx]])
                 )
             )
 
-    return results
+    return {
+        k: pd.DataFrame(v)
+        for k, v in dict(
+            trial_level=trial_level_data,
+            inspiration_requests=inspiration_requests,
+            ideas=ideas,
+        ).items()
+    }
 
 
 def get_survey_data(participants, analyses):
@@ -192,7 +233,7 @@ def get_survey_data(participants, analyses):
                 else:
                     segment = segment[4:].lower()
                     trial = int(trial)
-                    k = k.replace('-', '_')
+                    k = k.replace("-", "_")
                     trial_level.append((participant_id, trial, f"{segment}_{k}", v))
             else:
                 experiment_level.append((participant_id, k, v))
@@ -219,8 +260,8 @@ def analyze_all(participants):
 
     analyses = analysis_util.get_log_analysis_many(participants, analyzer="CueAnalyzer")
 
-    trial_level = get_trial_level_data(participants, analyses)
-    trial_level = pd.DataFrame(trial_level)
+    behavioral_data = get_behavioral_data(participants, analyses)
+    trial_level = behavioral_data.pop("trial_level")
 
     trial_level["fluency_1"] = trial_level.fluency.apply(lambda x: x[0])
     trial_level["fluency_2"] = trial_level.fluency.apply(lambda x: x[1])
@@ -245,11 +286,39 @@ def analyze_all(participants):
         set(experiment_level_survey["participant"])
     )
 
-    trial_level = pd.merge(
+    trial_level = clean_merge(
         trial_level, trial_level_survey, on=("participant", "block"), validate="1:1"
     )
 
-    return dict(experiment_level=experiment_level_survey, trial_level=trial_level)
+    experiment_level = clean_merge(
+        experiment_level_survey,
+        trial_level.groupby("participant")
+        .condition.apply(lambda x: ",".join(x))
+        .to_frame("condition_order"),
+        left_on="participant",
+        right_index=True,
+    )
+
+    trial_level["system_failure_occurred"] = (trial_level["condition"] != "norecs") & (
+        trial_level["any_requests_returned_empty"]
+    )
+
+    trial_level["should_exclude"] = trial_level["system_failure_occurred"] | (
+        trial_level["num_inspiration_requests"] == 0
+    )
+
+    experiment_level = clean_merge(
+        experiment_level,
+        trial_level.groupby("participant")
+        .should_exclude.any()
+        .to_frame("any_trial_excluded"),
+        left_on="participant",
+        right_index=True,
+    )
+
+    return dict(
+        experiment_level=experiment_level, trial_level=trial_level, **behavioral_data
+    )
 
 
 def main(batch):
@@ -264,6 +333,7 @@ def main(batch):
         if name.endswith("_level"):
             name = name[: -len("_level")]
         data.to_csv(out_path / f"{name}.csv", index=False)
+    return analyses
 
 
 if __name__ == "__main__":
@@ -272,4 +342,4 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("batch")
     opts = parser.parse_args()
-    main(opts.batch)
+    globals().update(main(opts.batch))
