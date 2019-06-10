@@ -116,7 +116,6 @@ const responseTypes = {
 };
 
 const allQuestions = {};
-window.allQuestions = allQuestions;
 
 export const ColumnDictionary = inject("state")(() => (
   <div style={{ fontSize: "10px" }}>
