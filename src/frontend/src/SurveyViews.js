@@ -115,6 +115,34 @@ const responseTypes = {
   likert: LikertResponse,
 };
 
+const allQuestions = {};
+window.allQuestions = allQuestions;
+
+export const ColumnDictionary = inject("state")(() => (
+  <table>
+    <thead>
+      <tr>
+        <td>Column</td>
+        <td>Type</td>
+        <td>Options</td>
+        <td>Text</td>
+      </tr>
+    </thead>
+    <tbody>
+      {Array.from(Object.entries(allQuestions)).map(
+        ([responseVarName, question]) => (
+          <tr key={responseVarName}>
+            <td>{responseVarName}</td>
+            <td>{question.responseType}</td>
+            <td>{(question.options || []).join(", ")}</td>
+            <td>{question.text}</td>
+          </tr>
+        )
+      )}
+    </tbody>
+  </table>
+));
+
 const Question = inject("state")(
   observer(({ basename, question, state }) => {
     let responseType = null;
@@ -128,6 +156,7 @@ const Question = inject("state")(
         state.controlledInputs.get(responseVarName) !== undefined
           ? "complete"
           : "missing";
+      allQuestions[responseVarName] = question;
     }
     return (
       <div

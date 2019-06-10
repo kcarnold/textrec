@@ -2,7 +2,8 @@
 
 import React, { Component } from "react";
 import forEach from "lodash/forEach";
-import { observer } from "mobx-react";
+import { observer, Provider } from "mobx-react";
+import { ColumnDictionary } from "./SurveyViews";
 
 let states = [];
 let MasterView = null;
@@ -85,6 +86,9 @@ const ShowAllScreens = observer(
               </div>
             </div>
           ))}
+          <Provider state={states[states.length - 1]} dispatch={() => {}}>
+            <ColumnDictionary />
+          </Provider>
         </div>
       );
     }
