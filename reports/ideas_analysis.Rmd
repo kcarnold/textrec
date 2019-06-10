@@ -18,7 +18,7 @@ afex::set_sum_contrasts()
 
 ```{r read, include=FALSE}
 allData <- read_csv(
-  "../data/analyzed/idea/idea3r4/step1.csv",
+  "../data/analyzed/idea/idea3r4/trial.csv",
   col_types = cols(
     block=col_factor(c("0", "1", "2"))
   )
@@ -43,6 +43,17 @@ data %>%
     facet_wrap("block")
 ```
 
+# Manipulation Checks
+
+Indications that the system worked:
+
+- Inspirations got shown, on trials other than norecs.
+- Somebody used some word that was a cue word while it was visible.
+
+
+# Fluency outcome
+
+
 ```{r fluency}
 labeledBar <- list(
   stat_summary(geom="bar", fun.y=mean, position="dodge"),
@@ -58,6 +69,38 @@ data %>% ggplot(aes(x=condition, y=fluency_2)) + labeledBar + facet_wrap("block"
 
 ```{r fluency_analysis}
 mixed(fluency_5 ~ condition * block + (1|participant), data = data)
+```
+
+# Subjective Opinions
+
+```{r subjective}
+#data %>% ggplot(aes(x=condition, y=brainstorm_sysRelevant)) + labeledBar + facet_wrap("block")
+measures.to.vis <-
+  c(
+    "brainstorm_distracting",
+    "brainstorm_fluent",
+    "brainstorm_stuck"       ,
+    "brainstorm_sysGaveIdeas",
+    "brainstorm_sysRelevant",
+    "brainstorm_system_helped",
+    "brainstorm_usedInspirations"
+    #"brainstorm_used_external"
+  )
+
+data %>%
+    select(participant, condition, block, !!!measures.to.vis) %>%
+    gather(measure, value, !!!measures.to.vis) %>%
+    mutate(measure=factor(measure, levels=measures.to.vis)) %>%
+    ggplot(aes(x=condition, y=value)) +
+      labeledBar +
+      facet_wrap(vars(measure, block), ncol=3, scales="free", strip.position="top") +
+      labs(x="xlabel", y="") +
+      theme(
+        strip.background = element_blank(),
+        panel.spacing.y = unit(2, "lines"),
+        axis.line.x = element_blank(),
+        legend.position = "bottom")
+
 ```
 
 For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
