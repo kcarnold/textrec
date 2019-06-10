@@ -166,6 +166,7 @@ def get_trial_level_data(participants, analyses):
 
 def get_survey_data(participants, analyses):
     experiment_level = []
+    trial_level = []
 
     for participant_id in participants:
         analyzed = analyses[participant_id]
@@ -176,27 +177,34 @@ def get_survey_data(participants, analyses):
             assert False
 
         total_time = (
-            (
-                analyzed["screenTimes"][-1]["timestamp"]
-                - analyzed["screenTimes"][0]["timestamp"]
-            )
-            / 1000
-            / 60
+            analyzed["screenTimes"][-1]["timestamp"]
+            - analyzed["screenTimes"][0]["timestamp"]
         )
+        total_time = total_time / 1000 / 60
         experiment_level.append((participant_id, "total_time", total_time))
 
         for k, v in analyzed["allControlledInputs"]:
-            # if "-" in k:
-            #     segment, k = k.split("-", 1)
-            # else:
-            #     segment = None
-            experiment_level.append((participant_id, k, v))
+            if k.startswith("postBrainstorm") or k.startswith("postWriting"):
+                segment, trial, k = k.split("-", 2)
+                if trial == "practice":
+                    # ignore.
+                    pass
+                else:
+                    segment = segment[4:].lower()
+                    trial = int(trial)
+                    k = k.replace('-', '_')
+                    trial_level.append((participant_id, trial, f"{segment}_{k}", v))
+            else:
+                experiment_level.append((participant_id, k, v))
 
-    return pd.DataFrame(experiment_level, columns="participant name value".split())
-
-
-def decode_experiment_level(experiment_level):
-    return experiment_level.set_index(["participant", "name"]).value.unstack(-1)
+    return dict(
+        experiment_level=pd.DataFrame(
+            experiment_level, columns="participant name value".split()
+        ),
+        trial_level=pd.DataFrame(
+            trial_level, columns="participant block name value".split()
+        ),
+    )
 
 
 def clean_merge(*a, must_match=[], combine_cols=[], **kw):
@@ -219,21 +227,29 @@ def analyze_all(participants):
     trial_level["fluency_5"] = trial_level.fluency.apply(lambda x: x[4])
 
     # Get survey data
-    _experiment_level = get_survey_data(participants, analyses)
-    experiment_level = decode_experiment_level(_experiment_level).reset_index()
-
-    assert "participant" in experiment_level, experiment_level.info()
-    assert "participant" in trial_level
-
-    assert len(set(trial_level["participant"])) == len(
-        set(experiment_level["participant"])
+    survey_data = get_survey_data(participants, analyses)
+    experiment_level_survey = (
+        survey_data["experiment_level"]
+        .set_index(["participant", "name"])
+        .value.unstack(-1)
+        .reset_index()
+    )
+    trial_level_survey = (
+        survey_data["trial_level"]
+        .set_index(["participant", "block", "name"])
+        .value.unstack(-1)
+        .reset_index()
     )
 
-    # trial_level = pd.merge(
-    #     experiment_level, trial_level, on="participant", validate="1:m"
-    # )
+    assert len(set(trial_level["participant"])) == len(
+        set(experiment_level_survey["participant"])
+    )
 
-    return dict(experiment_level=experiment_level, trial_level=trial_level)
+    trial_level = pd.merge(
+        trial_level, trial_level_survey, on=("participant", "block"), validate="1:1"
+    )
+
+    return dict(experiment_level=experiment_level_survey, trial_level=trial_level)
 
 
 def main(batch):
