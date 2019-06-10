@@ -119,28 +119,31 @@ const allQuestions = {};
 window.allQuestions = allQuestions;
 
 export const ColumnDictionary = inject("state")(() => (
-  <table>
-    <thead>
-      <tr>
-        <td>Column</td>
-        <td>Type</td>
-        <td>Options</td>
-        <td>Text</td>
-      </tr>
-    </thead>
-    <tbody>
-      {Array.from(Object.entries(allQuestions)).map(
-        ([responseVarName, question]) => (
-          <tr key={responseVarName}>
-            <td>{responseVarName}</td>
-            <td>{question.responseType}</td>
-            <td>{(question.options || []).join(", ")}</td>
-            <td>{question.text}</td>
-          </tr>
-        )
-      )}
-    </tbody>
-  </table>
+  <div style={{ fontSize: "10px" }}>
+    {Array.from(Object.entries(allQuestions)).length} survey questions:
+    <table>
+      <thead>
+        <tr>
+          <td>Column</td>
+          <td>Type</td>
+          <td>Options</td>
+          <td>Text</td>
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from(Object.entries(allQuestions)).map(
+          ([responseVarName, question]) => (
+            <tr key={responseVarName}>
+              <td>{responseVarName}</td>
+              <td>{question.responseType}</td>
+              <td>{(question.options || []).join(", ")}</td>
+              <td>{question.text}</td>
+            </tr>
+          )
+        )}
+      </tbody>
+    </table>
+  </div>
 ));
 
 const Question = inject("state")(
