@@ -243,8 +243,7 @@ const getPracticeScreens = () => [
           <p>
             In the area below, notice a box on the left, labeled "For
             Inspiration". Clicking the button will show various kinds of
-            inspirations. In this practice task, the inspirations will be
-            helpful (try it!), but that may change between tasks.
+            inspiration&emdash;try it!
           </p>
           <p>
             <b>Task:</b> Try to list 20 English words with "q" as the second
@@ -293,10 +292,11 @@ function brainstormHeader(topicName, targetIdeaCount) {
     <div>
       <h1>Preparing to Write an Encyclopedia Article</h1>
       <p>
-        You're going to write a factual article about{" "}
-        <span style={{ color: "orange" }}>{topicName}</span>. Think about the
-        person who will read the article.{" "}
-        <b>What factual questions might the reader have?</b>
+        You're going to write a factual, encyclopedia-style article about{" "}
+        <span style={{ color: "orange" }}>{topicName}</span>. Imagine someone
+        who doesn't know anything about {topicName} but will read your article
+        because they're curious.{" "}
+        <b>What factual questions might the reader of the article have?</b>
       </p>
 
       <ul>
@@ -575,12 +575,10 @@ function getTask(promptName) {
       writingPrompt,
       topicName: <ControlledInputView name={nameField} />,
       precommitView: withValidation([nameField], () => (
-        <div className="Survey">
-          <span>
-            What is a <b>{visibleName}</b> that you know well enough to be able
-            to write a brief encyclopedia-style article about it without
-            external resources?
-          </span>
+        <div>
+          <p>
+            Name a <b>{visibleName}</b> that you know well.
+          </p>
           <div
             style={{
               padding: "12px",
@@ -677,12 +675,11 @@ function getPrewritingScreens(tasksAndConditions) {
     screen: "PreSurvey",
     view: () => (
       <div className="Survey">
-        <h1>Writing factual articles</h1>
+        <h1>Preparing to write factual articles</h1>
         <p>
           You are going to be writing brief factual (encyclopedia-like) articles
           on the topics that you listed earlier.
         </p>
-        <p>Thinking about the reader will help make you a better writer.</p>
         <p>
           In the next few screens, you'll try to list some questions that
           someone might have about the topic before they read your article.
