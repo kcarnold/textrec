@@ -86,7 +86,7 @@ mixed(fluency_2 ~ condition * block + (1|participant), data = data)
 
 ```{r}
 #ideas %>% group_by(participant, block) %>% mutate(nth=row_number(), frac_less_than=cume_dist(since_start)) #%>% 
-ideas %>% groupby(condition) %>% mutate(num_ideas_by_time=)
+#ideas %>% groupby(condition) %>% mutate(num_ideas_by_time=)
   #ggplot(aes(x=since_start, y=nth, color=condition))
 ```
 
