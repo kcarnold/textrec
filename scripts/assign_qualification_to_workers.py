@@ -27,6 +27,9 @@ titles = {
     "Write a movie review": "write",
     "Find images that people not in a certain group would misunderstand": "exploratory",
     "Write about 3 different topics [~30m]": "ideawrite",
+    "Write about 3 different topics [~45m]": "ideawrite",
+    "Write about a movie or TV show [~10min]": "ideawrite",
+    "Write about a recent experience at a restaurant [<10min]": "ideawrite"
 }
 
 relevant_hits = [hit for hit in hits if hit["Title"] in titles.keys()]
@@ -34,7 +37,7 @@ irrelevant_hits = {hit["Title"] for hit in hits if hit["Title"] not in titles}
 if irrelevant_hits:
     print()
     print("Skipping other HITS:")
-    print("\n".join(irrelevant_hits))
+    print("\n".join(sorted(irrelevant_hits)))
     print()
 id2hit = {hit["HITId"]: hit for hit in hits}
 
