@@ -88,7 +88,7 @@ def mark_completed(participant_id, logdir=paths.logdir):
 
 
 def get_expected_completions(
-    n_groups, completion_data, max_age_secs=12 * SECS_PER_HOUR
+    n_groups, completion_data, timeout=3 * SECS_PER_HOUR
 ):
     now = time.time()
     expected_completions = np.zeros(n_groups)
@@ -98,7 +98,7 @@ def get_expected_completions(
             expected_completions[assignment] += 1.0
         else:
             age_secs = now - completion["login_timestamp"]
-            if age_secs < max_age_secs:
+            if age_secs < timeout:
                 # They might complete.
                 expected_completions[assignment] += 0.5
             else:
