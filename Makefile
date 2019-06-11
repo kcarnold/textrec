@@ -64,7 +64,11 @@ get-completed-participants:
 data/analyzed/idea/%/step1.pkl: data/participants.txt src/textrec/analysis_step1.py
 	poetry run python -m textrec.analysis_step1 $*
 
+data/analyzed/idea/%/annotation_chunks.json: data/analyzed/idea/%/step1.pkl src/textrec/analysis_step2.py
+	poetry run python -m textrec.analysis_step2 $*
 
+HITs/chunk_indices_%.csv: data/analyzed/idea/%/annotation_chunks.json
+	cd src/annotation/rate_texts/ && poetry run python build.py $* --truncate 2
 
 
 #################################################################################

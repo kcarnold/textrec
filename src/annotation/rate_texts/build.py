@@ -19,12 +19,16 @@ batch = opts.batch
 
 subprocess.run(["make", "dist/App.umd.js"])
 
-datafile_name = paths.data / "analyzed" / "idea" / batch / f"annotation_chunks_{batch}.json"
-data = json.load(open(datafile_name))
+source_datafile_path = (
+    paths.data / "analyzed" / "idea" / batch / f"annotation_chunks.json"
+)
+data = json.load(open(source_datafile_path))
 if opts.truncate != 0:
     data = data[: opts.truncate]
 
-shutil.copyfile(datafile_name, f"public/{datafile_name.name}")
+datafile_path = pathlib.Path("public") / f"data_{batch}.json"
+
+shutil.copyfile(source_datafile_path, datafile_path)
 
 print(len(data), "chunks")
 
@@ -65,7 +69,7 @@ out_dir.mkdir(exist_ok=True, parents=True)
 resources = {}
 
 resources["js"] = [pathlib.Path("dist/App.umd.js")]
-resources["json"] = [datafile_name]
+resources["json"] = [datafile_path]
 resources["css"] = list(pathlib.Path("dist").glob("*.css"))
 
 
