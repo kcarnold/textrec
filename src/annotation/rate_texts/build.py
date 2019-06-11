@@ -12,21 +12,30 @@ from jinja2 import Template
 from textrec.paths import paths
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('batch')
+parser.add_argument("batch")
+parser.add_argument("--truncate", type=int, default=0)
 opts = parser.parse_args()
 batch = opts.batch
 
-datafile_name = paths.data / "analyzed" / "idea" / batch / "annotation_chunks.json"
-data = json.load(open(datafile_name))
+subprocess.run(["make", "dist/App.umd.js"])
 
-# with open(datafile_name, 'w') as f:
-#     f.write('var DATA = ')
-#     f.write(data)
-#     f.write(';\n')
+datafile_name = paths.data / "analyzed" / "idea" / batch / f"annotation_chunks_{batch}.json"
+data = json.load(open(datafile_name))
+if opts.truncate != 0:
+    data = data[: opts.truncate]
+
+shutil.copyfile(datafile_name, f"public/{datafile_name.name}")
+
 print(len(data), "chunks")
 
-t = Template('''
-{% for css in stylesheets %}
+pd.Series(list(range(len(data)))).to_frame("chunk_idx").to_csv(
+    paths.top_level / "HITs" / f"chunk_indices_{batch}.csv", index=False
+)
+
+t = Template(
+    """
+<script src="https://unpkg.com/vue"></script>
+{% for css in resources.css %}
 <link rel="stylesheet" href="{{css}}">
 {% endfor %}
 {% raw %}
@@ -35,32 +44,62 @@ t = Template('''
 <textarea cols="80" name="feedback" placeholder="totally optional feedback" rows="4"></textarea>
 {% endraw %}
 
-<script>var chunk_idx = ${chunk_idx};</script>
-{% for js in scripts %}
+<script>var chunk_idx = ${chunk_idx}, FILE_PATH="{{resources.json[0]}}"</script>
+{% for js in resources.js %}
 <script src="{{js}}"></script>
 {% endfor %}
-''')
+<script>
+document.getElementById('app').innerHTML="<App></App>"
+new Vue({
+  components: {"App": App}
+}).$mount('#app')
+</script>
+"""
+)
 
 
-product = 'comparison'
-out_dir = pathlib.Path(f'./deploy/rate_texts')
+product = "rate_texts"
+out_dir = pathlib.Path(f"./deploy/rate_texts")
 out_dir.mkdir(exist_ok=True, parents=True)
 
-scripts = list(pathlib.Path('dist/js').glob('*.js'))
-scripts.sort(key=lambda name: 1 if name.name.startswith('app') else 0)
-scripts.insert(0, datafile_name)
-for name in scripts:
-    shutil.copyfile(name, out_dir / name.name)
-scripts = [f'https://s3.amazonaws.com/megacomplete.net/{product}/{name.name}' for name in scripts]
+resources = {}
 
-stylesheets = list(pathlib.Path('dist/css').glob('*.css'))
-for name in stylesheets:
-    shutil.copyfile(name, out_dir / name.name)
-stylesheets = [f'https://s3.amazonaws.com/megacomplete.net/{product}/{name.name}' for name in stylesheets]
-prod_html = t.render(scripts=scripts, stylesheets=stylesheets)
+resources["js"] = [pathlib.Path("dist/App.umd.js")]
+resources["json"] = [datafile_name]
+resources["css"] = list(pathlib.Path("dist").glob("*.css"))
+
+
+def get_mapped_resources(resources):
+    for typ, path_list in resources.items():
+        for path in path_list:
+            shutil.copyfile(path, out_dir / path.name)
+
+    return {
+        typ: [
+            f"https://s3.amazonaws.com/megacomplete.net/{product}/{path.name}"
+            for path in path_list
+        ]
+        for typ, path_list in resources.items()
+    }
+
+
+mapped_resources = get_mapped_resources(resources)
+prod_html = t.render(resources=mapped_resources)
 
 input("About to copy prod to clipboard")
-subprocess.Popen('pbcopy', stdin=subprocess.PIPE).communicate(prod_html.encode('utf-8'))
+subprocess.Popen("pbcopy", stdin=subprocess.PIPE).communicate(prod_html.encode("utf-8"))
 
 print("Syncing to s3")
-subprocess.run(['aws', '--profile', 'kca-s3', 's3', 'sync', str(out_dir), f"s3://megacomplete.net/{product}/", '--acl', 'public-read'])
+subprocess.run(
+    [
+        "aws",
+        "--profile",
+        "kca-s3",
+        "s3",
+        "sync",
+        str(out_dir),
+        f"s3://megacomplete.net/{product}/",
+        "--acl",
+        "public-read",
+    ]
+)
