@@ -99,3 +99,5 @@ tmpnotebook.py
 
 .mypy_cache
 reports/ideas_analysis.html
+HITs/chunk_indices_idea3r5.csv
+vendor/en_core_web_md-2.1.0
