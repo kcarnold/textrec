@@ -56,7 +56,8 @@ class PanoptStore {
   }
 
   addViewers(ids) {
-    ids.split(/\s/).forEach(id => this.addViewer(id));
+    if (typeof ids === "string") ids = ids.split(/\s/);
+    ids.forEach(id => this.addViewer(id));
   }
 }
 decorate(PanoptStore, {
@@ -89,14 +90,13 @@ function replay(log, state) {
     }
 
     if (idx === log.length - 1) return;
-    setTimeout(
-      tick,
-      0
-      // Math.min(
-      //   1000,
-      //   (log[idx + 1].jsTimestamp - log[idx].jsTimestamp) / store.acceleration
-      // )
-    );
+    let delay = false
+      ? 0
+      : Math.min(
+          1000,
+          (log[idx + 1].jsTimestamp - log[idx].jsTimestamp) / store.acceleration
+        );
+    setTimeout(tick, delay);
     idx++;
   }
   tick();
@@ -340,11 +340,13 @@ const Panopticon = observer(
                 <h1>
                   {participantId} {conditions.join(",")}
                 </h1>
-                <TextHistoryView
-                  history={store.textHistories.get(participantId) || []}
-                />
-                <AnalyzedView store={store} participantId={participantId} />
                 {false && (
+                  <TextHistoryView
+                    history={store.textHistories.get(participantId) || []}
+                  />
+                )}
+                <AnalyzedView store={store} participantId={participantId} />
+                {true && (
                   <ReplayView store={store} participantId={participantId} />
                 )}
               </div>
@@ -362,4 +364,8 @@ export default Panopticon;
 window.toJS = toJS;
 window.store = store;
 
-store.addViewers("269xh7 9rq5rw pvqf36 3rh4cc crqp24 87f3mv");
+store.addViewers([
+  // "cr7jh5", // Extremely bad opinion
+  // "9mwm8x", // Extremely good opinion
+  "57xfh7", // Moderate opinion
+]);
