@@ -316,8 +316,19 @@ def analyze_all(participants):
         right_index=True,
     )
 
+    behavioral_data_with_exclusions = {
+        k: clean_merge(
+            trial_level.loc[:, ["participant", "block", "should_exclude"]],
+            v,
+            on=["participant", "block"],
+        )
+        for k, v in behavioral_data.items()
+    }
+
     return dict(
-        experiment_level=experiment_level, trial_level=trial_level, **behavioral_data
+        experiment_level=experiment_level,
+        trial_level=trial_level,
+        **behavioral_data_with_exclusions,
     )
 
 
