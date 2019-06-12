@@ -1,7 +1,6 @@
 ---
-title: "Untitled"
+title: "Analysis of Targeted Example Presentation"
 author: "Kenneth C. Arnold"
-date: "6/8/2019"
 output: html_document
 ---
 
@@ -12,9 +11,9 @@ library("tidyverse")
 library("ggbeeswarm")
 library("afex")
 afex::set_sum_contrasts()
+library("ARTool")
+library("emmeans")
 ```
-
-## Ideas Analysis
 
 ```{r read, include=FALSE}
 BATCH <- "idea3r5"
@@ -25,47 +24,63 @@ do_read_csv <- function(filename, ...) {
   data;
 }
 
-allData <- do_read_csv("trial.csv",col_types = cols(block = col_factor(c("0", "1", "2"))));
-data <- allData %>% subset(should_exclude==FALSE);
+block_factor <- col_factor(c("0", "1", "2"));
+all_trialLevel <- do_read_csv("trial.csv",col_types = cols(block = block_factor));
+all_trialLevel$condition <- factor(all_trialLevel$condition)
+trialLevel <- all_trialLevel %>% subset(should_exclude==FALSE);
 
-expLevel <- do_read_csv("experiment.csv");
-ideas <- do_read_csv("ideas.csv");
+all_expLevel <- do_read_csv("experiment.csv")
+expLevel <- all_expLevel %>% subset(any_trial_excluded==FALSE);
+all_ideaLevel <- do_read_csv("ideas.csv", col_types=cols(block=block_factor));
+ideaLevel <- all_ideaLevel %>% subset(should_exclude==FALSE);
 ```
 
-```{r totalTime}
-ggplot(expLevel, aes(x=total_time)) + geom_histogram()
+# Summary
+
+```{r counts}
+all_expLevel %>% group_by(any_trial_excluded) %>% summarise(n=n_distinct(participant), total_time=median(total_time))
+```
+
+```{r time_taken_graph}
+ggplot(all_expLevel, aes(x=total_time)) + geom_histogram(bins=30) + facet_wrap(vars(any_trial_excluded), nrow = 2)
 ```
 
 ```{r checkRandomization}
 #data %>% group_by(block, condition) %>% summarise(n=n_distinct(participant))
-expLevel %>% group_by(condition_order) %>% summarize(n=n())
+all_expLevel %>% group_by(any_trial_excluded, condition_order) %>% summarize(n=n())
 ```
+
+TODO: Why was randomSents-first so heavily excluded?
+
+# Did the system basically work?
+
+- Inspirations got shown, on trials other than norecs.
+
 
 ```{r systemFailures}
-data %>% group_by(condition, any_requests_returned_empty) %>% summarise(n())
+all_trialLevel %>% group_by(condition, any_requests_returned_empty) %>% summarise(n())
 ```
 
+
+TODO: Did people use some word that was a cue word while it was visible?
+
+## How many times did people request inspiration?
+
 ```{r numRequests}
-data %>% group_by(condition) %>% summarise_at(c("num_inspiration_requests"), mean)
+trialLevel %>% group_by(condition) %>% summarise_at(c("num_inspiration_requests"), mean)
 ```
 
 ```{r requests}
-data %>% 
+trialLevel %>% 
   ggplot(aes(x=condition, y=num_inspiration_requests)) +
     geom_beeswarm() +
     facet_wrap("block")
 ```
 
-# Manipulation Checks
 
-Indications that the system worked:
+## Fluency
 
-- Inspirations got shown, on trials other than norecs.
-- Somebody used some word that was a cue word while it was visible.
-
-
-# Fluency outcome
-
+How many ideas did they have after 5 minutes?
 
 ```{r fluency}
 labeledBar <- list(
@@ -77,60 +92,174 @@ labeledBar <- list(
                  position=position_dodge(width=.9),
                  hjust="middle", vjust="bottom"))
 
-data %>% ggplot(aes(x=condition, y=fluency_5)) + labeledBar# + facet_wrap("block")
+trialLevel %>% ggplot(aes(x=condition, y=fluency_5)) + labeledBar# + facet_wrap("block")
 ```
 
-```{r fluency_analysis}
-mixed(fluency_2 ~ condition * block + (1|participant), data = data)
+
+Once we remove obvious outliers, the fluency results are very similar across conditions.
+```{r timeTillN}
+ideaLevel$outlier <- ideaLevel$since_start > quantile(ideaLevel$since_start, .75) + 1.5 * IQR(ideaLevel$since_start);
+
+
+ideas_by_time <- ideaLevel %>% group_by(participant, block) %>% mutate(nth=row_number()) %>% subset(nth <= 20);
+ideas_by_time %>% 
+  group_by(nth) %>% filter((since_start < quantile(since_start, .75) + 1.5*IQR(since_start))) %>% 
+  ggplot(aes(x=nth, y=since_start, color=condition)) +
+    stat_smooth() + geom_beeswarm() + 
+    facet_wrap(vars(block)) +
+    #coord_flip() +
+    labs(x="Num questions generated", y="Seconds since start")
 ```
 
-```{r}
-#ideas %>% group_by(participant, block) %>% mutate(nth=row_number(), frac_less_than=cume_dist(since_start)) #%>% 
-#ideas %>% groupby(condition) %>% mutate(num_ideas_by_time=)
-  #ggplot(aes(x=since_start, y=nth, color=condition))
+```{r timeTillNAnalysis, include=F}
+# Not including this since it's unclear how to do it correctly.
+#mixed(nth ~ since_start * condition * block + (block | participant), data=ideas_by_time)
 ```
 
-# Subjective Opinions
+TODO: Fluency measures from past papers.
+TODO: Total time needed to write 120 words of final text.
 
-```{r subjective}
-#data %>% ggplot(aes(x=condition, y=brainstorm_sysRelevant)) + labeledBar + facet_wrap("block")
-multiBar <- function(measures.to.vis) {
-data %>%
+
+
+## Subjective Experience
+
+```{r include=F}
+multiPlot <- function(measures.to.vis, geom=labeledBar) {
+  trialLevel %>%
     select(participant, condition, block, !!!measures.to.vis) %>%
     gather(measure, value, !!!measures.to.vis) %>%
     mutate(measure=factor(measure, levels=measures.to.vis)) %>%
     ggplot(aes(x=condition, y=value)) +
-      labeledBar +
+      geom +
       facet_wrap(vars(measure, block), ncol=3, scales="free", strip.position="top") +
-      labs(x="xlabel", y="") +
+      labs(x="condition", y="") +
       theme(
         strip.background = element_blank(),
         panel.spacing.y = unit(2, "lines"),
         axis.line.x = element_blank(),
         legend.position = "bottom")
 }
-
-multiBar(c(    "brainstorm_distracting",
-    "brainstorm_system_helped"))
 ```
 
-```{r process}
-multiBar(c(
+
+```{r helpedOverall, fig.cap="The system was helpful overall."}
+multiPlot(c("brainstorm_system_helped"), geom=geom_boxplot())
+```
+
+```{r usePaper, fig.cap="I would have done better using paper."}
+multiPlot(c("brainstorm_distracting"))#, geom=geom_boxplot())
+```
+
+
+```{r process, fig.cap="I felt like I could come up with ideas easily. // I sometimes felt stuck."}
+multiPlot(c(
     "brainstorm_fluent",
     "brainstorm_stuck"
 ));
 ```
 
-```{r system}
-multiBar(c(
+```{r system, fig.cap="The inspirations gave me new ideas. // The inspirations were relevant. // I used the inspirations that were given."}
+multiPlot(c(
     "brainstorm_sysGaveIdeas",
     "brainstorm_sysRelevant",
     "brainstorm_usedInspirations"
   ));
 ```
 
-```{r}
-colnames(data)
+Targeted recommendations are better than nothing but not better than random.
+```{r relevance}
+
+ana <- function(formula, use_art=T, data=trialLevel) {
+  res <- list()
+  if(use_art) {
+    m <- art(formula, data=data)
+    res$alignSummary <- summary(m)
+    res$m <- anova(m)
+    res$emm <- emmeans(artlm(m, "condition"), "condition", contr="pairwise", adjust="holm")
+    resids <- residuals(m)
+  } else {
+    res$m <- mixed(formula, data=data, method="KR")
+    res$emm <- emmeans(res$m, "condition", by=by, contr="pairwise", adjust="holm")
+    resids <- residuals(res$m$full_model)
+  }
+  res$shapiroResid <- shapiro.test(resids)
+  car::qqPlot(resids, groups=data$condition)
+  res
+}
+list(
+  relevant=ana(brainstorm_sysRelevant ~ condition * block + (1|participant)),
+  gaveIdeas=ana(brainstorm_sysGaveIdeas ~ condition * block + (1|participant)),
+  usedInspirations=ana(brainstorm_usedInspirations ~ condition * block + (1|participant)))
 ```
+
+# Relevance
+
+How relevant were the generated ideas to the writing task? TODO. 
+
+# Breadth of Ideas Generated
+
+We use word-vector-based metrics to compute the breadth of ideas generated. (This is in a Jupyter Notebook. And no difference between conditions.)
+
+
+# Subjective Experience
+
+
+  - ... of the system: did writers find the system's suggestions relevant? useful? giving ideas?
+  - ... of the task: did they feel stuck?
+
+## Comments
+
+```{r comments}
+trialLevel %>% group_by(condition) %>% summarize(comments=paste(brainstorm_whenRequest, collapse = " // ")) %>% knitr::kable()
+```
+
+## Self-Efficacy
+
+```{r computeSelfEfficacy}
+for (block in c(0:2)) {
+  for (aspect in c("WhatToSay", "HowToSay")) {
+    expLevel[paste0("pre2mid_", aspect, '_', block)] <- 
+      expLevel[paste0("mid-selfEfficacy", aspect, "-", block)] - expLevel[paste0("pre-selfEfficacy", aspect, "-", block)];
+  }
+}
+selfEfficacyPre2Mid <- expLevel %>% 
+  select(participant, starts_with("pre2mid")) %>% 
+  gather(sedelta, delta, -participant) %>% 
+  extract(sedelta, c("aspect", "block"), "pre2mid_(\\w+)_(\\d)", convert=T)
+selfEfficacyPre2Mid <- selfEfficacyPre2Mid %>% mutate(block=factor(block))
+```
+
+```{r plotSelfEfficacy}
+seDeltaByTrial <- trialLevel %>% select(participant, block, condition) %>% 
+  left_join(selfEfficacyPre2Mid, by=c("participant", "block"))
+seDeltaByTrial %>%
+  filter(!is.na(delta)) %>% 
+  ggplot(aes(x=condition, y=delta)) +
+    labeledBar+
+    #geom_beeswarm() +
+    facet_wrap(vars(aspect, block))
+```
+
+# Final Writing
+
+## Informativeness
+
+```{r nll}
+multiPlot(c("nll_total_lower", "nll_per_char"))
+```
+
+```{r nll_simple}
+trialLevel %>% ggplot(aes(x=condition, y=nll_per_char)) + geom_boxplot() + facet_wrap(vars(block))
+```
+
+```{r nll_analysis}
+mixed(nll_per_char ~ condition * block + (1|participant), data=trialLevel)
+```
+
+## Quality / Style
+
+
+
+# Appendix
 
 For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
