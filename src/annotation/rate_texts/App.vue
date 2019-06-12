@@ -44,9 +44,16 @@ export default {
       <p>
         Then, rate how
         <b>informative</b> the article is and how
-        <b>appropriate</b> the writing would be for an encyclopedia article, on a scale of 1 (least) to 10 (most).
-        <b>Try to use a range of scores</b>.
+        <b>appropriate</b> the writing would be for an encyclopedia article.
       </p>
+      <ul>
+        <li>Use a scale of 1 (least) to 10 (most).</li>
+        <li>
+          <b>Try to use a range of scores</b>.
+        </li>
+        <li>Use "10" for an article that would qualify as a "featured article" on Wikipedia.</li>
+        <li>Use "1" for the worst article in this set of {{results.length}} articles, even if it's pretty good.</li>
+      </ul>
     </div>
     <div id="task-container">
       <div v-if="results.length == 0">Loading...</div>
