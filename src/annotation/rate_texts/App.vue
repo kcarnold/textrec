@@ -80,6 +80,11 @@ export default {
       </div>
     </div>
 
+    <p>
+      How difficult was this task, on a scale of 1 (very easy) to 10 (very difficult)?
+      <input type="number" name="difficulty" min="0" max="10">
+    </p>
+
     <input type="hidden" name="results" :value="JSON.stringify(results)">
   </div>
 </template>
