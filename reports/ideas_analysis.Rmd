@@ -166,10 +166,21 @@ multiPlot(c(
   ));
 ```
 
+
+```{r subjectiveOverall}
+trialLevel <- trialLevel %>% 
+  mutate(brainstorm_overall=brainstorm_system_helped+brainstorm_sysRelevant+brainstorm_sysGaveIdeas+brainstorm_usedInspirations - brainstorm_distracting)
+
+trialLevel %>% 
+  ggplot(aes(x=condition, y=brainstorm_overall)) + labeledBar + facet_wrap(vars(block))
+```
+
+
 Targeted recommendations are better than nothing but not better than random.
 ```{r relevance}
 
-ana <- function(formula, use_art=T, data=trialLevel) {
+ana <- function(formula, use_art=T, data=NA) {
+  if (is.na(data)) data <- trialLevel;
   res <- list()
   if(use_art) {
     m <- art(formula, data=data)
@@ -190,6 +201,13 @@ list(
   relevant=ana(brainstorm_sysRelevant ~ condition * block + (1|participant)),
   gaveIdeas=ana(brainstorm_sysGaveIdeas ~ condition * block + (1|participant)),
   usedInspirations=ana(brainstorm_usedInspirations ~ condition * block + (1|participant)))
+```
+```{r analyzeSubjectiveOverall}
+ana(brainstorm_overall ~ condition * block + (1|participant))
+```
+
+```{r pickExamples}
+trialLevel %>% subset(condition=="highlightedSents") %>% select(participant, brainstorm_overall) %>% arrange(brainstorm_overall)# %>% pull(participant)
 ```
 
 # Relevance
