@@ -70,6 +70,10 @@ data/analyzed/idea/%/annotation_chunks.json: data/analyzed/idea/%/step1.pkl src/
 HITs/chunk_indices_%.csv: data/analyzed/idea/%/annotation_chunks.json
 	cd src/annotation/rate_texts/ && poetry run python build.py $* --truncate 2
 
+# Automated analysis.
+data/analyzed/idea/%/step3.pkl: data/analyzed/idea/%/step1.pkl src/textrec/analysis_step3.py
+	poetry run python -m textrec.analysis_step3 $*
+
 
 #################################################################################
 # Self Documenting Commands                                                     #
