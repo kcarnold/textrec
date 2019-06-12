@@ -16,7 +16,7 @@ cached_gpt2_nll = mem.cache(gpt2.nll)
 
 def main(batch):
     # We compute NLL on lowercased text because capitalization was inconsistent.
-    
+
     batch_path: pathlib.Path = paths.data / "analyzed" / "idea" / batch
     with open(batch_path / "step1.pkl", "rb") as f:
         analyses = pickle.load(f)
@@ -25,10 +25,14 @@ def main(batch):
     trials["nll_total_lower"] = trials.finalText.apply(
         lambda txt: cached_gpt2_nll(txt.strip().lower())
     )
-    trials['nll_per_char'] = trials.nll_total_lower / trials.finalText.str.len()
+    trials["nll_per_char"] = trials.nll_total_lower / trials.finalText.str.len()
 
     with open(batch_path / "step3.pkl", "wb") as f:
         pickle.dump(analyses, f)
+    for name, data in analyses.items():
+        if name.endswith("_level"):
+            name = name[: -len("_level")]
+        data.to_csv(batch_path / f"{name}.csv", index=False)
 
     return analyses
 
