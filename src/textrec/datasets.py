@@ -200,19 +200,24 @@ def load_wikivoyage(path=None):
     return add_useless_doc_id(dedupe_dataset(df))
 
 
-def get_wikipedia_category_loader(category):
-    def load_wikipedia_category(path=None):
+def articles_in_category(category, path=None):
         if path is None:
             path = get_path("wikipedia_category")
 
         fname = path / f"{category}.jsonl.gz"
 
         with gzip.open(str(fname)) as f:
+        for line in tqdm.tqdm(f, mininterval=1, desc="Read file"):
+            article = json.loads(line)
+            yield article["name"], article["content"]
+
+
+def get_wikipedia_category_loader(category):
+    def load_wikipedia_category(path=None):
             data = []
-            for line in tqdm.tqdm(f, mininterval=5, desc="Read file"):
-                article = json.loads(line)
-                text = clean_wikitext(article["content"])
-                data.append((article["name"], text))
+        for title, wikitext in articles_in_category(category, path=path):
+            text = clean_wikitext(wikitext)
+            data.append((title, text))
 
         return add_useless_doc_id(
             dedupe_dataset(pd.DataFrame(data, columns=["title", "text"]))
