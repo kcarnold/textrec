@@ -33,28 +33,55 @@ def normalize_dists(dists):
     return dists / np.sum(dists, axis=1, keepdims=True)
 
 
+def tokenize_with_ner(text):
+    from . import automated_analyses
+
+    doc = automated_analyses.nlp(text)
+    toks = [tok.text for tok in doc]
+    raw_sents = []
+    tokenized_sents = []
+    for sent in doc.sents:
+        for ent in sent.ents:
+            if ent.label_ in {
+                "EVENT",
+                "GPE",
+                "TIME",
+                "ORDINAL",
+                "CARDINAL",
+                "FAC",
+                "NORP",
+            }:
+                label = ent.root.text
+            else:
+                label = ent.label_
+            toks[ent.start] = label
+            for i in range(ent.start + 1, ent.end):
+                toks[i] = None
+        raw_sents.append(sent.text)
+        tokenized_sents.append(
+            " ".join(tok for tok in toks[sent.start : sent.end] if tok is not None)
+        )
+    return raw_sents, tokenized_sents
+
+
 def preprocess_texts(texts):
     space_re = re.compile("\\s+")
-
-    sentences = [
-        nltk.sent_tokenize(space_re.sub(" ", text))
-        for text in tqdm(texts, desc="Splitting sentences")
-    ]
-    tokenized = [
-        "\n".join(
-            " ".join(wordfreq.tokenize(sent, "en", include_punctuation=True))
-            for sent in sents
-        )
-        for sents in tqdm(sentences, desc="Tokenizing")
-    ]
-    return sentences, tokenized
+    all_raw_sents = []
+    all_tokenized_sents = []
+    num_sents = []
+    for text in tqdm(texts, desc="Tokenizing"):
+        raw, tok = tokenize_with_ner(space_re.sub(" ", text))
+        all_raw_sents.append("\0".join(raw))
+        all_tokenized_sents.append("\0".join(tok))
+        num_sents.append(len(raw))
+    return all_raw_sents, all_tokenized_sents, num_sents
 
 
 def preprocess_df(df):
-    sentences, tokenized = preprocess_texts(df.text)
-    df["sentences"] = ["\n".join(sents) for sents in sentences]
+    sentences, tokenized, num_sents = preprocess_texts(df.text)
+    df["sentences"] = sentences
     df["tokenized"] = tokenized
-    df["num_sents"] = [len(sents) for sents in sentences]
+    df["num_sents"] = num_sents
     return df
 
 
@@ -129,8 +156,8 @@ def cached_sentences(
     seen_texts = set()
     for row in df_full.itertuples():
         doc_id = row.doc_id
-        untokenized_sents = row.sentences.split("\n")
-        sents = row.tokenized.split("\n")
+        untokenized_sents = row.sentences.split("\0")
+        sents = row.tokenized.split("\0")
         assert len(untokenized_sents) == len(sents)
         doc_n_sents = len(sents)
         if doc_n_sents < min_sentences_per_doc:
@@ -139,10 +166,10 @@ def cached_sentences(
         for sent_idx, (raw_sent, sent) in enumerate(zip(untokenized_sents, sents)):
             if sent_idx == max_sentences_per_doc:
                 break
-            if sent in seen_texts:
+            if raw_sent.lower() in seen_texts:
                 dupes += 1
             else:
-                seen_texts.add(sent)
+                seen_texts.add(raw_sent.lower())
                 sentences.append((doc_id, doc_n_sents, sent_idx, raw_sent, sent))
         if len(sentences) >= max_sentences_total:
             break
