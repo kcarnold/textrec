@@ -147,11 +147,23 @@ def load_newsroom(*, path=None, frac=0.05, random_state=0):
     )
 
 
-def clean_wikitext(text):
+def clean_wikitext(text, only_intro_section=True):
+    """
+    Extract plain text from Wiki markup.
+
+    If `only_intro_section`, keep only the first section (until the first 
+    section header).
+    """
     import gensim.corpora.wikicorpus
 
     text = gensim.corpora.wikicorpus.filter_wiki(text)
-    text = WIKITEXT_TITLE_RE.sub("", text)
+    text = text.strip()
+    if only_intro_section:
+        match = WIKITEXT_TITLE_RE.search(text)
+        if match is not None:
+            text = text[: match.start()]
+    else:
+        text = WIKITEXT_TITLE_RE.sub("", text)
 
     text = bold_italic.sub(r"\1", text)
     text = bold.sub(r"\1", text)
@@ -201,12 +213,12 @@ def load_wikivoyage(path=None):
 
 
 def articles_in_category(category, path=None):
-        if path is None:
-            path = get_path("wikipedia_category")
+    if path is None:
+        path = get_path("wikipedia_category")
 
-        fname = path / f"{category}.jsonl.gz"
+    fname = path / f"{category}.jsonl.gz"
 
-        with gzip.open(str(fname)) as f:
+    with gzip.open(str(fname)) as f:
         for line in tqdm.tqdm(f, mininterval=1, desc="Read file"):
             article = json.loads(line)
             yield article["name"], article["content"]
@@ -214,7 +226,7 @@ def articles_in_category(category, path=None):
 
 def get_wikipedia_category_loader(category):
     def load_wikipedia_category(path=None):
-            data = []
+        data = []
         for title, wikitext in articles_in_category(category, path=path):
             text = clean_wikitext(wikitext)
             data.append((title, text))
