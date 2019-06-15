@@ -184,6 +184,10 @@ def cached_sentences(
     return sentences, dict(total_num_docs=total_num_docs, n_dupes=dupes)
 
 
+def preanalyzed_analyzer(txt):
+    return txt.split()
+
+
 @mem.cache
 def cached_vectorized_dataset(dataset_name, normalize_by_wordfreq=True):
     all_sentences, sentences_meta = cached_sentences(dataset_name)
@@ -205,7 +209,7 @@ def cached_vectorized_dataset(dataset_name, normalize_by_wordfreq=True):
     print("{:,} length-filtered sentences".format(len(length_filtered)))
 
     # Project into word-vector space
-    vectorizer = TfidfVectorizer(min_df=5, max_df=0.5, stop_words="english")
+    vectorizer = TfidfVectorizer(min_df=5, max_df=0.5, analyzer=preanalyzed_analyzer)
     length_filtered.raw_vecs = vectorizer.fit_transform(length_filtered.sentences.sent)
 
     vocab = vectorizer.get_feature_names()
