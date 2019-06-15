@@ -107,7 +107,7 @@ def get_cue_random_words(*, model_name, n_cues):
     return dict(cues=cues)
 
 
-def get_cue(text, *, model_name, n_cues, mode, method="w2v"):
+def get_cue(text, *, model_name, n_cues, mode, method="w2v", randomize=False):
     n_clusters_to_cue = n_cues
     existing_clusters, next_cluster_probs = next_cluster_distribution(
         text=text, model_name=model_name, method=method
@@ -178,12 +178,15 @@ def get_cue(text, *, model_name, n_cues, mode, method="w2v"):
     else:
         assert False
 
-    clusters_to_cue = np.random.choice(
-        len(next_cluster_probs),
-        size=len(next_cluster_probs),
-        replace=False,
-        p=next_cluster_probs,
-    )
+    if randomize:
+        clusters_to_cue = np.random.choice(
+            len(next_cluster_probs),
+            size=len(next_cluster_probs),
+            replace=False,
+            p=next_cluster_probs,
+        )
+    else:
+        clusters_to_cue = np.argsort(next_cluster_probs)[::-1]
 
     cues = []
     for cluster_to_cue in clusters_to_cue:
