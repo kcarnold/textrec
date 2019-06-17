@@ -33,7 +33,41 @@ def normalize_dists(dists):
     return dists / np.sum(dists, axis=1, keepdims=True)
 
 
-def tokenize_with_ner(text):
+entity_names = dict(
+    PERSON="person",
+    NORP="group",  # Nationalities or religious or political groups.
+    FAC="place",  # Buildings, airports, highways, bridges, etc.
+    ORG="thing",  # Companies, agencies, institutions, etc.
+    GPE="place",  # Countries, cities, states.
+    LOC="place",  # Non-GPE locations, mountain ranges, bodies of water.
+    PRODUCT="thing",  # Objects, vehicles, foods, etc. (Not services.)
+    EVENT="event",  # Named hurricanes, battles, wars, sports events, etc.
+    WORK_OF_ART="thing",  # Titles of books, songs, etc.
+    LAW="thing",  # Named documents made into laws.
+    LANGUAGE="thing",  # Any named language.
+    DATE="when",  # Absolute or relative dates or periods.
+    TIME="when",  # Times smaller than a day.
+    PERCENT="number",  # Percentage, including ”%“.
+    MONEY="number",  # Monetary values, including unit.
+    QUANTITY="number",  # Measurements, as of weight or distance.
+    ORDINAL="number",  # “first”, “second”, etc.
+    CARDINAL="number",  # Numerals that do not fall under another type.
+)
+
+
+def tokenize_with_ner(
+    text, ok_ents={"EVENT", "GPE", "ORDINAL", "CARDINAL", "FAC", "NORP"}
+):
+    """
+    We keep a few entity types by default:
+
+    - EVENT: this would filter out film awards.
+    - GPE, NORP: this would filter out nationalities
+    - ORDINAL: this filtered out "first" :(
+    - CARDINAL: this filtered out "one".
+    - FAC: these don't seem problematic.
+    """
+
     from . import automated_analyses
 
     doc = automated_analyses.nlp(text)
@@ -42,19 +76,9 @@ def tokenize_with_ner(text):
     tokenized_sents = []
     for sent in doc.sents:
         for ent in sent.ents:
-            if ent.label_ in {
-                "EVENT",
-                "GPE",
-                "TIME",
-                "ORDINAL",
-                "CARDINAL",
-                "FAC",
-                "NORP",
-            }:
-                label = ent.root.text
-            else:
-                label = ent.label_
-            toks[ent.start] = label
+            if ent.label_ in ok_ents:
+                continue
+            toks[ent.start] = ent.label_
             for i in range(ent.start + 1, ent.end):
                 toks[i] = None
         raw_sents.append(sent.text)
