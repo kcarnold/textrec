@@ -288,7 +288,7 @@ def analyze_doc(request):
     cluster_labels = cueing.get_model(model_name, "labels")
 
     clusters_with_labels = [
-        dict(cluster_id=cluster_id, label=" / ".join(cluster_labels[cluster_id]))
+        dict(cluster_id=int(cluster_id), label=" / ".join(cluster_labels[cluster_id]))
         for cluster_id in clusters
     ]
 

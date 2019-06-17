@@ -47,19 +47,23 @@ In May 2016, Disney announced that a live-action adaptation is currently in deve
 ]);
 window.docs = docs;
 
-const getAnalysis = (domain, doc) => {
+const getAnalysis = async (domain, doc) => {
   let requestBody = {
     method: "analyze_doc",
     domain,
     text: doc,
   };
-  return fetch("/api", {
+  let response = await fetch("/api", {
     headers: {
       "Content-Type": "application/json",
     },
     method: "POST",
     body: JSON.stringify(requestBody),
-  }).then(response => response.json());
+  });
+  if (!response.ok) {
+    debugger;
+  }
+  return await response.json();
 };
 
 const AnalyzeDocs = observer(
@@ -74,6 +78,21 @@ const AnalyzeDocs = observer(
     }
 
     render() {
+      let clusterData = {};
+      for (let doc of docs) {
+        if (doc.analysis !== null) {
+          for (let { cluster_id, label } of doc.analysis.clusters) {
+            let prior = clusterData[cluster_id];
+            clusterData[cluster_id] = {
+              cluster_id,
+              count: prior ? prior.count + 1 : 1,
+              label,
+            };
+          }
+        }
+      }
+      let clusters = Object.values(clusterData);
+      clusters.sort((a, b) => b.count - a.count);
       return (
         <div
           style={{
@@ -81,47 +100,58 @@ const AnalyzeDocs = observer(
             padding: "5px",
           }}
         >
-          {docs.map(({ domain, doc, analysis }, i) => {
-            if (analysis == null) {
-              return doc;
-            }
-            return (
-              <div
-                key={i}
-                style={{
-                  maxWidth: "1000px",
-                  margin: "0 auto",
-                }}
-              >
-                <h1>{domain}</h1>
-                <table>
-                  <tbody>
-                    {analysis.raw_sents.map((sent, sentIdx) => (
-                      <tr key={sentIdx}>
-                        <td
-                          style={{
-                            verticalAlign: "top",
-                            borderTop: "1px solid black",
-                            maxWidth: "400px",
-                          }}
-                        >
-                          {sent}
-                        </td>
-                        <td
-                          style={{
-                            verticalAlign: "top",
-                            borderTop: "1px solid black",
-                          }}
-                        >
-                          {analysis.clusters[sentIdx].label}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            );
-          })}
+          {clusters.map(
+            ({ cluster_id, count, label }) =>
+              count > 1 && (
+                <div key={cluster_id} style={{}}>
+                  {label}: {count}
+                </div>
+              )
+          )}
+          <div style={{ display: "flex", flexFlow: "row nowrap" }}>
+            {docs.map(({ domain, doc, analysis }, i) => {
+              if (analysis == null) {
+                return "...";
+              }
+              return (
+                <div
+                  key={i}
+                  style={{
+                    maxWidth: "1000px",
+                    margin: "0 auto",
+                    fontSize: "10px",
+                  }}
+                >
+                  <h1>{domain}</h1>
+                  <table>
+                    <tbody>
+                      {analysis.raw_sents.map((sent, sentIdx) => (
+                        <tr key={sentIdx}>
+                          <td
+                            style={{
+                              verticalAlign: "top",
+                              borderTop: "1px solid black",
+                              maxWidth: "400px",
+                            }}
+                          >
+                            {sent}
+                          </td>
+                          <td
+                            style={{
+                              verticalAlign: "top",
+                              borderTop: "1px solid black",
+                            }}
+                          >
+                            {analysis.clusters[sentIdx].label}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })}
+          </div>
         </div>
       );
     }
