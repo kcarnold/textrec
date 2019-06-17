@@ -70,7 +70,7 @@ def tokenize_with_ner(
 
     from . import automated_analyses
 
-    doc = automated_analyses.nlp(text)
+    doc = automated_analyses.nlp(text, disable=["parser", "tagger"])
     toks = [tok.text for tok in doc]
     raw_sents = []
     tokenized_sents = []
@@ -425,7 +425,9 @@ def get_labels_for_clusters(vectorizer, cluster_centers, sentences):
             word = vocab_in_cnnb[idx]
             if word in BAD_WORDS:
                 continue
-            tok = automated_analyses.nlp(word)[0]
+            tok = automated_analyses.nlp(
+                word, disable=["tagger", "parser", "sentencizer", "ner"]
+            )[0]
             lemma = tok.lemma_
             if lemma in used_lemmas:
                 continue

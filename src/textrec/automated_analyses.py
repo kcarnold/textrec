@@ -15,6 +15,8 @@ paths.imgdata_h5 = paths.imgdata_h5_all
 
 print("Loading SpaCy...", end='', flush=True)
 nlp = spacy.load('en_core_web_md')
+print("Hacking SpaCy...")
+nlp.add_pipe(nlp.create_pipe('sentencizer'), before='ner')
 print("done")
 
 @mem.cache(verbose=0)
