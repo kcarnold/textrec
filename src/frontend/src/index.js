@@ -80,6 +80,11 @@ const handlers = {
     topLevel = <ShowRecs />;
   },
 
+  analyzeDocs() {
+    let AnalyzeDocs = require("./AnalyzeDocs").default;
+    topLevel = <AnalyzeDocs />;
+  },
+
   idx() {
     let tasks = ["reviewRestaurant", "wiki-book", "wiki-film", "travelGuide"];
 

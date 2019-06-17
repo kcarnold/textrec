@@ -42,6 +42,8 @@ async def handle_request_async(executor, request):
         result = await get_keystroke_rec(executor, request)
     elif method == "get_cue":
         result = await get_cue_API(executor, request)
+    elif method == "analyze_doc":
+        result = analyze_doc(request)
     print("Result:", result)
     return result
 
@@ -257,26 +259,49 @@ def next_cluster_distribution_given_context_clusters(
     return cluster_probs
 
 
-def get_clusters_for_existing_doc(text, model_name):
-    sents = tokenize(text)
+def get_clusters_for_existing_doc(tokenized_sents, model_name):
     vectorizer = cueing.get_model(model_name, "vectorizer")
     projection_mat = cueing.get_model(model_name, "projection_mat")
     clusterer = cueing.get_model(model_name, "clusterer")
     n_clusters = clusterer.n_clusters
 
-    if len(sents):
-        vecs = vectorizer.transform(sents)
+    if len(tokenized_sents):
+        vecs = vectorizer.transform(tokenized_sents)
         projected = vecs.dot(projection_mat)
         existing_clusters = clusterer.predict(projected)
     else:
         existing_clusters = np.array([], dtype=int)
-    ic(sents, existing_clusters)
     return existing_clusters, n_clusters
+
+
+def analyze_doc(request):
+    """
+    Show how the clusterer understands an existing document.
+    """
+    domain = request["domain"]
+    model_name = domain_to_model[domain]
+    text = request["text"]
+
+    raw_sents, tokenized_sents = cueing.tokenize_with_ner(text)
+    clusters, n_clusters = get_clusters_for_existing_doc(tokenized_sents, model_name)
+
+    cluster_labels = cueing.get_model(model_name, "labels")
+
+    clusters_with_labels = [
+        dict(cluster_id=cluster_id, label=" / ".join(cluster_labels[cluster_id]))
+        for cluster_id in clusters
+    ]
+
+    return dict(
+        raw_sents=raw_sents,
+        tokenized_sents=tokenized_sents,
+        clusters=clusters_with_labels,
+    )
 
 
 def next_cluster_distribution(text, model_name, method, existing_clusters_weight=1e-6):
     existing_clusters, n_clusters = get_clusters_for_existing_doc(
-        text=text, model_name=model_name
+        tokenized_sents=tokenize(text), model_name=model_name
     )
 
     cluster_probs = next_cluster_distribution_given_context_clusters(
