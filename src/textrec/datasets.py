@@ -170,7 +170,7 @@ def clean_wikitext(text, only_intro_section=True):
     text = italic_quote.sub(r'"\1"', text)
     text = italic.sub(r'"\1"', text)
     text = quote_quote.sub(r'"\1"', text)
-    return text
+    return text.strip()
 
 
 def dedupe_dataset(df):
