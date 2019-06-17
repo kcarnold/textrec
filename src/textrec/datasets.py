@@ -185,6 +185,16 @@ def dedupe_dataset(df):
     return df_dedup
 
 
+def filter_too_short(df, min_length):
+    return df[df.text.str.len() >= min_length]
+
+
+def do_postprocessing(df, min_length=50):
+    df = dedupe_dataset(df)
+    df = filter_too_short(df, min_length=min_length)
+    return add_useless_doc_id(df)
+
+
 def load_wikivoyage(path=None):
     if path is None:
         path = get_path("wikivoyage")
@@ -209,7 +219,7 @@ def load_wikivoyage(path=None):
     data = [[title, text] for title, text, pageid in pages]
 
     df = pd.DataFrame(data, columns=["title", "text"])
-    return add_useless_doc_id(dedupe_dataset(df))
+    return do_postprocessing(df)
 
 
 def articles_in_category(category, path=None):
@@ -231,8 +241,6 @@ def get_wikipedia_category_loader(category):
             text = clean_wikitext(wikitext)
             data.append((title, text))
 
-        return add_useless_doc_id(
-            dedupe_dataset(pd.DataFrame(data, columns=["title", "text"]))
-        )
+        return do_postprocessing(pd.DataFrame(data, columns=["title", "text"]))
 
     return load_wikipedia_category
