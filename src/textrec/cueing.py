@@ -3,14 +3,12 @@ import re
 from functools import lru_cache
 
 import joblib
-import nltk
 import numpy as np
 import pandas as pd
-import wordfreq
 from gensim.models import Word2Vec
 from scipy.special import logsumexp
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.utils import check_random_state
 from tqdm import tqdm
 
@@ -508,7 +506,8 @@ def cached_lms_per_cluster(dataset_name, n_clusters, min_pervasiveness_frac=0.01
         print(cluster_idx)
         dump_kenlm(
             "{}_{}".format(model_basename, cluster_idx),
-            [s.lower() for s in sentences_in_cluster[cluster_idx]],
+            sorted({s for s in sentences_in_cluster[cluster_idx]}),
+            discount_fallback=True,
         )
 
     # Load models
@@ -548,6 +547,38 @@ def cached_scores_by_cluster(dataset_name, n_clusters, n_words=5):
             for cluster_idx, model in tqdm(models.items(), desc="Score by cluster")
         },
     )
+
+
+def scores_within_cluster(dataset_name, n_clusters):
+    models = cached_lms_per_cluster(dataset_name, n_clusters)
+    topic_data = cached_topic_data(dataset_name, n_clusters=n_clusters)
+    sentences = topic_data["sentences"]
+
+    # Score the conventionality of each sentence in its corresponding cluster
+    return [
+        models[cluster].score_seq(models[cluster].bos_state, sent.split())[0]
+        for cluster, sent in zip(tqdm(sentences.topic), sentences.sent)
+    ]
+
+
+def pairwise_jaccard(X):
+    """
+    Compute the Jaccard distance between pairs of rows of X.
+
+    Based on https://stackoverflow.com/a/32885931/69707
+    """
+    X = X.astype(bool).astype(int)
+    intersections = X.dot(X.T)
+    row_sums = intersections.diagonal()
+    unions = row_sums[:, None] + row_sums - intersections
+    return (1 - intersections / unions).A
+
+
+def most_conventional_sentences(sentences, k=10, ngram_max=3):
+    vectorizer = CountVectorizer(ngram_range=(1, 3), min_df=2)
+    vecs = vectorizer.fit_transform(sentences)
+    pdists = pairwise_jaccard(vecs)
+    return [sentences[idx] for idx in np.argsort(pdists.mean(axis=1))[:k]]
 
 
 @lru_cache()
