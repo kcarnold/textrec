@@ -32,6 +32,193 @@ import * as shuffle from "./shuffle";
 let baseConditions = ["verbatim", "template", "questions"];
 let conditionOrders = shuffle.permutator(baseConditions);
 
+const cuesByPrompt = {
+  "wiki-book": [
+    {
+      verbatim:
+        'The poem survives in a single manuscript, "Cotton Nero A.x.", which also includes three religious narrative poems: "Pearl", "Purity" and "Patience".',
+      template:
+        "[...] survives in a single manuscript, [name], which also includes [...]",
+      questions:
+        "How has the manuscript survived? Does the manuscript include other works?",
+    },
+    {
+      verbatim:
+        "It is written in stanzas of alliterative verse, each of which ends in a rhyming bob and wheel.",
+      template: "It is written in stanzas of [...] verse, each of which [...].",
+      questions:
+        "What form are its stanzas? Does it rhyme? What is the rhyming pattern?",
+    },
+    {
+      verbatim:
+        "It is one of the best known Arthurian stories, with its plot combining two types of folklore motifs, the beheading game and the exchange of winnings.",
+      template:
+        "It is one of the best known [type], with its plot combining two types of [...], the [...] and the [...].",
+      questions:
+        "What broad type of story is it? How well-known is it? What are some of its major plot characteristics?",
+    },
+    {
+      verbatim:
+        "It is an important example of a chivalric romance, which typically involves a hero who goes on a quest which tests his prowess.",
+      template:
+        "It is an important example of a [genre], which typically involves [...].",
+      questions:
+        "What genre does it exemplify? What characteristizes that genre?",
+    },
+    {
+      verbatim:
+        'All are thought to have been written by the same unknown author, dubbed the "Pearl Poet" or "Gawain Poet", since all four are written in a North West Midland dialect of Middle English.',
+      template:
+        "All are thought to have been written by the same unknown author, dubbed [...], since all [...] are written in a [...] dialect of [language].",
+      questions:
+        "Do the other works in the manuscript share the same author? Why or why not?",
+    },
+    {
+      verbatim:
+        'It describes how Sir Gawain, a knight of King Arthur\'s Round Table, accepts a challenge from a mysterious "Green Knight" who challenges any knight to strike him with his axe if he will take a return blow in a year and a day.',
+      template: "It describes how [person], a [description], [...]",
+      questions:
+        "Who is the main character? What is their main attribute? What is the central plot element?",
+    },
+    {
+      verbatim:
+        "It draws on Welsh, Irish, and English stories, as well as the French chivalric tradition.",
+      template:
+        "It draws on [country], [country], and [country] stories, as well as the [...] tradition.",
+      questions: "What are its major influences?",
+    },
+    {
+      verbatim:
+        'Sir Gawain and the Green Knight (Middle English: "Sir Gawayn and \u00fee Grene Kny\u021dt") is a late 14th-century Middle English chivalric romance.',
+      template: "[title] ([language]: [title]) is a [date] [language] [genre].",
+      questions:
+        "What is title? What was title in original language? When published? What genre?",
+    },
+    {
+      verbatim:
+        "It remains popular to this day in modern English renderings from J. R. R. Tolkien, Simon Armitage, and others, as well as through film and stage adaptations.",
+      template:
+        "It remains popular to this day in modern [country] renderings from [person], [person], and others, as well as through film and stage adaptations.",
+      questions: "Is it still popular? Does it have film or stage adaptations?",
+    },
+  ],
+  "wiki-film": [
+    {
+      verbatim:
+        'In the year after its release, "Blade Runner" won the Hugo Award for Best Dramatic Presentation, and in 1993 it was selected for preservation in the U. S. National Film Registry by the Library of Congress as being "culturally, historically, or aesthetically significant".',
+      template:
+        'In the year after its release, [title] won the [award] for [...], and in [year] it was selected for preservation in the [...] by [organization] as being "[...]".',
+      questions:
+        "What awards did it win? When? Was it selected for preservation?",
+    },
+    {
+      verbatim:
+        "The film has influenced many science fiction films, video games, anime, and television series.",
+      template:
+        "The film has influenced many [genre] films, [...], [...], [...], and [...].",
+      questions: "What other works of art has it influenced?",
+    },
+    {
+      verbatim:
+        'Hailed for its production design depicting a "retrofitted" future, "Blade Runner" is a leading example of neo-noir cinema.',
+      template:
+        "Hailed for its production design depicting [...], [title] is a leading example of [genre].",
+      questions:
+        "What genre does it exemplify? What aspects make it a good example?",
+    },
+    {
+      verbatim:
+        "A director's cut was released in 1992 after a strong response to test screenings of a workprint.",
+      template: "A director's cut was released in [year] after [...].",
+      questions: "Was a director's cut released? When? Why?",
+    },
+    {
+      verbatim:
+        '"Blade Runner" initially underperformed in North American theaters and polarized critics; some praised its thematic complexity and visuals, while others were displeased with its slow pacing and lack of action.',
+      template:
+        "[title] initially underperformed in [country] theaters and polarized critics; some praised its [...], while others were displeased with its [...] and lack of [...].",
+      questions:
+        "How did it initially perform? How did critics react? What aspects did critics praise? What aspects did critics condemn?",
+    },
+    {
+      verbatim:
+        'In 2007, Warner Bros.\u00a0released "The Final Cut", a 25th-anniversary digitally remastered version; the only version over which Scott retained artistic control.',
+      template:
+        "In [year], [organization] released [title], a [...] digitally remastered version; [...].",
+      questions: "Was a remastered version released? When? By whom?",
+    },
+    {
+      verbatim: 'A sequel, "Blade Runner 2049", was released in October 2017.',
+      template: "A sequel, [title], was released in [month], [year].",
+      questions: "Was a sequel made? What was its title? When was it released?",
+    },
+    {
+      verbatim:
+        "The film is set in a dystopian future Los Angeles of 2019, in which synthetic humans known as replicants are bio-engineered by the powerful Tyrell Corporation to work on off-world colonies.",
+      template:
+        "The film is set in a dystopian future [city] of [year], in which [...]",
+      questions:
+        "When and where is the film set? Is it a utopian or dystopian future? What characterizes the setting?",
+    },
+    {
+      verbatim:
+        "It brought the work of Philip K. Dick to the attention of Hollywood, and several later big-budget films were based on his work.",
+      template:
+        "It brought the work of [person] to the attention of Hollywood, and several later [...] films were based on [person]'s work.",
+      questions:
+        "What effect did the film have on the careers of people involved in its production?",
+    },
+    {
+      verbatim:
+        'Seven versions of "Blade Runner" exist as a result of controversial changes requested by studio executives.',
+      template: "[number] versions of [title] exist as a result of [...]",
+      questions:
+        "Do multiple versions exist? What led to there being multiple versions?",
+    },
+    {
+      verbatim:
+        "It later became an acclaimed cult film regarded as one of the all-time best science fiction films.",
+      template:
+        "It later became an acclaimed cult film regarded as one of the all-time best [genre] films.",
+      questions:
+        "How is it thought of now? How does it rank compared with other films of its genre?",
+    },
+    {
+      verbatim:
+        'It is loosely based on Philip K. Dick\'s novel "Do Androids Dream of Electric Sheep?" (1968).',
+      template: "It is loosely based on [person]'s novel [title] ([year]).",
+      questions: "What book is it based on? When was that book published?",
+    },
+    {
+      verbatim:
+        "The soundtrack, composed by Vangelis, was nominated in 1983 for a BAFTA and a Golden Globe as best original score.",
+      template:
+        "The soundtrack, composed by [artist], was nominated in [year] for a [award] and a [award] as best original score.",
+      questions:
+        "Who composed the soundtrack? Was it nominated for any awards?",
+    },
+    {
+      verbatim:
+        "This, in conjunction with the film's popularity as a video rental, made it one of the earliest movies to be released on DVD.",
+      template: "[...] popularity as a video rental [...] released on DVD.",
+      questions:
+        "Was it released on DVD? Was its release noteworthy? Why? Was it popular as a rental?",
+    },
+  ],
+  travelGuide: [
+    "WV1",
+    "WV2",
+    "WV3",
+    "WV4",
+    "WV5",
+    "WV6",
+    "WV7",
+    "WV8",
+    null,
+    null,
+  ],
+};
+
 export class TrialState {
   constructor(flags) {
     this.flags = flags;
@@ -222,19 +409,17 @@ const placeholderScreen = title => ({
 });
 
 const getExperimentBlocks = tasksAndConditions => {
-  const getTrialBlock = trialIdx => ({
+  const getTrialScreen = (trialIdx, cue, total) => ({
     screen: "Trial",
     view: iobs(() => {
       return (
         <div>
-          <h1>Sentence {trialIdx + 1} of NN</h1>
+          <h1>
+            Sentence {trialIdx + 1} of {total}
+          </h1>
 
           <div>Bot's prompt:</div>
-          <div style={{ paddingLeft: "20px" }}>
-            It is one of the best known Arthurian stories, with its plot
-            combining two types of folklore motifs, the beheading game and the
-            exchange of winnings.
-          </div>
+          <div style={{ paddingLeft: "20px" }}>{cue}</div>
 
           <div>
             Based on this prompt, write a sentence or two for the article about
@@ -250,15 +435,23 @@ const getExperimentBlocks = tasksAndConditions => {
       );
     }),
   });
-  const getExperimentBlock = blockIdx => [
+
+  const getExperimentBlock = (
+    task,
+    prompt,
+    condition,
+    blockIdx,
+    totalBlocks,
+    nFullCue
+  ) => [
     {
       screen: "Instructions",
       view: () => (
         <div>
           <p>
             <b>Your task</b>: Write sentences that might get included in an
-            article about the book you listed, book-name. For this article,
-            you’ll be using Bot {blockIdx + 1}.
+            article about the book you listed, {task.topicName}. For this
+            article, you’ll be using Bot {blockIdx + 1}.
           </p>
           <ul>
             <li>
@@ -278,11 +471,15 @@ const getExperimentBlocks = tasksAndConditions => {
         </div>
       ),
     },
-    ...[0, 1, 2].map((x, trialIdx) => getTrialBlock(trialIdx)),
+    ...cuesByPrompt[prompt]
+      .slice(0, nFullCue)
+      .map((cue, trialIdx) =>
+        getTrialScreen(trialIdx, cue ? cue[condition] : "??", nFullCue)
+      ),
     {
       screen: "PostBlockSurvey",
       view: surveyView({
-        title: `Survey for Bot ${blockIdx + 1} of NNN`,
+        title: `Survey for Bot ${blockIdx + 1} of ${totalBlocks}`,
         basename: `postBlock-${blockIdx}`,
         questions: [
           agreeLikert("fluent", "I felt like I could write easily."),
@@ -305,7 +502,16 @@ const getExperimentBlocks = tasksAndConditions => {
       }),
     },
   ];
-  return flatMap(tasksAndConditions, (x, idx) => getExperimentBlock(idx));
+  return flatMap(tasksAndConditions, ({ task, prompt, conditionName }, idx) =>
+    getExperimentBlock(
+      task,
+      prompt,
+      conditionName,
+      idx,
+      tasksAndConditions.length,
+      10
+    )
+  );
 };
 
 function getClosingSurvey(tasksAndConditions) {
