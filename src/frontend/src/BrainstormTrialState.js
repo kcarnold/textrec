@@ -77,6 +77,7 @@ export class TrialState {
     return {
       condition: this.flags.condition,
       ideas: this.ideas,
+      text: this.curText,
     };
   }
 }
