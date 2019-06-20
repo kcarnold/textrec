@@ -485,7 +485,7 @@ const getExperimentBlocks = tasksAndConditions => {
             <li>
               The accuracy of the information you provide doesn’t matter at this
               point. If you need some specific information for the sentence you
-              wan to write, invent something plausible.
+              want to write, invent something plausible.
             </li>
           </ul>
           <NextBtn />
