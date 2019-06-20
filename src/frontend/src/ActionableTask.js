@@ -263,7 +263,7 @@ function getScreens(prompts, conditionNames, isDemo) {
     {
       screen: "ScenarioDesc",
       view: () => (
-        <div>
+        <div className="Survey">
           <h1>Consider this fortunately imaginary scenario...</h1>
           <p>
             Oh no! A bunch of Wikipedia articles were found to contain content
@@ -281,6 +281,7 @@ function getScreens(prompts, conditionNames, isDemo) {
             different way. None of them are perfect yet, but the admins want to
             find out which bot is most promising.
           </p>
+          <NextBtn />
         </div>
       ),
     },
@@ -408,27 +409,46 @@ const placeholderScreen = title => ({
   view: () => <h1>{title}</h1>,
 });
 
+const ControlledCheckbox = iobs(({ dispatch, state, name }) => {
+  let checked = !!state.controlledInputs.get(name);
+  return (
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={evt => {
+        dispatch({ type: "controlledInputChanged", name, value: !checked });
+      }}
+    />
+  );
+});
+
 const getExperimentBlocks = tasksAndConditions => {
-  const getTrialScreen = (trialIdx, cue, total) => ({
+  const getTrialScreen = (blockIdx, trialIdx, cue, total, topicName) => ({
     screen: "Trial",
     view: iobs(() => {
       return (
-        <div>
+        <div className="Survey">
           <h1>
             Sentence {trialIdx + 1} of {total}
           </h1>
 
           <div>Bot's prompt:</div>
-          <div style={{ paddingLeft: "20px" }}>{cue}</div>
+          <div style={{ paddingLeft: "20px", paddingBottom: "20px" }}>
+            {cue}
+          </div>
 
           <div>
-            Based on this prompt, write a sentence or two for the article about
-            book-name:
+            Based on this prompt, write a sentence or two for the article about{" "}
+            {topicName}:
           </div>
-          <ControlledInput name={`TEMPBLOCK-${trialIdx}`} multiline={true} />
+          <ControlledInput
+            name={`response-${blockIdx}-${trialIdx}`}
+            multiline={true}
+            style={{ width: "100%" }}
+          />
           <label style={{ display: "block" }}>
-            <input type="checkbox" onChange={() => alert("Change")} /> the
-            prompt is irrelevant, or I can’t understand it.
+            <ControlledCheckbox name={`irrelevant-${blockIdx}-${trialIdx}`} />
+            the prompt is irrelevant, or I can’t understand it.
           </label>
           <NextBtn enabledFn={state => true} />
         </div>
@@ -447,11 +467,11 @@ const getExperimentBlocks = tasksAndConditions => {
     {
       screen: "Instructions",
       view: () => (
-        <div>
+        <div className="Survey">
           <p>
             <b>Your task</b>: Write sentences that might get included in an
-            article about the book you listed, {task.topicName}. For this
-            article, you’ll be using Bot {blockIdx + 1}.
+            article about the {task.visibleName} you listed, {task.topicName}.
+            For this article, you’ll be using Bot {blockIdx + 1}.
           </p>
           <ul>
             <li>
@@ -468,13 +488,20 @@ const getExperimentBlocks = tasksAndConditions => {
               wan to write, invent something plausible.
             </li>
           </ul>
+          <NextBtn />
         </div>
       ),
     },
     ...cuesByPrompt[prompt]
       .slice(0, nFullCue)
       .map((cue, trialIdx) =>
-        getTrialScreen(trialIdx, cue ? cue[condition] : "??", nFullCue)
+        getTrialScreen(
+          blockIdx,
+          trialIdx,
+          cue ? cue[condition] : "??",
+          nFullCue,
+          task.topicName
+        )
       ),
     {
       screen: "PostBlockSurvey",
