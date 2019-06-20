@@ -211,3 +211,7 @@ export const Survey = ({ title, basename, questions }) => (
     />
   </div>
 );
+
+export function surveyView(props) {
+  return () => React.createElement(Survey, props);
+}

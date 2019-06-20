@@ -1,6 +1,10 @@
+/**
+@format
+ */
 import React from "react";
 import StarRatingComponent from "react-star-rating-component";
 import { observer, inject } from "mobx-react";
+import { iobs } from "./misc";
 
 export const ControlledInput = inject("dispatch", "state", "spying")(
   observer(function ControlledInput({
@@ -55,3 +59,19 @@ export const ControlledStarRating = inject("dispatch", "state")(
     </div>
   ))
 );
+
+export const ControlledInputView = iobs(
+  ({ state, name }) => state.controlledInputs.get(name) || name
+);
+
+export const stringIsNontrivial = x => (x || "").trim().length > 0;
+
+export const withValidation = (requiredInputs, view) => {
+  return {
+    view,
+    complete: state =>
+      requiredInputs.every(name =>
+        stringIsNontrivial(state.controlledInputs.get(name))
+      ),
+  };
+};

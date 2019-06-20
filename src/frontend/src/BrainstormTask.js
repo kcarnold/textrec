@@ -12,9 +12,20 @@ import { TrialState } from "./BrainstormTrialState";
 import * as Views from "./CueViews";
 import { Editable } from "./Editable";
 import { NextBtn } from "./BaseViews";
-import { Survey, likert, agreeLikert, surveyBody } from "./SurveyViews";
+import {
+  Survey,
+  likert,
+  agreeLikert,
+  surveyBody,
+  surveyView,
+} from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
-import { ControlledInput, ControlledStarRating } from "./ControlledInputs";
+import {
+  ControlledInput,
+  ControlledStarRating,
+  ControlledInputView,
+  withValidation,
+} from "./ControlledInputs";
 
 import { finalDataLogger, iobs } from "./misc";
 import * as shuffle from "./shuffle";
@@ -33,10 +44,6 @@ let baseConditions = ["norecs", "randomSents", "highlightedSents"];
 
 const WelcomeScreen = { screen: "Welcome", view: Views.Welcome };
 const DoneScreen = { screen: "Done", view: Views.Done };
-
-function surveyView(props) {
-  return () => React.createElement(Survey, props);
-}
 
 const highlightedSpan = (text, highlight) => {
   if (!highlight) return <span>{text}</span>;
@@ -289,10 +296,6 @@ const getPracticeScreens = () => [
     }),
   },
 ];
-
-const ControlledInputView = iobs(
-  ({ state, name }) => state.controlledInputs.get(name) || name
-);
 
 function brainstormHeader(topicName, targetIdeaCount, idx, total) {
   return (
@@ -621,18 +624,6 @@ function getTask(promptName) {
     console.assert("Unknown prompt", promptName);
   }
 }
-
-const stringIsNontrivial = x => (x || "").trim().length > 0;
-
-const withValidation = (requiredInputs, view) => {
-  return {
-    view,
-    complete: state =>
-      requiredInputs.every(name =>
-        stringIsNontrivial(state.controlledInputs.get(name))
-      ),
-  };
-};
 
 const getPrecommitScreen = tasksAndConditions => ({
   screen: "Precommit",
