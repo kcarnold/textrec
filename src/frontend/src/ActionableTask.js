@@ -12,7 +12,7 @@ import { createState } from "./MasterState";
 import { ExperimentStateStore } from "./IOExperimentState";
 import * as Views from "./CueViews";
 import { NextBtn } from "./BaseViews";
-import { Survey, likert, surveyView } from "./SurveyViews";
+import { Survey, likert, surveyView, agreeLikert } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import {
   ControlledInput,
@@ -73,6 +73,30 @@ function getScreens(prompts, conditionNames, isDemo) {
   return [
     WelcomeScreen,
     // getIntroSurvey(tasksAndConditions),
+    {
+      screen: "ScenarioDesc",
+      view: () => (
+        <div>
+          <h1>Consider this fortunately imaginary scenario...</h1>
+          <p>
+            Oh no! A bunch of Wikipedia articles were found to contain content
+            under the wrong license. The admins decided that the only option to
+            make things right was to delete and rewrite them without looking at
+            the existing articles at all.
+          </p>
+          <p>
+            Since there were so many deleted articles, the admins made bots to
+            help with the process. The bots make suggestions about what to
+            include in the new article based on the text of other articles.
+          </p>
+          <p>
+            There are 3 different bots; each one presents its suggestions in a
+            different way. None of them are perfect yet, but the admins want to
+            find out which bot is most promising.
+          </p>
+        </div>
+      ),
+    },
     getPrecommitScreen(tasksAndConditions),
     ...getExperimentBlocks(tasksAndConditions),
     getClosingSurvey(tasksAndConditions),
@@ -98,8 +122,8 @@ function getTask(promptName) {
       precommitView: withValidation([nameField], () => (
         <div className="Survey">
           <span>
-            What is a travel destination (city, region, national park, etc.)
-            that you're familiar with?
+            Name a travel destination (city, region, national park, etc.) that
+            you're familiar with.
           </span>
           <div
             style={{
@@ -198,7 +222,90 @@ const placeholderScreen = title => ({
 });
 
 const getExperimentBlocks = tasksAndConditions => {
-  return [placeholderScreen("Experiment")];
+  const getTrialBlock = trialIdx => ({
+    screen: "Trial",
+    view: iobs(() => {
+      return (
+        <div>
+          <h1>Sentence {trialIdx + 1} of NN</h1>
+
+          <div>Bot's prompt:</div>
+          <div style={{ paddingLeft: "20px" }}>
+            It is one of the best known Arthurian stories, with its plot
+            combining two types of folklore motifs, the beheading game and the
+            exchange of winnings.
+          </div>
+
+          <div>
+            Based on this prompt, write a sentence or two for the article about
+            book-name:
+          </div>
+          <ControlledInput name={`TEMPBLOCK-${trialIdx}`} multiline={true} />
+          <label style={{ display: "block" }}>
+            <input type="checkbox" onChange={() => alert("Change")} /> the
+            prompt is irrelevant, or I can’t understand it.
+          </label>
+          <NextBtn enabledFn={state => true} />
+        </div>
+      );
+    }),
+  });
+  const getExperimentBlock = blockIdx => [
+    {
+      screen: "Instructions",
+      view: () => (
+        <div>
+          <p>
+            <b>Your task</b>: Write sentences that might get included in an
+            article about the book you listed, book-name. For this article,
+            you’ll be using Bot {blockIdx + 1}.
+          </p>
+          <ul>
+            <li>
+              The bot will give a prompt for you. Write a sentence or two based
+              on that prompt.
+            </li>
+            <li>
+              Some of the prompts will be irrelevant or hard to understand; if
+              so, say so and move on.
+            </li>
+            <li>
+              The accuracy of the information you provide doesn’t matter at this
+              point. If you need some specific information for the sentence you
+              wan to write, invent something plausible.
+            </li>
+          </ul>
+        </div>
+      ),
+    },
+    ...[0, 1, 2].map((x, trialIdx) => getTrialBlock(trialIdx)),
+    {
+      screen: "PostBlockSurvey",
+      view: surveyView({
+        title: `Survey for Bot ${blockIdx + 1} of NNN`,
+        basename: `postBlock-${blockIdx}`,
+        questions: [
+          agreeLikert("fluent", "I felt like I could write easily."),
+          agreeLikert("stuck", "I sometimes felt stuck."),
+          agreeLikert("sysRelevant", "The bot's suggestions were relevant."),
+          agreeLikert(
+            "sysOverall",
+            `I'd want to be able to request suggestions from this bot when I'm writing in the future.`
+          ),
+          {
+            text:
+              "I used outside resources for this task (we'd prefer you didn't, but better to be honest).",
+            name: "used-external",
+            responseType: "options",
+            options: ["Yes", "No"],
+          },
+          SurveyData.techDiff,
+          SurveyData.otherMid,
+        ],
+      }),
+    },
+  ];
+  return flatMap(tasksAndConditions, (x, idx) => getExperimentBlock(idx));
 };
 
 function getClosingSurvey(tasksAndConditions) {
