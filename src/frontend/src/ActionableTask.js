@@ -206,16 +206,101 @@ const cuesByPrompt = {
     },
   ],
   travelGuide: [
-    "WV1",
-    "WV2",
-    "WV3",
-    "WV4",
-    "WV5",
-    "WV6",
-    "WV7",
-    "WV8",
-    null,
-    null,
+    {
+      verbatim:
+        "Compared to other American cities, relatively few residents are home-town natives, rather than transplants from elsewhere.",
+      template:
+        "Compared to other [nationality] cities, relatively few residents are home-town natives, rather than transplants from elsewhere.",
+      questions:
+        "How many residents are natives vs transplants? How does this compare with other cities in the same country?",
+    },
+    {
+      verbatim:
+        "D.C., and particularly the metro area beyond the city limits, is impressively international.",
+      template: "[city] is impressively international.",
+      questions: "Is the population diverse?",
+    },
+    {
+      verbatim:
+        "The most beautiful time of spring usually falls from April to mid-May.",
+      template:
+        "The most beautiful time of spring usually falls from [...] to [...].",
+      questions: "When is springtime the best?",
+    },
+    {
+      verbatim:
+        "Weekends and federal holidays are more accommodating to guests as there are less parking restrictions.",
+      template:
+        "Weekends and [...] holidays are more accommodating to guests as there are [...]",
+      questions: "What days of the week or month are best to visit? Why?",
+    },
+    {
+      verbatim:
+        "Metrorail fares depend on the distance traveled and whether the trip starts during a peak or off-peak time period.",
+      template:
+        "[...] fares depend on the distance traveled and whether the trip starts during a peak or off-peak time period.",
+      questions:
+        "How expensive are transit fares? Do they depend on the destination or the time of day?",
+    },
+    {
+      verbatim:
+        "You must board though the front door so ridership can be tracked.",
+      template: "You must board though the [...] door so that [...].",
+      questions: "What are some rules for riding transit?",
+    },
+    {
+      verbatim:
+        "Driving in downtown D.C. is difficult, particularly during rush hour, where traffic can make it take 10 minutes to drive a couple city blocks.",
+      template:
+        "Driving in downtown [...] is difficult, particularly during rush hour, where traffic can make it take [...]",
+      questions: "Is driving downtown difficult? When is it worst?",
+    },
+    {
+      verbatim:
+        "There are several other parks worth visiting, including the Kenilworth Aquatic Gardens in Anacostia, the National Arboretum in Near Northeast, Meridian Hill Park in Columbia Heights, and the C&O Canal Towpath in Georgetown.",
+      template: "There are several other parks worth visiting, including [...]",
+      questions: "What parks are worth visiting?",
+    },
+    {
+      verbatim:
+        "The team also plays at the Capital One Arena since the crowds for the Hoyas' games are too big for the University to hold.",
+      template: "The team also plays at [...] since [...]",
+      questions: "What sports teams are there? Where do they play?",
+    },
+    {
+      verbatim:
+        "The gift shops of the Smithsonian museums have unique but more expensive offerings and are great places to buy gifts.",
+      template:
+        "The gift shops of [...] have unique but more expensive offerings and are great places to buy gifts.",
+      questions: "Where are good places to buy gifts? How expensive are they?",
+    },
+    {
+      verbatim:
+        "Busboys and Poets, a local chain, is known for hosting social-justice focused events.",
+      template: "[...] is known for hosting [...] events.",
+      questions:
+        "What kinds of events might be interesting? What kinds of places host them?",
+    },
+    {
+      verbatim: "The Villain & Saint hosts local jazz and rock bands.",
+      template: "[place] hosts local [genre] bands.",
+      questions: "Where do local bands play? What genres are they?",
+    },
+    {
+      verbatim:
+        "Free WiFi is also available at metro stations,  D.C. public libraries, and many local coffee shops, which are also nice places to relax.",
+      template:
+        "Free WiFi is also available at [...] and many local coffee shops, which are also nice places to relax.",
+      questions: "Where can you get free WiFi? Are local coffee shops nice?",
+    },
+    {
+      verbatim:
+        "Each May, dozens of embassies open their doors to the public for the  Passport D.C. festival, which showcases the buildings themselves, as well as exhibits, talks, and performances.",
+      template:
+        "Each [month], dozens of [org] open their doors to the public for the [...] festival, which showcases [...]",
+      questions:
+        "Are there notable yearly festivals? What are some unique things that happen during those festivals?",
+    },
   ],
 };
 
