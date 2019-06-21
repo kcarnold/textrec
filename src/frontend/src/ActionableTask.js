@@ -12,7 +12,13 @@ import { createState } from "./MasterState";
 import { ExperimentStateStore } from "./IOExperimentState";
 import * as Views from "./CueViews";
 import { NextBtn } from "./BaseViews";
-import { Survey, likert, surveyView, agreeLikert } from "./SurveyViews";
+import {
+  Survey,
+  likert,
+  surveyView,
+  agreeLikert,
+  OptionsResponse,
+} from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import {
   ControlledInput,
@@ -526,15 +532,24 @@ const getExperimentBlocks = tasksAndConditions => {
             Based on this prompt, write a sentence or two for the article about{" "}
             {topicName}:
           </div>
-          <ControlledInput
-            name={`response-${blockIdx}-${trialIdx}`}
-            multiline={true}
-            style={{ width: "100%" }}
+          <div style={{ padding: "10px 30px" }}>
+            <ControlledInput
+              name={`response-${blockIdx}-${trialIdx}`}
+              multiline={true}
+              rows={3}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <OptionsResponse
+            name={`relevance-${blockIdx}-${trialIdx}`}
+            question={{
+              options: [
+                "The prompt was relevant and understandable.",
+                "Some parts of the prompt were irrelevant or confusing, but it was usable anyway.",
+                "The prompt was so irrelevant or confusing that it was useless.",
+              ],
+            }}
           />
-          <label style={{ display: "block" }}>
-            <ControlledCheckbox name={`irrelevant-${blockIdx}-${trialIdx}`} />
-            the prompt is irrelevant, or I can’t understand it.
-          </label>
           <NextBtn enabledFn={state => true} />
         </div>
       );
