@@ -195,7 +195,7 @@ def do_postprocessing(df, min_length=50):
     return add_useless_doc_id(df)
 
 
-def load_wikivoyage(path=None):
+def wikivoyage_articles(path=None):
     if path is None:
         path = get_path("wikivoyage")
     import gensim.corpora.wikicorpus
@@ -203,21 +203,21 @@ def load_wikivoyage(path=None):
     filename = os.path.expanduser(path)
 
     filter_namespaces = ("0",)
-    pages = gensim.corpora.wikicorpus.extract_pages(
-        bz2.BZ2File(filename), filter_namespaces
+    return (
+        (title, text)
+        for title, text, pageid in gensim.corpora.wikicorpus.extract_pages(
+            bz2.BZ2File(filename), filter_namespaces
+        )
     )
-    pages = [
-        (title, text, pageid)
-        for title, text, pageid in tqdm.tqdm(pages, desc="Read file")
-        if len(text.split()) > 50
-    ]
-    pages = [
-        (title, clean_wikitext(text), pageid)
-        for title, text, pageid in tqdm.tqdm(pages, desc="Filter Wikitext")
-    ]
 
-    data = [[title, text] for title, text, pageid in pages]
 
+def load_wikivoyage(path=None):
+    data = [
+        (title, clean_wikitext(text))
+        for title, text in tqdm.tqdm(
+            wikivoyage_articles(path=path), desc="Read wikivoyage"
+        )
+    ]
     df = pd.DataFrame(data, columns=["title", "text"])
     return do_postprocessing(df)
 
