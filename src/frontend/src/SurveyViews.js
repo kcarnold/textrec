@@ -159,6 +159,8 @@ const Question = inject("state")(
           ? "complete"
           : "missing";
       allQuestions[responseVarName] = question;
+    } else {
+      console.assert(!!question.text);
     }
     return (
       <div
