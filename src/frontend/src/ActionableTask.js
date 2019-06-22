@@ -16,6 +16,7 @@ import {
   Survey,
   likert,
   surveyView,
+  surveyBody,
   agreeLikert,
   OptionsResponse,
 } from "./SurveyViews";
@@ -355,7 +356,7 @@ function getScreens(prompts, conditionNames, isDemo) {
       screen: "ScenarioDesc",
       view: () => (
         <div className="Survey">
-          <h1>Consider this fortunately imaginary scenario...</h1>
+          <h1>Consider this imaginary scenario...</h1>
           <p>
             Oh no! A bunch of Wikipedia articles were found to contain content
             under the wrong license. The admins decided that the only option to
@@ -363,12 +364,12 @@ function getScreens(prompts, conditionNames, isDemo) {
             the existing articles at all.
           </p>
           <p>
-            Since there were so many deleted articles, the admins made bots to
-            help with the process. The bots make suggestions about what to
-            include in the new article based on the text of other articles.
+            Since there were so many articles to rewrite, the admins made bots
+            to help. The bots make suggestions about what to include in a new
+            article based on the text of other articles.
           </p>
           <p>
-            There are 3 different bots; each one presents its suggestions in a
+            There are 3 different bots. Each bot presents its suggestions in a
             different way. None of them are perfect yet, but the admins want to
             find out which bot is most promising.
           </p>
@@ -641,13 +642,23 @@ const getExperimentBlocks = tasksAndConditions => {
   );
 };
 
+function getAllWritings(state) {
+  let res = [];
+  for (let blockIdx = 0; blockIdx < 3; blockIdx++) {
+    for (let trialIdx = 0; trialIdx < 10; trialIdx++) {
+      let name = `response-${blockIdx}-${trialIdx}`;
+      res.push(state.controlledInputs.get(name) || name);
+    }
+  }
+  return res;
+}
+
 function getClosingSurvey(tasksAndConditions) {
   return {
     screen: "PostExpSurvey",
-    view: surveyView({
-      title: "Closing Survey",
-      basename: "postExp",
-      questions: [
+    view: iobs(({ state }) => {
+      const basename = "postExp";
+      const questions = [
         SurveyData.age,
         SurveyData.gender,
         SurveyData.english_proficiency,
@@ -666,7 +677,15 @@ function getClosingSurvey(tasksAndConditions) {
         },
         SurveyData.techDiff,
         SurveyData.otherFinal,
-      ],
+      ];
+      return (
+        <div>
+          <h1>Final Survey</h1>
+
+          {surveyBody(basename, questions)}
+          <NextBtn enabledFn={allQuestionsAnswered(basename, questions)} />
+        </div>
+      );
     }),
   };
 }

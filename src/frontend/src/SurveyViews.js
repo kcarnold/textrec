@@ -191,24 +191,22 @@ export const surveyBody = (basename, questions) =>
     );
   });
 
+export const allQuestionsAnswered = (basename, questions) => state =>
+  questions.every(
+    question =>
+      question.type === "text" ||
+      !question.responseType ||
+      question.optional ||
+      state.controlledInputs.get(basename + "-" + question.name) !== undefined
+  );
+
 export const Survey = ({ title, basename, questions }) => (
   <div className="Survey">
     <h1>{title}</h1>
 
     {surveyBody(basename, questions)}
 
-    <NextBtn
-      enabledFn={state =>
-        questions.every(
-          question =>
-            question.type === "text" ||
-            !question.responseType ||
-            question.optional ||
-            state.controlledInputs.get(basename + "-" + question.name) !==
-              undefined
-        )
-      }
-    />
+    <NextBtn enabledFn={allQuestionsAnswered(basename, questions)} />
   </div>
 );
 
