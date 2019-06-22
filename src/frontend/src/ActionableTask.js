@@ -18,6 +18,7 @@ import {
   surveyView,
   surveyBody,
   agreeLikert,
+  allQuestionsAnswered,
   OptionsResponse,
 } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
@@ -311,6 +312,8 @@ const cuesByPrompt = {
   ],
 };
 
+const nFullCue = 10;
+
 export class TrialState {
   constructor(flags) {
     this.flags = flags;
@@ -562,8 +565,7 @@ const getExperimentBlocks = tasksAndConditions => {
     prompt,
     condition,
     blockIdx,
-    totalBlocks,
-    nFullCue
+    totalBlocks
   ) => [
     {
       screen: "Instructions",
@@ -636,8 +638,7 @@ const getExperimentBlocks = tasksAndConditions => {
       prompt,
       conditionName,
       idx,
-      tasksAndConditions.length,
-      10
+      tasksAndConditions.length
     )
   );
 };
@@ -653,12 +654,71 @@ function getAllWritings(state) {
   return res;
 }
 
+const comparisonRank = (attr, text) => ({
+  text,
+  responseType: "options",
+  name: `comparisonRank-${attr}`,
+  options: ["Bot 1", "Bot 2", "Bot 3"],
+});
+
 function getClosingSurvey(tasksAndConditions) {
   return {
     screen: "PostExpSurvey",
     view: iobs(({ state }) => {
+      const writings = getAllWritings(state);
+      const writingQuestions = writings.map(text =>
+        likert(`quality`, text, 5, ["Very unsatisfied", "Very satisfied"])
+      );
       const basename = "postExp";
       const questions = [
+        {
+          type: "text",
+          text: "How satisfied are you with each of these sentences?",
+        },
+        ...writingQuestions,
+        {
+          type: "text",
+          text: (
+            <div>
+              <b>Now let's compare the bots.</b> For reference, here's what each
+              of the bots suggested:
+              <div style={{ display: "flex", flexFlow: "row nowrap" }}>
+                {tasksAndConditions.map(
+                  ({ prompt, conditionName }, blockIdx) => (
+                    <div key={blockIdx} style={{ flex: "0 0 33%" }}>
+                      <h3>Bot {blockIdx + 1}</h3>
+                      <ul>
+                        {cuesByPrompt[prompt]
+                          .slice(0, nFullCue)
+                          .map((cue, trialIdx) => (
+                            <li key={trialIdx}>{cue[conditionName]}</li>
+                          ))}
+                      </ul>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          ),
+        },
+        comparisonRank(
+          "understand-most",
+          "Which bot was easiest to understand?"
+        ),
+        comparisonRank(
+          "understand-least",
+          "Which bot was hardest to understand?"
+        ),
+        comparisonRank("generate-most", "Which bot made it easiest to write?"),
+        comparisonRank("generate-least", "Which bot made it hardest to write?"),
+        comparisonRank(
+          "choice-most",
+          "If you were writing an article on a new article, which bot would you most like to have?"
+        ),
+        comparisonRank(
+          "choice-least",
+          "If you were writing an article on a new article, which bot would you least like to have?"
+        ),
         SurveyData.age,
         SurveyData.gender,
         SurveyData.english_proficiency,
