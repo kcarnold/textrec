@@ -646,9 +646,17 @@ const getExperimentBlocks = tasksAndConditions => {
 function getAllWritings(state) {
   let res = [];
   for (let blockIdx = 0; blockIdx < 3; blockIdx++) {
+    let block = [];
+    res.push(block);
     for (let trialIdx = 0; trialIdx < 10; trialIdx++) {
       let name = `response-${blockIdx}-${trialIdx}`;
-      res.push(state.controlledInputs.get(name) || name);
+      let text = state.controlledInputs.get(name);
+      if (text) {
+        block.push({
+          trialIdx,
+          text,
+        });
+      }
     }
   }
   return res;
@@ -665,17 +673,28 @@ function getClosingSurvey(tasksAndConditions) {
   return {
     screen: "PostExpSurvey",
     view: iobs(({ state }) => {
-      const writings = getAllWritings(state);
-      const writingQuestions = writings.map(text =>
-        likert(`quality`, text, 5, ["Very unsatisfied", "Very satisfied"])
-      );
       const basename = "postExp";
       const questions = [
         {
           type: "text",
-          text: "How satisfied are you with each of these sentences?",
+          text: <h3>How satisfied are you with each of these sentences?</h3>,
         },
-        ...writingQuestions,
+        ...flatMap(getAllWritings(state), (blockResponses, blockIdx) => [
+          // {
+          //   type: "text",
+          //   text: (
+          //     <div>
+          //       What you wrote for {tasksAndConditions[blockIdx].task.topicName}
+          //     </div>
+          //   ),
+          // },
+          ...blockResponses.map(({ text, trialIdx }) =>
+            likert(`quality-${blockIdx}-${trialIdx}`, text, 5, [
+              "Very unsatisfied",
+              "Very satisfied",
+            ])
+          ),
+        ]),
         {
           type: "text",
           text: (
