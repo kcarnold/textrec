@@ -88,20 +88,22 @@ export const LikertResponse = inject("dispatch", "state", "spying")(
         style={{ display: "flex", flexFlow: "row nowrap", padding: "5px 0" }}
       >
         {question.options.map((label, idx) => (
-          <div key={idx} style={{ textAlign: "center", flex: "1 1 0" }}>
-            <label title={spying ? `${name}=${idx}` : undefined}>
-              <input
-                type="radio"
-                checked={choice === idx}
-                onChange={() => change(idx)}
-              />
-              <br />
-              <span>
-                {label}
-                &nbsp;
-              </span>
-            </label>
-          </div>
+          <label
+            key={idx}
+            style={{ display: "block", textAlign: "center", flex: "1 1 0px" }}
+            title={spying ? `${name}=${idx}` : undefined}
+          >
+            <input
+              type="radio"
+              checked={choice === idx}
+              onChange={() => change(idx)}
+            />
+            <br />
+            <span>
+              {label}
+              &nbsp;
+            </span>
+          </label>
         ))}
       </div>
     );
