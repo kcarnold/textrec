@@ -517,10 +517,35 @@ const ControlledCheckbox = iobs(({ dispatch, state, name }) => {
   );
 });
 
+const LabeledCheckbox = ({ name, children }) => (
+  <label style={{ display: "block" }}>
+    <ControlledCheckbox name={name} /> {children}
+  </label>
+);
+
+const cueView = txt => {
+  let result = [];
+  let regex = /\[([^\]]+)\]/;
+  let match;
+  let i = 0;
+  while ((match = txt.match(regex))) {
+    result.push(txt.slice(0, match.index));
+    result.push(
+      <span key={i++} style={{ color: "#555", fontStyle: "italic" }}>
+        {match[0]}
+      </span>
+    );
+    txt = txt.slice(match.index + match[0].length);
+  }
+  if (txt) result.push(txt);
+  return result;
+};
+
 const getExperimentBlocks = tasksAndConditions => {
   const getTrialScreen = (blockIdx, trialIdx, cue, total, topicName) => ({
     screen: "Trial",
-    view: iobs(() => {
+    view: iobs(({ state }) => {
+      const confusedName = `confused-${blockIdx}-${trialIdx}`;
       return (
         <div className="Survey">
           <h1>
@@ -528,32 +553,41 @@ const getExperimentBlocks = tasksAndConditions => {
           </h1>
 
           <div>Bot's prompt:</div>
-          <div style={{ paddingLeft: "20px", paddingBottom: "20px" }}>
-            {cue}
+          <div
+            style={{
+              padding: "10px 20px",
+              margin: "10px 0",
+              background: "#eee",
+              borderRadius: "3px",
+            }}
+          >
+            {cueView(cue)}
           </div>
 
-          <div>
-            Based on this prompt, write a sentence or two for the article about{" "}
-            {topicName}:
-          </div>
-          <div style={{ padding: "10px 30px" }}>
-            <ControlledInput
-              name={`response-${blockIdx}-${trialIdx}`}
-              multiline={true}
-              rows={3}
-              style={{ width: "100%" }}
-            />
-          </div>
-          <OptionsResponse
-            name={`relevance-${blockIdx}-${trialIdx}`}
-            question={{
-              options: [
-                "The prompt was relevant and understandable.",
-                "Some parts of the prompt were irrelevant or confusing, but it was usable anyway.",
-                "The prompt was so irrelevant or confusing that it was useless.",
-              ],
-            }}
-          />
+          <LabeledCheckbox name={confusedName}>
+            I couldn't understand the prompt.
+          </LabeledCheckbox>
+          <br />
+          {state.controlledInputs.get(confusedName) || (
+            <div>
+              <div>
+                Based on this prompt, write a sentence or two for the article
+                about <b>{topicName}</b>:
+              </div>
+              <div style={{ padding: "10px 30px" }}>
+                <ControlledInput
+                  name={`response-${blockIdx}-${trialIdx}`}
+                  multiline={true}
+                  rows={3}
+                  style={{ width: "100%" }}
+                />
+              </div>
+              <LabeledCheckbox name={`irrelevant-${blockIdx}-${trialIdx}`}>
+                The prompt was irrelevant.
+              </LabeledCheckbox>
+            </div>
+          )}
+          <br />
           <NextBtn enabledFn={state => true} />
         </div>
       );
@@ -571,24 +605,32 @@ const getExperimentBlocks = tasksAndConditions => {
       screen: "Instructions",
       view: () => (
         <div className="Survey">
+          <h1>
+            Article {blockIdx + 1} of {totalBlocks}
+          </h1>
           <p>
             <b>Your task</b>: Write sentences that might get included in an
-            article about the {task.visibleName} you listed, {task.topicName}.
-            For this article, you’ll be using Bot {blockIdx + 1}.
+            article about the {task.visibleName} you listed,{" "}
+            <b>{task.topicName}</b>. For this article, you’ll be using Bot{" "}
+            {blockIdx + 1}.
           </p>
-          <ul>
+          <ul style={{ lineHeight: 1.5 }}>
             <li>
-              The bot will give a prompt for you. Write a sentence or two based
-              on that prompt.
+              The bot will give a prompt. Write a sentence or two based on that
+              prompt.
             </li>
             <li>
-              Some of the prompts will be irrelevant or hard to understand; if
-              so, say so and move on.
+              If the bot's prompt is irrelevant or hard to understand, say so
+              and move on.
             </li>
             <li>
-              The accuracy of the information you provide doesn’t matter at this
-              point. If you need some specific information for the sentence you
-              want to write, invent something plausible.
+              Since we're just trying out these bots,{" "}
+              <b>
+                don't worry about whether the information you provide is
+                accurate
+              </b>
+              . If you need some specific information for the sentence you want
+              to write, invent something plausible.
             </li>
           </ul>
           <NextBtn />
@@ -614,11 +656,11 @@ const getExperimentBlocks = tasksAndConditions => {
         questions: [
           agreeLikert("fluent", "I felt like I could write easily."),
           agreeLikert("stuck", "I sometimes felt stuck."),
-          agreeLikert("sysRelevant", "The bot's suggestions were relevant."),
           agreeLikert(
-            "sysOverall",
-            `I'd want to be able to request suggestions from this bot when I'm writing in the future.`
+            "sysUnderstandable",
+            "I could understand the bot's suggestions."
           ),
+          agreeLikert("sysRelevant", "The bot's suggestions were relevant."),
           {
             text:
               "I used outside resources for this task (we'd prefer you didn't, but better to be honest).",
@@ -677,7 +719,11 @@ function getClosingSurvey(tasksAndConditions) {
       const questions = [
         {
           type: "text",
-          text: <h3>How satisfied are you with each of these sentences?</h3>,
+          text: (
+            <h3>
+              How satisfied are you with having written each of these sentences?
+            </h3>
+          ),
         },
         ...flatMap(getAllWritings(state), (blockResponses, blockIdx) => [
           // {
@@ -689,7 +735,7 @@ function getClosingSurvey(tasksAndConditions) {
           //   ),
           // },
           ...blockResponses.map(({ text, trialIdx }) =>
-            likert(`quality-${blockIdx}-${trialIdx}`, text, 5, [
+            likert(`quality-${blockIdx}-${trialIdx}`, `"${text}"`, 5, [
               "Very unsatisfied",
               "Very satisfied",
             ])
@@ -699,18 +745,20 @@ function getClosingSurvey(tasksAndConditions) {
           type: "text",
           text: (
             <div>
-              <b>Now let's compare the bots.</b> For reference, here's what each
-              of the bots suggested:
-              <div style={{ display: "flex", flexFlow: "row nowrap" }}>
+              <b>Now let's compare the bots.</b> For reference, here's a sample
+              of what each of the bots suggested:
+              <div>
                 {tasksAndConditions.map(
                   ({ prompt, conditionName }, blockIdx) => (
-                    <div key={blockIdx} style={{ flex: "0 0 33%" }}>
+                    <div key={blockIdx}>
                       <h3>Bot {blockIdx + 1}</h3>
                       <ul>
                         {cuesByPrompt[prompt]
-                          .slice(0, nFullCue)
+                          .slice(0, 3)
                           .map((cue, trialIdx) => (
-                            <li key={trialIdx}>{cue[conditionName]}</li>
+                            <li key={trialIdx} style={{ paddingBottom: "5px" }}>
+                              {cue[conditionName]}
+                            </li>
                           ))}
                       </ul>
                     </div>
@@ -732,11 +780,11 @@ function getClosingSurvey(tasksAndConditions) {
         comparisonRank("generate-least", "Which bot made it hardest to write?"),
         comparisonRank(
           "choice-most",
-          "If you were writing an article on a new article, which bot would you most like to have?"
+          "If you were writing an article on a new topic, which bot would you most like to have?"
         ),
         comparisonRank(
           "choice-least",
-          "If you were writing an article on a new article, which bot would you least like to have?"
+          "If you were writing an article on a new topic, which bot would you least like to have?"
         ),
         SurveyData.age,
         SurveyData.gender,
@@ -758,7 +806,7 @@ function getClosingSurvey(tasksAndConditions) {
         SurveyData.otherFinal,
       ];
       return (
-        <div>
+        <div className="Survey">
           <h1>Final Survey</h1>
 
           {surveyBody(basename, questions)}
