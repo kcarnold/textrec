@@ -839,7 +839,7 @@ export function createTaskState(loginEvent: LoginEvent) {
       console.assert(window.location.search.includes("showall"));
     }
     conditions = conditionOrders[loginEvent.assignment];
-    prompts = ["wiki-book", "wiki-film", "travelGuide"];
+    prompts = ["wiki-film", "wiki-book", "travelGuide"];
   }
 
   // Get task setup.
