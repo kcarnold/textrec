@@ -32,6 +32,7 @@ ftfy = "^5.5"
 gensim = "^3.7"
 icecream = "^1.5"
 python-dotenv = "^0.10.2"
+hdbscan = "^0.8.22"
 [tool.poetry.dev-dependencies]
 ipython = "^7.5"
 fabric = "^2.4"
