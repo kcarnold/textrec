@@ -56,6 +56,12 @@ deploy:
 get-data:
 	poetry run fab get-data
 
+
+qualify_workers:
+	poetry run python scripts/backup_mturk.py
+	poetry run python scripts/assign_qualification_to_workers.py
+
+
 # Analyses
 
 get-completed-participants:
