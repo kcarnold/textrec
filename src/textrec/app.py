@@ -195,7 +195,9 @@ class WebsocketHandler(tornado.websocket.WebSocketHandler):
 
     def log(self, event):
         if event.get("type") == "finalData":
-            counterbalancing.mark_completed(self.participant.participant_id)
+            participant_id = self.participant.participant_id
+            counterbalancing.mark_completed(participant_id)
+            logger.info(f"Participant completed: {participant_id}")
         self.participant.log(dict(event))
 
     def open(self):
