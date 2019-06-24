@@ -664,7 +664,7 @@ def predict_missing_topics_w2v(
 
 
 def model_filename(model_name, part):
-    return paths.models / f"cue_{model_name}_{part}.joblib"
+    return paths.cue_models / f"cue_{model_name}_{part}.joblib"
 
 
 @lru_cache(maxsize=None)

@@ -17,6 +17,7 @@ class paths:
     cache = pathlib.Path.home() / ".cache" / "textrec"
 
     models = top_level / "models"
+    cue_models = top_level / "models-local" / "cue"
     scripts = top_level / "scripts"
 
     imgdata_h5_subset = models / "feats_by_imgid.subset.h5"
