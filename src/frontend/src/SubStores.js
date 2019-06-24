@@ -88,6 +88,8 @@ export const screenTracking = screens => state => {
         if (initReq) sideEffects.push(initReq);
       } else if (preEvent.type === "switchToTrial") {
         state.curExperiment = preEvent.name;
+      } else {
+        sideEffects.push(preEvent);
       }
     }
     state.screenTimes.push({
