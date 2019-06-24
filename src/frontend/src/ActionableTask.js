@@ -44,11 +44,18 @@ const cuesByPrompt = {
   "wiki-book": [
     {
       verbatim:
-        'The poem survives in a single manuscript, "Cotton Nero A.x.", which also includes three religious narrative poems: "Pearl", "Purity" and "Patience".',
-      template:
-        "[...] survives in a single manuscript, [name], which also includes [...]",
+        'Sir Gawain and the Green Knight (Middle English: "Sir Gawayn and \u00fee Grene Kny\u021dt") is a late 14th-century Middle English chivalric romance.',
+      template: "[title] ([language]: [title]) is a [date] [language] [genre].",
       questions:
-        "How has the manuscript survived? Does the manuscript include other works?",
+        "What is title? What was title in original language? When published? What genre?",
+    },
+    {
+      verbatim:
+        "It is one of the best known Arthurian stories, with its plot combining two types of folklore motifs, the beheading game and the exchange of winnings.",
+      template:
+        "It is one of the best known [type], with its plot combining two types of [...], the [...] and the [...].",
+      questions:
+        "What type of story is it? How well-known is it? What are some of its major plot characteristics?",
     },
     {
       verbatim:
@@ -59,11 +66,10 @@ const cuesByPrompt = {
     },
     {
       verbatim:
-        "It is one of the best known Arthurian stories, with its plot combining two types of folklore motifs, the beheading game and the exchange of winnings.",
+        "It draws on Welsh, Irish, and English stories, as well as the French chivalric tradition.",
       template:
-        "It is one of the best known [type], with its plot combining two types of [...], the [...] and the [...].",
-      questions:
-        "What broad type of story is it? How well-known is it? What are some of its major plot characteristics?",
+        "It draws on [country], [country], and [country] stories, as well as the [...] tradition.",
+      questions: "What are its major influences?",
     },
     {
       verbatim:
@@ -75,11 +81,10 @@ const cuesByPrompt = {
     },
     {
       verbatim:
-        'All are thought to have been written by the same unknown author, dubbed the "Pearl Poet" or "Gawain Poet", since all four are written in a North West Midland dialect of Middle English.',
+        "It remains popular to this day in modern English renderings from J. R. R. Tolkien, Simon Armitage, and others, as well as through film and stage adaptations.",
       template:
-        "All are thought to have been written by the same unknown author, dubbed [...], since all [...] are written in a [...] dialect of [language].",
-      questions:
-        "Do the other works in the manuscript share the same author? Why or why not?",
+        "It remains popular to this day in modern [country] renderings from [person], [person], and others, as well as through film and stage adaptations.",
+      questions: "Is it still popular? Does it have film or stage adaptations?",
     },
     {
       verbatim:
@@ -90,75 +95,27 @@ const cuesByPrompt = {
     },
     {
       verbatim:
-        "It draws on Welsh, Irish, and English stories, as well as the French chivalric tradition.",
+        'All are thought to have been written by the same unknown author, dubbed the "Pearl Poet" or "Gawain Poet", since all four are written in a North West Midland dialect of Middle English.',
       template:
-        "It draws on [country], [country], and [country] stories, as well as the [...] tradition.",
-      questions: "What are its major influences?",
-    },
-    {
-      verbatim:
-        'Sir Gawain and the Green Knight (Middle English: "Sir Gawayn and \u00fee Grene Kny\u021dt") is a late 14th-century Middle English chivalric romance.',
-      template: "[title] ([language]: [title]) is a [date] [language] [genre].",
+        "All are thought to have been written by the same unknown author, dubbed [...], since all [...] are written in a [...] dialect of [language].",
       questions:
-        "What is title? What was title in original language? When published? What genre?",
+        "Do the other works in the manuscript share the same author? Why or why not?",
     },
     {
       verbatim:
-        "It remains popular to this day in modern English renderings from J. R. R. Tolkien, Simon Armitage, and others, as well as through film and stage adaptations.",
+        'The poem survives in a single manuscript, "Cotton Nero A.x.", which also includes three religious narrative poems: "Pearl", "Purity" and "Patience".',
       template:
-        "It remains popular to this day in modern [country] renderings from [person], [person], and others, as well as through film and stage adaptations.",
-      questions: "Is it still popular? Does it have film or stage adaptations?",
+        "[...] survives in a single manuscript, [name], which also includes [...]",
+      questions:
+        "How has the manuscript survived? Does the manuscript include other works?",
     },
   ],
   "wiki-film": [
     {
       verbatim:
-        'In the year after its release, "Blade Runner" won the Hugo Award for Best Dramatic Presentation, and in 1993 it was selected for preservation in the U. S. National Film Registry by the Library of Congress as being "culturally, historically, or aesthetically significant".',
-      template:
-        'In the year after its release, [title] won the [award] for [...], and in [year] it was selected for preservation in the [...] by [organization] as being "[...]".',
-      questions:
-        "What awards did it win? When? Was it selected for preservation?",
-    },
-    {
-      verbatim:
-        "The film has influenced many science fiction films, video games, anime, and television series.",
-      template:
-        "The film has influenced many [genre] films, [...], [...], [...], and [...].",
-      questions: "What other works of art has it influenced?",
-    },
-    {
-      verbatim:
-        'Hailed for its production design depicting a "retrofitted" future, "Blade Runner" is a leading example of neo-noir cinema.',
-      template:
-        "Hailed for its production design depicting [...], [title] is a leading example of [genre].",
-      questions:
-        "What genre does it exemplify? What aspects make it a good example?",
-    },
-    {
-      verbatim:
-        "A director's cut was released in 1992 after a strong response to test screenings of a workprint.",
-      template: "A director's cut was released in [year] after [...].",
-      questions: "Was a director's cut released? When? Why?",
-    },
-    {
-      verbatim:
-        '"Blade Runner" initially underperformed in North American theaters and polarized critics; some praised its thematic complexity and visuals, while others were displeased with its slow pacing and lack of action.',
-      template:
-        "[title] initially underperformed in [country] theaters and polarized critics; some praised its [...], while others were displeased with its [...] and lack of [...].",
-      questions:
-        "How did it initially perform? How did critics react? What aspects did critics praise? What aspects did critics condemn?",
-    },
-    {
-      verbatim:
-        'In 2007, Warner Bros.\u00a0released "The Final Cut", a 25th-anniversary digitally remastered version; the only version over which Scott retained artistic control.',
-      template:
-        "In [year], [organization] released [title], a [...] digitally remastered version; [...].",
-      questions: "Was a remastered version released? When? By whom?",
-    },
-    {
-      verbatim: 'A sequel, "Blade Runner 2049", was released in October 2017.',
-      template: "A sequel, [title], was released in [month], [year].",
-      questions: "Was a sequel made? What was its title? When was it released?",
+        'It is loosely based on Philip K. Dick\'s novel "Do Androids Dream of Electric Sheep?" (1968).',
+      template: "It is loosely based on [person]'s novel [title] ([year]).",
+      questions: "What book is it based on? When was that book published?",
     },
     {
       verbatim:
@@ -170,18 +127,11 @@ const cuesByPrompt = {
     },
     {
       verbatim:
-        "It brought the work of Philip K. Dick to the attention of Hollywood, and several later big-budget films were based on his work.",
+        '"Blade Runner" initially underperformed in North American theaters and polarized critics; some praised its thematic complexity and visuals, while others were displeased with its slow pacing and lack of action.',
       template:
-        "It brought the work of [person] to the attention of Hollywood, and several later [...] films were based on [person]'s work.",
+        "[title] initially underperformed in [country] theaters and polarized critics; some praised its [...], while others were displeased with its [...] and lack of [...].",
       questions:
-        "What effect did the film have on the careers of people involved in its production?",
-    },
-    {
-      verbatim:
-        'Seven versions of "Blade Runner" exist as a result of controversial changes requested by studio executives.',
-      template: "[number] versions of [title] exist as a result of [...]",
-      questions:
-        "Do multiple versions exist? What led to there being multiple versions?",
+        "How did it initially perform? How did critics react? What aspects did critics praise? What aspects did critics condemn?",
     },
     {
       verbatim:
@@ -193,9 +143,11 @@ const cuesByPrompt = {
     },
     {
       verbatim:
-        'It is loosely based on Philip K. Dick\'s novel "Do Androids Dream of Electric Sheep?" (1968).',
-      template: "It is loosely based on [person]'s novel [title] ([year]).",
-      questions: "What book is it based on? When was that book published?",
+        'Hailed for its production design depicting a "retrofitted" future, "Blade Runner" is a leading example of neo-noir cinema.',
+      template:
+        "Hailed for its production design depicting [...], [title] is a leading example of [genre].",
+      questions:
+        "What genre does it exemplify? What aspects make it a good example?",
     },
     {
       verbatim:
@@ -207,10 +159,58 @@ const cuesByPrompt = {
     },
     {
       verbatim:
+        "The film has influenced many science fiction films, video games, anime, and television series.",
+      template:
+        "The film has influenced many [genre] films, [...], [...], [...], and [...].",
+      questions: "What other works of art has it influenced?",
+    },
+    {
+      verbatim:
+        "It brought the work of Philip K. Dick to the attention of Hollywood, and several later big-budget films were based on his work.",
+      template:
+        "It brought the work of [person] to the attention of Hollywood, and several later [...] films were based on [person]'s work.",
+      questions:
+        "What effect did the film have on the careers of people involved in its production?",
+    },
+    {
+      verbatim:
+        'In the year after its release, "Blade Runner" won the Hugo Award for Best Dramatic Presentation, and in 1993 it was selected for preservation in the U. S. National Film Registry by the Library of Congress as being "culturally, historically, or aesthetically significant".',
+      template:
+        'In the year after its release, [title] won the [award] for [...], and in [year] it was selected for preservation in the [...] by [organization] as being "[...]".',
+      questions:
+        "What awards did it win? When? Was it selected for preservation?",
+    },
+    {
+      verbatim: 'A sequel, "Blade Runner 2049", was released in October 2017.',
+      template: "A sequel, [title], was released in [month], [year].",
+      questions: "Was a sequel made? What was its title? When was it released?",
+    },
+    {
+      verbatim:
+        'Seven versions of "Blade Runner" exist as a result of controversial changes requested by studio executives.',
+      template: "[number] versions of [title] exist as a result of [...]",
+      questions:
+        "Do multiple versions exist? What led to there being multiple versions?",
+    },
+    {
+      verbatim:
+        "A director's cut was released in 1992 after a strong response to test screenings of a workprint.",
+      template: "A director's cut was released in [year] after [...].",
+      questions: "Was a director's cut released? When? Why?",
+    },
+    {
+      verbatim:
         "This, in conjunction with the film's popularity as a video rental, made it one of the earliest movies to be released on DVD.",
       template: "[...] popularity as a video rental [...] released on DVD.",
       questions:
         "Was it released on DVD? Was its release noteworthy? Why? Was it popular as a rental?",
+    },
+    {
+      verbatim:
+        'In 2007, Warner Bros.\u00a0released "The Final Cut", a 25th-anniversary digitally remastered version; the only version over which Scott retained artistic control.',
+      template:
+        "In [year], [organization] released [title], a [...] digitally remastered version; [...].",
+      questions: "Was a remastered version released? When? By whom?",
     },
   ],
   travelGuide: [
