@@ -362,19 +362,19 @@ function getScreens(prompts, conditionNames, isDemo) {
           <h1>Consider this imaginary scenario...</h1>
           <p>
             Oh no! A bunch of Wikipedia articles were found to contain content
-            under the wrong license. The admins decided that the only option to
+            under the wrong license. The editors decided that the only option to
             make things right was to delete and rewrite them without looking at
             the existing articles at all.
           </p>
           <p>
-            Since there were so many articles to rewrite, the admins made bots
+            Since there were so many articles to rewrite, some editors made bots
             to help. The bots make suggestions about what to include in a new
             article based on the text of other articles.
           </p>
           <p>
-            There are 3 different bots. Each bot presents its suggestions in a
-            different way. None of them are perfect yet, but the admins want to
-            find out which bot is most promising.
+            Today we are testing 3 different bots. Each bot presents its
+            suggestions in a different way. None of them are perfect yet, but
+            the editors want to find out which bot is most promising.
           </p>
           <NextBtn />
         </div>
