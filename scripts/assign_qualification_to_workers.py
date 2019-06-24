@@ -31,6 +31,8 @@ titles = {
     "Write about a movie or TV show [~10min]": "ideawrite",
     "Write about a recent experience at a restaurant [<10min]": "ideawrite",
     "Write about a recent experience at a restaurant [~10min]": "ideawrite",
+    "Write sentences about 3 different topics [~35m]": "design",
+    "Rate informativeness and appropriateness of text": "rate",
 }
 
 relevant_hits = [hit for hit in hits if hit["Title"] in titles.keys()]
@@ -100,7 +102,10 @@ def add_qualification(client, qualification_name, hit_type):
     if len(workers) == 0:
         print("No workers did", hit_type)
         return
-    print("Giving qualification", qualification_name, "to", len(workers), "workers:")
+    print(
+        f"Giving qualification {qualification_name}"
+        f" to {len(workers)} workers who did {hit_type}:"
+    )
     print(" ".join(workers))
     client.qualify_workers(client.get_qualification_id(qualification_name), workers)
 
@@ -109,4 +114,5 @@ if __name__ == "__main__":
     from mturk import MTurkClient
 
     client = MTurkClient(profile_name="iismturk", region_name="us-east-1")
-    add_qualification(client, "did-articles", "ideawrite")
+    for hit_type in ["ideawrite", "design", "rate"]:
+        add_qualification(client, "did-articles", hit_type)
