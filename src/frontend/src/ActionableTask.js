@@ -542,7 +542,12 @@ const cueView = txt => {
 };
 
 const getExperimentBlocks = tasksAndConditions => {
-  const getTrialScreen = (blockIdx, trialIdx, cue, total, topicName) => ({
+  const getTrialScreen = (blockIdx, trialIdx, cue, total, task, prompt) => ({
+    preEvent: {
+      type: "logCue",
+      cue,
+      prompt,
+    },
     screen: "Trial",
     view: iobs(({ state }) => {
       const confusedName = `confused-${blockIdx}-${trialIdx}`;
@@ -572,7 +577,7 @@ const getExperimentBlocks = tasksAndConditions => {
             <div>
               <div>
                 Based on this prompt, write a sentence or two for the article
-                about <b>{topicName}</b>:
+                about <b>{task.topicName}</b>:
               </div>
               <div style={{ padding: "10px 30px" }}>
                 <ControlledInput
@@ -645,7 +650,8 @@ const getExperimentBlocks = tasksAndConditions => {
           trialIdx,
           cue ? cue[condition] : "??",
           nFullCue,
-          task.topicName
+          task,
+          prompt
         )
       ),
     {
