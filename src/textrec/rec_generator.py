@@ -33,7 +33,8 @@ PARTS_NEEDED = [
 ]
 
 
-cueing.preload_models(PRELOAD_MODELS, PARTS_NEEDED)
+if False:
+    cueing.preload_models(PRELOAD_MODELS, PARTS_NEEDED)
 
 
 async def handle_request_async(executor, request):
