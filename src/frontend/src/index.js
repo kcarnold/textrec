@@ -93,6 +93,7 @@ const handlers = {
         {[
           "showall/c=idea&a=0",
           "showall/c=act&a=2",
+          "new/b=design1",
           "panopt/XX",
           ...tasks.map(prompt => `demoidea-cueSents-${prompt}-p`),
           ...tasks.map(prompt => `demoidea-randomSents-${prompt}-p`),
