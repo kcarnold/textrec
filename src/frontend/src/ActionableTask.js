@@ -502,7 +502,7 @@ const getExperimentBlocks = tasksAndConditions => {
 
           <div>
             Write a sentence or two for the article about{" "}
-            <b>{task.topicName}</b>:
+            <b>{task.topicName}</b>.
           </div>
           <div style={{ padding: "10px 30px" }}>
             <ControlledInput
@@ -575,11 +575,12 @@ const getExperimentBlocks = tasksAndConditions => {
 
           {state.controlledInputs.get(relevanceName) === "Yes" && (
             <div>
-              <div>
+              <div style={{ marginTop: "15px" }}>
                 Based on this prompt, write a sentence or two for the article
-                about <b>{task.topicName}</b>:
+                about <b>{task.topicName}</b>. Remember that the reader of the
+                article won't see the prompt.
               </div>
-              <div style={{ padding: "10px 30px" }}>
+              <div style={{ padding: "10px 0" }}>
                 <ControlledInput
                   name={responseName}
                   multiline={true}
@@ -637,6 +638,7 @@ const getExperimentBlocks = tasksAndConditions => {
                   . If you need some specific information for the sentence you
                   want to write, invent something plausible.
                 </li>
+                <li>The reader won't see the prompt.</li>
               </ul>
             </div>
           ) : (
