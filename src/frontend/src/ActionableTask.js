@@ -302,9 +302,13 @@ function getScreens(prompts, conditionNames, isDemo) {
           <p>
             Today we are testing 2 different bots. Each bot presents its
             suggestions in a different way. None of them are perfect yet, but
-            the editors want to find out which bot is most promising. To help
-            see whether the bots are helpful overall, you'll also do some
-            writing without any bot.
+            the editors want to find out which bot is most promising.
+          </p>
+
+          <p>
+            You can help by trying out writing with suggestions from the two
+            different bots. To help see whether the bots are helpful overall,
+            you'll also do some writing without any bot.
           </p>
           <NextBtn />
         </div>
@@ -467,8 +471,8 @@ const getExperimentBlocks = tasksAndConditions => {
           </h1>
 
           <div>
-            Write a sentence or two for the article about{" "}
-            <b>{task.topicName}</b>.
+            Write a sentence or two that would belong in an encyclopedia article
+            about <b>{task.topicName}</b>.
           </div>
           <div style={{ padding: "10px 30px" }}>
             <ControlledInput
@@ -531,20 +535,16 @@ const getExperimentBlocks = tasksAndConditions => {
           <OptionsResponse
             name={relevanceName}
             question={{
-              options: [
-                "No, it doesn't make sense.",
-                "No, it's not relevant.",
-                "Yes",
-              ],
+              options: ["The prompt doesn't make sense", "No", "Yes"],
             }}
           />
 
           {state.controlledInputs.get(relevanceName) === "Yes" && (
             <div>
               <div style={{ marginTop: "15px" }}>
-                Based on this prompt, write a sentence or two for the article
-                about <b>{task.topicName}</b>. Remember that the reader of the
-                article won't see the prompt.
+                Based on this prompt, write a sentence or two that would belong
+                in an encyclopedia article about <b>{task.topicName}</b>.
+                Remember that the reader of the article won't see the prompt.
               </div>
               <div style={{ padding: "10px 0" }}>
                 <ControlledInput
@@ -592,10 +592,15 @@ const getExperimentBlocks = tasksAndConditions => {
             <div>
               <p>
                 For this article, you'll be writing without any bot prompt. Just
-                write 10 sentences.
+                write {nFullCue} sentences, one at a time.
               </p>
               <ul style={{ lineHeight: 1.5 }}>
-                <li>Order doesn’t matter.</li>
+                <li>
+                  You may write sentences in a different order than they would
+                  appear in the article, so don't worry if you want to write
+                  something that doesn't flow nicely from the previous sentence
+                  you wrote.
+                </li>
                 <li>
                   <b>
                     Don't worry about whether the information you provide is
@@ -604,7 +609,6 @@ const getExperimentBlocks = tasksAndConditions => {
                   . If you need some specific information for the sentence you
                   want to write, invent something plausible.
                 </li>
-                <li>The reader won't see the prompt.</li>
               </ul>
             </div>
           ) : (
@@ -613,11 +617,17 @@ const getExperimentBlocks = tasksAndConditions => {
               <ul style={{ lineHeight: 1.5 }}>
                 <li>
                   The bot will give a prompt. Write a sentence or two based on
-                  that prompt.
+                  that prompt. <b>The reader won't see the prompt.</b>
                 </li>
                 <li>
-                  If the bot's prompt is irrelevant or hard to understand, say
-                  so and move on.
+                  You may write sentences in a different order than they would
+                  appear in the article, so don't worry if you want to write
+                  something that doesn't flow nicely from the previous sentence
+                  you wrote.
+                </li>
+                <li>
+                  If the bot's prompt is hard to understand or doesn't give you
+                  a clear idea of what to write, say so and move on.
                 </li>
                 <li>
                   Since we're just trying out these bots,{" "}
@@ -660,7 +670,7 @@ const getExperimentBlocks = tasksAndConditions => {
     {
       screen: "PostBlockSurvey",
       view: surveyView({
-        title: `Survey for Bot ${blockIdx + 1} of ${totalBlocks}`,
+        title: `Survey for Article ${blockIdx + 1} of ${totalBlocks}`,
         basename: `postBlock-${blockIdx}`,
         questions: [
           agreeLikert("fluent", "I felt like I could write easily."),
