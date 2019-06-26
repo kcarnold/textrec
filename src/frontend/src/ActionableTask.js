@@ -15,6 +15,7 @@ import { NextBtn } from "./BaseViews";
 import {
   Survey,
   likert,
+  LikertResponse,
   surveyView,
   surveyBody,
   agreeLikert,
@@ -26,7 +27,6 @@ import {
   ControlledInput,
   ControlledStarRating,
   ControlledInputView,
-  withValidation,
 } from "./ControlledInputs";
 import {
   getDemoConditionName,
@@ -372,9 +372,11 @@ function getScreens(prompts, conditionNames, isDemo) {
             article based on the text of other articles.
           </p>
           <p>
-            Today we are testing 3 different bots. Each bot presents its
+            Today we are testing 2 different bots. Each bot presents its
             suggestions in a different way. None of them are perfect yet, but
-            the editors want to find out which bot is most promising.
+            the editors want to find out which bot is most promising. To help
+            see whether the bots are helpful overall, you'll also do some
+            writing without any bot.
           </p>
           <NextBtn />
         </div>
@@ -399,25 +401,9 @@ function getTask(promptName) {
         singular: "travel guide",
         plural: "travel guides",
       },
-      visibleName: "travel destination",
+      visibleName: "travel destination", // (city, region, national park, etc.)
       nameField,
       topicName: <ControlledInputView name={nameField} />,
-      precommitView: withValidation([nameField], () => (
-        <div className="Survey">
-          <span>
-            Name a travel destination (city, region, national park, etc.) that
-            you're familiar with.
-          </span>
-          <div
-            style={{
-              padding: "12px",
-              lineHeight: 1.5,
-            }}
-          >
-            Destination Name: <ControlledInput name={nameField} />
-          </div>
-        </div>
-      )),
 
       ideaSource: (
         <span>
@@ -464,21 +450,6 @@ function getTask(promptName) {
       },
       nameField,
       topicName: <ControlledInputView name={nameField} />,
-      precommitView: withValidation([nameField], () => (
-        <div>
-          <p>
-            Name a <b>{visibleName}</b> that you know well.
-          </p>
-          <div
-            style={{
-              padding: "12px",
-              lineHeight: 1.5,
-            }}
-          >
-            Name of {visibleName}: <ControlledInput name={nameField} />
-          </div>
-        </div>
-      )),
 
       ideaSource: (
         <span>
@@ -955,23 +926,60 @@ export function createTaskState(loginEvent: LoginEvent) {
   return state;
 }
 
-const getPrecommitScreen = tasksAndConditions => ({
-  screen: "Precommit",
-  view: () => (
-    <div className="Survey">
-      <h1>Pick what to write about</h1>
-      {tasksAndConditions.map(({ task }, idx) => (
-        <div key={idx} style={{ borderBottom: "1px solid black" }}>
-          {task.precommitView.view()}
+const getPrecommitScreen = tasksAndConditions => {
+  let confidenceQuestions = tasksAndConditions.map(({ task }) =>
+    likert(
+      `confidence-${task.nameField}`,
+      `How knowledgeable do you feel about this ${task.visibleName}?`,
+      5,
+      ["Passing Knowledge", "Encyclopedic Knowledge"]
+    )
+  );
+
+  let requiredInputs = [
+    ...tasksAndConditions.map(({ task }) => task.nameField),
+    ...confidenceQuestions.map(({ name }) => name),
+  ];
+
+  return {
+    screen: "Precommit",
+    view: () => (
+      <div className="Survey">
+        <h1>Pick what to write about</h1>
+        <div>
+          {tasksAndConditions.map(({ task }, idx) => (
+            <div key={idx} style={{ borderBottom: "1px solid black" }}>
+              <p>
+                Name a <b>{task.visibleName}</b> that you know well.
+              </p>
+              <div
+                style={{
+                  padding: "12px",
+                  lineHeight: 1.5,
+                }}
+              >
+                Name of {task.visibleName}:{" "}
+                <ControlledInput name={task.nameField} />
+                <div>
+                  {confidenceQuestions[idx].text}
+                  <LikertResponse
+                    name={confidenceQuestions[idx].name}
+                    question={confidenceQuestions[idx]}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
-      <NextBtn
-        enabledFn={state =>
-          tasksAndConditions.every(({ task }) =>
-            task.precommitView.complete(state)
-          )
-        }
-      />
-    </div>
-  ),
-});
+
+        <NextBtn
+          enabledFn={state =>
+            requiredInputs.every(
+              name => state.controlledInputs.get(name) !== undefined
+            )
+          }
+        />
+      </div>
+    ),
+  };
+};
