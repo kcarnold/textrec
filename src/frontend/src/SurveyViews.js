@@ -41,14 +41,17 @@ export const OptionsResponse = inject("dispatch", "state", "spying")(
     question,
   }) {
     let choice = state.controlledInputs.get(name) || "";
+    let options = question.options.map(option =>
+      typeof option === "string" ? { key: option, value: option } : option
+    );
     function change(newVal) {
       dispatch({ type: "controlledInputChanged", name, value: newVal });
     }
     return (
       <div>
-        {question.options.map(option => (
+        {options.map(({ key, value }) => (
           <label
-            key={option}
+            key={key}
             style={{
               background: "#f0f0f0",
               display: "block",
@@ -56,14 +59,14 @@ export const OptionsResponse = inject("dispatch", "state", "spying")(
               padding: "10px 3px",
               width: "100%",
             }}
-            title={spying ? `${name}=${option}` : undefined}
+            title={spying ? `${name}=${key}` : undefined}
           >
             <input
               type="radio"
-              checked={choice === option}
-              onChange={() => change(option)}
+              checked={choice === key}
+              onChange={() => change(key)}
             />
-            <span style={{ width: "100%" }}>{option}</span>
+            <span style={{ width: "100%" }}>{value}</span>
           </label>
         ))}
       </div>

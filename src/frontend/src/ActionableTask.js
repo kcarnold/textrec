@@ -274,11 +274,19 @@ const WelcomeScreen = { screen: "Welcome", view: Views.Welcome };
 const DoneScreen = { screen: "Done", view: Views.Done };
 
 function getScreens(prompts, conditionNames, isDemo) {
-  let tasksAndConditions = prompts.map((conditionName, idx) => ({
-    conditionName: conditionNames[idx],
-    prompt: prompts[idx],
-    task: getTask(prompts[idx]),
-  }));
+  let tasksAndConditions = [];
+  let botIdx = 1;
+  for (let idx = 0; idx < prompts.length; idx++) {
+    let prompt = prompts[idx];
+    let conditionName = conditionNames[idx];
+    let task = getTask(prompts[idx]);
+    tasksAndConditions.push({
+      conditionName,
+      prompt,
+      task,
+      botIdx: conditionName === "noprompt" ? null : botIdx++,
+    });
+  }
   //   if (isDemo) return getPrewritingScreens(tasksAndConditions);
   return [
     WelcomeScreen,
@@ -574,7 +582,8 @@ const getExperimentBlocks = tasksAndConditions => {
     prompt,
     condition,
     blockIdx,
-    totalBlocks
+    totalBlocks,
+    botIdx
   ) => [
     {
       screen: "Instructions",
@@ -585,7 +594,7 @@ const getExperimentBlocks = tasksAndConditions => {
           </h1>
           <p>
             <b>Your task</b>: Write sentences that might get included in an
-            article about the {task.visibleName} you listed,{" "}
+            encyclopedia article about the {task.visibleName} you listed,{" "}
             <b>{task.topicName}</b>.
           </p>
           {condition === "noprompt" ? (
@@ -613,7 +622,7 @@ const getExperimentBlocks = tasksAndConditions => {
             </div>
           ) : (
             <div>
-              <p>For this article, you’ll be using Bot {blockIdx + 1}.</p>
+              <p>For this article, you’ll be using Bot {botIdx}.</p>
               <ul style={{ lineHeight: 1.5 }}>
                 <li>
                   The bot will give a prompt. Write a sentence or two based on
@@ -700,14 +709,17 @@ const getExperimentBlocks = tasksAndConditions => {
       }),
     },
   ];
-  return flatMap(tasksAndConditions, ({ task, prompt, conditionName }, idx) =>
-    getExperimentBlock(
-      task,
-      prompt,
-      conditionName,
-      idx,
-      tasksAndConditions.length
-    )
+  return flatMap(
+    tasksAndConditions,
+    ({ task, prompt, conditionName, botIdx }, idx) =>
+      getExperimentBlock(
+        task,
+        prompt,
+        conditionName,
+        idx,
+        tasksAndConditions.length,
+        botIdx
+      )
   );
 };
 
@@ -730,14 +742,18 @@ function getAllWritings(state) {
   return res;
 }
 
-const comparisonRank = (attr, text) => ({
-  text,
-  responseType: "options",
-  name: `comparisonRank-${attr}`,
-  options: ["Bot 1", "Bot 2", "Bot 3"],
-});
-
 function getClosingSurvey(tasksAndConditions) {
+  let botCodes = [];
+  tasksAndConditions.forEach(({ botIdx, conditionName }) => {
+    if (botIdx !== null)
+      botCodes.push({ key: conditionName, value: `Bot ${botIdx}` });
+  });
+  const comparisonRank = (attr, text) => ({
+    text,
+    responseType: "options",
+    name: `comparisonRank-${attr}`,
+    options: botCodes,
+  });
   return {
     screen: "PostExpSurvey",
     view: iobs(({ state }) => {
@@ -774,10 +790,10 @@ function getClosingSurvey(tasksAndConditions) {
               <b>Now let's compare the bots.</b> For reference, here's a sample
               of what each of the bots suggested:
               <div>
-                {tasksAndConditions.map(
-                  ({ prompt, conditionName }, blockIdx) => (
-                    <div key={blockIdx}>
-                      <h3>Bot {blockIdx + 1}</h3>
+                {tasksAndConditions.map(({ prompt, conditionName, botIdx }) =>
+                  botIdx !== null ? (
+                    <div key={botIdx}>
+                      <h3>Bot {botIdx}</h3>
                       <ul>
                         {cuesByPrompt[prompt]
                           .slice(0, 3)
@@ -788,7 +804,7 @@ function getClosingSurvey(tasksAndConditions) {
                           ))}
                       </ul>
                     </div>
-                  )
+                  ) : null
                 )}
               </div>
             </div>
@@ -798,20 +814,20 @@ function getClosingSurvey(tasksAndConditions) {
           "understand-most",
           "Which bot was easiest to understand?"
         ),
-        comparisonRank(
-          "understand-least",
-          "Which bot was hardest to understand?"
-        ),
+        // comparisonRank(
+        //   "understand-least",
+        //   "Which bot was hardest to understand?"
+        // ),
         comparisonRank("generate-most", "Which bot made it easiest to write?"),
-        comparisonRank("generate-least", "Which bot made it hardest to write?"),
+        // comparisonRank("generate-least", "Which bot made it hardest to write?"),
         comparisonRank(
           "choice-most",
           "If you were writing an article on a new topic, which bot would you most like to have?"
         ),
-        comparisonRank(
-          "choice-least",
-          "If you were writing an article on a new topic, which bot would you least like to have?"
-        ),
+        // comparisonRank(
+        //   "choice-least",
+        //   "If you were writing an article on a new topic, which bot would you least like to have?"
+        // ),
         SurveyData.age,
         SurveyData.gender,
         SurveyData.english_proficiency,
