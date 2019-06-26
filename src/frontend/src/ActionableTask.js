@@ -99,104 +99,82 @@ const cuesByPrompt = {
   ],
   "wiki-film": [
     {
-      verbatim:
-        'It is loosely based on Philip K. Dick\'s novel "Do Androids Dream of Electric Sheep?" (1968).',
-      template: "It is loosely based on [person]'s novel [title] ([year]).",
+      template:
+        'It is loosely based on [person=Philip K. Dick]\'s novel [title="Do Androids Dream of Electric Sheep?"] ([year=1968]).',
       questions: "What book is it based on? When was that book published?",
     },
     {
-      verbatim:
-        "The film is set in a dystopian future Los Angeles of 2019, in which synthetic humans known as replicants are bio-engineered by the powerful Tyrell Corporation to work on off-world colonies.",
       template:
-        "The film is set in a dystopian future [city] of [year], in which [...]",
+        "The film is set in a dystopian future [city=Los Angeles] of [year=2019], in which [synthetic humans known as replicants are bio-engineered by the powerful Tyrell Corporation to work on off-world colonies].",
       questions:
         "When and where is the film set? Is it a utopian or dystopian future? What characterizes the setting?",
     },
     {
-      verbatim:
-        '"Blade Runner" initially underperformed in North American theaters and polarized critics; some praised its thematic complexity and visuals, while others were displeased with its slow pacing and lack of action.',
       template:
-        "[title] initially underperformed in [country] theaters and polarized critics; some praised its [...], while others were displeased with its [...] and lack of [...].",
+        '"[title=Blade Runner]" initially underperformed in [country=North American] theaters and polarized critics; some praised its [thematic complexity and visuals], while others were displeased with its [slow pacing and lack of action].',
       questions:
         "How did it initially perform? How did critics react? What aspects did critics praise? What aspects did critics condemn?",
     },
     {
-      verbatim:
-        "It later became an acclaimed cult film regarded as one of the all-time best science fiction films.",
       template:
-        "It later became an acclaimed cult film regarded as one of the all-time best [genre] films.",
+        "It later became an acclaimed cult film regarded as one of the all-time best [genre=science fiction] films.",
       questions:
         "How is it thought of now? How does it rank compared with other films of its genre?",
     },
     {
-      verbatim:
-        'Hailed for its production design depicting a "retrofitted" future, "Blade Runner" is a leading example of neo-noir cinema.',
       template:
-        "Hailed for its production design depicting [...], [title] is a leading example of [genre].",
+        'Hailed for its production design depicting [a "retrofitted" future], "[title=Blade Runner]" is a leading example of [neo-noir cinema].',
       questions:
         "What genre does it exemplify? What aspects make it a good example?",
     },
     {
-      verbatim:
-        "The soundtrack, composed by Vangelis, was nominated in 1983 for a BAFTA and a Golden Globe as best original score.",
       template:
-        "The soundtrack, composed by [artist], was nominated in [year] for a [award] and a [award] as best original score.",
+        "The soundtrack, composed by [artist=Vangelis], was nominated in [year=1983] for a [award=BAFTA and a Golden Globe] as [best original score].",
       questions:
         "Who composed the soundtrack? Was it nominated for any awards?",
     },
     {
-      verbatim:
-        "The film has influenced many science fiction films, video games, anime, and television series.",
       template:
-        "The film has influenced many [genre] films, [...], [...], [...], and [...].",
+        "The film has influenced many [genre=science fiction] films, [video games, anime, and television series].",
       questions: "What other works of art has it influenced?",
     },
     {
-      verbatim:
-        "It brought the work of Philip K. Dick to the attention of Hollywood, and several later big-budget films were based on his work.",
       template:
-        "It brought the work of [person] to the attention of Hollywood, and several later [...] films were based on [person]'s work.",
+        "It brought the work of [author=Philip K. Dick] to the attention of Hollywood, and several later big-budget films were based on his work.",
       questions:
         "What effect did the film have on the careers of people involved in its production?",
     },
     {
-      verbatim:
-        'In the year after its release, "Blade Runner" won the Hugo Award for Best Dramatic Presentation, and in 1993 it was selected for preservation in the U. S. National Film Registry by the Library of Congress as being "culturally, historically, or aesthetically significant".',
       template:
-        'In the year after its release, [title] won the [award] for [...], and in [year] it was selected for preservation in the [...] by [organization] as being "[...]".',
+        'In the year after its release, "[title=Blade Runner]" won the [award=Hugo Award for Best Dramatic Presentation], and in [year=1993] it was selected for preservation in the [U. S. National Film Registry by the Library of Congress] as being "[culturally, historically, or aesthetically significant]".',
       questions:
         "What awards did it win? When? Was it selected for preservation?",
     },
     {
-      verbatim: 'A sequel, "Blade Runner 2049", was released in October 2017.',
-      template: "A sequel, [title], was released in [month], [year].",
+      template:
+        'A sequel, "[title=Blade Runner 2049]", was released in [month=October] [year=2017].',
       questions: "Was a sequel made? What was its title? When was it released?",
     },
     {
-      verbatim:
-        'Seven versions of "Blade Runner" exist as a result of controversial changes requested by studio executives.',
-      template: "[number] versions of [title] exist as a result of [...]",
+      template:
+        '[Seven] versions of "[title=Blade Runner]" exist as a result of [controversial changes requested by studio executives].',
       questions:
         "Do multiple versions exist? What led to there being multiple versions?",
     },
     {
-      verbatim:
-        "A director's cut was released in 1992 after a strong response to test screenings of a workprint.",
-      template: "A director's cut was released in [year] after [...].",
+      template:
+        "A director's cut was released in [year=1992] after a [strong response to test screenings of a workprint].",
       questions: "Was a director's cut released? When? Why?",
     },
     {
-      verbatim:
-        "This, in conjunction with the film's popularity as a video rental, made it one of the earliest movies to be released on DVD.",
-      template: "[...] popularity as a video rental [...] released on DVD.",
+      template:
+        "[This, in conjunction with the film's] popularity as a video rental, [made it one of the earliest movies to be] released on DVD.",
       questions:
         "Was it released on DVD? Was its release noteworthy? Why? Was it popular as a rental?",
     },
     {
-      verbatim:
-        'In 2007, Warner Bros.\u00a0released "The Final Cut", a 25th-anniversary digitally remastered version; the only version over which Scott retained artistic control.',
       template:
-        "In [year], [organization] released [title], a [...] digitally remastered version; [...].",
+        'In [year=2007], [org=Warner Bros.] released "[title=The Final Cut]", a [25th-anniversary] digitally remastered version; [the only version over which Scott retained artistic control].',
       questions: "Was a remastered version released? When? By whom?",
     },
   ],
@@ -479,14 +457,14 @@ function getTask(promptName) {
 
 const cueView = txt => {
   let result = [];
-  let regex = /\[([^\]]+)\]/;
+  let regex = /\[(\w+=)?([^\]]+)\]/;
   let match;
   let i = 0;
   while ((match = txt.match(regex))) {
     result.push(txt.slice(0, match.index));
     result.push(
-      <span key={i++} style={{ color: "#555", fontStyle: "italic" }}>
-        {match[0]}
+      <span key={i++} style={{ opacity: 0.25 }}>
+        {match[2]}
       </span>
     );
     txt = txt.slice(match.index + match[0].length);
@@ -959,8 +937,8 @@ const getPrecommitScreen = tasksAndConditions => {
                 }}
               >
                 <div>
-                Name of {task.visibleName}:{" "}
-                <ControlledInput name={task.nameField} />
+                  Name of {task.visibleName}:{" "}
+                  <ControlledInput name={task.nameField} />
                 </div>
                 <div>
                   {task.categoryQuestion.text}
