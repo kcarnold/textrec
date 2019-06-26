@@ -11,6 +11,7 @@ import * as Views from "./CueViews";
 import { NextBtn } from "./BaseViews";
 import {
   likert,
+  OptionsResponse,
   LikertResponse,
   surveyView,
   surveyBody,
@@ -456,25 +457,6 @@ function getTask(promptName) {
   }
 }
 
-const ControlledCheckbox = iobs(({ dispatch, state, name }) => {
-  let checked = !!state.controlledInputs.get(name);
-  return (
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={evt => {
-        dispatch({ type: "controlledInputChanged", name, value: !checked });
-      }}
-    />
-  );
-});
-
-const LabeledCheckbox = ({ name, children }) => (
-  <label style={{ display: "block" }}>
-    <ControlledCheckbox name={name} /> {children}
-  </label>
-);
-
 const cueView = txt => {
   let result = [];
   let regex = /\[([^\]]+)\]/;
@@ -556,7 +538,8 @@ const getExperimentBlocks = tasksAndConditions => {
     },
     screen: "Trial",
     view: iobs(({ state }) => {
-      const confusedName = `confused-${blockIdx}-${trialIdx}`;
+      const relevanceName = `relevance-${blockIdx}-${trialIdx}`;
+      const responseName = `response-${blockIdx}-${trialIdx}`;
       return (
         <div className="Survey">
           <h1>
@@ -575,11 +558,22 @@ const getExperimentBlocks = tasksAndConditions => {
             {cueView(cue)}
           </div>
 
-          <LabeledCheckbox name={confusedName}>
-            I couldn't understand the prompt.
-          </LabeledCheckbox>
-          <br />
-          {state.controlledInputs.get(confusedName) || (
+          <p>
+            Does this prompt give you any ideas about what to write for an
+            article about "<b>{task.topicName}</b>"?
+          </p>
+          <OptionsResponse
+            name={relevanceName}
+            question={{
+              options: [
+                "No, it doesn't make sense.",
+                "No, it's not relevant.",
+                "Yes",
+              ],
+            }}
+          />
+
+          {state.controlledInputs.get(relevanceName) === "Yes" && (
             <div>
               <div>
                 Based on this prompt, write a sentence or two for the article
@@ -587,19 +581,22 @@ const getExperimentBlocks = tasksAndConditions => {
               </div>
               <div style={{ padding: "10px 30px" }}>
                 <ControlledInput
-                  name={`response-${blockIdx}-${trialIdx}`}
+                  name={responseName}
                   multiline={true}
                   rows={3}
                   style={{ width: "100%" }}
                 />
               </div>
-              <LabeledCheckbox name={`irrelevant-${blockIdx}-${trialIdx}`}>
-                The prompt was irrelevant.
-              </LabeledCheckbox>
             </div>
           )}
           <br />
-          <NextBtn enabledFn={state => true} />
+          <NextBtn
+            enabledFn={state =>
+              state.controlledInputs.get(relevanceName) !== undefined &&
+              (state.controlledInputs.get(relevanceName) !== "Yes" ||
+                state.controlledInputs.get(responseName) !== undefined)
+            }
+          />
         </div>
       );
     }),
