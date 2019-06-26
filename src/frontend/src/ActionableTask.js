@@ -4,36 +4,22 @@
 
 import * as React from "react";
 import { extendObservable, decorate, action } from "mobx";
-import { observer, inject } from "mobx-react";
 
 import flatMap from "lodash/flatMap";
-import range from "lodash/range";
 import { createState } from "./MasterState";
-import { ExperimentStateStore } from "./IOExperimentState";
 import * as Views from "./CueViews";
 import { NextBtn } from "./BaseViews";
 import {
-  Survey,
   likert,
   LikertResponse,
   surveyView,
   surveyBody,
   agreeLikert,
   allQuestionsAnswered,
-  OptionsResponse,
 } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
-import {
-  ControlledInput,
-  ControlledStarRating,
-  ControlledInputView,
-} from "./ControlledInputs";
-import {
-  getDemoConditionName,
-  gatingSuggestionFilter,
-  finalDataLogger,
-  iobs,
-} from "./misc";
+import { ControlledInput, ControlledInputView } from "./ControlledInputs";
+import { finalDataLogger, iobs } from "./misc";
 
 import * as shuffle from "./shuffle";
 
@@ -469,11 +455,6 @@ function getTask(promptName) {
     console.assert("Unknown prompt", promptName);
   }
 }
-
-const placeholderScreen = title => ({
-  screen: "placeholder",
-  view: () => <h1>{title}</h1>,
-});
 
 const ControlledCheckbox = iobs(({ dispatch, state, name }) => {
   let checked = !!state.controlledInputs.get(name);

@@ -12,13 +12,7 @@ import { TrialState } from "./BrainstormTrialState";
 import * as Views from "./CueViews";
 import { Editable } from "./Editable";
 import { NextBtn } from "./BaseViews";
-import {
-  Survey,
-  likert,
-  agreeLikert,
-  surveyBody,
-  surveyView,
-} from "./SurveyViews";
+import { likert, agreeLikert, surveyBody, surveyView } from "./SurveyViews";
 import * as SurveyData from "./SurveyData";
 import {
   ControlledInput,
