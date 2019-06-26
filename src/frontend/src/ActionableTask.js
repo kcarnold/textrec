@@ -388,6 +388,11 @@ function getTask(promptName) {
         singular: "travel guide",
         plural: "travel guides",
       },
+      categoryQuestion: {
+        text: "The main attraction of this destination is:",
+        options: ["nature", "culture", "other"],
+      },
+
       visibleName: "travel destination", // (city, region, national park, etc.)
       visibleNameLong:
         "place you might travel to, such as a particular city, country, or natural area",
@@ -428,10 +433,22 @@ function getTask(promptName) {
     console.assert(topicNameCode in visibleNameMap);
     const visibleName = visibleNameMap[topicNameCode];
 
+    const categoryQuestionMap = {
+      book: {
+        text: "This book is:",
+        options: ["fiction", "non-fiction", "other"],
+      },
+      film: {
+        text: "This film is a:",
+        options: ["drama", "musical or comedy", "animated", "other"],
+      },
+    };
+
     return {
       flags: {
         domain: promptName,
       },
+      categoryQuestion: categoryQuestionMap[topicNameCode],
       visibleName,
       visibleNameLong: visibleName,
       writingType: {
@@ -941,8 +958,17 @@ const getPrecommitScreen = tasksAndConditions => {
                   lineHeight: 1.5,
                 }}
               >
+                <div>
                 Name of {task.visibleName}:{" "}
                 <ControlledInput name={task.nameField} />
+                </div>
+                <div>
+                  {task.categoryQuestion.text}
+                  <OptionsResponse
+                    name={`category-${task.nameField}`}
+                    question={task.categoryQuestion}
+                  />
+                </div>
                 <div>
                   {confidenceQuestions[idx].text}
                   <LikertResponse
