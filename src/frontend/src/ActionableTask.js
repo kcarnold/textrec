@@ -24,7 +24,7 @@ import { finalDataLogger, iobs } from "./misc";
 
 import * as shuffle from "./shuffle";
 
-let baseConditions = ["noprompt", "template", "questions"];
+let baseConditions = ["noprompt", "verbatim", "questions"];
 let conditionOrders = shuffle.permutator(baseConditions);
 
 const cuesByPrompt = {
@@ -32,148 +32,133 @@ const cuesByPrompt = {
     {
       verbatim:
         'Sir Gawain and the Green Knight (Middle English: "Sir Gawayn and \u00fee Grene Kny\u021dt") is a late 14th-century Middle English chivalric romance.',
-      template: "[title] ([language]: [title]) is a [date] [language] [genre].",
       questions:
         "What is title? What was title in original language? When published? What genre?",
     },
     {
       verbatim:
         "It is one of the best known Arthurian stories, with its plot combining two types of folklore motifs, the beheading game and the exchange of winnings.",
-      template:
-        "It is one of the best known [type], with its plot combining two types of [...], the [...] and the [...].",
       questions:
         "What type of story is it? How well-known is it? What are some of its major plot characteristics?",
     },
     {
       verbatim:
         "It is written in stanzas of alliterative verse, each of which ends in a rhyming bob and wheel.",
-      template: "It is written in stanzas of [...] verse, each of which [...].",
       questions:
         "What form are its stanzas? Does it rhyme? What is the rhyming pattern?",
     },
     {
       verbatim:
         "It draws on Welsh, Irish, and English stories, as well as the French chivalric tradition.",
-      template:
-        "It draws on [country], [country], and [country] stories, as well as the [...] tradition.",
       questions: "What are its major influences?",
     },
     {
       verbatim:
         "It is an important example of a chivalric romance, which typically involves a hero who goes on a quest which tests his prowess.",
-      template:
-        "It is an important example of a [genre], which typically involves [...].",
       questions:
         "What genre does it exemplify? What characteristizes that genre?",
     },
     {
       verbatim:
         "It remains popular to this day in modern English renderings from J. R. R. Tolkien, Simon Armitage, and others, as well as through film and stage adaptations.",
-      template:
-        "It remains popular to this day in modern [country] renderings from [person], [person], and others, as well as through film and stage adaptations.",
       questions: "Is it still popular? Does it have film or stage adaptations?",
     },
     {
       verbatim:
         'It describes how Sir Gawain, a knight of King Arthur\'s Round Table, accepts a challenge from a mysterious "Green Knight" who challenges any knight to strike him with his axe if he will take a return blow in a year and a day.',
-      template: "It describes how [person], a [description], [...]",
       questions:
         "Who is the main character? What is their main attribute? What is the central plot element?",
     },
     {
       verbatim:
         'All are thought to have been written by the same unknown author, dubbed the "Pearl Poet" or "Gawain Poet", since all four are written in a North West Midland dialect of Middle English.',
-      template:
-        "All are thought to have been written by the same unknown author, dubbed [...], since all [...] are written in a [...] dialect of [language].",
       questions:
         "Do the other works in the manuscript share the same author? Why or why not?",
     },
     {
       verbatim:
         'The poem survives in a single manuscript, "Cotton Nero A.x.", which also includes three religious narrative poems: "Pearl", "Purity" and "Patience".',
-      template:
-        "[...] survives in a single manuscript, [name], which also includes [...]",
       questions:
         "How has the manuscript survived? Does the manuscript include other works?",
     },
   ],
   "wiki-film": [
     {
-      template:
+      verbatim:
         'It is loosely based on [person=Philip K. Dick]\'s novel [title="Do Androids Dream of Electric Sheep?"] ([year=1968]).',
       questions: "What book is it based on? When was that book published?",
     },
     {
-      template:
+      verbatim:
         "The film is set in a dystopian future [city=Los Angeles] of [year=2019], in which [synthetic humans known as replicants are bio-engineered by the powerful Tyrell Corporation to work on off-world colonies].",
       questions:
         "When and where is the film set? Is it a utopian or dystopian future? What characterizes the setting?",
     },
     {
-      template:
+      verbatim:
         '"[title=Blade Runner]" initially underperformed in [country=North American] theaters and polarized critics; some praised its [thematic complexity and visuals], while others were displeased with its [slow pacing and lack of action].',
       questions:
         "How did it initially perform? How did critics react? What aspects did critics praise? What aspects did critics condemn?",
     },
     {
-      template:
+      verbatim:
         "It later became an acclaimed cult film regarded as one of the all-time best [genre=science fiction] films.",
       questions:
         "How is it thought of now? How does it rank compared with other films of its genre?",
     },
     {
-      template:
+      verbatim:
         'Hailed for its production design depicting [a "retrofitted" future], "[title=Blade Runner]" is a leading example of [neo-noir cinema].',
       questions:
         "What genre does it exemplify? What aspects make it a good example?",
     },
     {
-      template:
+      verbatim:
         "The soundtrack, composed by [artist=Vangelis], was nominated in [year=1983] for a [award=BAFTA and a Golden Globe] as [best original score].",
       questions:
         "Who composed the soundtrack? Was it nominated for any awards?",
     },
     {
-      template:
+      verbatim:
         "The film has influenced many [genre=science fiction] films, [video games, anime, and television series].",
       questions: "What other works of art has it influenced?",
     },
     {
-      template:
+      verbatim:
         "It brought the work of [author=Philip K. Dick] to the attention of Hollywood, and several later big-budget films were based on his work.",
       questions:
         "What effect did the film have on the careers of people involved in its production?",
     },
     {
-      template:
+      verbatim:
         'In the year after its release, "[title=Blade Runner]" won the [award=Hugo Award for Best Dramatic Presentation], and in [year=1993] it was selected for preservation in the [U. S. National Film Registry by the Library of Congress] as being "[culturally, historically, or aesthetically significant]".',
       questions:
         "What awards did it win? When? Was it selected for preservation?",
     },
     {
-      template:
+      verbatim:
         'A sequel, "[title=Blade Runner 2049]", was released in [month=October] [year=2017].',
       questions: "Was a sequel made? What was its title? When was it released?",
     },
     {
-      template:
+      verbatim:
         '[Seven] versions of "[title=Blade Runner]" exist as a result of [controversial changes requested by studio executives].',
       questions:
         "Do multiple versions exist? What led to there being multiple versions?",
     },
     {
-      template:
+      verbatim:
         "A director's cut was released in [year=1992] after a [strong response to test screenings of a workprint].",
       questions: "Was a director's cut released? When? Why?",
     },
     {
-      template:
+      verbatim:
         "[This, in conjunction with the film's] popularity as a video rental, [made it one of the earliest movies to be] released on DVD.",
       questions:
         "Was it released on DVD? Was its release noteworthy? Why? Was it popular as a rental?",
     },
     {
-      template:
+      verbatim:
         'In [year=2007], [org=Warner Bros.] released "[title=The Final Cut]", a [25th-anniversary] digitally remastered version; [the only version over which Scott retained artistic control].',
       questions: "Was a remastered version released? When? By whom?",
     },
@@ -181,96 +166,74 @@ const cuesByPrompt = {
   travelGuide: [
     {
       verbatim:
-        "Compared to other American cities, relatively few residents are home-town natives, rather than transplants from elsewhere.",
-      template:
-        "Compared to other [nationality] cities, relatively few residents are home-town natives, rather than transplants from elsewhere.",
+        "Compared to other [nationality=American] cities, relatively few residents are home-town natives, rather than transplants from elsewhere.",
       questions:
         "How many residents are natives vs transplants? How does this compare with other cities in the same country?",
     },
     {
       verbatim:
-        "D.C., and particularly the metro area beyond the city limits, is impressively international.",
-      template: "[city] is impressively international.",
+        "[city=D.C., and particularly the metro area beyond the city limits,] is impressively international.",
       questions: "Is the population diverse?",
     },
     {
       verbatim:
-        "The most beautiful time of spring usually falls from April to mid-May.",
-      template:
-        "The most beautiful time of spring usually falls from [...] to [...].",
+        "The most beautiful time of spring usually falls from [April] to [mid-May].",
       questions: "When is springtime the best?",
     },
     {
       verbatim:
-        "Weekends and federal holidays are more accommodating to guests as there are less parking restrictions.",
-      template:
-        "Weekends and [...] holidays are more accommodating to guests as there are [...]",
+        "[Weekends and federal holidays] are more accommodating to guests as there are [less parking restrictions].",
       questions: "What days of the week or month are best to visit? Why?",
     },
     {
       verbatim:
-        "Metrorail fares depend on the distance traveled and whether the trip starts during a peak or off-peak time period.",
-      template:
-        "[...] fares depend on the distance traveled and whether the trip starts during a peak or off-peak time period.",
+        "[Metrorail] fares depend on the distance traveled and whether the trip starts during a peak or off-peak time period.",
       questions:
         "How expensive are transit fares? Do they depend on the destination or the time of day?",
     },
     {
       verbatim:
-        "You must board though the front door so ridership can be tracked.",
-      template: "You must board though the [...] door so that [...].",
+        "You must board though the [front] door so [ridership can be tracked].",
       questions: "What are some rules for riding transit?",
     },
     {
       verbatim:
-        "Driving in downtown D.C. is difficult, particularly during rush hour, where traffic can make it take 10 minutes to drive a couple city blocks.",
-      template:
-        "Driving in downtown [...] is difficult, particularly during rush hour, where traffic can make it take [...]",
+        "Driving in downtown [D.C.] is difficult, particularly during rush hour, where traffic can make it take [10 minutes to drive a couple city blocks].",
       questions: "Is driving downtown difficult? When is it worst?",
     },
     {
       verbatim:
-        "There are several other parks worth visiting, including the Kenilworth Aquatic Gardens in Anacostia, the National Arboretum in Near Northeast, Meridian Hill Park in Columbia Heights, and the C&O Canal Towpath in Georgetown.",
-      template: "There are several other parks worth visiting, including [...]",
+        "There are several other parks worth visiting, including the [Kenilworth Aquatic Gardens in Anacostia, the National Arboretum in Near Northeast, Meridian Hill Park in Columbia Heights, and the C&O Canal Towpath in Georgetown].",
       questions: "What parks are worth visiting?",
     },
     {
       verbatim:
-        "The team also plays at the Capital One Arena since the crowds for the Hoyas' games are too big for the University to hold.",
-      template: "The team also plays at [...] since [...]",
+        "The team also plays at [the Capital One Arena] since [the crowds for the Hoyas' games are too big for the University to hold].",
       questions: "What sports teams are there? Where do they play?",
     },
     {
       verbatim:
-        "The gift shops of the Smithsonian museums have unique but more expensive offerings and are great places to buy gifts.",
-      template:
-        "The gift shops of [...] have unique but more expensive offerings and are great places to buy gifts.",
+        "The gift shops of [the Smithsonian museums] have unique but more expensive offerings and are great places to buy gifts.",
       questions: "Where are good places to buy gifts? How expensive are they?",
     },
     {
       verbatim:
-        "Busboys and Poets, a local chain, is known for hosting social-justice focused events.",
-      template: "[...] is known for hosting [...] events.",
+        "[Busboys and Poets], a local chain, is known for hosting [social-justice focused] events.",
       questions:
         "What kinds of events might be interesting? What kinds of places host them?",
     },
     {
-      verbatim: "The Villain & Saint hosts local jazz and rock bands.",
-      template: "[place] hosts local [genre] bands.",
+      verbatim: "[The Villain & Saint] hosts local [jazz and rock] bands.",
       questions: "Where do local bands play? What genres are they?",
     },
     {
       verbatim:
-        "Free WiFi is also available at metro stations,  D.C. public libraries, and many local coffee shops, which are also nice places to relax.",
-      template:
-        "Free WiFi is also available at [...] and many local coffee shops, which are also nice places to relax.",
+        "Free WiFi is also available at [metro stations,  D.C. public libraries,] and many local coffee shops, which are also nice places to relax.",
       questions: "Where can you get free WiFi? Are local coffee shops nice?",
     },
     {
       verbatim:
-        "Each May, dozens of embassies open their doors to the public for the  Passport D.C. festival, which showcases the buildings themselves, as well as exhibits, talks, and performances.",
-      template:
-        "Each [month], dozens of [org] open their doors to the public for the [...] festival, which showcases [...]",
+        "Each [month=May], dozens of [org=embassies] open their doors to the public for the [Passport D.C.] festival, which showcases [the buildings themselves, as well as exhibits, talks, and performances].",
       questions:
         "Are there notable yearly festivals? What are some unique things that happen during those festivals?",
     },
@@ -327,7 +290,7 @@ function getScreens(prompts, conditionNames, isDemo) {
           <h1>Consider this imaginary scenario...</h1>
           <p>
             Oh no! A bunch of Wikipedia articles were found to contain content
-            under the wrong license. The editors decided that the only option to
+            under the wrong license. The editors decided that the only way to
             make things right was to delete and rewrite them without looking at
             the existing articles at all.
           </p>
@@ -455,18 +418,23 @@ function getTask(promptName) {
   }
 }
 
-const cueView = txt => {
+const cueView = (condition, cue) => {
+  let txt = condition === "questions" ? cue["questions"] : cue["verbatim"];
   let result = [];
   let regex = /\[(\w+=)?([^\]]+)\]/;
   let match;
   let i = 0;
   while ((match = txt.match(regex))) {
     result.push(txt.slice(0, match.index));
-    result.push(
-      <span key={i++} style={{ opacity: 0.25 }}>
-        {match[2]}
-      </span>
-    );
+    if (condition === "template" || condition == "labeled") {
+      result.push(
+        <span key={i++} style={{ opacity: 0.25 }}>
+          {match[2]}
+        </span>
+      );
+    } else {
+      result.push(match[2]);
+    }
     txt = txt.slice(match.index + match[0].length);
   }
   if (txt) result.push(txt);
@@ -553,7 +521,7 @@ const getExperimentBlocks = tasksAndConditions => {
               borderRadius: "3px",
             }}
           >
-            {cueView(cue)}
+            {cueView(conditionName, cue)}
           </div>
 
           <p>
@@ -674,7 +642,7 @@ const getExperimentBlocks = tasksAndConditions => {
           ? getTrialScreen(
               blockIdx,
               trialIdx,
-              cue[condition],
+              cue,
               nFullCue,
               task,
               prompt,
@@ -805,7 +773,7 @@ function getClosingSurvey(tasksAndConditions) {
                           .slice(0, 3)
                           .map((cue, trialIdx) => (
                             <li key={trialIdx} style={{ paddingBottom: "5px" }}>
-                              {cue[conditionName]}
+                              {cueView(conditionName, cue)}
                             </li>
                           ))}
                       </ul>
