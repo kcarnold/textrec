@@ -37,7 +37,7 @@ import {
 
 import * as shuffle from "./shuffle";
 
-let baseConditions = ["verbatim", "template", "questions"];
+let baseConditions = ["noprompt", "template", "questions"];
 let conditionOrders = shuffle.permutator(baseConditions);
 
 const cuesByPrompt = {
@@ -542,11 +542,65 @@ const cueView = txt => {
 };
 
 const getExperimentBlocks = tasksAndConditions => {
-  const getTrialScreen = (blockIdx, trialIdx, cue, total, task, prompt) => ({
+  const getBaselineTrialScreen = (
+    blockIdx,
+    trialIdx,
+    total,
+    task,
+    prompt,
+    conditionName
+  ) => ({
     preEvent: {
       type: "logCue",
+      blockIdx,
+      trialIdx,
+      cue: "",
+      prompt,
+      conditionName,
+    },
+    screen: "Trial",
+    view: iobs(({ state }) => {
+      return (
+        <div className="Survey">
+          <h1>
+            Sentence {trialIdx + 1} of {total}
+          </h1>
+
+          <div>
+            Write a sentence or two for the article about{" "}
+            <b>{task.topicName}</b>:
+          </div>
+          <div style={{ padding: "10px 30px" }}>
+            <ControlledInput
+              name={`response-${blockIdx}-${trialIdx}`}
+              multiline={true}
+              rows={3}
+              style={{ width: "100%" }}
+            />
+          </div>
+          <br />
+          <NextBtn enabledFn={state => true} />
+        </div>
+      );
+    }),
+  });
+
+  const getTrialScreen = (
+    blockIdx,
+    trialIdx,
+    cue,
+    total,
+    task,
+    prompt,
+    conditionName
+  ) => ({
+    preEvent: {
+      type: "logCue",
+      blockIdx,
+      trialIdx,
       cue,
       prompt,
+      conditionName,
     },
     screen: "Trial",
     view: iobs(({ state }) => {
@@ -616,28 +670,50 @@ const getExperimentBlocks = tasksAndConditions => {
           <p>
             <b>Your task</b>: Write sentences that might get included in an
             article about the {task.visibleName} you listed,{" "}
-            <b>{task.topicName}</b>. For this article, you’ll be using Bot{" "}
-            {blockIdx + 1}.
+            <b>{task.topicName}</b>.
           </p>
-          <ul style={{ lineHeight: 1.5 }}>
-            <li>
-              The bot will give a prompt. Write a sentence or two based on that
-              prompt.
-            </li>
-            <li>
-              If the bot's prompt is irrelevant or hard to understand, say so
-              and move on.
-            </li>
-            <li>
-              Since we're just trying out these bots,{" "}
-              <b>
-                don't worry about whether the information you provide is
-                accurate
-              </b>
-              . If you need some specific information for the sentence you want
-              to write, invent something plausible.
-            </li>
-          </ul>
+          {condition === "noprompt" ? (
+            <div>
+              <p>
+                For this article, you'll be writing without any bot prompt. Just
+                write 10 sentences.
+              </p>
+              <ul style={{ lineHeight: 1.5 }}>
+                <li>Order doesn’t matter.</li>
+                <li>
+                  <b>
+                    Don't worry about whether the information you provide is
+                    accurate
+                  </b>
+                  . If you need some specific information for the sentence you
+                  want to write, invent something plausible.
+                </li>
+              </ul>
+            </div>
+          ) : (
+            <div>
+              <p>For this article, you’ll be using Bot {blockIdx + 1}.</p>
+              <ul style={{ lineHeight: 1.5 }}>
+                <li>
+                  The bot will give a prompt. Write a sentence or two based on
+                  that prompt.
+                </li>
+                <li>
+                  If the bot's prompt is irrelevant or hard to understand, say
+                  so and move on.
+                </li>
+                <li>
+                  Since we're just trying out these bots,{" "}
+                  <b>
+                    don't worry about whether the information you provide is
+                    accurate
+                  </b>
+                  . If you need some specific information for the sentence you
+                  want to write, invent something plausible.
+                </li>
+              </ul>
+            </div>
+          )}
           <NextBtn />
         </div>
       ),
@@ -645,14 +721,24 @@ const getExperimentBlocks = tasksAndConditions => {
     ...cuesByPrompt[prompt]
       .slice(0, nFullCue)
       .map((cue, trialIdx) =>
-        getTrialScreen(
-          blockIdx,
-          trialIdx,
-          cue ? cue[condition] : "??",
-          nFullCue,
-          task,
-          prompt
-        )
+        condition !== "noprompt"
+          ? getTrialScreen(
+              blockIdx,
+              trialIdx,
+              cue[condition],
+              nFullCue,
+              task,
+              prompt,
+              condition
+            )
+          : getBaselineTrialScreen(
+              blockIdx,
+              trialIdx,
+              nFullCue,
+              task,
+              prompt,
+              condition
+            )
       ),
     {
       screen: "PostBlockSurvey",
@@ -662,11 +748,18 @@ const getExperimentBlocks = tasksAndConditions => {
         questions: [
           agreeLikert("fluent", "I felt like I could write easily."),
           agreeLikert("stuck", "I sometimes felt stuck."),
-          agreeLikert(
-            "sysUnderstandable",
-            "I could understand the bot's suggestions."
-          ),
-          agreeLikert("sysRelevant", "The bot's suggestions were relevant."),
+          ...(condition === "noprompt"
+            ? []
+            : [
+                agreeLikert(
+                  "sysUnderstandable",
+                  "I could understand the bot's suggestions."
+                ),
+                agreeLikert(
+                  "sysRelevant",
+                  "The bot's suggestions were relevant."
+                ),
+              ]),
           {
             text:
               "I used outside resources for this task (we'd prefer you didn't, but better to be honest).",
