@@ -389,6 +389,8 @@ function getTask(promptName) {
         plural: "travel guides",
       },
       visibleName: "travel destination", // (city, region, national park, etc.)
+      visibleNameLong:
+        "place you might travel to, such as a particular city, country, or natural area",
       nameField,
       topicName: <ControlledInputView name={nameField} />,
 
@@ -431,6 +433,7 @@ function getTask(promptName) {
         domain: promptName,
       },
       visibleName,
+      visibleNameLong: visibleName,
       writingType: {
         singular: `an encyclopedia-style article about a ${visibleName}`,
         plural: `encyclopedia-style articles`,
@@ -930,7 +933,7 @@ const getPrecommitScreen = tasksAndConditions => {
           {tasksAndConditions.map(({ task }, idx) => (
             <div key={idx} style={{ borderBottom: "1px solid black" }}>
               <p>
-                Name a <b>{task.visibleName}</b> that you know well.
+                Name a <b>{task.visibleNameLong}</b> that you know well.
               </p>
               <div
                 style={{
