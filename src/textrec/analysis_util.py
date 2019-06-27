@@ -49,6 +49,20 @@ def get_log_analysis(participant):
     return get_log_analysis_many([participant])[participant]
 
 
+def get_final_data(participant):
+    logpath = paths.logdir / (participant + ".jsonl")
+    final_data = None
+    with open(logpath) as logfile:
+        for line in logfile:
+            entry = json.loads(line)
+            if entry["type"] == "finalData":
+                assert final_data is None
+                final_data = entry["finalData"]
+                # Don't break, so we can catch any weird cases where there were
+                # multiple finalDatas.
+    return final_data
+
+
 cheating_analysis_results = {}
 
 
