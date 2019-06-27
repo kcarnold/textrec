@@ -460,7 +460,7 @@ const cueView = (condition, cue) => {
   let i = 0;
   while ((match = txt.match(regex))) {
     result.push(txt.slice(0, match.index));
-    if (condition === "template" || condition == "labeled") {
+    if (condition === "template" || condition === "labeled") {
       result.push(
         <span key={i++} style={{ opacity: 0.25 }}>
           {match[2]}
