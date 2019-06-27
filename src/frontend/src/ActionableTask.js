@@ -388,11 +388,11 @@ function getTask(promptName) {
 
     const categoryQuestionMap = {
       book: {
-        text: "This book is:",
+        text: "This book would be classified as:",
         options: ["fiction", "non-fiction", "other"],
       },
       film: {
-        text: "This film is a:",
+        text: "This film would be classified as:",
         options: ["drama", "musical or comedy", "animated", "other"],
       },
     };
