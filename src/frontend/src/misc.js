@@ -23,30 +23,34 @@ export function getDemoConditionName(clientId: string): ?string {
   return null;
 }
 
-export const finalDataLogger = state => {
+const defaultFinalDataHandler = state => {
+  let trialData = [];
+  state.experiments.forEach((expState, expName) => {
+    trialData.push({
+      name: expName,
+      ...expState.getSerialized(),
+    });
+  });
+  let finalData = {
+    screenTimes: state.screenTimes.map(screen => ({
+      ...screen,
+      name: state.screens[screen.num].screen,
+    })),
+    controlledInputs: [...state.controlledInputs.toJS()],
+    trialData,
+  };
+  return finalData;
+};
+
+export const finalDataLogger = (state, callback = defaultFinalDataHandler) => {
   state.eventHandlers.push((state, event) => {
     if (event.type === "next") {
       let delta = event.delta || 1;
       if (delta === 1 && state.screenNum === state.screens.length - 1) {
-        let trialData = [];
-        state.experiments.forEach((expState, expName) => {
-          trialData.push({
-            name: expName,
-            ...expState.getSerialized(),
-          });
-        });
-        let finalData = {
-          screenTimes: state.screenTimes.map(screen => ({
-            ...screen,
-            name: state.screens[screen.num].screen,
-          })),
-          controlledInputs: [...state.controlledInputs.toJS()],
-          trialData,
-        };
         return [
           {
             type: "finalData",
-            finalData,
+            finalData: callback(state),
           },
         ];
       }
