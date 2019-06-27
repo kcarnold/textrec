@@ -568,7 +568,7 @@ const getExperimentBlocks = tasksAndConditions => {
           <OptionsResponse
             name={relevanceName}
             question={{
-              options: ["The prompt doesn't make sense", "No", "Yes"],
+              options: ["No", "Yes"],
             }}
           />
 
