@@ -577,7 +577,8 @@ const getExperimentBlocks = tasksAndConditions => {
               <div style={{ marginTop: "15px" }}>
                 Based on this prompt, write a sentence or two that would belong
                 in an encyclopedia article about <b>{task.topicName}</b>.
-                Remember that the reader of the article won't see the prompt.
+                Remember that the reader of the article{" "}
+                <b>won't see the prompt</b>.
               </div>
               <div style={{ padding: "10px 0" }}>
                 <ControlledInput
