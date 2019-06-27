@@ -660,8 +660,8 @@ const getExperimentBlocks = tasksAndConditions => {
                   you wrote.
                 </li>
                 <li>
-                  If the bot's prompt is hard to understand or doesn't give you
-                  a clear idea of what to write, say so and move on.
+                  If the bot's prompt doesn't give you a clear idea of what to
+                  write, say so and move on.
                 </li>
                 <li>
                   Since we're just trying out these bots,{" "}
