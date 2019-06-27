@@ -790,7 +790,8 @@ function getClosingSurvey(tasksAndConditions) {
           text: (
             <h3>
               How appropriate is the content and style of each of these
-              sentences?
+              sentences for the encyclopedia article? Try to use a wide range of
+              scores.
             </h3>
           ),
         },
@@ -802,7 +803,7 @@ function getClosingSurvey(tasksAndConditions) {
                 tasksAndConditions[blockIdx].task.nameField
               )}: "${text}"`,
               5,
-              ["Very unsatisfied", "Very satisfied"]
+              ["Very inappropriate", "Very appropriate"]
             )
           ),
         ]),
