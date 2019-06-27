@@ -30,56 +30,78 @@ let conditionOrders = shuffle.permutator(baseConditions);
 const cuesByPrompt = {
   "wiki-book": [
     {
-      verbatim:
-        'Sir Gawain and the Green Knight (Middle English: "Sir Gawayn and \u00fee Grene Kny\u021dt") is a late 14th-century Middle English chivalric romance.',
-      questions:
-        "What is title? What was title in original language? When published? What genre?",
-    },
-    {
+      type: "fiction",
+      source: "Sir Gawain and the Green Knight",
       verbatim:
         "It is one of the best known Arthurian stories, with its plot combining two types of folklore motifs, the beheading game and the exchange of winnings.",
       questions:
         "What type of story is it? How well-known is it? What are some of its major plot characteristics?",
     },
     {
-      verbatim:
-        "It is written in stanzas of alliterative verse, each of which ends in a rhyming bob and wheel.",
-      questions:
-        "What form are its stanzas? Does it rhyme? What is the rhyming pattern?",
-    },
-    {
+      type: "fiction",
+      source: "Sir Gawain and the Green Knight",
       verbatim:
         "It draws on Welsh, Irish, and English stories, as well as the French chivalric tradition.",
       questions: "What are its major influences?",
     },
     {
+      type: "fiction",
+      source: "Sir Gawain and the Green Knight",
       verbatim:
         "It is an important example of a chivalric romance, which typically involves a hero who goes on a quest which tests his prowess.",
       questions:
         "What genre does it exemplify? What characteristizes that genre?",
     },
     {
+      type: "fiction",
+      source: "Sir Gawain and the Green Knight",
       verbatim:
         "It remains popular to this day in modern English renderings from J. R. R. Tolkien, Simon Armitage, and others, as well as through film and stage adaptations.",
       questions: "Is it still popular? Does it have film or stage adaptations?",
     },
     {
+      type: "fiction",
+      source: "Sir Gawain and the Green Knight",
       verbatim:
         'It describes how Sir Gawain, a knight of King Arthur\'s Round Table, accepts a challenge from a mysterious "Green Knight" who challenges any knight to strike him with his axe if he will take a return blow in a year and a day.',
       questions:
         "Who is the main character? What is their main attribute? What is the central plot element?",
     },
     {
+      type: "fiction",
+      source: "Candide",
       verbatim:
-        'All are thought to have been written by the same unknown author, dubbed the "Pearl Poet" or "Gawain Poet", since all four are written in a North West Midland dialect of Middle English.',
-      questions:
-        "Do the other works in the manuscript share the same author? Why or why not?",
+        'The novella has been widely translated, with English versions titled Candide: or, All for the Best (1759); Candide: or, The Optimist (1762); and Candide: Optimism""\' (1947).',
+      questions: "Has it been translated? What is its translated title?",
     },
     {
+      type: "fiction",
+      source: "Candide",
       verbatim:
-        'The poem survives in a single manuscript, "Cotton Nero A.x.", which also includes three religious narrative poems: "Pearl", "Purity" and "Patience".',
+        "Candide is characterized by its  tone as well as by its erratic, fantastical, and fast-moving plot.",
       questions:
-        "How has the manuscript survived? Does the manuscript include other works?",
+        "What are some distinguishing attributes of the writing and plot?",
+    },
+    {
+      type: "fiction",
+      source: "Candide",
+      verbatim:
+        "Still, the events discussed are often based on historical happenings, such as the Seven Years' War and the 1755 Lisbon earthquake.",
+      questions: "Is the plot based on historical events?",
+    },
+    {
+      type: "fiction",
+      source: "Candide",
+      verbatim:
+        "As philosophers of Voltaire's day contended with the problem of evil, so does Candide in this short novel, albeit more directly and humorously.",
+      questions: "What philosophical subjects does the book address?",
+    },
+    {
+      type: "fiction",
+      source: "Candide",
+      verbatim:
+        "Immediately after its secretive publication, the book was widely banned to the public because it contained religious blasphemy, political sedition, and intellectual hostility hidden under a thin veil of na\u00efvet\u00e9.",
+      questions: "What reaction did the book get when initially published?",
     },
   ],
   "wiki-film": [
