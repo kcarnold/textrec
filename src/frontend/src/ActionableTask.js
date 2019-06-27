@@ -295,7 +295,7 @@ decorate(TrialState, {
 const WelcomeScreen = { screen: "Welcome", view: Views.Welcome };
 const DoneScreen = { screen: "Done", view: Views.Done };
 
-function getScreens(prompts, conditionNames, isDemo) {
+const getTasksAndConditions = (prompts, conditionNames) => {
   let tasksAndConditions = [];
   let botIdx = 1;
   for (let idx = 0; idx < prompts.length; idx++) {
@@ -309,7 +309,10 @@ function getScreens(prompts, conditionNames, isDemo) {
       botIdx: conditionName === "noprompt" ? null : botIdx++,
     });
   }
-  //   if (isDemo) return getPrewritingScreens(tasksAndConditions);
+  return tasksAndConditions;
+};
+
+function getScreens(tasksAndConditions, isDemo) {
   return [
     WelcomeScreen,
     // getIntroSurvey(tasksAndConditions),
@@ -912,7 +915,8 @@ export function createTaskState(loginEvent: LoginEvent) {
   }
 
   // Get task setup.
-  let screens = getScreens(prompts, conditions, isDemo);
+  let tasksAndConditions = getTasksAndConditions(prompts, conditions);
+  let screens = getScreens(tasksAndConditions, isDemo);
 
   let state = createState({
     clientId,
@@ -920,6 +924,7 @@ export function createTaskState(loginEvent: LoginEvent) {
     createExperimentState: flags => new TrialState(flags),
     timeEstimate: "30 minutes",
   });
+  state.tasksAndConditions = tasksAndConditions;
   finalDataLogger(state);
 
   return state;
