@@ -38,6 +38,7 @@ BATCH_DATA = {
     "idea3r4": dict(n_groups=6, config="idea"),  # With post-writing surveys.
     "idea3r5": dict(n_groups=6, config="idea"),  # So much fixed!
     "design1": dict(config="act", n_groups=6),  # Cue design experiment
+    "design1r2": dict(config="act", n_groups=6),  # Cue design experiment r2
 }
 
 invalid = set("h52x67 3vf5fg 73qq5q ffhgxm mhh838 j39263 pqf6q5 49cm8f".split())
