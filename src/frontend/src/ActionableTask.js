@@ -794,14 +794,6 @@ function getClosingSurvey(tasksAndConditions) {
           ),
         },
         ...flatMap(getAllWritings(state), (blockResponses, blockIdx) => [
-          // {
-          //   type: "text",
-          //   text: (
-          //     <div>
-          //       What you wrote for {tasksAndConditions[blockIdx].task.topicName}
-          //     </div>
-          //   ),
-          // },
           ...blockResponses.map(({ text, trialIdx }) =>
             likert(
               `quality-${blockIdx}-${trialIdx}`,
@@ -889,6 +881,70 @@ function getClosingSurvey(tasksAndConditions) {
   };
 }
 
+const getFinalData = state => {
+  let {
+    tasksAndConditions,
+    controlledInputs,
+    ciStartTimes,
+    ciEndTimes,
+  } = state;
+  let blocks = tasksAndConditions.map(
+    ({ prompt, task, conditionName }, blockIdx) => {
+      let trials = [];
+      for (let trialIdx = 0; trialIdx < nFullCue; trialIdx++) {
+        const relevanceName = `relevance-${blockIdx}-${trialIdx}`;
+        const responseName = `response-${blockIdx}-${trialIdx}`;
+
+        trials.push({
+          relevance: controlledInputs.get(relevanceName),
+          secsBeforeFirstJudgedRelevance: ciStartTimes.get(relevanceName),
+          secsBeforeLastJudgedRelevance: ciEndTimes.get(relevanceName),
+          text: controlledInputs.get(responseName),
+          secsBeforeStartTyping: ciStartTimes.get(responseName),
+          secsBeforeEndTyping: ciEndTimes.get(responseName),
+          selfReportQuality: controlledInputs.get(
+            `postExp-quality-${blockIdx}-${trialIdx}`
+          ),
+        });
+      }
+
+      let blockSurvey = [
+        "fluent",
+        "stuck",
+        "sysUnderstandable",
+        "sysRelevant",
+        "used-external",
+        "techDiff",
+        "other",
+      ].map(attr => [
+        attr,
+        controlledInputs.get(`postBlock-${blockIdx}-${attr}`),
+      ]);
+
+      return {
+        blockIdx,
+        prompt,
+        conditionName,
+        trials,
+        blockSurvey,
+      };
+    }
+  );
+  return {
+    conditionOrder: tasksAndConditions.map(
+      ({ conditionName }) => conditionName
+    ),
+    promptOrder: tasksAndConditions.map(({ prompt }) => prompt),
+    blocks,
+    screenTimes: state.screenTimes.map(screen => ({
+      ...screen,
+      name: state.screens[screen.num].screen,
+    })),
+    controlledInputs: [...state.controlledInputs.toJS()],
+  };
+};
+window.getFinalData = getFinalData;
+
 export function createTaskState(loginEvent: LoginEvent) {
   let clientId = loginEvent.participant_id;
 
@@ -925,7 +981,7 @@ export function createTaskState(loginEvent: LoginEvent) {
     timeEstimate: "30 minutes",
   });
   state.tasksAndConditions = tasksAndConditions;
-  finalDataLogger(state);
+  finalDataLogger(state, getFinalData);
 
   return state;
 }

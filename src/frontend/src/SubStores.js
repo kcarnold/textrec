@@ -60,10 +60,23 @@ export const sizeTracking = state => {
 export const controlledInputsTracking = state => {
   extendObservable(state, {
     controlledInputs: observable.map({}, { deep: false }),
+    ciStartTimes: observable.map({}, { deep: false }),
+    ciEndTimes: observable.map({}, { deep: false }),
   });
   state.eventHandlers.push((state, event) => {
     if (event.type === "controlledInputChanged") {
-      state.controlledInputs.set(event.name, event.value);
+      let { name, value, jsTimestamp } = event;
+      let {
+        controlledInputs,
+        ciStartTimes,
+        ciEndTimes,
+        screenTimestamp,
+      } = state;
+      let timeOffset = (jsTimestamp - screenTimestamp) / 1000;
+      controlledInputs.set(name, value);
+      if (ciStartTimes.get(name) === undefined)
+        ciStartTimes.set(name, timeOffset);
+      ciEndTimes.set(name, timeOffset);
     }
   });
 };
@@ -96,6 +109,7 @@ export const screenTracking = screens => state => {
       num: state.screenNum,
       timestamp: state.lastEventTimestamp,
     });
+    state.screenTimestamp = state.lastEventTimestamp;
     if (screen.timer) {
       state.timerStartedAt = state.lastEventTimestamp;
       state.timerDur = screen.timer;
