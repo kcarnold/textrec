@@ -763,7 +763,8 @@ function getClosingSurvey(tasksAndConditions) {
           type: "text",
           text: (
             <h3>
-              How satisfied are you with having written each of these sentences?
+              How appropriate is the content and style of each of these
+              sentences?
             </h3>
           ),
         },
@@ -777,10 +778,14 @@ function getClosingSurvey(tasksAndConditions) {
           //   ),
           // },
           ...blockResponses.map(({ text, trialIdx }) =>
-            likert(`quality-${blockIdx}-${trialIdx}`, `"${text}"`, 5, [
-              "Very unsatisfied",
-              "Very satisfied",
-            ])
+            likert(
+              `quality-${blockIdx}-${trialIdx}`,
+              `Encyclopedia article about ${state.controlledInputs.get(
+                tasksAndConditions[blockIdx].task.nameField
+              )}: "${text}"`,
+              5,
+              ["Very unsatisfied", "Very satisfied"]
+            )
           ),
         ]),
         {
