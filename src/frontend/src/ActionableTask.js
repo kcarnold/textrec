@@ -927,6 +927,8 @@ const getFinalData = state => {
         conditionName,
         trials,
         blockSurvey,
+        confidence: controlledInputs.get(`confidence-${task.nameField}`),
+        category: controlledInputs.get(`category-${task.nameField}`),
       };
     }
   );
