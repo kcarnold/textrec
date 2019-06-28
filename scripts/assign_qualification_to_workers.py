@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """
-Find anyone who did the experiment or the annotation after already seeing the target images.
+Assign qualifications to workers who have completed certain types of HITs.
 """
 
+import sys
 import json
 import pathlib
 
@@ -32,16 +33,37 @@ titles = {
     "Write about a recent experience at a restaurant [<10min]": "ideawrite",
     "Write about a recent experience at a restaurant [~10min]": "ideawrite",
     "Write sentences about 3 different topics [~35m]": "design",
+    "Write sentences about 3 different topics [~45m]": "design",
     "Rate informativeness and appropriateness of text": "rate",
 }
 
+known_irrelevant = """
+Answer questions about a video
+Create a face using shapes [duration: < 3 minutes]
+Create a face using shapes [duration: < 6 minutes, if you have done this HIT before, please refrain from doing it again]
+Create a face using shapes [duration: < 6 minutes]
+Label sentences in a conversation between three people
+Take our Negotiation Experiment
+Take our VR experiment 
+Take our VR experiment (SMARTPHONE REQUIRED)
+Take our VR experiment (TABLET REQUIRED)
+Tell us your opinion about these videos
+Which image is more creative? [<1 minutes]
+Which image is more creative? [<5 minutes]
+""".strip().split(
+    "\n"
+)
+
 relevant_hits = [hit for hit in hits if hit["Title"] in titles.keys()]
-irrelevant_hits = {hit["Title"] for hit in hits if hit["Title"] not in titles}
+irrelevant_hits = {
+    hit["Title"]
+    for hit in hits
+    if hit["Title"] not in titles and hit["Title"] not in known_irrelevant
+}
 if irrelevant_hits:
-    print()
-    print("Skipping other HITS:")
-    print("\n".join(sorted(irrelevant_hits)))
-    print()
+    print("ERR: uncategorized HITs:")
+    print("\n".join(repr(t) for t in sorted(irrelevant_hits)))
+    sys.exit(1)
 id2hit = {hit["HITId"]: hit for hit in hits}
 
 
