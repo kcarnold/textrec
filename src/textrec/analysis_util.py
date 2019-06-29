@@ -63,6 +63,28 @@ def get_final_data(participant):
     return final_data
 
 
+def get_trial_lengths(participant):
+    # HACK.
+    from textrec.paths import paths
+    import json
+
+    result = []
+    logpath = paths.logdir / (participant + ".jsonl")
+    last_logged_cue = None
+    with open(logpath) as logfile:
+        for line in logfile:
+            entry = json.loads(line)
+            if entry["type"] == "logCue":
+                last_logged_cue = entry.copy()
+                del entry["type"]
+            elif entry["type"] == "next":
+                if last_logged_cue is not None:
+                    ts = entry["jsTimestamp"]
+                    result.append(dict(last_logged_cue, next_ts=ts))
+                last_logged_cue = None
+    return result
+
+
 cheating_analysis_results = {}
 
 
