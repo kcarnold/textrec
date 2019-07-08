@@ -1,0 +1,54 @@
+---
+title: "Analysis of Word Choice Effects"
+author: "Kenneth C. Arnold"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("readr")
+library("tidyverse")
+library("ggbeeswarm")
+library("afex")
+afex::set_sum_contrasts()
+library("ARTool")
+library("emmeans")
+```
+
+```{r read, include=FALSE}
+block_factor <- col_factor(c("0", "1", "2"));
+#data <- read_csv("../data/min_pervasiveness.csv", col_types=cols(
+data <- read_csv("../data/min_freq.csv", col_types=cols(
+  block=block_factor,
+  img = col_character()
+));
+data$participant <- factor(data$participant);
+data$condition <- factor(data$condition);
+data$img <- factor(data$img);
+```
+
+```{r}
+# blockLevel <- data %>% group_by(participant, condition) %>% 
+#   summarise(min_pervasiveness=mean(min_pervasiveness))
+blockLevel <- data %>% group_by(participant, condition) %>% 
+  summarise(min_freq=mean(min_freq))
+```
+
+```{r min_pervasinveness}
+#m <- art(min_pervasiveness ~ condition + (condition|participant) + (condition|img), data=data)
+# m <- art(min_pervasiveness ~ condition + (1|participant), data=blockLevel)
+m <- art(min_freq ~ condition + (1|participant), data=blockLevel)
+summary(m)
+```
+```{r results}
+model <- anova(m)
+emm <- emmeans(artlm(m, "condition"), "condition", contr="pairwise", adjust="holm")
+resids <- residuals(m)
+
+shapiroResid <- shapiro.test(resids)
+car::qqPlot(resids, groups=blockLevel$condition)
+```
+
+# Appendix
+
+For more details on using R Markdown see <http://rmarkdown.rstudio.com>.

@@ -1,0 +1,107 @@
+---
+title: "Cue Design Study Analysis"
+author: "Kenneth C. Arnold"
+date: "7/6/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.path = "figures/cue_")
+library(dplyr)
+library(readr)
+library(tidyverse)
+
+# Modeling
+library(lme4)
+library(lmerTest)
+library(car)
+library(afex)
+library("emmeans")
+library("ARTool")
+
+# Plotting
+library("cowplot")
+library("ggbeeswarm")
+
+afex::set_sum_contrasts()
+
+## See vignette("afex_mixed_example") for why "asymptotic".
+# emm_options(lmer.df = "asymptotic") # also possible: 'satterthwaite', 'kenward-roger'
+emm_options(lmer.df="kenward-roger") # slower, but needed for post-hoc tests to make sense.
+```
+
+
+
+```{r read, include=FALSE}
+block_factor <- col_factor(c("0", "1", "2"));
+data <- read_csv("../data/analyzed/design/trial.csv");
+
+# Rename column
+colnames(data)[colnames(data) == "used-external"] <- "usedExternal";
+colnames(data)[colnames(data) == "prompt"] <- "task";
+
+# Exclude
+data <- data %>% subset(usedExternal != "Yes");
+
+# TODO: Exclude jw8wc8 because she wrote things like "No. this movie has been translated in only english on 1997 and next to."
+
+data$pid <- factor(data$pid);
+data$abstraction <- factor(
+  data$conditionName,
+  levels=c("noprompt", "verbatim", "questions"),
+  labels=c("NoPrompt", "Snippets", "Questions"));
+data$text_len_log <- log(data$text_len);
+
+trialsWithTexts <- data %>% subset((relevance == "Yes") | is.na(relevance))
+```
+
+```{r n_relevant}
+blocksWithCues <- data %>% 
+  subset(abstraction != "NoPrompt") %>% 
+  group_by(pid, abstraction, blockIdx, task, confidence, category_is_relevant) %>% summarize(n_relevant=sum(relevance == "Yes"), total=n());
+blocksWithCues$abstraction <- factor(blocksWithCues$abstraction, exclude="NoPrompt");
+
+blocksWithCues %>% ggplot(aes(x=abstraction, y=n_relevant)) +
+  geom_boxplot() +
+  labs(y="Num marked Relevant", x="Presentation")
+```
+
+```{r cache=TRUE}
+#blocksWithCues$fracRelevant <- (blocksWithCues$n_relevant + 1) / 12# / 11 + .01;
+m <- mixed(cbind(n_relevant, total - n_relevant) ~ abstraction + (1|pid) + (1|task), family=binomial(link = "logit"), data=blocksWithCues, method="PB", args_test = list(nsim=100))#, weights=blocksWithCues$total + 2)
+m
+```
+
+```{r}
+m2 <- mixed(
+  cbind(n_relevant, total - n_relevant) ~ abstraction * category_is_relevant + (1|pid) + (1|task),
+  family=binomial(link = "logit"), data=blocksWithCues, method="LRT", all_fit = T)#, args_test = list(nsim=100));
+m2
+```
+
+```{r}
+blockLevelTexts <- trialsWithTexts %>%
+  group_by(pid, abstraction, blockIdx, task, confidence, category_is_relevant) %>% 
+  summarise(text_len_log=mean(text_len_log));
+```
+
+```{r}
+summary(mixed(text_len_log ~ abstraction + confidence + (1|pid) + (1|task), data=blockLevelTexts))
+```
+
+```{r textLenLogGG}
+labeledBar <- list(
+  stat_summary(geom="bar", fun.y=mean, position="dodge"),
+    stat_summary(geom="errorbar", fun.data=mean_se, position=position_dodge(width=.9), width=.4),
+    scale_y_continuous(expand=expand_scale(mult=c(0,.05))), # remove the extra spacing at 0
+    stat_summary(geom="text", fun.y=mean,
+                 aes(label=sprintf("%1.2f", ..y..)),
+                 position=position_dodge(width=.9),
+                 hjust="middle", vjust="bottom"))
+
+
+blockLevelTexts %>% ggplot(aes(x=abstraction, y=text_len_log)) + labeledBar +
+  labs(x="Abstraction", y="log(Number of Characters)")
+```
+
+How long does it take to decide that a prompt is *irrelevant*?

@@ -23,16 +23,16 @@
 // Master data filter
 dt = Subset(
 	dt_all,
-	Rows( dt_all << get rows where( :participant != "pr5hff" & :participant != "7q253f" & :experiment == "gc1" ))//& :steppedBack == "False" ) )
+	Rows( dt_all << get rows where( :participant != "pr5hff" & :participant != "7q253f" & :experiment != "gc1" ))//& :steppedBack == "False" ) )
 );
 Close( dt_all );
-dt << Set Name( "Combined Data" );
+dt << Set Name( "specificity Data" );
 
 
 // Set data types
 Column( dt, "stimulus" ) << Data Type( "Character" ) << Modeling Type( "Nominal" );
 // "The last level is the level with the highest value order coding; it is the level whose indicator function is not included in the model." (https://www.jmp.com/support/help/14/indicator-parameterization-estimates.shtml)
-Column( dt, "condition" ) << Set Property( "Value Ordering", {"gated", "standard", "norecs"} );
+Column( dt, "condition" ) << Set Property( "Value Ordering", {"contextual", "standard", "norecs"} );
 
 // Transform columns
 quartilify = {/*"NFC", "Extraversion", "Openness", "Trust",*/ "chars_per_sec_norecs_mean"};
@@ -61,6 +61,8 @@ dt << New Column( "mintaps_standard", Numeric, Formula( :corrected_tapstotype_st
 dt << New Column( "mintaps_contextual", Numeric, Formula( :corrected_tapstotype_contextual / :num_words ) );
 dt << New Column( "mintaps_gated", Numeric, Formula( :corrected_tapstotype_gated / :num_words ) );
 dt << New Column( "mintaps_std_minus_contextual", Numeric, Formula( mintaps_standard - mintaps_contextual ) );
+
+dt << New Column( "bow_std_minus_contextual", Numeric, Formula( corrected_bow_recs_idealuse_standard - corrected_bow_recs_idealuse_contextual) );
 
 
 dt << New Column( "num_words_not_BOW_recs", Numeric, Formula( :num_words - :corrected_bow_recs_idealuse_standard ) );
@@ -186,10 +188,15 @@ analyze = Function( {response_name, window_title, extra_toplevel = "", extra_eff
 
 /*** Outcome Effects ***/
 // MTPW(standard)
-analyze( "mintaps_standard", "MTPW(Standard, text)" );
+analyze( "mintaps_standard", "Ideal Taps Per Word (Standard, text)" );
 
 // Total taps
 analyze( "corrected_tapstotype_standard", "Min-Taps total" );
+
+analyze("corrected_bow_recs_idealuse_standard", "Number of words matching a full-word Standard prediction");
+analyze("corrected_bow_recs_idealuse_contextual", "Number of words matching a full-word Contextual prediction");
+analyze("bow_std_minus_contextual", "Number of words matching a full-word Standard prediction - contextual");
+
 
 // Deviations from BOW recs
 analyze( "num_words_not_BOW_recs", "Num words typed that weren't BOW recommendations" );
