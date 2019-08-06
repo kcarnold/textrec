@@ -13,7 +13,8 @@ PROJECT_NAME = textrec
 
 ## Install Python Dependencies
 requirements:
-	poetry install
+	./scripts/dl-spacy
+	CFLAGS=-stdlib=libc++ poetry install
 	poetry run python -c "import nltk; nltk.download('punkt'); nltk.download('perluniprops'); nltk.download('nonbreaking_prefixes')"
 
 ## Delete all compiled Python files

@@ -1,2 +1,6 @@
 #!/bin/sh
-curl -L https://github.com/explosion/spacy-models/releases/download/en_core_web_md-2.1.0/en_core_web_md-2.1.0.tar.gz | (cd vendor && tar zxv)
+if [ -d vendor/en_core_web_md-2.1.0/ ]; then
+    echo "SpaCy data already installed"
+else
+    curl -L https://github.com/explosion/spacy-models/releases/download/en_core_web_md-2.1.0/en_core_web_md-2.1.0.tar.gz | (cd vendor && tar zxv)
+fi
