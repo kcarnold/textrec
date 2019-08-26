@@ -81,6 +81,18 @@ HITs/chunk_indices_%.csv: data/analyzed/idea/%/annotation_chunks.json
 data/analyzed/idea/%/step3.pkl: data/analyzed/idea/%/step1.pkl src/textrec/analysis_step3.py
 	poetry run python -m textrec.analysis_step3 $*
 
+## Old analysis
+# This rule needs to go first or else the logs_to_csv rule will match a 'withmanual' :(
+data/analyzed/trial_withmanual_%.csv: src/textrec/gruntwork.py data/analyzed/trial_%.csv data/gruntwork
+	poetry run python -m textrec.gruntwork $*
+
+data/analyzed/trial_%.csv: data/participants.txt src/textrec/logs_to_csv.py
+	poetry run python -m textrec.logs_to_csv $*
+
+# === Build this rule for the full analysis! ===
+data/analyzed/combined_data.csv: data/analyzed/trial_withmanual_gc1.csv data/analyzed/trial_withmanual_spec1.csv data/analyzed/trial_withmanual_spec2.csv
+	poetry run python scripts/combined_analysis.py
+
 
 #################################################################################
 # Self Documenting Commands                                                     #

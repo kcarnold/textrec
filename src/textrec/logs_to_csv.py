@@ -476,7 +476,7 @@ def analyze_all(participants, traits='NFC Extraversion'):
         expected_experiment_columns[trait] = TraitColumn
 
     print(f"Getting log analyses for {len(participants)} participants.")
-    analyses = analysis_util.get_log_analysis_many(participants)
+    analyses = analysis_util.get_log_analysis_many(participants, analyzer="TouchAnalyzer")
 
     trial_data = get_trial_data(participants, analyses)
 

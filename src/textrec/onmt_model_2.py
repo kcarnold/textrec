@@ -245,7 +245,7 @@ models = dict()
 for name, spec in model_specs.items():
     print(spec['filename'])
     models[name] = ONMTModelWrapper(
-        model_filename=str(paths.models / spec['filename']),
+        model_filename=str(paths.onmt_models / spec['filename']),
         cmdline_args=spec['args'].split(),
     )
 print("Ready.")

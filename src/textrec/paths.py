@@ -24,6 +24,8 @@ class paths:
     imgdata_h5_all = top_level / "models-local" / "feats_by_imgid.h5"
     imgdata_h5 = imgdata_h5_subset
 
+    onmt_models = top_level / "models-local" / "onmt_models"
+
     old_code = frontend / "src" / "old_versions"
 
     vendor = top_level.parent / "vendor"
