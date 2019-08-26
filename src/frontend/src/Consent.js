@@ -111,7 +111,7 @@ const Consent = ({ timeEstimate, platform }) => (
         Upon completion of the study, you will be paid the amount shown in the{" "}
         {platform === "sona" && "HDSL"} {platform === "turk" && "MTurk"} system.
         We determined this amount based on the estimated time to complete the
-        task at a target rate of $9/hr.
+        task at a target rate of $15/hr.
       </p>
     ) : (
       <p>
