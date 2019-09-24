@@ -2,17 +2,24 @@
 title: "Suggestion Assertiveness Analysis"
 author: "Kenneth C. Arnold"
 date: "9/18/2019"
-output: html_document
+output:
+  html_document:
+    self_contained: false
 ---
 
-The Transparent Statistics guide, especially the [exemplars](https://transparentstats.github.io/guidelines/effectsize.html#effectsize_exemplar_within), was very helpful
+The Transparent Statistics guide, especially the [exemplars](https://transparentstats.github.io/guidelines/effectsize.html#effectsize_exemplar_within), was very helpful.
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+# https://stackoverflow.com/questions/27992239/knitr-include-figures-in-report-and-output-figures-to-separate-files
+knitr::opts_chunk$set(
+  echo = TRUE,
+  dev=c('png', 'pdf')
+)
 
 library(dplyr)
 library(readr)
 library(tidyverse)
+library("knitr")
 
 # Modeling
 library(lme4)
@@ -25,8 +32,9 @@ library("emmeans")
 library("ARTool")
 
 # Plotting
-library("cowplot")
+#library("cowplot")
 library("ggbeeswarm")
+library("ggstance")
 
 afex::set_sum_contrasts()
 
@@ -50,32 +58,31 @@ allData$recsVisible <- allData$condition != "norecs";
 ```
 
 ```{r munge-data, include=FALSE}
+# Use only the "Gated" study.
+allData <- allData %>% subset(experiment == "gc1");
+
 # Exclude bad participants.
 data <- subset(allData, (participant != "pr5hff") & (participant != "7q253f"))
 
-# Use only the "Gated" study.
-data <- subset(data, experiment == "gc1")
 
 # Set appropriate columns as nominal factors
-data$experiment <- factor(data$experiment)
-data$block <- factor(data$block)
+data <- data %>% mutate_at(c('experiment', 'block', 'participant', 'stimulus', 'stimulus_order', 'condition_order'), factor);
 #data$idx <- factor(data$idx)
 #data$idx_in_block <- factor(data$idx_in_block)
-data$participant <- factor(data$participant)
-data$steppedBack <- factor(data$steppedBack)
-data$condition_order <- factor(data$condition_order)
-data$stimulus <- factor(data$stimulus)
-data$stimulus_order <- factor(data$stimulus_order)
+
+data <- data %>% rename(
+  num_predictable = corrected_bow_recs_idealuse_standard,
+  chars_per_sec = characters_per_sec
+);
 
 # Name the conditions.
 data$condition <- recode_factor(data$condition, "norecs"="Intro.", "gated"="Ambi.", "standard"="Extra.")
 data$condition <- factor(data$condition, levels = c("Extra.", "Ambi.", "Intro."))
 
-# (stuff that's useful if we go back and use Contextual)
-data$study <- recode_factor(data$experiment, "gc1"="gated", "spec1"="contextual", "spec2"="contextual")
-#data$condition_order_2 <- factor(gsub("contextual", "manip", sub("gated", "manip", data$condition_order)))
-
 # Compute derived data.
+data <- data %>% mutate(
+  chars_per_sec_log = log(chars_per_sec)
+);
 data$itpw <- data$corrected_tapstotype_standard / data$num_words
 data$itpw_log <- log(data$itpw)
 data$itpw_gated <- data$corrected_tapstotype_gated / data$num_words
@@ -85,8 +92,8 @@ data$tapsPerSec <- data$num_taps / data$seconds_spent_typing
 data$anyErrors <- factor(data$uncorrected_errors != 0)
 data$anyADJ = factor(data$ADJ != 0)
 
-data$num_predictable = data$corrected_bow_recs_idealuse_standard
-data$frac_predictable = data$corrected_bow_recs_idealuse_standard / data$num_words
+#data$num_predictable = data$corrected_bow_recs_idealuse_standard
+data$frac_predictable = data$num_predictable / data$num_words
 
 #data$num_not_recced = data$corrected_bow_recs_offered_standard - data$corrected_bow_recs_idealuse_standard
 #data$frac_not_recced = 1 - data$corrected_bow_recs_idealuse_standard / data$corrected_bow_recs_offered_standard
@@ -113,85 +120,147 @@ vars.to.summarize <- list(
   "num_predictable" = "Number of predictable words",
   "frac_predictable" = "Fraction of words that were predictable",
   "relevant_use_frac" = "Fraction of relevant predictions that were used",
-  #  "progressive_tense" = "Progressive tense used?",
-  "characters_per_sec"="Characters per Second",
+  "chars_per_sec"="Characters per Second",
   "tapsPerSec" = "Taps per Second",
   "TLX_sum"="Total cognitive load (TLX)",
   "physical"="Physical load (TLX)",
   "mental"="Mental load (TLX)"
 )
 
-
 expLevel <- data %>%
   group_by(experiment, condition_order, participant, age, chars_per_sec_norecs_mean, steppedBack, gender, use_predictive) %>%
   summarise(
-    characters_per_sec_mean = mean(characters_per_sec),
+    chars_per_sec_mean = mean(chars_per_sec),
     rec_use_per_seen_mean=mean(rec_use_per_seen, na.rm=TRUE))
-
-expLevel$high_prediction_user <- factor(ntile(expLevel$rec_use_per_seen_mean, 2))
-expLevel$speed_bin <- factor(ntile(expLevel$chars_per_sec_norecs_mean, 3))
 
 data <- left_join(data, expLevel, copy=TRUE)
 
-blockLevel <- data %>%
-  group_by(experiment, participant, block, condition, condition_order, stimulus_order, steppedBack, high_prediction_user, speed_bin, age, chars_per_sec_norecs_mean) %>%
-  summarise_at(names(vars.to.summarize), mean)
-
-
 longForm <- data %>%
-  select(experiment, participant, condition, block, idx, idx_in_block, steppedBack, high_prediction_user, !!!names(vars.to.summarize)) %>%
+  select(experiment, participant, condition, block, idx, idx_in_block, steppedBack, !!!names(vars.to.summarize)) %>%
   gather(measure, value, !!!names(vars.to.summarize)) %>%
   mutate(measure=dplyr::recode(measure, !!!vars.to.summarize))
 
 ```
 
+# Summaries
+
+Overall:
 ```{r}
-if (FALSE) {
-data %>%
-  group_by(participant, condition) %>% 
-  summarise(num_predictable=mean(num_predictable)) %>% 
-  ggplot() +
-    aes(y=num_predictable_words, x=condition, group=participant) +
-    geom_point() +
-    facet_wrap(~participant) +
-    theme_bw()
-}
+print(paste("Total", n_distinct(allData$participant), "participants"))
 ```
+
+Gender:
+```{r genders}
+# Gender distribution
+allData %>%
+  group_by(gender) %>%
+  summarize(count=n_distinct(participant)) %>%
+  spread(gender, count)
+#counts.gc1 <- filter(genderCounts, experiment=="gc1")
+```
+
+Ages:
+```{r ages}
+# Age range
+allData %>%
+  summarize(min=min(age), max=max(age))
+```
+
+# Adjustments
+
+```{r typosByCondition}
+xt <- xtabs(~ condition + anyErrors, data=data)
+#typo_test <- fisher.test(xt)
+xt %>% kable()
+```
+```{r typoDifferenceSignificant}
+xt <- xtabs(~ recsVisible + anyErrors, data=data)
+fisher.test(xt)
+```
+
+
+# Subtract per-image mean, aggregate by block.
 
 ```{r}
 dataMinusImgMean <- data %>%
   group_by(stimulus) %>% 
   mutate(
     num_predictable = num_predictable - mean(num_predictable),
-    frac_predictable = frac_predictable - mean(frac_predictable)
-   );
+    frac_predictable = frac_predictable - mean(frac_predictable),
+    num_words = num_words - mean(num_words),
+    chars_per_sec = chars_per_sec - mean(chars_per_sec),
+    chars_per_sec_log = chars_per_sec_log - mean(chars_per_sec_log)
+   ) %>% 
+  ungroup();
+
 blockLevel <- dataMinusImgMean %>% 
-  group_by(participant, stimulus) %>% 
-  summarise(num_predictable=mean(num_predictable))
+  group_by(participant, condition, block) %>% 
+  summarise_at(c('num_predictable', 'frac_predictable', 'num_words', 'chars_per_sec', 'chars_per_sec_log', 'chars_per_sec_norecs_mean', 'chars_per_sec_ratio_to_norecs'), mean);
+#    num_predictable=mean(num_predictable),
+#    frac_predictable=mean(frac_predictable),
+#    num_words=mean(num_words),
+#    chars_per_sec=mean(chars_per_sec))
 ```
 
 ```{r}
 labeledBar <- list(
   stat_summary(geom="bar", fun.y=mean, position="dodge"),
     stat_summary(geom="errorbar", fun.data=mean_se, position=position_dodge(width=.9), width=.4),
-    scale_y_continuous(expand=expand_scale(mult=c(0,.05))), # remove the extra spacing at 0
+    #scale_y_continuous(expand=expand_scale(mult=c(0,.05))), # remove the extra spacing at 0
     stat_summary(geom="text", fun.y=mean,
                  aes(label=sprintf("%1.2f", ..y..)),
                  position=position_dodge(width=.9),
                  hjust="middle", vjust="bottom"))
 ```
 
+# RQ1: To what degree do people choose the words that the system suggests?
+
 ```{r num_predictable}
-dataMinusImgMean %>% ggplot(aes(x=condition, y=num_predictable)) + labeledBar
+blockLevel %>%
+  #group_by(participant) %>% mutate(num_predictable = num_predictable - mean(num_predictable)) %>% ungroup() %>% 
+  ggplot(aes(x=condition, y=num_predictable)) + 
+  #geom_boxplot() +
+  labeledBar + 
+  #stat_summary(geom="bar", fun.data=mean_se) +
+  #stat_summary(geom="errorbar", fun.data=mean_se)
+  coord_flip()
 ```
 
 ```{r frac_predictable}
-dataMinusImgMean %>% ggplot(aes(x=condition, y=frac_predictable)) + labeledBar
+blockLevel %>% ggplot(aes(x=condition, y=frac_predictable)) + labeledBar + coord_flip()
+```
+
+```{r individualDiffs}
+getPairwiseDiffs <- function(colName) {
+  blockLevel %>%
+    pivot_wider(id_cols = c("participant"), names_from = "condition", values_from = colName) %>% 
+    mutate(
+      `Extra-Intro` = `Extra.` - `Intro.`,
+      `Extra-Ambi` = `Extra.` - `Ambi.`,
+      `Ambi-Intro` = `Ambi.` - `Intro.`
+    )
+};
+
+predictable_pdiffs <- getPairwiseDiffs("num_predictable")
+
+pdiffs <- bind_rows(
+  num_predictable = getPairwiseDiffs("num_predictable"),
+  frac_predictable = getPairwiseDiffs("frac_predictable"),
+  num_words = getPairwiseDiffs("num_words"),
+  .id = "measure"
+)
+
+#predictable_pdiffs %>% 
+#  ggplot(aes(x=`Extra-Intro`)) + geom_dotplot()
+
+pdiffs %>% 
+  pivot_longer(c('Extra-Intro', 'Extra-Ambi', 'Ambi-Intro')) %>% 
+  ggplot(aes(x=value, y=name)) + ggstance::geom_boxploth() + facet_wrap(vars(measure), ncol = 1, scales = "free")
 ```
 
 ```{r}
 results <- afex::aov_ez(
-  data=dataMinusImgMean,
+  data=blockLevel,
   id="participant", # subject identifier
   dv="num_predictable", # outcome
   within=c('condition'),
@@ -199,11 +268,62 @@ results <- afex::aov_ez(
   fun_aggregate = mean,
   anova_table = list(es='ges'));
 
+#select(-`Pr(>F)`)
+#results$anova_table %>% as_tibble(rownames = "effect")
 results
 ```
 
 ```{r}
-  #select(-`Pr(>F)`) # no need to show p-values
-  
-results$anova_table %>% as_tibble(rownames = "effect")
+afex::aov_ez(
+  data=blockLevel,
+  id="participant",
+  dv="frac_predictable",
+  within=c('condition'),
+  between=NULL);
+```
+
+# How do predictions affect text length?
+
+```{r num_words}
+blockLevel %>% ggplot(aes(x=condition, y=num_words)) + labeledBar + coord_flip()
+```
+
+```{r num_words_analysis}
+afex::aov_ez(
+  data=blockLevel,
+  id="participant",
+  dv="num_words",
+  within=c('condition'),
+  between=NULL);
+```
+
+
+# How does text entry speed depend on suggestion presence and assertiveness?
+
+```{r speed}
+blockLevel %>% ggplot(aes(x=condition, y=chars_per_sec)) + labeledBar + coord_flip()
+```
+
+```{r speedAnalysis}
+afex::mixed(chars_per_sec_log ~ condition * block + (1|participant), data=blockLevel)
+```
+
+```{r speedAnalysisMANOVA}
+afex::aov_ez(
+  data=blockLevel,
+  id="participant",
+  dv="chars_per_sec",
+  within=c('condition')
+)
+```
+
+```{r speed_interaction}
+blockLevel %>%
+  ggplot(aes(x=chars_per_sec_norecs_mean, y=chars_per_sec_ratio_to_norecs, color=condition)) +
+  geom_smooth()# +
+  #facet_wrap(vars(block))
+```
+
+```{r speedInteractionAnalysis}
+afex::mixed(chars_per_sec_log ~ condition * block * log(chars_per_sec_norecs_mean) + (1|participant), data=blockLevel)
 ```
