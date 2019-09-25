@@ -195,7 +195,11 @@ dataMinusImgMean <- data %>%
 
 blockLevel <- dataMinusImgMean %>% 
   group_by(participant, condition, block) %>% 
-  summarise_at(c('num_predictable', 'frac_predictable', 'num_words', 'chars_per_sec', 'chars_per_sec_log', 'chars_per_sec_norecs_mean', 'chars_per_sec_ratio_to_norecs'), mean);
+  summarise_at(c(
+    'num_predictable', 'frac_predictable', 'num_words',
+    'chars_per_sec', 'chars_per_sec_log', 'chars_per_sec_norecs_mean', 'chars_per_sec_ratio_to_norecs',
+    'pos_count_NOUN', 'pos_count_ADJ', 'num_colors'
+    ), mean);
 #    num_predictable=mean(num_predictable),
 #    frac_predictable=mean(frac_predictable),
 #    num_words=mean(num_words),
@@ -230,6 +234,40 @@ blockLevel %>%
 blockLevel %>% ggplot(aes(x=condition, y=frac_predictable)) + labeledBar + coord_flip()
 ```
 
+
+```{r "examples"}
+total <- data %>% group_by(stimulus) %>% count() %>% pull(n) %>% mean()
+q1 <- floor(total * .25)
+q3 <- floor(total * .75)
+
+sorted <- data %>%
+  group_by(stimulus) %>%
+  arrange(frac_predictable)
+
+sorted %>% 
+  slice(q1) %>%
+  select(stimulus, frac_predictable, corrected_text) %>% 
+  kable(format="latex") %>% 
+  cat(sep="\n");
+
+sorted %>% 
+  group_by(stimulus) %>%
+  arrange(frac_predictable) %>%
+  slice(q3) %>%
+  select(stimulus, frac_predictable, corrected_text) %>% 
+  kable(format="latex") %>% 
+  cat(sep="\n");
+
+
+```
+
+```{r "predictabilityVsLength"}
+data %>% 
+  ggplot(aes(x=num_words, y=frac_predictable)) +
+  stat_smooth(method = "lm") +
+  geom_point()
+```
+
 ```{r individualDiffs}
 getPairwiseDiffs <- function(colName) {
   blockLevel %>%
@@ -257,6 +295,7 @@ pdiffs %>%
   pivot_longer(c('Extra-Intro', 'Extra-Ambi', 'Ambi-Intro')) %>% 
   ggplot(aes(x=value, y=name)) + ggstance::geom_boxploth() + facet_wrap(vars(measure), ncol = 1, scales = "free")
 ```
+
 
 ```{r}
 results <- afex::aov_ez(
@@ -326,4 +365,31 @@ blockLevel %>%
 
 ```{r speedInteractionAnalysis}
 afex::mixed(chars_per_sec_log ~ condition * block * log(chars_per_sec_norecs_mean) + (1|participant), data=blockLevel)
+```
+
+# Supplemental Analyses
+
+## Part of Speech
+
+```{r contentExploratory}
+multiBar <- function(measures.to.vis, nrow=3) {
+  blockLevel %>%
+    ungroup() %>%
+    select(participant, condition, block, !!!measures.to.vis) %>%
+    gather(measure, value, !!!measures.to.vis) %>%
+    mutate(measure=factor(measure, levels=measures.to.vis)) %>%
+    mutate(measure=dplyr::recode(measure, !!!vars.to.summarize)) %>%
+    ggplot(aes(x=condition, y=value)) +
+      labeledBar +
+      facet_wrap(vars(measure), nrow=3, scales="free", strip.position="top") +
+      labs(x="Prediction assertiveness", y="") +
+      coord_flip() +
+      theme(
+        strip.background = element_blank(),
+        panel.spacing.y = unit(2, "lines"),
+        axis.line.x = element_blank(),
+        legend.position = "bottom")
+}
+
+multiBar(c("pos_count_NOUN", "pos_count_ADJ", "num_colors"))
 ```
