@@ -29,7 +29,8 @@ library(afex)
 library(optimx)
 library(papaja) # devtools::install_github("crsh/papaja")
 library("emmeans")
-library("ARTool")
+#library("ARTool")
+library("parallel")
 
 # Plotting
 #library("cowplot")
@@ -76,8 +77,10 @@ data <- data %>% rename(
 );
 
 # Name the conditions.
-data$condition <- recode_factor(data$condition, "norecs"="Intro.", "gated"="Ambi.", "standard"="Extra.")
-data$condition <- factor(data$condition, levels = c("Extra.", "Ambi.", "Intro."))
+data <- data %>% mutate(
+  condition = factor(
+    recode_factor(condition, "norecs"="Never", "gated"="OnlyConfident", "standard"="Always"),
+    levels = c("Never", "OnlyConfident", "Always")))
 
 # Compute derived data.
 data <- data %>% mutate(
@@ -179,6 +182,120 @@ fisher.test(xt)
 ```
 
 
+```{r}
+res <- lmer(num_predictable ~ condition + (1|participant) + (1|stimulus), data=data)
+p <- pairs(emmeans(res, "condition"))
+```
+
+```{r}
+# based on https://transparentstats.github.io/guidelines/effectsize.html#effectsize_exemplar_within
+# Sample subjects, but keep all data for each.
+getBootstrapSample <- function () {
+  subjects <- unique(data$participant)
+  sampled_subjects <- sample(subjects, length(subjects), replace = TRUE)
+  get_data_for_subject <- function(i) {
+    data %>%
+      # extract that subject's data
+      filter(participant == sampled_subjects[i]) %>%
+      # give them a unique id
+      mutate(participant = paste0(sampled_subjects[i], '_', i))
+  };
+  # Need bind_rows to concatenate the samples for each subject.
+  lapply(1:length(sampled_subjects), get_data_for_subject) %>% bind_rows()
+};
+
+analyze_one_iteration <- function(measures) {
+  sampled <- getBootstrapSample();
+  lapply(measures, function(m) {
+    paste0(m, " ~ condition + (1|participant) + (1|stimulus)") %>% 
+    as.formula() %>%
+    lme4::lmer(data=sampled) %>% 
+    emmeans(specs="condition") %>% 
+    pairs() %>% 
+    as.data.frame(infer=F) %>%
+    select(contrast, estimate) %>% 
+    mutate(measure=m)
+  }) %>% bind_rows()
+}
+
+#analyze_one_iteration()
+
+analyze_n_iterations <- function(n_iterations, measures) {
+  lapply(1:n_iterations, function(x) analyze_one_iteration(measures)) %>% bind_rows()
+}
+
+#analyze_n_iterations(
+#  measures = c("num_predictable", "frac_predictable", "num_words"),
+#  n_iterations = 1)
+```
+
+```{r}
+core_count <- detectCores()
+cluster <- makeCluster(core_count)
+clusterSetRNGStream(cluster, iseed = 0)
+
+measures_to_analyze = c("num_predictable", "frac_predictable", "num_words")
+
+clusterExport(cluster, varlist = c("getBootstrapSample", "analyze_one_iteration", "analyze_n_iterations", "data"))
+clusterCall(cluster, function() {
+  library("tidyverse")
+  library("lme4")
+  library("emmeans")
+  NULL
+});
+
+
+iterations_per_node <- ceiling(1000/core_count)
+system.time(
+  boot_results <- parLapply(
+    cluster,
+    rep(iterations_per_node, core_count),
+    analyze_n_iterations,
+    rep( measures_to_analyze, core_count)
+    )
+)
+
+stopCluster(cluster);
+```
+
+```{r}
+# inner 95%
+PERCENTILE_LO <- 0.025
+PERCENTILE_HI <- 0.975
+
+confints <- boot_results %>% 
+  bind_rows %>% 
+  group_by(measure, contrast) %>% 
+  summarize(
+    mean=mean(estimate),
+    conf_low = unname(quantile(estimate, probs = PERCENTILE_LO)),
+    conf_high = unname(quantile(estimate, probs = PERCENTILE_HI)))
+
+```
+
+```{r}
+confints %>%
+  ggplot(aes(x=contrast, y=mean, ymin=conf_low, ymax=conf_high)) +
+  geom_hline(yintercept = 0, linetype ='dotted') +
+  geom_pointrange() +
+  expand_limits(x=0) +
+  labs(x="", y="Estimated pairwise difference") +
+  coord_flip() +
+  facet_wrap(vars(measure), ncol=1, scales = "free")
+```
+
+```{r}
+confints %>%
+  ggplot(aes(x=contrast, y=mean, ymin=conf_low, ymax=conf_high)) +
+  geom_hline(yintercept = 0, linetype ='dotted') +
+  geom_pointrange() +
+  expand_limits(x=0) +
+  labs(x="", y="Estimated pairwise difference") +
+  coord_flip() +
+  facet_grid(measure~., scales = "free")
+```
+
+
 # Subtract per-image mean, aggregate by block.
 
 ```{r}
@@ -273,9 +390,9 @@ getPairwiseDiffs <- function(colName) {
   blockLevel %>%
     pivot_wider(id_cols = c("participant"), names_from = "condition", values_from = colName) %>% 
     mutate(
-      `Extra-Intro` = `Extra.` - `Intro.`,
-      `Extra-Ambi` = `Extra.` - `Ambi.`,
-      `Ambi-Intro` = `Ambi.` - `Intro.`
+      `Always-Never` = Always - Never,
+      `Always-OnlyConfident` = Always - OnlyConfident,
+      `OnlyConfident-Never` = OnlyConfident - Never
     )
 };
 
@@ -292,7 +409,7 @@ pdiffs <- bind_rows(
 #  ggplot(aes(x=`Extra-Intro`)) + geom_dotplot()
 
 pdiffs %>% 
-  pivot_longer(c('Extra-Intro', 'Extra-Ambi', 'Ambi-Intro')) %>% 
+  pivot_longer(c('Always-Never', 'Always-OnlyConfident', 'OnlyConfident-Never')) %>% 
   ggplot(aes(x=value, y=name)) + ggstance::geom_boxploth() + facet_wrap(vars(measure), ncol = 1, scales = "free")
 ```
 
@@ -311,6 +428,11 @@ results <- afex::aov_ez(
 #results$anova_table %>% as_tibble(rownames = "effect")
 results
 ```
+
+```{r}
+pairs(emmeans(results, "condition"), comparisons = TRUE)
+```
+
 
 ```{r}
 afex::aov_ez(
