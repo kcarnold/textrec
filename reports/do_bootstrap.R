@@ -5,16 +5,19 @@ library(readr)
 library(tidyverse)
 
 # Modeling
-library(lme4)
-library(afex)
-library("emmeans")
 library("parallel")
 
-afex::set_sum_contrasts()
 
-## See vignette("afex_mixed_example") for why "asymptotic".
-emm_options(lmer.df = "asymptotic") # also possible: 'satterthwaite', 'kenward-roger'
-# emm_options(lmer.df="kenward-roger") # slower, but needed for post-hoc tests to make sense.
+doAnalysisSetup <- function() {
+  library("tidyverse")
+  library("afex")
+  library("emmeans")
+  afex::set_sum_contrasts()
+
+  emm_options(lmer.df = "asymptotic") # also possible: 'satterthwaite', 'kenward-roger'
+};
+doAnalysisSetup()
+
 
 # We need to set the stimulus (image) columns to chars because they otherwise look like numbers.
 allData <- read_csv(
@@ -157,23 +160,36 @@ getBootstrapSample <- function () {
 }
 
 
-analyze_one_iteration <- function(measures) {
-  sampled <- getBootstrapSample()
 
+analyze_one_iteration <- function(measures) {
+  pairs_to_stats <- function(emmgrid) {
+    emmgrid %>%
+      pairs() %>%
+      as.data.frame(infer=F) %>%
+      rename(statistic=contrast) %>%
+      select(statistic, estimate) %>%
+      mutate(statistic=as.character(statistic))
+  };
+
+  emmeans_to_stats <- function(emmgrid) {
+    emmgrid %>%
+      as.data.frame(infer=F) %>%
+      rename(statistic=condition, estimate=emmean) %>%
+      select(statistic, estimate) %>%
+      mutate(statistic=as.character(statistic))
+  };
+  sampled <- getBootstrapSample();
   lapply(measures, function(m) {
     paste0(m, " ~ condition + (1|participant) + (1|stimulus)") %>%
       as.formula() %>%
-      lme4::lmer(data = sampled) %>%
-      emmeans(specs = "condition") %>%
-      pairs() %>%
-      as.data.frame(infer = F) %>%
-      select(contrast, estimate) %>%
-      mutate(measure = m)
+      lme4::lmer(data=sampled) %>%
+      emmeans(specs="condition") %>%
+      {list(
+        means=emmeans_to_stats(.)
+        , pairs=pairs_to_stats(.))} %>% bind_rows(.id="type") %>%
+      mutate(measure=m, statistic=factor(statistic))
   }) %>% bind_rows()
 }
-
-
-#analyze_one_iteration()
 
 analyze_n_iterations <- function(n_iterations, measures) {
   lapply(1:n_iterations, function(x)
@@ -197,12 +213,7 @@ clusterExport(
     "data"
   )
 )
-clusterCall(cluster, function() {
-  library("tidyverse")
-  library("lme4")
-  library("emmeans")
-  NULL
-})
+clusterCall(cluster, doAnalysisSetup)
 
 
 iterations_per_node <- ceiling(total_iterations / core_count)
