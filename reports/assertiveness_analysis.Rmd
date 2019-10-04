@@ -18,17 +18,14 @@ knitr::opts_chunk$set(
 
 library(dplyr)
 library(readr)
-library(tidyverse)
 library("knitr")
 
 # Modeling
 library(lme4)
 library(lmerTest)
 library(car)
-library(afex)
 library(optimx)
 library(papaja) # devtools::install_github("crsh/papaja")
-library("emmeans")
 #library("ARTool")
 library("parallel")
 
@@ -37,12 +34,17 @@ library("parallel")
 library("ggbeeswarm")
 library("ggstance")
 
-afex::set_sum_contrasts()
+doAnalysisSetup <- function() {
+  library("tidyverse")
+  library("afex")
+  library("emmeans")  
+  afex::set_sum_contrasts()
 
-## See vignette("afex_mixed_example") for why "asymptotic".
-# emm_options(lmer.df = "asymptotic") # also possible: 'satterthwaite', 'kenward-roger'
-emm_options(lmer.df="kenward-roger") # slower, but needed for post-hoc tests to make sense.
-
+  ## See vignette("afex_mixed_example") for why "asymptotic".
+  emm_options(lmer.df = "asymptotic") # also possible: 'satterthwaite', 'kenward-roger'
+  #emm_options(lmer.df="kenward-roger") # slower, but needed for post-hoc tests to make sense.
+};
+doAnalysisSetup()
 ```
 
 ```{r read-data, include=FALSE}
@@ -205,24 +207,42 @@ getBootstrapSample <- function () {
 };
 
 analyze_one_iteration <- function(measures) {
+  pairs_to_stats <- function(emmgrid) {
+    emmgrid %>% 
+      pairs() %>% 
+      as.data.frame(infer=F) %>% 
+      rename(statistic=contrast) %>% 
+      select(statistic, estimate) %>% 
+      mutate(statistic=as.character(statistic))
+  };
+  
+  emmeans_to_stats <- function(emmgrid) {
+    emmgrid %>% 
+      as.data.frame(infer=F) %>% 
+      rename(statistic=condition, estimate=emmean) %>% 
+      select(statistic, estimate) %>% 
+      mutate(statistic=as.character(statistic))
+  };
   sampled <- getBootstrapSample();
   lapply(measures, function(m) {
     paste0(m, " ~ condition + (1|participant) + (1|stimulus)") %>% 
     as.formula() %>%
     lme4::lmer(data=sampled) %>% 
     emmeans(specs="condition") %>% 
-    pairs() %>% 
-    as.data.frame(infer=F) %>%
-    select(contrast, estimate) %>% 
-    mutate(measure=m)
+      {list(
+        means=emmeans_to_stats(.)
+      , pairs=pairs_to_stats(.))} %>% bind_rows(.id="type") %>% 
+    mutate(measure=m, statistic=factor(statistic))
   }) %>% bind_rows()
 }
 
-#analyze_one_iteration()
+analyze_one_iteration(c("num_predictable"))
 
 analyze_n_iterations <- function(n_iterations, measures) {
   lapply(1:n_iterations, function(x) analyze_one_iteration(measures)) %>% bind_rows()
 }
+
+
 
 #analyze_n_iterations(
 #  measures = c("num_predictable", "frac_predictable", "num_words"),
@@ -230,32 +250,34 @@ analyze_n_iterations <- function(n_iterations, measures) {
 ```
 
 ```{r}
-core_count <- detectCores()
-cluster <- makeCluster(core_count)
-clusterSetRNGStream(cluster, iseed = 0)
-
-measures_to_analyze = c("num_predictable", "frac_predictable", "num_words")
-
-clusterExport(cluster, varlist = c("getBootstrapSample", "analyze_one_iteration", "analyze_n_iterations", "data"))
-clusterCall(cluster, function() {
-  library("tidyverse")
-  library("lme4")
-  library("emmeans")
-  NULL
-});
-
-
-iterations_per_node <- ceiling(1000/core_count)
-system.time(
-  boot_results <- parLapply(
-    cluster,
-    rep(iterations_per_node, core_count),
-    analyze_n_iterations,
-    rep( measures_to_analyze, core_count)
-    )
-)
-
-stopCluster(cluster);
+do_compute <- FALSE
+total_iterations <- 8
+if (do_compute) {
+  core_count <- detectCores()
+  cluster <- makeCluster(core_count)
+  clusterSetRNGStream(cluster, iseed = 0)
+  
+  measures_to_analyze = c("num_predictable", "frac_predictable", "num_words")
+  
+  clusterExport(cluster, varlist = c("getBootstrapSample", "analyze_one_iteration", "analyze_n_iterations", "data"))
+  clusterCall(cluster, doAnalysisSetup);
+  
+  
+  iterations_per_node <- ceiling(total_iterations/core_count)
+  system.time(
+    boot_results <- parLapply(
+      cluster,
+      rep(iterations_per_node, core_count),
+      analyze_n_iterations,
+      rep( measures_to_analyze, core_count)
+      )
+  )
+  #saveRDS(boot_results, "bootstrap_results.rds");
+  
+  stopCluster(cluster);
+} else {
+  boot_results <- readRDS("bootstrap_results_20191002.rds")
+}
 ```
 
 ```{r}
@@ -265,17 +287,32 @@ PERCENTILE_HI <- 0.975
 
 confints <- boot_results %>% 
   bind_rows %>% 
-  group_by(measure, contrast) %>% 
+  group_by(type, measure, statistic) %>% 
   summarize(
+    n=n(),
     mean=mean(estimate),
     conf_low = unname(quantile(estimate, probs = PERCENTILE_LO)),
     conf_high = unname(quantile(estimate, probs = PERCENTILE_HI)))
 
 ```
 
-```{r}
+```{r bootstrap_lsmeans}
 confints %>%
-  ggplot(aes(x=contrast, y=mean, ymin=conf_low, ymax=conf_high)) +
+  subset(type == "means") %>% 
+  mutate(statistic=factor(statistic, levels=c("Always", "OnlyConfident", "Never"))) %>% 
+  ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
+  geom_hline(yintercept = 0, linetype ='dotted') +
+  geom_pointrange() +
+  expand_limits(x=0) +
+  labs(x="", y="Least-Squares Means") +
+  coord_flip() +
+  facet_wrap(vars(measure), ncol=1, scales = "free")
+```
+
+```{r bootstrap_pairwise}
+confints %>%
+  subset(type == "pairs") %>% 
+  ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
   geom_hline(yintercept = 0, linetype ='dotted') +
   geom_pointrange() +
   expand_limits(x=0) +
@@ -283,18 +320,6 @@ confints %>%
   coord_flip() +
   facet_wrap(vars(measure), ncol=1, scales = "free")
 ```
-
-```{r}
-confints %>%
-  ggplot(aes(x=contrast, y=mean, ymin=conf_low, ymax=conf_high)) +
-  geom_hline(yintercept = 0, linetype ='dotted') +
-  geom_pointrange() +
-  expand_limits(x=0) +
-  labs(x="", y="Estimated pairwise difference") +
-  coord_flip() +
-  facet_grid(measure~., scales = "free")
-```
-
 
 # Subtract per-image mean, aggregate by block.
 
@@ -479,10 +504,24 @@ afex::aov_ez(
 ```
 
 ```{r speed_interaction}
-blockLevel %>%
+blockLevelRecsOnly <- subset(blockLevel, condition != "Never")
+blockLevelRecsOnly %>%
   ggplot(aes(x=chars_per_sec_norecs_mean, y=chars_per_sec_ratio_to_norecs, color=condition)) +
   geom_smooth()# +
   #facet_wrap(vars(block))
+```
+
+```{r speedInteractionSimple}
+# afex::aov_ez(
+#   id="participant",
+#   dv="chars_per_sec_ratio_to_norecs",
+#   data=blockLevelRecsOnly,
+#   within=c("condition", "chars_per_sec_norecs_mean")
+# )
+
+summary(lmer(
+  chars_per_sec_ratio_to_norecs ~ chars_per_sec_norecs_mean + (1|participant),
+  data=blockLevelRecsOnly))
 ```
 
 ```{r speedInteractionAnalysis}
