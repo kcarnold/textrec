@@ -151,7 +151,8 @@ longForm <- data %>%
 
 Overall:
 ```{r}
-print(paste("Total", n_distinct(allData$participant), "participants"))
+print(paste("Total", n_distinct(allData$participant), "participants,", n_distinct(data$participant), "after exclusion"))
+print(paste(nrow(data), "captions"))
 ```
 
 Gender:
@@ -276,7 +277,7 @@ if (do_compute) {
   
   stopCluster(cluster);
 } else {
-  boot_results <- readRDS("bootstrap_results_20191002.rds")
+  boot_results <- readRDS("bootstrap_results_20191005.rds")
 }
 ```
 
@@ -303,6 +304,9 @@ confints %>%
   ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
   geom_hline(yintercept = 0, linetype ='dotted') +
   geom_pointrange() +
+  geom_text(aes(label=sprintf("%1.2f", ..y..)), nudge_x=.3, hjust="middle", vjust="bottom", size=2) +
+  geom_text(aes(label=sprintf("%1.2f", conf_low), y=conf_low), hjust="right", size=2) +
+  geom_text(aes(label=sprintf("%1.2f", conf_high), y=conf_high), hjust="left", size=2) +
   expand_limits(x=0) +
   labs(x="", y="Least-Squares Means") +
   coord_flip() +
@@ -310,11 +314,15 @@ confints %>%
 ```
 
 ```{r bootstrap_pairwise}
+# The "g" format string uses sigfigs, rather than after decimal point, for frac_predicted.
 confints %>%
   subset(type == "pairs") %>% 
   ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
   geom_hline(yintercept = 0, linetype ='dotted') +
   geom_pointrange() +
+  geom_text(aes(label=sprintf("%1.2f", ..y..)), nudge_x=.3, hjust="middle", vjust="bottom", size=2) +
+  geom_text(aes(label=sprintf("%1.2g", conf_low), y=conf_low), hjust="right", size=2) +
+  geom_text(aes(label=sprintf("%1.2g", conf_high), y=conf_high), hjust="left", size=2) +
   expand_limits(x=0) +
   labs(x="", y="Estimated pairwise difference") +
   coord_flip() +
