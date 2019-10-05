@@ -1,5 +1,5 @@
 ---
-title: "Suggestion Assertiveness Analysis"
+title: "Suggestion Visibility Analysis"
 author: "Kenneth C. Arnold"
 date: "9/18/2019"
 output:
@@ -147,6 +147,42 @@ longForm <- data %>%
 
 ```
 
+```{r helpfulRank}
+# I want:
+#  participant | aspect | condition | rank
+#
+# I do that in a few steps:
+# 1. Join the separate columns into one. helpfulAccurate="norecs-gated"
+# 2. Split out the 
+
+# 1. Select only the helpfulRank columns.
+expHelpful <- data %>%
+  select(participant, starts_with("helpfulRank")) %>% 
+  select(participant, ends_with("condition")) %>% 
+  group_by(participant) %>% summarise_all(first)
+
+# Tidy the data (participant, aspect, extreme, value)
+helpfulTidy <- expHelpful %>% 
+  pivot_longer(
+    cols=starts_with("helpfulRank"),
+    names_prefix="helpfulRank-",
+    names_sep="-",
+    names_to = c("aspect", "extreme", "unused"),
+    values_to = "condition"
+  ) %>% select(-unused)
+  # concatenate the two values
+#  group_by(participant, aspect) %>% summarize(val_concat=decode(extreme, value))#paste(value, sep="-", collapse=""))
+#data %>% transmute(
+#  helpfulAccurate=paste(`helpfulRank-accurate-least-condition`, `helpfulRank-accurate-most-condition`, sep="-"),
+#  )
+#helpfulTidy %>% mutate(picked=TRUE) %>% pivot_wider(id_cols = c("participant", "aspect"), names_from=c("extreme", "value"), values_from=picked, values_fill = list(picked=FALSE))
+helpfulCounts <- helpfulTidy %>% subset(extreme=="most") %>% group_by(condition) %>% summarize(picked=n())
+helpfulCounts
+```
+```{r helpfulChiSq}
+#helpfulTidy %>% pivot_wider(id_cols = )
+chisq.test(helpfulCounts$picked)
+```
 # Summaries
 
 Overall:
@@ -177,10 +213,11 @@ allData %>%
 ```{r typosByCondition}
 xt <- xtabs(~ condition + anyErrors, data=data)
 #typo_test <- fisher.test(xt)
-xt %>% kable()
+xt %>% addmargins() %>% kable()
 ```
 ```{r typoDifferenceSignificant}
 xt <- xtabs(~ recsVisible + anyErrors, data=data)
+#xt <- xtabs(~ condition + anyErrors, data=data)
 fisher.test(xt)
 ```
 
@@ -190,7 +227,7 @@ res <- lmer(num_predictable ~ condition + (1|participant) + (1|stimulus), data=d
 p <- pairs(emmeans(res, "condition"))
 ```
 
-```{r}
+```{r perTrialBootstrap}
 # based on https://transparentstats.github.io/guidelines/effectsize.html#effectsize_exemplar_within
 # Sample subjects, but keep all data for each.
 getBootstrapSample <- function () {
@@ -250,7 +287,7 @@ analyze_n_iterations <- function(n_iterations, measures) {
 #  n_iterations = 1)
 ```
 
-```{r}
+```{r bootstrapCalc}
 do_compute <- FALSE
 total_iterations <- 8
 if (do_compute) {
@@ -491,8 +528,7 @@ afex::aov_ez(
   between=NULL);
 ```
 
-
-# How does text entry speed depend on suggestion presence and assertiveness?
+# How does text entry speed depend on suggestion visibility?
 
 ```{r speed}
 blockLevel %>% ggplot(aes(x=condition, y=chars_per_sec)) + labeledBar + coord_flip()
@@ -515,25 +551,194 @@ afex::aov_ez(
 blockLevelRecsOnly <- subset(blockLevel, condition != "Never")
 blockLevelRecsOnly %>%
   ggplot(aes(x=chars_per_sec_norecs_mean, y=chars_per_sec_ratio_to_norecs, color=condition)) +
-  geom_smooth()# +
+  geom_point(alpha=.5) +
+  geom_smooth(method="loess") +
+  labs(
+    x="Baseline Speed (chars/sec in trials with with Hidden suggestions)",
+    y="Block-level mean ratio of speed in trial to baseline speed",
+    color="Suggestion Visibility")
   #facet_wrap(vars(block))
 ```
 
 ```{r speedInteractionSimple}
-# afex::aov_ez(
-#   id="participant",
-#   dv="chars_per_sec_ratio_to_norecs",
-#   data=blockLevelRecsOnly,
-#   within=c("condition", "chars_per_sec_norecs_mean")
-# )
-
-summary(lmer(
+lmer(
   chars_per_sec_ratio_to_norecs ~ chars_per_sec_norecs_mean + (1|participant),
-  data=blockLevelRecsOnly))
+  data=blockLevelRecsOnly) %>% 
+confint.merMod(
+  nsim = 1000,
+  parallel="multicore",
+  method = "boot")
 ```
 
-```{r speedInteractionAnalysis}
-afex::mixed(chars_per_sec_log ~ condition * block * log(chars_per_sec_norecs_mean) + (1|participant), data=blockLevel)
+```{r speedInteractionWithCondition}
+lmer(
+  chars_per_sec_ratio_to_norecs ~ condition *  chars_per_sec_norecs_mean + (1|participant),
+  data=blockLevelRecsOnly) %>%
+confint.merMod(
+  nsim = 1000,
+  parallel="multicore",
+  method = "boot")
+```
+
+# How did subjective experience depend on suggestion visibility?
+
+```{r perBlockBootstrap}
+blockLevelSubjective <- data %>% 
+  group_by(participant, condition, block) %>% summarise_at(c("TLX_sum", "physical", "mental"), first) %>% 
+  filter(!(any(is.na(TLX_sum)))) %>% 
+  ungroup()
+
+
+# Sample subjects, but keep all data for each.
+getBootstrapSample <- function (data) {
+  subjects <- unique(data$participant)
+  sampled_subjects <- sample(subjects, length(subjects), replace = TRUE)
+  get_data_for_subject <- function(i) {
+    data %>%
+      # extract that subject's data
+      filter(participant == sampled_subjects[i]) %>%
+      # give them a unique id
+      mutate(participant = paste0(sampled_subjects[i], '_', i))
+  };
+  # Need bind_rows to concatenate the samples for each subject.
+  lapply(1:length(sampled_subjects), get_data_for_subject) %>% bind_rows()
+};
+
+analyze_one_iteration <- function(measures, data, formulaSuffix=" ~ condition + (1|participant)") {
+  pairs_to_stats <- function(emmgrid) {
+    emmgrid %>% 
+      pairs() %>% 
+      as.data.frame(infer=F) %>% 
+      rename(statistic=contrast) %>% 
+      select(statistic, estimate) %>% 
+      mutate(statistic=as.character(statistic))
+  };
+  
+  emmeans_to_stats <- function(emmgrid) {
+    emmgrid %>% 
+      as.data.frame(infer=F) %>% 
+      rename(statistic=condition, estimate=emmean) %>% 
+      select(statistic, estimate) %>% 
+      mutate(statistic=as.character(statistic))
+  };
+  sampled <- getBootstrapSample(data=data);
+  lapply(measures, function(m) {
+    paste0(m, formulaSuffix) %>% 
+    as.formula() %>%
+    lme4::lmer(data=sampled) %>% 
+    emmeans(specs="condition") %>% 
+      {list(
+        means=emmeans_to_stats(.)
+      , pairs=pairs_to_stats(.))} %>% bind_rows(.id="type") %>% 
+    mutate(measure=m, statistic=factor(statistic))
+  }) %>% bind_rows()
+}
+
+#analyze_one_iteration(c("TLX_sum", "physical", "mental"), blockLevelSubjective)
+
+analyze_n_iterations <- function(dataName, n_iterations, measures, formulaSuffix) {
+  data <- get(dataName)
+  lapply(1:n_iterations, function(x) analyze_one_iteration(measures, data, formulaSuffix = formulaSuffix)) %>% bind_rows()
+}
+
+do_compute <- FALSE
+total_iterations <- 1000
+if (do_compute) {
+  core_count <- detectCores()
+  cluster <- makeCluster(core_count)
+  clusterSetRNGStream(cluster, iseed = 0)
+  
+  measures_to_analyze = c("TLX_sum", "physical", "mental")
+  
+  clusterExport(cluster, varlist = c("getBootstrapSample", "analyze_one_iteration", "analyze_n_iterations", "blockLevelSubjective"))
+  clusterCall(cluster, doAnalysisSetup);
+  
+  
+  iterations_per_node <- ceiling(total_iterations/core_count)
+  system.time(
+    boot_results <- pbapply::pblapply(
+      1:total_iterations,
+      function(i, measures, data=blockLevelSubjective) {
+        analyze_one_iteration(measures=measures, data=data)
+      },
+      rep( measures_to_analyze, core_count),
+      cl=cluster
+      )
+  )
+  saveRDS(boot_results, "TLX_bootstraps.rds");
+  
+  stopCluster(cluster);
+} else {
+  boot_results <- readRDS("TLX_bootstraps.rds")
+}
+
+```
+
+```{r TLXconfitns}
+# inner 95%
+PERCENTILE_LO <- 0.025
+PERCENTILE_HI <- 0.975
+
+TLXconfints <- boot_results %>% 
+  bind_rows %>% 
+  group_by(type, measure, statistic) %>% 
+  summarize(
+    n=n(),
+    mean=mean(estimate),
+    conf_low = unname(quantile(estimate, probs = PERCENTILE_LO)),
+    conf_high = unname(quantile(estimate, probs = PERCENTILE_HI)))
+
+```
+
+```{r TLX}
+
+
+# tlx.boot <- boot::boot(
+#   data=unique(tlxData$participant),
+#   parallel = "multicore",
+#   ncpus = detectCores(),
+#   R=100,
+#   statistic=function(subjects, indices) {
+#    bootstrap_sample <- lapply(1:length(indices), function(i) {
+#      idx <- indices[i]
+#      tlxData %>%
+#        filter(participant == subjects[idx]) %>%
+#        mutate(participant=paste0(subjects[idx], '_', i))
+#    }) %>% bind_rows()
+# #   mean(bootstrap_sample$TLX_sum)
+#    model <- lme4::lmer(TLX_sum ~ condition + block + (1|participant), data=bootstrap_sample)
+#    model %>% emmeans(specs="condition") %>% 
+#       {list(
+#         means=emmeans_to_stats(.)
+#       , pairs=pairs_to_stats(.))} %>% bind_rows(.id="type") %>% 
+#     mutate(statistic=factor(statistic))
+#   }
+# )
+if(F){
+emm_options(lmer.df="kenward-roger")
+tlxModel <- lmer(TLX_sum ~ condition + block + (1|participant), data=tlxData)
+tlxCIs <- pairs(emmeans(tlxModel, specs = c("condition"))) %>% as.data.frame(infer=c(TRUE, FALSE))  %>% 
+  rename(mean=estimate, conf_low=lower.CL, conf_high=upper.CL)
+tlxCIs}
+```
+
+```{r tlxPairwise}
+#, fig.width=7, fig.height=1.5}
+# Maybe: https://stackoverflow.com/questions/45361904/duplicating-and-modifying-discrete-axis-in-ggplot2/45362497#45362497
+#tlxCIs %>% #separate(contrast, into=c("right", "left"), remove=FALSE) %>% 
+TLXconfints %>% 
+  subset(type == "pairs") %>% 
+  ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
+  geom_hline(yintercept = 0, linetype ='dotted') +
+  geom_pointrange() +
+  geom_text(aes(label=sprintf("%1.2f", ..y..)), nudge_x=.3, hjust="middle", vjust="bottom", size=2) +
+  geom_text(aes(label=sprintf("%1.2g", conf_low), y=conf_low), hjust="right", size=2) +
+  geom_text(aes(label=sprintf("%1.2g", conf_high), y=conf_high), hjust="left", size=2) +
+  #expand_limits(x=0) +
+  labs(x="", y="Estimated increase in TLX load") +
+  coord_flip() +
+  facet_wrap(vars(measure), ncol=1, scales = "free")
+#ggsave("TLXpairwise.pdf");
 ```
 
 # Supplemental Analyses
@@ -551,7 +756,7 @@ multiBar <- function(measures.to.vis, nrow=3) {
     ggplot(aes(x=condition, y=value)) +
       labeledBar +
       facet_wrap(vars(measure), nrow=3, scales="free", strip.position="top") +
-      labs(x="Prediction assertiveness", y="") +
+      labs(x="Prediction visibility", y="") +
       coord_flip() +
       theme(
         strip.background = element_blank(),
