@@ -14,6 +14,7 @@ doAnalysisSetup <- function() {
   afex::set_sum_contrasts()
 
   emm_options(lmer.df = "asymptotic") # also possible: 'satterthwaite', 'kenward-roger'
+  invisible()
 };
 doAnalysisSetup()
 
@@ -107,7 +108,7 @@ clusterExport(
     "measures"
   )
 )
-clusterCall(cluster, doAnalysisSetup)
+clusterCall(cluster, doAnalysisSetup) %>% invisible()
 
 # Run all analyses for all iterations.
 boot_results <- pbapply::pblapply(
