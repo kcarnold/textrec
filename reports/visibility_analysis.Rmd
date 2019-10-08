@@ -24,8 +24,7 @@ library("knitr")
 library(lme4)
 library(lmerTest)
 library(car)
-library(optimx)
-library(papaja) # devtools::install_github("crsh/papaja")
+#library(optimx)
 #library("ARTool")
 library("parallel")
 
@@ -74,9 +73,13 @@ data <- data %>% mutate_at(c('experiment', 'block', 'participant', 'stimulus', '
 #data$idx_in_block <- factor(data$idx_in_block)
 
 data <- data %>% rename(
-  num_predictable = corrected_bow_recs_idealuse_standard,
-  chars_per_sec = characters_per_sec
-);
+    num_predictable = corrected_bow_recs_idealuse_standard,
+    chars_per_sec = characters_per_sec) %>%
+  mutate(
+    frac_predictable = num_predictable / num_words,
+    num_unpredictable = num_words - num_predictable
+  );
+
 
 # Name the conditions.
 data <- data %>% mutate(
@@ -97,8 +100,6 @@ data$tapsPerSec <- data$num_taps / data$seconds_spent_typing
 data$anyErrors <- factor(data$uncorrected_errors != 0)
 data$anyADJ = factor(data$ADJ != 0)
 
-#data$num_predictable = data$corrected_bow_recs_idealuse_standard
-data$frac_predictable = data$num_predictable / data$num_words
 
 #data$num_not_recced = data$corrected_bow_recs_offered_standard - data$corrected_bow_recs_idealuse_standard
 #data$frac_not_recced = 1 - data$corrected_bow_recs_idealuse_standard / data$corrected_bow_recs_offered_standard
@@ -132,18 +133,18 @@ vars.to.summarize <- list(
   "mental"="Mental load (TLX)"
 )
 
-expLevel <- data %>%
-  group_by(experiment, condition_order, participant, age, chars_per_sec_norecs_mean, steppedBack, gender, use_predictive) %>%
-  summarise(
-    chars_per_sec_mean = mean(chars_per_sec),
-    rec_use_per_seen_mean=mean(rec_use_per_seen, na.rm=TRUE))
-
-data <- left_join(data, expLevel, copy=TRUE)
-
-longForm <- data %>%
-  select(experiment, participant, condition, block, idx, idx_in_block, steppedBack, !!!names(vars.to.summarize)) %>%
-  gather(measure, value, !!!names(vars.to.summarize)) %>%
-  mutate(measure=dplyr::recode(measure, !!!vars.to.summarize))
+# expLevel <- data %>%
+#   group_by(experiment, condition_order, participant, age, chars_per_sec_norecs_mean, steppedBack, gender, use_predictive) %>%
+#   summarise(
+#     chars_per_sec_mean = mean(chars_per_sec),
+#     rec_use_per_seen_mean=mean(rec_use_per_seen, na.rm=TRUE))
+# 
+# data <- left_join(data, expLevel, copy=TRUE)
+# 
+# longForm <- data %>%
+#   select(experiment, participant, condition, block, idx, idx_in_block, steppedBack, !!!names(vars.to.summarize)) %>%
+#   gather(measure, value, !!!names(vars.to.summarize)) %>%
+#   mutate(measure=dplyr::recode(measure, !!!vars.to.summarize))
 
 ```
 
@@ -179,6 +180,7 @@ helpfulTidy <- expHelpful %>%
 helpfulCounts <- helpfulTidy %>% subset(extreme=="most") %>% group_by(condition) %>% summarize(picked=n())
 helpfulCounts
 ```
+
 ```{r helpfulChiSq}
 #helpfulTidy %>% pivot_wider(id_cols = )
 chisq.test(helpfulCounts$picked)
@@ -221,11 +223,6 @@ xt <- xtabs(~ recsVisible + anyErrors, data=data)
 fisher.test(xt)
 ```
 
-
-```{r}
-res <- lmer(num_predictable ~ condition + (1|participant) + (1|stimulus), data=data)
-p <- pairs(emmeans(res, "condition"))
-```
 
 ```{r perTrialBootstrap}
 # based on https://transparentstats.github.io/guidelines/effectsize.html#effectsize_exemplar_within
