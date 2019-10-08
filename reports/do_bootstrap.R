@@ -1,5 +1,3 @@
-total_iterations <- 8
-
 library("dplyr")
 library("readr")
 library("tidyverse")
@@ -91,6 +89,7 @@ outFilename <- args[2]
 task <- readRDS(taskFilename)
 data <- task$data
 measures <- task$measures
+total_iterations <- task$iterations
 
 print(paste("Starting", task$name))
 
