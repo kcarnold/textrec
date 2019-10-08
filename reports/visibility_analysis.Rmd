@@ -420,7 +420,7 @@ blockLevelRecsOnly %>%
   #facet_wrap(vars(block))
 ```
 
-```{r speedInteractionSimple}
+```{r "speedInteractionSimple", cache=TRUE}
 lmer(
   chars_per_sec_ratio_to_norecs ~ chars_per_sec_norecs_mean + (1|participant),
   data=blockLevelRecsOnly) %>% 
@@ -430,7 +430,7 @@ confint.merMod(
   method = "boot")
 ```
 
-```{r speedInteractionWithCondition}
+```{r "speedInteractionWithCondition", cache=TRUE}
 lmer(
   chars_per_sec_ratio_to_norecs ~ condition *  chars_per_sec_norecs_mean + (1|participant),
   data=blockLevelRecsOnly) %>%
@@ -447,8 +447,6 @@ TLXconfints <- confIntsFromResults(block_level_results)
 ```
 
 ```{r TLX}
-
-
 # tlx.boot <- boot::boot(
 #   data=unique(tlxData$participant),
 #   parallel = "multicore",
