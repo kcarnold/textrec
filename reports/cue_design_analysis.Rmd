@@ -55,6 +55,10 @@ data$text_len_log <- log(data$text_len);
 trialsWithTexts <- data %>% subset((relevance == "Yes") | is.na(relevance))
 ```
 
+```{r descriptive}
+data %>% summarise(pid=n_distinct(pid))
+```
+
 ```{r n_relevant}
 blocksWithCues <- data %>% 
   subset(abstraction != "NoPrompt") %>% 
