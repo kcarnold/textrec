@@ -32,6 +32,7 @@ library("parallel")
 #library("cowplot")
 library("ggbeeswarm")
 library("ggstance")
+theme_set(theme_bw())
 
 doAnalysisSetup <- function() {
   library("tidyverse")
@@ -132,12 +133,12 @@ vars.to.summarize <- list(
 )
 
 var_names <- list(
-  "num_predictable" = "Num Predictable Words",
-  "num_unpredictable" = "Num Unpredictable Words",
-  "num_words" = "Num Words Total",
-  "TLX_sum" = "Total task load (TLX)",
-  "physical" = "Physical load (TLX)",
-  "mental" = "Mental load (TLX)"
+  "num_predictable" = "Number of Predictable Words",
+  "num_unpredictable" = "Number of Unpredictable Words",
+  "num_words" = "Total Number of Words",
+  "TLX_sum" = "Total task load (sum of TLX items)",
+  "physical" = "TLX physical load item",
+  "mental" = "TLX mental load item"
 )
 
 # expLevel <- data %>%
@@ -336,6 +337,7 @@ confints <- confIntsFromResults(trial_level_results)
 confints %>%
   subset(type == "means") %>% 
   subset(measure != "frac_predictable") %>% 
+  mutate(measure=dplyr::recode(measure, !!!var_names)) %>%
   mutate(statistic=factor(statistic, levels=c("Always", "OnlyConfident", "Never"))) %>% 
   ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
   geom_hline(yintercept = 0, linetype ='dotted') +
@@ -344,7 +346,7 @@ confints %>%
   geom_text(aes(label=sprintf("%1.2f", conf_low), y=conf_low), hjust="right", size=2) +
   geom_text(aes(label=sprintf("%1.2f", conf_high), y=conf_high), hjust="left", size=2) +
   expand_limits(x=0) +
-  labs(x="", y="Least-Squares Means") +
+  labs(x="", y="Estimated Means") +
   coord_flip() +
   facet_wrap(vars(measure), ncol=1, scales = "free")
 ```
@@ -363,7 +365,7 @@ confints %>%
   geom_text(aes(label=sprintf("%1.2g", conf_low), y=conf_low), hjust="right", size=2) +
   geom_text(aes(label=sprintf("%1.2g", conf_high), y=conf_high), hjust="left", size=2) +
   expand_limits(x=0) +
-  labs(x="", y="Estimated pairwise difference") +
+  labs(x="", y="Estimated Pairwise Difference") +
   coord_flip() +
   facet_wrap(vars(measure), ncol=1)#, scales = "free")
 ```
