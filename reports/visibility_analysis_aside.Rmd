@@ -1,0 +1,100 @@
+# RQ1: To what degree do people choose the words that the system suggests?
+
+```{r "predictabilityVsLength"}
+data %>% 
+  ggplot(aes(x=num_words, y=frac_predictable)) +
+  stat_smooth(method = "lm") +
+  geom_point()
+```
+
+```{r individualDiffs}
+getPairwiseDiffs <- function(colName) {
+  blockLevel %>%
+    pivot_wider(id_cols = c("participant"), names_from = "condition", values_from = colName) %>% 
+    mutate(
+      `Always-Never` = Always - Never,
+      `Always-OnlyConfident` = Always - OnlyConfident,
+      `OnlyConfident-Never` = OnlyConfident - Never
+    )
+};
+
+predictable_pdiffs <- getPairwiseDiffs("num_predictable")
+
+pdiffs <- bind_rows(
+  num_predictable = getPairwiseDiffs("num_predictable"),
+  frac_predictable = getPairwiseDiffs("frac_predictable"),
+  num_words = getPairwiseDiffs("num_words"),
+  .id = "measure"
+)
+
+#predictable_pdiffs %>% 
+#  ggplot(aes(x=`Extra-Intro`)) + geom_dotplot()
+
+pdiffs %>% 
+  pivot_longer(c('Always-Never', 'Always-OnlyConfident', 'OnlyConfident-Never')) %>% 
+  ggplot(aes(x=value, y=name)) + ggstance::geom_boxploth() + facet_wrap(vars(measure), ncol = 1, scales = "free")
+```
+
+
+```{r}
+results <- afex::aov_ez(
+  data=blockLevel,
+  id="participant", # subject identifier
+  dv="num_predictable", # outcome
+  within=c('condition'),
+  between=NULL,
+  fun_aggregate = mean,
+  anova_table = list(es='ges'));
+
+#select(-`Pr(>F)`)
+#results$anova_table %>% as_tibble(rownames = "effect")
+results
+```
+
+```{r}
+pairs(emmeans(results, "condition"), comparisons = TRUE)
+```
+
+
+```{r}
+afex::aov_ez(
+  data=blockLevel,
+  id="participant",
+  dv="frac_predictable",
+  within=c('condition'),
+  between=NULL);
+```
+
+# How do predictions affect text length?
+
+```{r num_words}
+blockLevel %>% ggplot(aes(x=condition, y=num_words)) + labeledBar + coord_flip()
+```
+
+```{r num_words_analysis}
+afex::aov_ez(
+  data=blockLevel,
+  id="participant",
+  dv="num_words",
+  within=c('condition'),
+  between=NULL);
+```
+
+# How does text entry speed depend on suggestion visibility?
+
+```{r speed}
+blockLevel %>% ggplot(aes(x=condition, y=chars_per_sec)) + labeledBar + coord_flip()
+```
+
+```{r speedAnalysis}
+afex::mixed(chars_per_sec_log ~ condition * block + (1|participant), data=blockLevel)
+```
+
+```{r speedAnalysisMANOVA}
+afex::aov_ez(
+  data=blockLevel,
+  id="participant",
+  dv="chars_per_sec",
+  within=c('condition')
+)
+```
