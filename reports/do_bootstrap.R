@@ -116,7 +116,7 @@ boot_results <- pbapply::pblapply(
     analyze_one_iteration(measures=measures, data=data)
   },
   cl=cluster
-)
+) %>% bind_rows()
 
 stopCluster(cluster);
 
