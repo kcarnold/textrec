@@ -223,96 +223,59 @@ xt <- xtabs(~ recsVisible + anyErrors, data=data)
 fisher.test(xt)
 ```
 
+# Set Up Analysis Task
 
-```{r perTrialBootstrap}
-# based on https://transparentstats.github.io/guidelines/effectsize.html#effectsize_exemplar_within
-# Sample subjects, but keep all data for each.
-getBootstrapSample <- function () {
-  subjects <- unique(data$participant)
-  sampled_subjects <- sample(subjects, length(subjects), replace = TRUE)
-  get_data_for_subject <- function(i) {
-    data %>%
-      # extract that subject's data
-      filter(participant == sampled_subjects[i]) %>%
-      # give them a unique id
-      mutate(participant = paste0(sampled_subjects[i], '_', i))
-  };
-  # Need bind_rows to concatenate the samples for each subject.
-  lapply(1:length(sampled_subjects), get_data_for_subject) %>% bind_rows()
-};
+```{r "blockLevelAggregation"}
+blockLevelAll <- data %>% 
+  group_by(participant, condition, block) %>%
+  summarise_at(c("TLX_sum", "physical", "mental"), first) %>% 
+  filter(!(any(is.na(TLX_sum)))) %>% 
+  ungroup()
 
-analyze_one_iteration <- function(measures) {
-  pairs_to_stats <- function(emmgrid) {
-    emmgrid %>% 
-      pairs() %>% 
-      as.data.frame(infer=F) %>% 
-      rename(statistic=contrast) %>% 
-      select(statistic, estimate) %>% 
-      mutate(statistic=as.character(statistic))
-  };
-  
-  emmeans_to_stats <- function(emmgrid) {
-    emmgrid %>% 
-      as.data.frame(infer=F) %>% 
-      rename(statistic=condition, estimate=emmean) %>% 
-      select(statistic, estimate) %>% 
-      mutate(statistic=as.character(statistic))
-  };
-  sampled <- getBootstrapSample();
-  lapply(measures, function(m) {
-    paste0(m, " ~ condition + (1|participant) + (1|stimulus)") %>% 
-    as.formula() %>%
-    lme4::lmer(data=sampled) %>% 
-    emmeans(specs="condition") %>% 
-      {list(
-        means=emmeans_to_stats(.)
-      , pairs=pairs_to_stats(.))} %>% bind_rows(.id="type") %>% 
-    mutate(measure=m, statistic=factor(statistic))
-  }) %>% bind_rows()
-}
+blockLevelRecsOnly <- subset(blockLevel, condition != "Never")
 
-analyze_one_iteration(c("num_predictable"))
-
-analyze_n_iterations <- function(n_iterations, measures) {
-  lapply(1:n_iterations, function(x) analyze_one_iteration(measures)) %>% bind_rows()
-}
-
-
-
-#analyze_n_iterations(
-#  measures = c("num_predictable", "frac_predictable", "num_words"),
-#  n_iterations = 1)
 ```
 
-```{r bootstrapCalc}
-do_compute <- FALSE
-total_iterations <- 8
-if (do_compute) {
-  core_count <- detectCores()
-  cluster <- makeCluster(core_count)
-  clusterSetRNGStream(cluster, iseed = 0)
-  
-  measures_to_analyze = c("num_predictable", "frac_predictable", "num_words")
-  
-  clusterExport(cluster, varlist = c("getBootstrapSample", "analyze_one_iteration", "analyze_n_iterations", "data"))
-  clusterCall(cluster, doAnalysisSetup);
-  
-  
-  iterations_per_node <- ceiling(total_iterations/core_count)
-  system.time(
-    boot_results <- parLapply(
-      cluster,
-      rep(iterations_per_node, core_count),
-      analyze_n_iterations,
-      rep( measures_to_analyze, core_count)
-      )
-  )
-  #saveRDS(boot_results, "bootstrap_results.rds");
-  
-  stopCluster(cluster);
-} else {
-  boot_results <- readRDS("bootstrap_results_20191005.rds")
-}
+```{r bootstrapGenTask}
+total_iterations <- 5 #10000
+
+saveRDS(
+  list(
+    name="Trial-Level",
+    iterations=total_iterations,
+    data=data,
+    measures=list(
+      list("num_predictable", " ~ condition + (1|participant) + (1|stimulus)"),
+      list("frac_predictable", " ~ condition + (1|participant) + (1|stimulus)"),
+      list("num_words", " ~ condition + (1|participant) + (1|stimulus)"))
+  ),
+  "tasks/trial_level.rds")
+
+saveRDS(
+  list(
+    name="Block-Level All",
+    iterations=total_iterations,
+    data=blockLevelAll,
+    measures=list(
+      list("physical", " ~ condition + (1|participant)"),
+      list("mental", " ~ condition + (1|participant)"),
+      list("TLX_sum", " ~ condition + (1|participant)")
+    )
+  ),
+  "tasks/block_level_all.rds"
+)
+
+saveRDS(
+  list(
+    name="Block-Level Suggs",
+    iterations=total_iterations,
+    data=blockLevelRecsOnly,
+    measures=list(
+      list("chars_per_sec_ratio_to_norecs", " ~ condition + (1|participant)")
+    )
+  ),
+  "tasks/block_level_suggs.rds"
+)
 ```
 
 ```{r}
@@ -401,23 +364,6 @@ labeledBar <- list(
                  hjust="middle", vjust="bottom"))
 ```
 
-# RQ1: To what degree do people choose the words that the system suggests?
-
-```{r num_predictable}
-blockLevel %>%
-  #group_by(participant) %>% mutate(num_predictable = num_predictable - mean(num_predictable)) %>% ungroup() %>% 
-  ggplot(aes(x=condition, y=num_predictable)) + 
-  #geom_boxplot() +
-  labeledBar + 
-  #stat_summary(geom="bar", fun.data=mean_se) +
-  #stat_summary(geom="errorbar", fun.data=mean_se)
-  coord_flip()
-```
-
-```{r frac_predictable}
-blockLevel %>% ggplot(aes(x=condition, y=frac_predictable)) + labeledBar + coord_flip()
-```
-
 
 ```{r "examples"}
 total <- data %>% group_by(stimulus) %>% count() %>% pull(n) %>% mean()
@@ -445,107 +391,8 @@ sorted %>%
 
 ```
 
-```{r "predictabilityVsLength"}
-data %>% 
-  ggplot(aes(x=num_words, y=frac_predictable)) +
-  stat_smooth(method = "lm") +
-  geom_point()
-```
-
-```{r individualDiffs}
-getPairwiseDiffs <- function(colName) {
-  blockLevel %>%
-    pivot_wider(id_cols = c("participant"), names_from = "condition", values_from = colName) %>% 
-    mutate(
-      `Always-Never` = Always - Never,
-      `Always-OnlyConfident` = Always - OnlyConfident,
-      `OnlyConfident-Never` = OnlyConfident - Never
-    )
-};
-
-predictable_pdiffs <- getPairwiseDiffs("num_predictable")
-
-pdiffs <- bind_rows(
-  num_predictable = getPairwiseDiffs("num_predictable"),
-  frac_predictable = getPairwiseDiffs("frac_predictable"),
-  num_words = getPairwiseDiffs("num_words"),
-  .id = "measure"
-)
-
-#predictable_pdiffs %>% 
-#  ggplot(aes(x=`Extra-Intro`)) + geom_dotplot()
-
-pdiffs %>% 
-  pivot_longer(c('Always-Never', 'Always-OnlyConfident', 'OnlyConfident-Never')) %>% 
-  ggplot(aes(x=value, y=name)) + ggstance::geom_boxploth() + facet_wrap(vars(measure), ncol = 1, scales = "free")
-```
-
-
-```{r}
-results <- afex::aov_ez(
-  data=blockLevel,
-  id="participant", # subject identifier
-  dv="num_predictable", # outcome
-  within=c('condition'),
-  between=NULL,
-  fun_aggregate = mean,
-  anova_table = list(es='ges'));
-
-#select(-`Pr(>F)`)
-#results$anova_table %>% as_tibble(rownames = "effect")
-results
-```
-
-```{r}
-pairs(emmeans(results, "condition"), comparisons = TRUE)
-```
-
-
-```{r}
-afex::aov_ez(
-  data=blockLevel,
-  id="participant",
-  dv="frac_predictable",
-  within=c('condition'),
-  between=NULL);
-```
-
-# How do predictions affect text length?
-
-```{r num_words}
-blockLevel %>% ggplot(aes(x=condition, y=num_words)) + labeledBar + coord_flip()
-```
-
-```{r num_words_analysis}
-afex::aov_ez(
-  data=blockLevel,
-  id="participant",
-  dv="num_words",
-  within=c('condition'),
-  between=NULL);
-```
-
-# How does text entry speed depend on suggestion visibility?
-
-```{r speed}
-blockLevel %>% ggplot(aes(x=condition, y=chars_per_sec)) + labeledBar + coord_flip()
-```
-
-```{r speedAnalysis}
-afex::mixed(chars_per_sec_log ~ condition * block + (1|participant), data=blockLevel)
-```
-
-```{r speedAnalysisMANOVA}
-afex::aov_ez(
-  data=blockLevel,
-  id="participant",
-  dv="chars_per_sec",
-  within=c('condition')
-)
-```
 
 ```{r speed_interaction}
-blockLevelRecsOnly <- subset(blockLevel, condition != "Never")
 blockLevelRecsOnly %>%
   ggplot(aes(x=chars_per_sec_norecs_mean, y=chars_per_sec_ratio_to_norecs, color=condition)) +
   geom_point(alpha=.5) +
@@ -580,94 +427,15 @@ confint.merMod(
 # How did subjective experience depend on suggestion visibility?
 
 ```{r perBlockBootstrap}
-blockLevelSubjective <- data %>% 
-  group_by(participant, condition, block) %>% summarise_at(c("TLX_sum", "physical", "mental"), first) %>% 
-  filter(!(any(is.na(TLX_sum)))) %>% 
-  ungroup()
 
-
-# Sample subjects, but keep all data for each.
-getBootstrapSample <- function (data) {
-  subjects <- unique(data$participant)
-  sampled_subjects <- sample(subjects, length(subjects), replace = TRUE)
-  get_data_for_subject <- function(i) {
-    data %>%
-      # extract that subject's data
-      filter(participant == sampled_subjects[i]) %>%
-      # give them a unique id
-      mutate(participant = paste0(sampled_subjects[i], '_', i))
-  };
-  # Need bind_rows to concatenate the samples for each subject.
-  lapply(1:length(sampled_subjects), get_data_for_subject) %>% bind_rows()
-};
-
-analyze_one_iteration <- function(measures, data, formulaSuffix=" ~ condition + (1|participant)") {
-  pairs_to_stats <- function(emmgrid) {
-    emmgrid %>% 
-      pairs() %>% 
-      as.data.frame(infer=F) %>% 
-      rename(statistic=contrast) %>% 
-      select(statistic, estimate) %>% 
-      mutate(statistic=as.character(statistic))
-  };
-  
-  emmeans_to_stats <- function(emmgrid) {
-    emmgrid %>% 
-      as.data.frame(infer=F) %>% 
-      rename(statistic=condition, estimate=emmean) %>% 
-      select(statistic, estimate) %>% 
-      mutate(statistic=as.character(statistic))
-  };
-  sampled <- getBootstrapSample(data=data);
-  lapply(measures, function(m) {
-    paste0(m, formulaSuffix) %>% 
-    as.formula() %>%
-    lme4::lmer(data=sampled) %>% 
-    emmeans(specs="condition") %>% 
-      {list(
-        means=emmeans_to_stats(.)
-      , pairs=pairs_to_stats(.))} %>% bind_rows(.id="type") %>% 
-    mutate(measure=m, statistic=factor(statistic))
-  }) %>% bind_rows()
-}
-
-#analyze_one_iteration(c("TLX_sum", "physical", "mental"), blockLevelSubjective)
-
-analyze_n_iterations <- function(dataName, n_iterations, measures, formulaSuffix) {
-  data <- get(dataName)
-  lapply(1:n_iterations, function(x) analyze_one_iteration(measures, data, formulaSuffix = formulaSuffix)) %>% bind_rows()
-}
-
-do_compute <- FALSE
-total_iterations <- 1000
-if (do_compute) {
-  core_count <- detectCores()
-  cluster <- makeCluster(core_count)
-  clusterSetRNGStream(cluster, iseed = 0)
-  
-  measures_to_analyze = c("TLX_sum", "physical", "mental")
-  
   clusterExport(cluster, varlist = c("getBootstrapSample", "analyze_one_iteration", "analyze_n_iterations", "blockLevelSubjective"))
   clusterCall(cluster, doAnalysisSetup);
   
   
   iterations_per_node <- ceiling(total_iterations/core_count)
   system.time(
-    boot_results <- pbapply::pblapply(
-      1:total_iterations,
-      function(i, measures, data=blockLevelSubjective) {
-        analyze_one_iteration(measures=measures, data=data)
-      },
-      rep( measures_to_analyze, core_count),
-      cl=cluster
-      )
   )
-  saveRDS(boot_results, "TLX_bootstraps.rds");
-  
   stopCluster(cluster);
-} else {
-  boot_results <- readRDS("TLX_bootstraps.rds")
-}
 
 ```
 
