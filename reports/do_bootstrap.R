@@ -91,7 +91,7 @@ data <- task$data
 measures <- task$measures
 total_iterations <- task$iterations
 
-print(paste("Starting", task$name))
+print(paste("Starting", task$name, "iterations:", total_iterations))
 
 # Spin up the cluster.
 core_count <- detectCores()
