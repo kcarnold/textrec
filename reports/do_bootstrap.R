@@ -60,11 +60,11 @@ analyze_one_iteration <- function(measures, data) {
   lapply(measures, function(x) {
     # specs are (measure, rest of formula, name).
     # if name is unspecified, default it to 'measure'.
-    f <- paste0(x[1], x[2])
+    f <- paste0(x[[1]], x[[2]])
     if (length(x) > 2) {
-      m <- x[3]
+      m <- x[[3]]
     } else {
-      m <- x[1]
+      m <- x[[1]]
     }
     
     # Run this analysis.
