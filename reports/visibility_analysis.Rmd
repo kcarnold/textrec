@@ -127,10 +127,17 @@ vars.to.summarize <- list(
   "frac_predictable" = "Fraction of words that were predictable",
   "relevant_use_frac" = "Fraction of relevant predictions that were used",
   "chars_per_sec"="Characters per Second",
-  "tapsPerSec" = "Taps per Second",
-  "TLX_sum"="Total cognitive load (TLX)",
-  "physical"="Physical load (TLX)",
-  "mental"="Mental load (TLX)"
+  "tapsPerSec" = "Taps per Second"
+
+)
+
+var_names <- list(
+  "num_predictable" = "Num Predictable Words",
+  "num_unpredictable" = "Num Unpredictable Words",
+  "num_words" = "Num Words Total",
+  "TLX_sum" = "Total task load (TLX)",
+  "physical" = "Physical load (TLX)",
+  "mental" = "Mental load (TLX)"
 )
 
 # expLevel <- data %>%
@@ -232,9 +239,28 @@ blockLevelAll <- data %>%
   filter(!(any(is.na(TLX_sum)))) %>% 
   ungroup()
 
-blockLevelRecsOnly <- subset(blockLevel, condition != "Never")
+# Subtract per-image mean, aggregate by block.
+dataMinusImgMean <- data %>%
+  group_by(stimulus) %>% 
+  mutate(
+    num_predictable = num_predictable - mean(num_predictable),
+    frac_predictable = frac_predictable - mean(frac_predictable),
+    num_words = num_words - mean(num_words),
+    chars_per_sec = chars_per_sec - mean(chars_per_sec),
+    chars_per_sec_log = chars_per_sec_log - mean(chars_per_sec_log)
+   ) %>% 
+  ungroup();
 
+blockLevelMinusMean <- dataMinusImgMean %>% 
+  group_by(participant, condition, block) %>% 
+  summarise_at(c(
+    'num_predictable', 'frac_predictable', 'num_words',
+    'chars_per_sec', 'chars_per_sec_log', 'chars_per_sec_norecs_mean', 'chars_per_sec_ratio_to_norecs',
+    'pos_count_NOUN', 'pos_count_ADJ', 'num_colors'
+    ), mean);
+blockLevelRecsOnly <- subset(blockLevelMinusMean, condition != "Never")
 ```
+
 
 ```{r bootstrapGenTask}
 total_iterations <- 10000
@@ -246,6 +272,7 @@ saveRDS(
     data=data,
     measures=list(
       list("num_predictable", " ~ condition + (1|participant) + (1|stimulus)"),
+      list("num_unpredictable", " ~ condition + (1|participant) + (1|stimulus)"),
       list("frac_predictable", " ~ condition + (1|participant) + (1|stimulus)"),
       list("num_words", " ~ condition + (1|participant) + (1|stimulus)"))
   ),
@@ -280,27 +307,35 @@ saveRDS(
 
 ```{r loadResults}
 trial_level_results <- readRDS("task_results/trial_level.rds")
+block_level_results <- readRDS("task_results/block_level_all.rds")
 
 ```
 
 ```{r}
-# inner 95%
-PERCENTILE_LO <- 0.025
-PERCENTILE_HI <- 0.975
 
-confints <- trial_level_results %>% 
-  group_by(type, measure, statistic) %>% 
-  summarize(
-    n=n(),
-    mean=mean(estimate),
-    conf_low = unname(quantile(estimate, probs = PERCENTILE_LO)),
-    conf_high = unname(quantile(estimate, probs = PERCENTILE_HI)))
+confIntsFromResults <- function(boot_results) {
+  # inner 95%
+  PERCENTILE_LO <- 0.025
+  PERCENTILE_HI <- 0.975
+  
+  boot_results %>% 
+    group_by(type, measure, statistic) %>% 
+    summarize(
+      n=n(),
+      mean=mean(estimate),
+      conf_low = unname(quantile(estimate, probs = PERCENTILE_LO)),
+      conf_high = unname(quantile(estimate, probs = PERCENTILE_HI))) %>% 
+    ungroup()
+}
 
+confints <- confIntsFromResults(trial_level_results)
+  
 ```
 
 ```{r bootstrap_lsmeans}
 confints %>%
   subset(type == "means") %>% 
+  subset(measure != "frac_predictable") %>% 
   mutate(statistic=factor(statistic, levels=c("Always", "OnlyConfident", "Never"))) %>% 
   ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
   geom_hline(yintercept = 0, linetype ='dotted') +
@@ -316,8 +351,11 @@ confints %>%
 
 ```{r bootstrap_pairwise}
 # The "g" format string uses sigfigs, rather than after decimal point, for frac_predicted.
+
 confints %>%
   subset(type == "pairs") %>% 
+  subset(measure != "frac_predictable") %>% 
+  mutate(measure=dplyr::recode(measure, !!!var_names)) %>%
   ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
   geom_hline(yintercept = 0, linetype ='dotted') +
   geom_pointrange() +
@@ -327,35 +365,9 @@ confints %>%
   expand_limits(x=0) +
   labs(x="", y="Estimated pairwise difference") +
   coord_flip() +
-  facet_wrap(vars(measure), ncol=1, scales = "free")
+  facet_wrap(vars(measure), ncol=1)#, scales = "free")
 ```
 
-# Subtract per-image mean, aggregate by block.
-
-```{r}
-dataMinusImgMean <- data %>%
-  group_by(stimulus) %>% 
-  mutate(
-    num_predictable = num_predictable - mean(num_predictable),
-    frac_predictable = frac_predictable - mean(frac_predictable),
-    num_words = num_words - mean(num_words),
-    chars_per_sec = chars_per_sec - mean(chars_per_sec),
-    chars_per_sec_log = chars_per_sec_log - mean(chars_per_sec_log)
-   ) %>% 
-  ungroup();
-
-blockLevel <- dataMinusImgMean %>% 
-  group_by(participant, condition, block) %>% 
-  summarise_at(c(
-    'num_predictable', 'frac_predictable', 'num_words',
-    'chars_per_sec', 'chars_per_sec_log', 'chars_per_sec_norecs_mean', 'chars_per_sec_ratio_to_norecs',
-    'pos_count_NOUN', 'pos_count_ADJ', 'num_colors'
-    ), mean);
-#    num_predictable=mean(num_predictable),
-#    frac_predictable=mean(frac_predictable),
-#    num_words=mean(num_words),
-#    chars_per_sec=mean(chars_per_sec))
-```
 
 ```{r}
 labeledBar <- list(
@@ -402,7 +414,7 @@ blockLevelRecsOnly %>%
   geom_point(alpha=.5) +
   geom_smooth(method="loess") +
   labs(
-    x="Baseline Speed (chars/sec in trials with with Hidden suggestions)",
+    x="Baseline Speed (chars/sec in trials with suggestions Never visible)",
     y="Block-level mean ratio of speed in trial to baseline speed",
     color="Suggestion Visibility")
   #facet_wrap(vars(block))
@@ -430,20 +442,8 @@ confint.merMod(
 
 # How did subjective experience depend on suggestion visibility?
 
-```{r TLXconfitns}
-# inner 95%
-PERCENTILE_LO <- 0.025
-PERCENTILE_HI <- 0.975
-
-TLXconfints <- boot_results %>% 
-  bind_rows %>% 
-  group_by(type, measure, statistic) %>% 
-  summarize(
-    n=n(),
-    mean=mean(estimate),
-    conf_low = unname(quantile(estimate, probs = PERCENTILE_LO)),
-    conf_high = unname(quantile(estimate, probs = PERCENTILE_HI)))
-
+```{r TLXconfints}
+TLXconfints <- confIntsFromResults(block_level_results)
 ```
 
 ```{r TLX}
@@ -484,6 +484,7 @@ tlxCIs}
 #tlxCIs %>% #separate(contrast, into=c("right", "left"), remove=FALSE) %>% 
 TLXconfints %>% 
   subset(type == "pairs") %>% 
+  mutate(measure=dplyr::recode(measure, !!!var_names)) %>% 
   ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
   geom_hline(yintercept = 0, linetype ='dotted') +
   geom_pointrange() +
@@ -503,7 +504,7 @@ TLXconfints %>%
 
 ```{r contentExploratory}
 multiBar <- function(measures.to.vis, nrow=3) {
-  blockLevel %>%
+  blockLevelMinusMean %>%
     ungroup() %>%
     select(participant, condition, block, !!!measures.to.vis) %>%
     gather(measure, value, !!!measures.to.vis) %>%
@@ -512,7 +513,7 @@ multiBar <- function(measures.to.vis, nrow=3) {
     ggplot(aes(x=condition, y=value)) +
       labeledBar +
       facet_wrap(vars(measure), nrow=3, scales="free", strip.position="top") +
-      labs(x="Prediction visibility", y="") +
+      labs(x="Suggestion Visibility", y="") +
       coord_flip() +
       theme(
         strip.background = element_blank(),
