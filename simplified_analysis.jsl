@@ -9,7 +9,11 @@ Column( dt_all, "condition" ) << Set Property( "Value Ordering", {"contextual", 
 
 // Formulas
 dt_all << New Column( "frac_BOW_recs", Numeric, Formula( :corrected_bow_recs_idealuse_standard / :num_words ) );
+dt_all << New Column( "num_words_log", Numeric, Formula( Log( :num_words ) ) );
+dt_all << New Column( "num_openclass", Numeric, Formula(:pos_count_ADJ + :pos_count_ADV + :pos_count_NOUN + :pos_count_PROPN + :pos_count_VERB));
+dt_all << New Column( "num_functionwords", Numeric, Formula(:num_words - :num_openclass));
 
+// :pos_count_INTJ
 
 // Master data filter
 data = Subset(
@@ -80,15 +84,15 @@ analyze = Function( {dt, response_name, window_title, extra_toplevel = "", extra
 
 analyze_all = Function( {response_name, window_title, extra_toplevel = "", extra_effects = ""},
 	analyze(dt_gc1, response_name, window_title, extra_toplevel=extra_toplevel, extra_effects=extra_effects);
-	analyze(dt_specs, response_name, window_title, extra_toplevel=extra_toplevel, extra_effects=extra_effects);
+//	analyze(dt_specs, response_name, window_title, extra_toplevel=extra_toplevel, extra_effects=extra_effects);
 );
 
 analyze_all("num_words", "Number of words written");
+analyze_all("num_words_log", "log of number of words written");
+analyze_all("corrected_bow_recs_idealuse_standard", "Number of words matching a full-word Standard prediction");
+analyze_all("frac_BOW_recs", "Fraction of words matching a full-word Standard prediction");
 
-analyze(dt_gc1, "corrected_bow_recs_idealuse_standard", "Number of words matching a full-word Standard prediction");
-analyze(dt_specs, "corrected_bow_recs_idealuse_standard", "Number of words matching a full-word Standard prediction");
-
-analyze(dt_gc1, "frac_BOW_recs", "Fraction of words matching a full-word Standard prediction");
-analyze(dt_specs, "frac_BOW_recs", "Fraction of words matching a full-word Standard prediction");
-
-
+analyze_all("pos_count_ADJ", "Number of adjectives");
+analyze_all("pos_count_NOUN", "Number of nouns");
+analyze_all("num_openclass", "# content words");
+analyze_all("num_functionwords", "# function words");
