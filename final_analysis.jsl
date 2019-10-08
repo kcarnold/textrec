@@ -191,9 +191,12 @@ analyze( "mintaps_standard", "MTPW(Standard, text)" );
 // Total taps
 analyze( "corrected_tapstotype_standard", "Min-Taps total" );
 
+analyze("corrected_bow_recs_idealuse_standard", "Number of words matching a full-word Standard prediction");
+
+
 // Deviations from BOW recs
-analyze( "num_words_not_BOW_recs", "Num words typed that weren't BOW recommendations" );
-analyze( "frac_words_not_BOW_recs", "Frac words typed that weren't BOW recommendations" );
+//analyze( "num_words_not_BOW_recs", "Num words typed that weren't BOW recommendations" );
+//analyze( "frac_words_not_BOW_recs", "Frac words typed that weren't BOW recommendations" );
 
 
 // By content of recommendations offered (diff between standard and contextual)
