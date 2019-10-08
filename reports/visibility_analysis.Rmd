@@ -237,7 +237,7 @@ blockLevelRecsOnly <- subset(blockLevel, condition != "Never")
 ```
 
 ```{r bootstrapGenTask}
-total_iterations <- 5 #10000
+total_iterations <- 10000
 
 saveRDS(
   list(
@@ -278,13 +278,17 @@ saveRDS(
 )
 ```
 
+```{r loadResults}
+trial_level_results <- readRDS("task_results/trial_level.rds")
+
+```
+
 ```{r}
 # inner 95%
 PERCENTILE_LO <- 0.025
 PERCENTILE_HI <- 0.975
 
-confints <- boot_results %>% 
-  bind_rows %>% 
+confints <- trial_level_results %>% 
   group_by(type, measure, statistic) %>% 
   summarize(
     n=n(),
@@ -425,19 +429,6 @@ confint.merMod(
 ```
 
 # How did subjective experience depend on suggestion visibility?
-
-```{r perBlockBootstrap}
-
-  clusterExport(cluster, varlist = c("getBootstrapSample", "analyze_one_iteration", "analyze_n_iterations", "blockLevelSubjective"))
-  clusterCall(cluster, doAnalysisSetup);
-  
-  
-  iterations_per_node <- ceiling(total_iterations/core_count)
-  system.time(
-  )
-  stopCluster(cluster);
-
-```
 
 ```{r TLXconfitns}
 # inner 95%
