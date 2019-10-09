@@ -1,6 +1,6 @@
 ---
 title: "Suggestion Visibility Analysis"
-author: "Kenneth C. Arnold"
+author: "(anon)"
 date: "9/18/2019"
 output:
   html_document:
@@ -348,7 +348,7 @@ confints %>%
   expand_limits(x=0) +
   labs(x="", y="Estimated Means") +
   coord_flip() +
-  facet_wrap(vars(measure), ncol=1, scales = "free")
+  facet_wrap(vars(measure), ncol=1)
 ```
 
 ```{r bootstrap_pairwise}
