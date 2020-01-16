@@ -32,29 +32,29 @@ analyze_one_iteration <- function(measures, data) {
     # Need bind_rows to concatenate the samples for each subject.
     lapply(1:length(sampled_subjects), get_data_for_subject) %>% bind_rows()
   };
-  
+
   # Pull out pairwise comparisons in a standard format.
   pairs_to_stats <- function(emmgrid) {
-    emmgrid %>% 
-      pairs() %>% 
-      as.data.frame(infer=F) %>% 
-      rename(statistic=contrast) %>% 
-      select(statistic, estimate) %>% 
+    emmgrid %>%
+      pairs() %>%
+      as.data.frame(infer=F) %>%
+      rename(statistic=contrast) %>%
+      select(statistic, estimate) %>%
       mutate(statistic=as.character(statistic))
   };
-  
+
   # Pull out marginal means in a standard format.
   emmeans_to_stats <- function(emmgrid) {
-    emmgrid %>% 
-      as.data.frame(infer=F) %>% 
-      rename(statistic=condition, estimate=emmean) %>% 
-      select(statistic, estimate) %>% 
+    emmgrid %>%
+      as.data.frame(infer=F) %>%
+      rename(statistic=condition, estimate=emmean) %>%
+      select(statistic, estimate) %>%
       mutate(statistic=as.character(statistic))
   };
-  
+
   # Make a single sample for all analyses
   sampled <- getBootstrapSample(data=data);
-  
+
   # Run all the requested analyses.
   # The results will be in a standard format, so we can bind_rows them.
   lapply(measures, function(x) {
@@ -66,15 +66,15 @@ analyze_one_iteration <- function(measures, data) {
     } else {
       m <- x[[1]]
     }
-    
+
     # Run this analysis.
-    f %>% 
+    f %>%
       as.formula() %>%
-      lme4::lmer(data=sampled) %>% 
-      emmeans(specs="condition") %>% 
+      lme4::lmer(data=sampled) %>%
+      emmeans(specs="condition") %>%
       {list(
         means=emmeans_to_stats(.)
-        , pairs=pairs_to_stats(.))} %>% bind_rows(.id="type") %>% 
+        , pairs=pairs_to_stats(.))} %>% bind_rows(.id="type") %>%
       mutate(measure=m, statistic=factor(statistic))
   }) %>% bind_rows()
 }
@@ -110,6 +110,7 @@ clusterExport(
 clusterCall(cluster, doAnalysisSetup) %>% invisible()
 
 # Run all analyses for all iterations.
+pboptions(type="timer")
 boot_results <- pbapply::pblapply(
   1:total_iterations,
   function(i) {
