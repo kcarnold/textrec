@@ -111,6 +111,7 @@ data$anyADJ = factor(data$ADJ != 0)
 var_names <- list(
   "num_predictable" = "Number of Predictable Words",
   "num_unpredictable" = "Number of Unpredictable Words",
+  "frac_predictable" = "Fraction of Predictable Words",
   "num_words" = "Total Number of Words",
   "TLX_sum" = "Total task load (sum of TLX items)",
   "physical" = "TLX physical load item",
@@ -334,11 +335,20 @@ confints %>%
   facet_wrap(vars(measure), ncol=1)
 ```
 
-```{r bootstrap_pairwise}
+```{r bootstrap_pairwise, fig.width=7, fig.height=7}
 # TODO: https://stackoverflow.com/questions/45361904/duplicating-and-modifying-discrete-axis-in-ggplot2/45362497#45362497
+ranges <- data.frame(
+  measure=c("num_predictable", "num_unpredictable", "frac_predictable", "num_words"),
+  min=c(-2, -2, -.1, -2),
+  max=c(2, 2, .1, 2)
+) %>% mutate(measure=dplyr::recode(measure, !!!var_names))
+
+cur_measures <- list("num_predictable", "num_unpredictable", "frac_predictable", "num_words")
+
 confints %>%
   subset(type == "pairs") %>% 
-  subset(measure %in% list("num_predictable", "num_unpredictable", "num_words")) %>% 
+  subset(measure %in% cur_measures) %>% 
+  mutate(measure=factor(measure, levels=cur_measures)) %>% 
   mutate(measure=dplyr::recode(measure, !!!var_names)) %>%
   ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
   geom_hline(yintercept = 0, linetype ='dotted') +
@@ -346,10 +356,14 @@ confints %>%
   geom_text(aes(label=sprintf("%1.2f", ..y..)), nudge_x=.25, hjust="middle", vjust="bottom", size=2.5) +
   geom_text(aes(label=sprintf("%1.2f", conf_low), y=conf_low), hjust="right", vjust="bottom", size=3) +
   geom_text(aes(label=sprintf("%1.2f", conf_high), y=conf_high), hjust="left", vjust="bottom", size=3) +
-  expand_limits(x=0, y=c(-1.5, 2)) +
+  #expand_limits(x=0, y=c(-1.5, 2)) +
+  geom_blank(
+    aes(y=value), 
+    data=ranges %>% pivot_longer(-measure),#data.frame(measure="frac_predictable", lims=c(-10, 10)),
+  inherit.aes = F) +
   labs(x="", y="Estimated Pairwise Difference") +
   coord_flip() +
-  facet_wrap(vars(measure), ncol=1)#, scales = "free")
+  facet_wrap(vars(measure), ncol=1, scales = "free")
 ```
 
 ```{r bootstrap_frac_predictable}
@@ -364,10 +378,11 @@ confints %>%
   geom_text(aes(label=sprintf("%1.2f", ..y..)), nudge_x=.25, hjust="middle", vjust="bottom", size=2.5) +
   geom_text(aes(label=sprintf("%1.2f", conf_low), y=conf_low), hjust="right", vjust="bottom", size=3) +
   geom_text(aes(label=sprintf("%1.2f", conf_high), y=conf_high), hjust="left", vjust="bottom", size=3) +
-  expand_limits(x=0) +
+  geom_blank(aes(y=lims), data=data.frame(measure="frac_predictable", lims=c(-10, 10)), inherit.aes = F) +
+  #expand_limits(x=0) +
   labs(x="", y="Estimated Pairwise Difference") +
   coord_flip() +
-  facet_wrap(vars(measure), ncol=1)#, scales = "free")
+  facet_wrap(vars(measure), ncol=1, scales = "free")
 
 ```
 
