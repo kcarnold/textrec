@@ -13,7 +13,7 @@ The Transparent Statistics guide, especially the [exemplars](https://transparent
 # https://stackoverflow.com/questions/27992239/knitr-include-figures-in-report-and-output-figures-to-separate-files
 knitr::opts_chunk$set(
   echo = TRUE,
-  dev=c('png', 'pdf')
+  dev=c('png', 'cairo_pdf')
 )
 
 library(dplyr)
@@ -23,7 +23,7 @@ library("knitr")
 # Modeling
 library(lme4)
 library(lmerTest)
-library(car)
+#library(car)
 #library(optimx)
 #library("ARTool")
 library("parallel")
@@ -108,37 +108,16 @@ data$anyADJ = factor(data$ADJ != 0)
 #data <- data %>% group_by(participant) %>% mutate(mean_relevant_use_frac=mean(relevant_use_frac, na.rm=T)) %>% ungroup()
 #data$rec_use_bin <- factor(ntile(data$mean_relevant_use_frac, 2))
 
-vars.to.summarize <- list(
-  "num_words"="Number of words written",
-  "itpw" = "Ideal Taps per Word (ITPW)",
-  "itpw_log" = "log(ITPW)",
-  "itpw_gated" = "ITPW in Gated",
-  "corrected_tapstotype_standard" = "Total taps to type",
-  "num_chars" = "Number of characters",
-  "num_colors" = "Number of colors used",
-  "mean_rarity"="Mean word rarity (inverse log frequency)",
-  "total_rarity"="Total rarity of words used",
-  "total_nll"="Total NLL under language model",
-  "ADJ" = "Fraction of adjectives",
-  "NOUN" = "Fraction of nouns",
-  "pos_count_ADJ" = "Number of adjectives",
-  "pos_count_NOUN" = "Number of nouns",
-  "pos_count_VERB" = "Number of verbs",
-  "num_predictable" = "Number of predictable words",
-  "frac_predictable" = "Fraction of words that were predictable",
-  "relevant_use_frac" = "Fraction of relevant predictions that were used",
-  "chars_per_sec"="Characters per Second",
-  "tapsPerSec" = "Taps per Second"
-
-)
-
 var_names <- list(
   "num_predictable" = "Number of Predictable Words",
   "num_unpredictable" = "Number of Unpredictable Words",
   "num_words" = "Total Number of Words",
   "TLX_sum" = "Total task load (sum of TLX items)",
   "physical" = "TLX physical load item",
-  "mental" = "TLX mental load item"
+  "mental" = "TLX mental load item",
+  "pos_count_NOUN" = "Number of nouns",
+  "pos_count_ADJ" = "Number of adjectives",
+  "num_colors" = "Number of color words used"
 )
 
 # expLevel <- data %>%
@@ -275,7 +254,11 @@ saveRDS(
       list("num_predictable", " ~ condition + (1|participant) + (1|stimulus)"),
       list("num_unpredictable", " ~ condition + (1|participant) + (1|stimulus)"),
       list("frac_predictable", " ~ condition + (1|participant) + (1|stimulus)"),
-      list("num_words", " ~ condition + (1|participant) + (1|stimulus)"))
+      list("num_words", " ~ condition + (1|participant) + (1|stimulus)"),
+      list("pos_count_NOUN", " ~ condition + (1|participant) + (1|stimulus)"),
+      list("pos_count_ADJ", " ~ condition + (1|participant) + (1|stimulus)"),
+      list("num_colors", " ~ condition + (1|participant) + (1|stimulus)")
+    )
   ),
   "tasks/trial_level.rds")
 
@@ -336,36 +319,56 @@ confints <- confIntsFromResults(trial_level_results)
 ```{r bootstrap_lsmeans}
 confints %>%
   subset(type == "means") %>% 
-  subset(measure != "frac_predictable") %>% 
+  subset(measure %in% list("num_predictable", "num_unpredictable", "num_words")) %>% 
   mutate(measure=dplyr::recode(measure, !!!var_names)) %>%
   mutate(statistic=factor(statistic, levels=c("Always", "OnlyConfident", "Never"))) %>% 
   ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
   geom_hline(yintercept = 0, linetype ='dotted') +
-  geom_pointrange() +
-  geom_text(aes(label=sprintf("%1.2f", ..y..)), nudge_x=.3, hjust="middle", vjust="bottom", size=2) +
-  geom_text(aes(label=sprintf("%1.2f", conf_low), y=conf_low), hjust="right", size=3) +
-  geom_text(aes(label=sprintf("%1.2f", conf_high), y=conf_high), hjust="left", size=3) +
-  expand_limits(x=0) +
+  geom_pointrange(size=.25) +
+  geom_text(aes(label=sprintf("%1.2f", ..y..)), nudge_x=.25, hjust="middle", vjust="bottom", size=2.5) +
+  geom_text(aes(label=sprintf("%1.2f", conf_low), y=conf_low), hjust="right", vjust="bottom", size=3) +
+  geom_text(aes(label=sprintf("%1.2f", conf_high), y=conf_high), hjust="left", vjust="bottom", size=3) +
+  expand_limits(x=0, y=16) +
   labs(x="", y="Estimated Means") +
   coord_flip() +
   facet_wrap(vars(measure), ncol=1)
 ```
 
 ```{r bootstrap_pairwise}
+# TODO: https://stackoverflow.com/questions/45361904/duplicating-and-modifying-discrete-axis-in-ggplot2/45362497#45362497
 confints %>%
   subset(type == "pairs") %>% 
-  subset(measure != "frac_predictable") %>% 
+  subset(measure %in% list("num_predictable", "num_unpredictable", "num_words")) %>% 
   mutate(measure=dplyr::recode(measure, !!!var_names)) %>%
   ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
   geom_hline(yintercept = 0, linetype ='dotted') +
-  geom_pointrange() +
-  geom_text(aes(label=sprintf("%1.2f", ..y..)), nudge_x=.3, hjust="middle", vjust="bottom", size=2) +
-  geom_text(aes(label=sprintf("%1.2f", conf_low), y=conf_low), hjust="right", size=3) +
-  geom_text(aes(label=sprintf("%1.2f", conf_high), y=conf_high), hjust="left", size=3) +
+  geom_pointrange(size=.25) +
+  geom_text(aes(label=sprintf("%1.2f", ..y..)), nudge_x=.25, hjust="middle", vjust="bottom", size=2.5) +
+  geom_text(aes(label=sprintf("%1.2f", conf_low), y=conf_low), hjust="right", vjust="bottom", size=3) +
+  geom_text(aes(label=sprintf("%1.2f", conf_high), y=conf_high), hjust="left", vjust="bottom", size=3) +
+  expand_limits(x=0, y=c(-1.5, 2)) +
+  labs(x="", y="Estimated Pairwise Difference") +
+  coord_flip() +
+  facet_wrap(vars(measure), ncol=1)#, scales = "free")
+```
+
+```{r bootstrap_frac_predictable}
+# TODO: https://stackoverflow.com/questions/45361904/duplicating-and-modifying-discrete-axis-in-ggplot2/45362497#45362497
+confints %>%
+  subset(type == "pairs") %>% 
+  subset(measure %in% list("frac_predictable", "num_words")) %>%
+  mutate(measure=dplyr::recode(measure, !!!var_names)) %>%
+  ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
+  geom_hline(yintercept = 0, linetype ='dotted') +
+  geom_pointrange(size=.25) +
+  geom_text(aes(label=sprintf("%1.2f", ..y..)), nudge_x=.25, hjust="middle", vjust="bottom", size=2.5) +
+  geom_text(aes(label=sprintf("%1.2f", conf_low), y=conf_low), hjust="right", vjust="bottom", size=3) +
+  geom_text(aes(label=sprintf("%1.2f", conf_high), y=conf_high), hjust="left", vjust="bottom", size=3) +
   expand_limits(x=0) +
   labs(x="", y="Estimated Pairwise Difference") +
   coord_flip() +
   facet_wrap(vars(measure), ncol=1)#, scales = "free")
+
 ```
 
 
@@ -391,19 +394,11 @@ sorted <- data %>%
   arrange(frac_predictable)
 
 sorted %>% 
-  slice(q1) %>%
-  select(stimulus, frac_predictable, corrected_text) %>% 
+  slice(c(q1, q3)) %>%
+  select(stimulus, num_predictable, num_unpredictable, frac_predictable, corrected_text) %>% 
+  mutate(frac_predictable=round(frac_predictable * 100)) %>% 
   kable(format="latex") %>% 
   cat(sep="\n");
-
-sorted %>% 
-  group_by(stimulus) %>%
-  arrange(frac_predictable) %>%
-  slice(q3) %>%
-  select(stimulus, frac_predictable, corrected_text) %>% 
-  kable(format="latex") %>% 
-  cat(sep="\n");
-
 
 ```
 
@@ -447,36 +442,6 @@ confint.merMod(
 TLXconfints <- confIntsFromResults(block_level_results)
 ```
 
-```{r TLX}
-# tlx.boot <- boot::boot(
-#   data=unique(tlxData$participant),
-#   parallel = "multicore",
-#   ncpus = detectCores(),
-#   R=100,
-#   statistic=function(subjects, indices) {
-#    bootstrap_sample <- lapply(1:length(indices), function(i) {
-#      idx <- indices[i]
-#      tlxData %>%
-#        filter(participant == subjects[idx]) %>%
-#        mutate(participant=paste0(subjects[idx], '_', i))
-#    }) %>% bind_rows()
-# #   mean(bootstrap_sample$TLX_sum)
-#    model <- lme4::lmer(TLX_sum ~ condition + block + (1|participant), data=bootstrap_sample)
-#    model %>% emmeans(specs="condition") %>% 
-#       {list(
-#         means=emmeans_to_stats(.)
-#       , pairs=pairs_to_stats(.))} %>% bind_rows(.id="type") %>% 
-#     mutate(statistic=factor(statistic))
-#   }
-# )
-if(F){
-emm_options(lmer.df="kenward-roger")
-tlxModel <- lmer(TLX_sum ~ condition + block + (1|participant), data=tlxData)
-tlxCIs <- pairs(emmeans(tlxModel, specs = c("condition"))) %>% as.data.frame(infer=c(TRUE, FALSE))  %>% 
-  rename(mean=estimate, conf_low=lower.CL, conf_high=upper.CL)
-tlxCIs}
-```
-
 ```{r tlxPairwise}
 #, fig.width=7, fig.height=1.5}
 # Maybe: https://stackoverflow.com/questions/45361904/duplicating-and-modifying-discrete-axis-in-ggplot2/45362497#45362497
@@ -502,24 +467,22 @@ TLXconfints %>%
 ## Part of Speech
 
 ```{r contentExploratory}
-multiBar <- function(measures.to.vis, nrow=3) {
-  blockLevelMinusMean %>%
-    ungroup() %>%
-    select(participant, condition, block, !!!measures.to.vis) %>%
-    gather(measure, value, !!!measures.to.vis) %>%
-    mutate(measure=factor(measure, levels=measures.to.vis)) %>%
-    mutate(measure=dplyr::recode(measure, !!!vars.to.summarize)) %>%
-    ggplot(aes(x=condition, y=value)) +
-      labeledBar +
-      facet_wrap(vars(measure), nrow=3, scales="free", strip.position="top") +
-      labs(x="Suggestion Visibility", y="") +
-      coord_flip() +
-      theme(
-        strip.background = element_blank(),
-        panel.spacing.y = unit(2, "lines"),
-        axis.line.x = element_blank(),
-        legend.position = "bottom")
-}
+# TODO: https://stackoverflow.com/questions/45361904/duplicating-and-modifying-discrete-axis-in-ggplot2/45362497#45362497
+confints %>%
+  subset(type == "pairs") %>% 
+  subset(measure %in% list("pos_count_NOUN", "pos_count_ADJ", "num_colors")) %>% 
+  mutate(measure=dplyr::recode(measure, !!!var_names)) %>%
+  ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
+  geom_hline(yintercept = 0, linetype ='dotted') +
+  geom_pointrange(size=.25) +
+  geom_text(aes(label=sprintf("%1.2f", ..y..)), nudge_x=.25, hjust="middle", vjust="bottom", size=2.5) +
+  geom_text(aes(label=sprintf("%1.2f", conf_low), y=conf_low), hjust="right", vjust="bottom", size=3) +
+  geom_text(aes(label=sprintf("%1.2f", conf_high), y=conf_high), hjust="left", vjust="bottom", size=3) +
+  expand_limits(x=0) +
+  labs(x="", y="Estimated Pairwise Difference") +
+  coord_flip() +
+  #facet_grid(rows=vars(measure), cols=vars(type), scales="free")
+  facet_wrap(vars(measure), ncol=1)#, scales = "free")
 
-multiBar(c("pos_count_NOUN", "pos_count_ADJ", "num_colors"))
 ```
+
