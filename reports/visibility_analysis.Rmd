@@ -4,7 +4,8 @@ author: "(anon)"
 date: "9/18/2019"
 output:
   html_document:
-    self_contained: false
+    self_contained: no
+  pdf_document: default
 ---
 
 The Transparent Statistics guide, especially the [exemplars](https://transparentstats.github.io/guidelines/effectsize.html#effectsize_exemplar_within), was very helpful.
@@ -13,7 +14,7 @@ The Transparent Statistics guide, especially the [exemplars](https://transparent
 # https://stackoverflow.com/questions/27992239/knitr-include-figures-in-report-and-output-figures-to-separate-files
 knitr::opts_chunk$set(
   echo = TRUE,
-  dev=c('png', 'cairo_pdf')
+  dev=c('png', 'pdf')
 )
 
 library(dplyr)
@@ -317,25 +318,38 @@ confints <- confIntsFromResults(trial_level_results)
   
 ```
 
-```{r bootstrap_lsmeans}
+```{r bootstrap_lsmeans, fig.width=7, fig.height=6}
+cur_measures <- list("num_predictable", "num_unpredictable", "num_words", "frac_predictable")
+
 confints %>%
   subset(type == "means") %>% 
-  subset(measure %in% list("num_predictable", "num_unpredictable", "num_words")) %>% 
-  mutate(measure=dplyr::recode(measure, !!!var_names)) %>%
-  mutate(statistic=factor(statistic, levels=c("Always", "OnlyConfident", "Never"))) %>% 
+  subset(measure %in% cur_measures) %>% 
+  mutate(measure=factor(measure, levels=cur_measures)) %>%  # reorder
+  mutate(measure=dplyr::recode(measure, !!!var_names)) %>%  # rename measures
+  mutate(statistic=factor(statistic, levels=c("Always", "OnlyConfident", "Never"))) %>%
   ggplot(aes(x=statistic, y=mean, ymin=conf_low, ymax=conf_high)) +
   geom_hline(yintercept = 0, linetype ='dotted') +
   geom_pointrange(size=.25) +
   geom_text(aes(label=sprintf("%1.2f", ..y..)), nudge_x=.25, hjust="middle", vjust="bottom", size=2.5) +
   geom_text(aes(label=sprintf("%1.2f", conf_low), y=conf_low), hjust="right", vjust="bottom", size=3) +
   geom_text(aes(label=sprintf("%1.2f", conf_high), y=conf_high), hjust="left", vjust="bottom", size=3) +
-  expand_limits(x=0, y=16) +
+  geom_blank(
+    aes(y=value), 
+    data=data.frame(
+      measure=c("num_predictable", "num_unpredictable", "frac_predictable", "num_words"),
+      min=c(0, 0, 0, 0.),
+      max=c(9, 9, .7, 16)
+    ) %>% mutate(measure=dplyr::recode(measure, !!!var_names))
+    %>% pivot_longer(-measure),#data.frame(measure="frac_predictable", lims=c(-10, 10)),
+  inherit.aes = F) +
   labs(x="", y="Estimated Means") +
   coord_flip() +
-  facet_wrap(vars(measure), ncol=1)
+  facet_wrap(vars(measure), ncol=1, scales = "free")
+#ggsave("bootstrap_lsmeans_manual.pdf", device=cairo_pdf())
 ```
 
-```{r bootstrap_pairwise, fig.width=7, fig.height=7}
+```{r bootstrap_pairwise, fig.width=7, fig.height=6}
+# Helpful: https://stackoverflow.com/questions/18046051/setting-individual-axis-limits-with-facet-wrap-and-scales-free-in-ggplot2
 # TODO: https://stackoverflow.com/questions/45361904/duplicating-and-modifying-discrete-axis-in-ggplot2/45362497#45362497
 ranges <- data.frame(
   measure=c("num_predictable", "num_unpredictable", "frac_predictable", "num_words"),
@@ -343,7 +357,7 @@ ranges <- data.frame(
   max=c(2, 2, .1, 2)
 ) %>% mutate(measure=dplyr::recode(measure, !!!var_names))
 
-cur_measures <- list("num_predictable", "num_unpredictable", "frac_predictable", "num_words")
+cur_measures <- list("num_predictable", "num_unpredictable", "num_words", "frac_predictable")
 
 confints %>%
   subset(type == "pairs") %>% 
@@ -356,10 +370,9 @@ confints %>%
   geom_text(aes(label=sprintf("%1.2f", ..y..)), nudge_x=.25, hjust="middle", vjust="bottom", size=2.5) +
   geom_text(aes(label=sprintf("%1.2f", conf_low), y=conf_low), hjust="right", vjust="bottom", size=3) +
   geom_text(aes(label=sprintf("%1.2f", conf_high), y=conf_high), hjust="left", vjust="bottom", size=3) +
-  #expand_limits(x=0, y=c(-1.5, 2)) +
   geom_blank(
     aes(y=value), 
-    data=ranges %>% pivot_longer(-measure),#data.frame(measure="frac_predictable", lims=c(-10, 10)),
+    data=ranges %>% pivot_longer(-measure),
   inherit.aes = F) +
   labs(x="", y="Estimated Pairwise Difference") +
   coord_flip() +
@@ -501,3 +514,47 @@ confints %>%
 
 ```
 
+## Skips
+
+```{r subset-hidden}
+data %>% subset(condition=="Never") %>% select(stimulus, participant, corrected_text) %>% rename(text=corrected_text) %>% write_csv("no_suggestions_texts.csv")
+```
+
+Manually run `replay_recs.py`, then...
+
+```{r}
+actions <- read_csv("actions.csv")
+```
+
+
+```{r}
+GATING_THRESHOLD = -0.989417552947998
+
+skip_suggestions <- actions %>%
+  mutate(thresholded=max_rec_prob > GATING_THRESHOLD) %>%
+  group_by(participant, stimulus, text) %>% 
+  fill(word, .direction = "up") %>% 
+  subset(is.na(cur_word)) %>% 
+  mutate(next_word=lead(word)) %>%
+  rename(action_type=type) %>% 
+  select(participant, stimulus, text, word, action_type, recs_shown, thresholded, next_word) %>% 
+  mutate(
+    recs_shown=str_split(recs_shown, ":"),
+    shows_next_word=mapply(function(nw, recs) { nw %in% recs }, next_word, recs_shown),
+  )
+  #subset(shows_next_word == T) %>% 
+  #View()
+
+skip_suggestions %>% summarise(shows_next_word=sum(shows_next_word)) %>% subset(shows_next_word > 0) %>% nrow()
+```
+
+```{r}
+skip_suggestions %>% ungroup() %>% subset(shows_next_word) %>%
+  #subset(action_type == "key") %>%
+  count(word) %>% arrange(desc(n)) %>% slice(1:10) %>% pull(word) %>% paste0(collapse = ", ")
+```
+
+```{r}
+skip_suggestions %>% ungroup() %>% subset(shows_next_word) %>%
+  count(action_type)
+```
