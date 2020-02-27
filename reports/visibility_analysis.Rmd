@@ -16,6 +16,7 @@ knitr::opts_chunk$set(
   echo = TRUE,
   dev=c('png', 'pdf')
 )
+library(r2d3)
 
 library(dplyr)
 library(readr)
@@ -524,6 +525,7 @@ Manually run `replay_recs.py`, then...
 
 ```{r}
 actions <- read_csv("actions.csv")
+actions %>% glimpse()
 ```
 
 
@@ -546,6 +548,72 @@ skip_suggestions <- actions %>%
   #View()
 
 skip_suggestions %>% summarise(shows_next_word=sum(shows_next_word)) %>% subset(shows_next_word > 0) %>% nrow()
+```
+
+```{r}
+#short_suggestions <- skip_suggestions %>% filter(participant == '26cj6j', stimulus == '71815')
+nested_suggestions <- skip_suggestions %>% 
+  group_by(participant, stimulus) %>%
+  nest() %>% 
+  mutate(
+   has_nexts = purrr::map_lgl(data, ~ any(.$shows_next_word))
+  ) %>% filter(has_nexts) %>% 
+  filter(stimulus == '223777')
+#nested_suggestions$data[[1]]
+
+#purrr::map_lgl(nested_suggestions$data, ~ any(.$shows_next_word))
+nested_suggestions
+```
+```{r}
+#phrase_to_show <- nested_suggestions %>%  %>% head(1) %>% pull(data)
+phrase_to_show <- nested_suggestions$data[[5]]
+```
+
+
+```{d3 data=phrase_to_show, width=1200}
+
+//data = HTMLWidgets.dataframeToD3(data[0].data);
+/*
+// Each line maps to a top-level g.group.
+let groups = svg.selectAll('g.group').data(data)
+groups.enter().append('g')
+  .attr('class', 'group')
+  .data(d => HTMLWidgets.dataframeToD3(d.data))
+  .style('transform', (d, i) => `translate(50px, ${i * 300}px)`)
+
+// Each group contains two sub-g's: one for the words, and one for the suggestions.
+groups.enter().append('g').attr('class', 'words')
+groups.selectAll('g.words')
+*/
+let wordWidth = 90;
+
+let wordsGroup = svg.append('g');
+let suggestionsGroup = svg.append('g');
+wordsGroup.selectAll('text')
+  .data(data)
+  .enter().append('text')
+    .attr('x', (d, i) => i * wordWidth)
+    .attr('y', 120)
+    .text(d => d.word)
+
+suggestionsGroup.selectAll('g')
+  .data(data)
+  .enter().append('g')
+    .style('transform', (d, i) => 'translate(' + (i * wordWidth) +'px, 50px)')
+    .selectAll('text')
+      .data(d => (d.recs_shown || []).map(word => ({word: word, matchesParent: word === d.word, matchesNextWord: word === d.next_word})))
+      .enter().append('text')
+        .attr('x', 0)
+        .attr('y', (d, i) => i * 20)
+        .text(d => d.word)
+        .style('fill', d => d.matchesParent ? 'red' : (d.matchesNextWord ? 'blue' : '#555'))
+    
+```
+
+```{r}
+skip_suggestions %>% ungroup() %>% subset(shows_next_word) %>%
+  subset(action_type == "rec") %>%
+  count(word) %>% arrange(desc(n)) %>% slice(1:10) %>% pull(word) %>% paste0(collapse = ", ")
 ```
 
 ```{r}
